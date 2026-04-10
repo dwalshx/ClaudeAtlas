@@ -1,0 +1,27 @@
+{
+  "timestamp": "2026-04-10T17:08:59.783Z",
+  "total_discovered": 33000,
+  "total_skills": 1078,
+  "unique_repos": 826,
+  "tiers": {
+    "featured": 305,
+    "solid": 660,
+    "listed": 113
+  },
+  "categories": {
+    "AI & Automation": 455,
+    "Data & Documents": 223,
+    "Web & Frontend": 146,
+    "API & Backend": 51,
+    "Testing & QA": 42,
+    "Code & Development": 124,
+    "DevOps & Infrastructure": 37
+  },
+  "filter_config": {
+    "MAX_PER_REPO": 2,
+    "MIN_STARS": 10,
+    "MIN_BODY_LENGTH": 500,
+    "FEATURED_THRESHOLD": 90,
+    "SOLID_THRESHOLD": 70
+  }
+}

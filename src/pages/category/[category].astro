@@ -1,0 +1,55 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import SkillCard from '../../components/SkillCard.astro';
+import CategoryChip from '../../components/CategoryChip.astro';
+import { allSkills, getAllCategories, getCategorySlug, getCategoryFromSlug } from '../../lib/skills.js';
+
+export function getStaticPaths() {
+  const categories = getAllCategories();
+  return categories.map(cat => ({
+    params: { category: cat.slug },
+    props: { categoryName: cat.name, count: cat.count },
+  }));
+}
+
+const { categoryName, count } = Astro.props;
+const skills = allSkills
+  .filter(s => s.category === categoryName)
+  .sort((a, b) => b.quality_score - a.quality_score);
+const categories = getAllCategories();
+---
+
+<BaseLayout
+  title={`${categoryName} Skills`}
+  description={`Browse ${count} curated ${categoryName.toLowerCase()} skills for Claude and other AI coding assistants.`}
+>
+  <div class="max-w-6xl mx-auto px-4 py-12">
+    <!-- Breadcrumb -->
+    <nav class="text-sm text-gray-500 mb-6 flex items-center gap-2">
+      <a href="/" class="hover:text-white transition-colors">Home</a>
+      <span>/</span>
+      <span class="text-gray-400">{categoryName}</span>
+    </nav>
+
+    <h1 class="text-3xl font-bold text-white mb-2">{categoryName}</h1>
+    <p class="text-gray-400 mb-8">{count} curated skills in this category</p>
+
+    <!-- Other categories -->
+    <div class="flex flex-wrap gap-2 mb-10">
+      {categories.map(cat => (
+        <CategoryChip
+          category={cat.name}
+          count={cat.count}
+          active={cat.name === categoryName}
+        />
+      ))}
+    </div>
+
+    <!-- Skills grid -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      {skills.map(skill => (
+        <SkillCard skill={skill} />
+      ))}
+    </div>
+  </div>
+</BaseLayout>

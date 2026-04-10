@@ -1,0 +1,129 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+---
+
+<BaseLayout title="Methodology" description="How ClaudeAtlas scores and ranks Claude ecosystem skills.">
+  <div class="max-w-3xl mx-auto px-4 py-12">
+    <h1 class="text-3xl font-bold text-white mb-8">How ClaudeAtlas Works</h1>
+
+    <div class="prose prose-invert max-w-none space-y-8">
+      <section>
+        <h2 class="text-xl font-semibold text-white mb-4">Discovery</h2>
+        <p class="text-gray-300 leading-relaxed">
+          ClaudeAtlas automatically discovers skills by scanning GitHub for <code class="text-atlas-400 bg-gray-800 px-1 rounded">SKILL.md</code> files using the GitHub Code Search API. We use size-range partitioning to exceed the API's 1,000-result cap, supplemented by GitHub Topics search and known skill repositories. The scraper runs daily via GitHub Actions.
+        </p>
+      </section>
+
+      <section>
+        <h2 class="text-xl font-semibold text-white mb-4">Quality Scoring</h2>
+        <p class="text-gray-300 leading-relaxed mb-4">
+          Every discovered skill is scored on a 100-point scale using 7 signals, all sourced from the GitHub API. The formula is fully transparent:
+        </p>
+
+        <div class="bg-gray-900 border border-gray-800 rounded-xl p-6">
+          <table class="w-full text-sm">
+            <thead>
+              <tr class="text-gray-400 border-b border-gray-800">
+                <th class="text-left py-2">Signal</th>
+                <th class="text-left py-2">Weight</th>
+                <th class="text-left py-2">What It Measures</th>
+              </tr>
+            </thead>
+            <tbody class="text-gray-300">
+              <tr class="border-b border-gray-800/50">
+                <td class="py-3 font-mono text-atlas-400">GitHub Stars</td>
+                <td class="py-3">20%</td>
+                <td class="py-3">Community trust (log-scaled to avoid mega-repo bias)</td>
+              </tr>
+              <tr class="border-b border-gray-800/50">
+                <td class="py-3 font-mono text-atlas-400">Last Commit</td>
+                <td class="py-3">20%</td>
+                <td class="py-3">Freshness — skills in a fast-moving ecosystem need maintenance</td>
+              </tr>
+              <tr class="border-b border-gray-800/50">
+                <td class="py-3 font-mono text-atlas-400">Frontmatter</td>
+                <td class="py-3">20%</td>
+                <td class="py-3">SKILL.md completeness — has name, description, and metadata</td>
+              </tr>
+              <tr class="border-b border-gray-800/50">
+                <td class="py-3 font-mono text-atlas-400">Documentation</td>
+                <td class="py-3">15%</td>
+                <td class="py-3">Skill body length + repo description quality</td>
+              </tr>
+              <tr class="border-b border-gray-800/50">
+                <td class="py-3 font-mono text-atlas-400">Issue Health</td>
+                <td class="py-3">10%</td>
+                <td class="py-3">Open issues relative to popularity — high ratio suggests abandonment</td>
+              </tr>
+              <tr class="border-b border-gray-800/50">
+                <td class="py-3 font-mono text-atlas-400">License</td>
+                <td class="py-3">10%</td>
+                <td class="py-3">Open-source license presence signals professional quality</td>
+              </tr>
+              <tr>
+                <td class="py-3 font-mono text-atlas-400">Description</td>
+                <td class="py-3">5%</td>
+                <td class="py-3">Repository has a meaningful description</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section>
+        <h2 class="text-xl font-semibold text-white mb-4">Tiers</h2>
+        <p class="text-gray-300 leading-relaxed mb-4">
+          Skills are assigned to three tiers based on their composite score:
+        </p>
+        <div class="space-y-3">
+          <div class="flex items-center gap-3 bg-gray-900 border border-gray-800 rounded-lg p-4">
+            <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-sm font-medium bg-amber-100 text-amber-800">
+              <span class="w-2 h-2 rounded-full bg-amber-500"></span> Featured
+            </span>
+            <span class="text-gray-300">Score 80+ — Top-quality skills prominently displayed</span>
+          </div>
+          <div class="flex items-center gap-3 bg-gray-900 border border-gray-800 rounded-lg p-4">
+            <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-sm font-medium bg-emerald-100 text-emerald-800">
+              <span class="w-2 h-2 rounded-full bg-emerald-500"></span> Solid
+            </span>
+            <span class="text-gray-300">Score 50-79 — Good skills that meet quality standards</span>
+          </div>
+          <div class="flex items-center gap-3 bg-gray-900 border border-gray-800 rounded-lg p-4">
+            <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-sm font-medium bg-gray-100 text-gray-600">
+              <span class="w-2 h-2 rounded-full bg-gray-400"></span> Listed
+            </span>
+            <span class="text-gray-300">Score below 50 — Meets minimum bar but not highlighted</span>
+          </div>
+        </div>
+      </section>
+
+      <section>
+        <h2 class="text-xl font-semibold text-white mb-4">Filtering</h2>
+        <p class="text-gray-300 leading-relaxed">
+          We automatically exclude archived repositories, forks, and repos with no stars. Skills from deleted or private repos are removed after 3 consecutive days of returning 404. Repos not updated in over 6 months receive a recency penalty.
+        </p>
+      </section>
+
+      <section>
+        <h2 class="text-xl font-semibold text-white mb-4">Categories</h2>
+        <p class="text-gray-300 leading-relaxed">
+          Skills are auto-categorized into 8 categories using keyword matching on the skill name, description, and repository topics. The mapping is deterministic and consistent across runs.
+        </p>
+      </section>
+
+      <section>
+        <h2 class="text-xl font-semibold text-white mb-4">Freshness</h2>
+        <p class="text-gray-300 leading-relaxed">
+          The entire index is re-scraped and rebuilt daily via GitHub Actions. ETag caching ensures efficient API usage — unchanged repos are skipped automatically. The "Updated daily" claim is literal, not aspirational.
+        </p>
+      </section>
+
+      <section>
+        <h2 class="text-xl font-semibold text-white mb-4">Open Data</h2>
+        <p class="text-gray-300 leading-relaxed">
+          The scored skills data is available as JSON. The scoring algorithm is open source. If you believe a skill is miscategorized or mislabeled, please open an issue on GitHub.
+        </p>
+      </section>
+    </div>
+  </div>
+</BaseLayout>

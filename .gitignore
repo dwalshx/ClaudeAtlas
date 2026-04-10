@@ -1,0 +1,33 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+
+# Astro
+.astro/
+
+# Environment
+.env
+.env.*
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.idea/
+.vscode/
+*.swp
+
+# Planning artifacts (keep separate)
+.objective/
+
+# Claude
+.claude/
+
+# Large scraper artifacts (rebuilt each run)
+data/skills-raw.json
+data/skills.json.partial
+data/etag-cache.json
+data/scrape-log.txt

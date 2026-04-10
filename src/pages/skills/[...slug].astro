@@ -1,0 +1,178 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import QualityBadge from '../../components/QualityBadge.astro';
+import CopyButton from '../../components/CopyButton.astro';
+import SkillCard from '../../components/SkillCard.astro';
+import ScoreBar from '../../components/ScoreBar.astro';
+import { allSkills, getRelatedSkills, timeAgo, categoryColor, getCategorySlug } from '../../lib/skills.js';
+
+function daysToRecency(dateStr) {
+  if (!dateStr) return 0;
+  const days = (Date.now() - new Date(dateStr).getTime()) / (1000 * 60 * 60 * 24);
+  if (days <= 7) return 100;
+  if (days <= 30) return 90;
+  if (days <= 90) return 75;
+  if (days <= 180) return 50;
+  if (days <= 365) return 25;
+  return 5;
+}
+
+export function getStaticPaths() {
+  return allSkills.map(skill => ({
+    params: { slug: skill.slug },
+    props: { skill },
+  }));
+}
+
+const { skill } = Astro.props;
+const related = getRelatedSkills(skill, 3);
+const cc = categoryColor(skill.category);
+const updated = timeAgo(skill.repo_pushed_at);
+const created = timeAgo(skill.repo_created_at);
+const installCmd = `claude install-skill ${skill.repo_full_name}`;
+
+// JSON-LD structured data
+const jsonLd = {
+  "@context": "https://schema.org",
+  "@type": "SoftwareSourceCode",
+  "name": skill.name,
+  "description": skill.description,
+  "codeRepository": skill.repo_url,
+  "programmingLanguage": "Markdown",
+  "dateCreated": skill.repo_created_at,
+  "dateModified": skill.repo_pushed_at,
+  "author": {
+    "@type": skill.repo_owner_type === 'Organization' ? 'Organization' : 'Person',
+    "name": skill.repo_full_name.split('/')[0],
+  },
+  "license": skill.repo_license ? `https://spdx.org/licenses/${skill.repo_license}` : undefined,
+};
+---
+
+<BaseLayout
+  title={`${skill.name} — Claude Skill`}
+  description={skill.description || `${skill.name} is a Claude ecosystem skill indexed on ClaudeAtlas.`}
+>
+  <script type="application/ld+json" set:html={JSON.stringify(jsonLd)} />
+
+  <div class="max-w-4xl mx-auto px-4 py-12">
+    <!-- Breadcrumb -->
+    <nav class="text-sm text-gray-500 mb-6 flex items-center gap-2">
+      <a href="/" class="hover:text-white transition-colors">Home</a>
+      <span>/</span>
+      <a href={`/category/${getCategorySlug(skill.category)}/`} class="hover:text-white transition-colors">{skill.category}</a>
+      <span>/</span>
+      <span class="text-gray-400">{skill.name}</span>
+    </nav>
+
+    <!-- Header -->
+    <div class="flex flex-col sm:flex-row sm:items-start gap-4 mb-8">
+      <div class="flex-1">
+        <div class="flex items-center gap-3 mb-2">
+          <h1 class="text-3xl font-bold text-white font-mono">{skill.name}</h1>
+          <QualityBadge tier={skill.quality_tier} size="lg" />
+        </div>
+        <p class="text-gray-400 text-lg mb-4">{skill.description || 'No description available.'}</p>
+
+        <div class="flex flex-wrap items-center gap-3 text-sm text-gray-500">
+          <span class={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${cc}`}>
+            {skill.category}
+          </span>
+          <span class="flex items-center gap-1">
+            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 16 16"><path d="M8 .25a.75.75 0 01.673.418l1.882 3.815 4.21.612a.75.75 0 01.416 1.279l-3.046 2.97.719 4.192a.75.75 0 01-1.088.791L8 12.347l-3.766 1.98a.75.75 0 01-1.088-.79l.72-4.194L.818 6.374a.75.75 0 01.416-1.28l4.21-.611L7.327.668A.75.75 0 018 .25z"/></svg>
+            {skill.repo_stars.toLocaleString()} stars
+          </span>
+          <span>{skill.repo_forks} forks</span>
+          <span>Updated {updated}</span>
+          {skill.repo_license && <span>{skill.repo_license}</span>}
+        </div>
+      </div>
+    </div>
+
+    <!-- Install + Links -->
+    <div class="bg-gray-900 border border-gray-800 rounded-xl p-6 mb-8">
+      <h2 class="text-sm font-medium text-gray-400 mb-3 uppercase tracking-wider">Install</h2>
+      <div class="flex flex-col sm:flex-row gap-3">
+        <CopyButton text={installCmd} />
+        <a
+          href={skill.repo_url}
+          target="_blank"
+          rel="noopener"
+          class="inline-flex items-center gap-2 px-4 py-2 bg-gray-800 hover:bg-gray-700 border border-gray-700 rounded-lg text-sm text-gray-300 hover:text-white transition-all"
+        >
+          <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
+          View on GitHub
+        </a>
+      </div>
+    </div>
+
+    <!-- Quality Score Breakdown -->
+    <div class="bg-gray-900 border border-gray-800 rounded-xl p-6 mb-8">
+      <h2 class="text-sm font-medium text-gray-400 mb-4 uppercase tracking-wider">Quality Score: {skill.quality_score}/100</h2>
+      <div class="space-y-3">
+        <ScoreBar label="Stars" value={Math.min(100, Math.round(Math.log10((skill.repo_stars || 0) + 1) * 33.3))} weight="20%" />
+        <ScoreBar label="Recency" value={daysToRecency(skill.repo_pushed_at)} weight="20%" />
+        <ScoreBar label="Frontmatter" value={skill.has_name && skill.has_description ? 70 : skill.has_description ? 40 : 10} weight="20%" />
+        <ScoreBar label="Documentation" value={Math.min(100, Math.round(skill.body_length / 20))} weight="15%" />
+        <ScoreBar label="Issue Health" value={skill.repo_open_issues === 0 ? 80 : 50} weight="10%" />
+        <ScoreBar label="License" value={skill.repo_license ? 100 : 0} weight="10%" />
+        <ScoreBar label="Description" value={skill.repo_description ? 100 : 0} weight="5%" />
+      </div>
+    </div>
+
+    <!-- Skill Content Preview -->
+    {skill.body_markdown && skill.body_markdown.length > 50 && (
+      <div class="bg-gray-900 border border-gray-800 rounded-xl p-6 mb-8">
+        <h2 class="text-sm font-medium text-gray-400 mb-4 uppercase tracking-wider">Skill Content</h2>
+        <div class="prose prose-invert prose-sm max-w-none text-gray-300 whitespace-pre-wrap font-mono text-xs leading-relaxed max-h-96 overflow-y-auto">
+          {skill.body_markdown.substring(0, 2000)}
+          {skill.body_markdown.length > 2000 && (
+            <p class="text-gray-500 mt-4">... <a href={skill.repo_url} target="_blank" class="text-atlas-400 hover:underline">View full content on GitHub</a></p>
+          )}
+        </div>
+      </div>
+    )}
+
+    <!-- Metadata -->
+    <div class="bg-gray-900 border border-gray-800 rounded-xl p-6 mb-8">
+      <h2 class="text-sm font-medium text-gray-400 mb-4 uppercase tracking-wider">Details</h2>
+      <dl class="grid grid-cols-2 gap-4 text-sm">
+        <div>
+          <dt class="text-gray-500">Author</dt>
+          <dd class="text-white font-mono">{skill.repo_full_name.split('/')[0]}</dd>
+        </div>
+        <div>
+          <dt class="text-gray-500">Repository</dt>
+          <dd class="text-white font-mono">{skill.repo_full_name}</dd>
+        </div>
+        <div>
+          <dt class="text-gray-500">Created</dt>
+          <dd class="text-white">{created}</dd>
+        </div>
+        <div>
+          <dt class="text-gray-500">Last Updated</dt>
+          <dd class="text-white">{updated}</dd>
+        </div>
+        <div>
+          <dt class="text-gray-500">Language</dt>
+          <dd class="text-white">{skill.repo_language || 'N/A'}</dd>
+        </div>
+        <div>
+          <dt class="text-gray-500">License</dt>
+          <dd class="text-white">{skill.repo_license || 'None'}</dd>
+        </div>
+      </dl>
+    </div>
+
+    <!-- Related Skills -->
+    {related.length > 0 && (
+      <section>
+        <h2 class="text-lg font-semibold text-white mb-4">Related Skills</h2>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {related.map(r => <SkillCard skill={r} />)}
+        </div>
+      </section>
+    )}
+  </div>
+</BaseLayout>
+

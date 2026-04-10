@@ -1,0 +1,16 @@
+---
+import { tierColor } from '../lib/skills.js';
+
+const { tier, size = 'sm' } = Astro.props;
+const tc = tierColor(tier);
+const label = tier === 'featured' ? 'Featured' : tier === 'solid' ? 'Solid' : 'Listed';
+
+const sizeClasses = size === 'lg'
+  ? 'px-3 py-1 text-sm'
+  : 'px-2 py-0.5 text-xs';
+---
+
+<span class={`inline-flex items-center gap-1.5 rounded-full font-medium ${sizeClasses} ${tc.bg} ${tc.text}`}>
+  <span class={`w-2 h-2 rounded-full ${tc.dot}`}></span>
+  {label}
+</span>

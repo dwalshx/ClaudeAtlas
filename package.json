@@ -1,0 +1,26 @@
+{
+  "name": "claudeatlas",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Curated discovery index of top Claude ecosystem skills",
+  "scripts": {
+    "scrape": "node scripts/scrape.js",
+    "filter": "node scripts/filter.js",
+    "pipeline": "node scripts/scrape.js && node scripts/filter.js",
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview",
+    "astro": "astro"
+  },
+  "keywords": ["claude", "skills", "directory", "index"],
+  "author": "Dan Walsh",
+  "license": "MIT",
+  "dependencies": {
+    "astro": "^5.7.10",
+    "@astrojs/sitemap": "^3.3.1",
+    "@astrojs/tailwind": "^6.0.2",
+    "tailwindcss": "^3.4.17",
+    "gray-matter": "^4.0.3",
+    "p-queue": "^9.1.2"
+  }
+}

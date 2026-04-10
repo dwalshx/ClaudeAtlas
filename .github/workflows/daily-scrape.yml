@@ -1,0 +1,81 @@
+name: Daily Scrape & Deploy
+
+on:
+  schedule:
+    - cron: '30 6 * * *' # 6:30 AM UTC daily
+  workflow_dispatch: {} # Manual trigger
+  push:
+    branches: [main]
+
+jobs:
+  scrape-build-deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - run: npm ci
+
+      # Restore ETag cache from previous run
+      - name: Restore ETag cache
+        uses: actions/cache@v4
+        with:
+          path: data/etag-cache.json
+          key: etag-cache-${{ github.run_number }}
+          restore-keys: etag-cache-
+
+      # Run scraper (writes skills-raw.json)
+      - name: Scrape GitHub for skills
+        run: npm run scrape
+        env:
+          GITHUB_TOKEN: ${{ secrets.SCRAPE_PAT }}
+
+      # Apply filter (writes skills.json from skills-raw.json)
+      - name: Filter and calibrate skills
+        run: npm run filter
+
+      # Regression guard
+      - name: Check skills count
+        run: |
+          CURRENT=$(node -e "console.log(JSON.parse(require('fs').readFileSync('data/skills.json','utf8')).length)")
+          echo "Current skills count: $CURRENT"
+          if [ "$CURRENT" -lt 100 ]; then
+            echo "::error::Skills count too low: $CURRENT (minimum 100)"
+            exit 1
+          fi
+
+      # Build site
+      - name: Build Astro site
+        run: npm run build
+
+      # Deploy to Cloudflare Pages
+      - name: Deploy to Cloudflare Pages
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CF_API_TOKEN }}
+          accountId: ${{ secrets.CF_ACCOUNT_ID }}
+          command: pages deploy dist --project-name=claudeatlas
+
+      # Health check
+      - name: Health check
+        run: |
+          sleep 10
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" https://claudeatlas.com || echo "000")
+          echo "Site returned HTTP $STATUS"
+          if [ "$STATUS" != "200" ]; then
+            echo "::warning::Site health check returned HTTP $STATUS (may still be deploying)"
+          fi
+
+      # Commit updated data back to repo
+      - name: Commit skills data
+        run: |
+          git config user.name "ClaudeAtlas Bot"
+          git config user.email "bot@claudeatlas.com"
+          git add data/skills.json data/pipeline-stats.json || true
+          git diff --cached --quiet || git commit -m "chore: update skills data $(date -u +%Y-%m-%d)"
+          git push || true

@@ -1,0 +1,128 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import SkillCard from '../components/SkillCard.astro';
+import CategoryChip from '../components/CategoryChip.astro';
+import { allSkills, getFeaturedSkills, getAllCategories, getStats } from '../lib/skills.js';
+
+const stats = getStats();
+const featured = getFeaturedSkills(6);
+const categories = getAllCategories();
+
+// Only render top 60 skills on homepage (performance)
+const HOMEPAGE_LIMIT = 60;
+const topSkills = [...allSkills].sort((a, b) => b.quality_score - a.quality_score).slice(0, HOMEPAGE_LIMIT);
+---
+
+<BaseLayout>
+  <!-- Hero -->
+  <section class="py-16 sm:py-24 px-4">
+    <div class="max-w-6xl mx-auto text-center">
+      <h1 class="text-4xl sm:text-5xl font-bold text-white mb-4 tracking-tight">
+        Discover the best agent skills
+      </h1>
+      <p class="text-lg sm:text-xl text-gray-400 mb-2 max-w-2xl mx-auto">
+        The curated index for production-quality Claude ecosystem skills.
+      </p>
+      <p class="text-sm text-gray-500 mb-8 font-mono">
+        {stats.total.toLocaleString()} skills analyzed &middot; {stats.featured} featured &middot; Updated daily
+      </p>
+
+      <!-- Search -->
+      <div class="max-w-xl mx-auto mb-10">
+        <div class="relative">
+          <svg class="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+            <circle cx="11" cy="11" r="8"/>
+            <path d="m21 21-4.35-4.35"/>
+          </svg>
+          <input
+            type="text"
+            id="skill-search"
+            placeholder="Search skills... (e.g. testing, docker, api)"
+            class="w-full pl-12 pr-4 py-3.5 bg-gray-900 border border-gray-700 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-atlas-500 focus:border-transparent text-base"
+          />
+        </div>
+      </div>
+
+      <!-- Category chips -->
+      <div class="flex flex-wrap justify-center gap-2 mb-4">
+        {categories.map(cat => (
+          <CategoryChip category={cat.name} count={cat.count} />
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <!-- Featured Skills -->
+  {featured.length > 0 && (
+    <section class="px-4 pb-12">
+      <div class="max-w-6xl mx-auto">
+        <h2 class="text-xl font-semibold text-white mb-6 flex items-center gap-2">
+          <span class="w-2 h-2 rounded-full bg-amber-500"></span>
+          Featured Skills
+        </h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {featured.map(skill => (
+            <SkillCard skill={skill} />
+          ))}
+        </div>
+      </div>
+    </section>
+  )}
+
+  <!-- Top Skills -->
+  <section class="px-4 pb-16">
+    <div class="max-w-6xl mx-auto">
+      <div class="flex items-end justify-between mb-6">
+        <h2 class="text-xl font-semibold text-white flex items-center gap-2">
+          <span class="w-2 h-2 rounded-full bg-atlas-500"></span>
+          Top Skills
+        </h2>
+        <span class="text-sm text-gray-500">Showing top {HOMEPAGE_LIMIT} of {stats.total}</span>
+      </div>
+      <div id="skills-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {topSkills.map(skill => (
+          <div class="skill-item" data-name={skill.name.toLowerCase()} data-desc={(skill.description || '').toLowerCase()} data-cat={skill.category.toLowerCase()}>
+            <SkillCard skill={skill} />
+          </div>
+        ))}
+      </div>
+      <div id="no-results" class="hidden text-center py-12 text-gray-500">
+        No skills match your search. Try different keywords or <a href="/category/ai-and-automation/" class="text-atlas-400 hover:underline">browse by category</a>.
+      </div>
+      <div class="text-center mt-10">
+        <p class="text-gray-500 text-sm mb-4">Want to explore more?</p>
+        <div class="flex flex-wrap justify-center gap-2">
+          {categories.map(cat => (
+            <CategoryChip category={cat.name} count={cat.count} />
+          ))}
+        </div>
+      </div>
+    </div>
+  </section>
+</BaseLayout>
+
+<script>
+  const searchInput = document.getElementById('skill-search') as HTMLInputElement;
+  const skillItems = document.querySelectorAll('.skill-item');
+  const noResults = document.getElementById('no-results');
+
+  searchInput?.addEventListener('input', (e) => {
+    const query = (e.target as HTMLInputElement).value.toLowerCase().trim();
+    let visible = 0;
+
+    skillItems.forEach(item => {
+      const el = item as HTMLElement;
+      const name = el.dataset.name || '';
+      const desc = el.dataset.desc || '';
+      const cat = el.dataset.cat || '';
+
+      const matches = !query || name.includes(query) || desc.includes(query) || cat.includes(query);
+      el.style.display = matches ? '' : 'none';
+      if (matches) visible++;
+    });
+
+    if (noResults) {
+      noResults.classList.toggle('hidden', visible > 0);
+    }
+  });
+</script>

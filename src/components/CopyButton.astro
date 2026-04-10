@@ -1,0 +1,40 @@
+---
+const { text, label = 'Copy' } = Astro.props;
+---
+
+<button
+  class="copy-btn inline-flex items-center gap-1.5 px-3 py-1.5 bg-gray-800 hover:bg-gray-700 border border-gray-700 rounded-lg text-xs font-mono text-gray-300 hover:text-white transition-all cursor-pointer"
+  data-copy={text}
+  title={`Copy: ${text}`}
+>
+  <svg class="w-3.5 h-3.5 copy-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+    <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
+    <path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/>
+  </svg>
+  <svg class="w-3.5 h-3.5 check-icon hidden text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+    <polyline points="20 6 9 17 4 12"/>
+  </svg>
+  <code class="truncate max-w-[200px]">{text}</code>
+</button>
+
+<script>
+  document.addEventListener('click', (e) => {
+    const btn = (e.target as HTMLElement).closest('.copy-btn') as HTMLButtonElement;
+    if (!btn) return;
+
+    const text = btn.dataset.copy;
+    if (!text) return;
+
+    navigator.clipboard.writeText(text).then(() => {
+      const copyIcon = btn.querySelector('.copy-icon') as HTMLElement;
+      const checkIcon = btn.querySelector('.check-icon') as HTMLElement;
+      copyIcon.classList.add('hidden');
+      checkIcon.classList.remove('hidden');
+
+      setTimeout(() => {
+        copyIcon.classList.remove('hidden');
+        checkIcon.classList.add('hidden');
+      }, 2000);
+    });
+  });
+</script>
