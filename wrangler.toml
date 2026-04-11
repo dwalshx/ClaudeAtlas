@@ -12,14 +12,15 @@ not_found_handling = "404-page"
 binding = "ASSETS"
 
 # --- Phase 5 Analytics: D1 search query log ---
-# To activate (see docs/SECRETS.md for the full walkthrough):
-#   1) npx wrangler d1 create claudeatlas-search-log
-#   2) Copy the database_id printed by step 1 into the block below and uncomment
-#   3) npx wrangler d1 execute claudeatlas-search-log --remote --file=worker/schema.sql
-#   4) Set SALT_SECRET via `npx wrangler secret put SALT_SECRET`
-#   5) npx wrangler deploy
+# Database provisioned via Cloudflare dashboard (Windows ARM64 can't run
+# wrangler locally because workerd has no win32-arm64 binary). The CI
+# deploy path via cloudflare/wrangler-action@v3 runs on linux-x64 where
+# this binding is wired up automatically on every deploy.
 #
-# [[d1_databases]]
-# binding = "DB"
-# database_name = "claudeatlas-search-log"
-# database_id = "REPLACE_WITH_DATABASE_ID"
+# SALT_SECRET is set directly on the Worker via the CF dashboard
+# (Workers & Pages → claudeatlas → Settings → Variables and Secrets).
+
+[[d1_databases]]
+binding = "DB"
+database_name = "claudeatlas-search-log"
+database_id = "d4e341fa-17d6-4069-8a00-3b6a8d698ab9"
