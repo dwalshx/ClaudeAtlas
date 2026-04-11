@@ -11,7 +11,7 @@ Canonical reference for every secret/env var ClaudeAtlas uses, where each one li
 | `CF_API_TOKEN` | `wrangler deploy` in CI | — | ✅ | — |
 | `CF_ACCOUNT_ID` | `wrangler deploy` in CI | — | ✅ | — |
 | `PUBLIC_POSTHOG_KEY` | Built into client bundle | ✅ | ✅ | — |
-| `PUBLIC_CF_ANALYTICS_TOKEN` | Built into client bundle | ✅ | ✅ | — |
+| `PUBLIC_CF_ANALYTICS_TOKEN` | ~~Build-time client bundle~~ — NOT USED, we use CF Automatic Setup | — | — | — |
 | `SALT_SECRET` | `worker/log-search.js` at runtime | — | — | ✅ |
 
 **Rule of thumb:**
@@ -66,12 +66,11 @@ Canonical reference for every secret/env var ClaudeAtlas uses, where each one li
 - **Rotation:** create a new project in PostHog, update both places (local `.env` and GH secret), trigger a rebuild. The old key stops receiving events immediately.
 - **Host:** we use the EU cloud (`https://eu.i.posthog.com`) hardcoded in `src/lib/analytics.js` for GDPR reasons. Don't sign up at `us.posthog.com`.
 
-### `PUBLIC_CF_ANALYTICS_TOKEN` — Cloudflare Web Analytics beacon
+### `PUBLIC_CF_ANALYTICS_TOKEN` — NOT USED
 
-- **Scope:** the beacon token from Cloudflare Web Analytics. Technically "public" but same treatment as PostHog.
-- **Where to get:** Cloudflare dashboard → Analytics & Logs → Web Analytics → your site → "Copy beacon snippet". The token is the value inside `data-cf-beacon='{"token": "..."}'`.
-- **Where it lives:** local `.env` + GitHub Actions secret `PUBLIC_CF_ANALYTICS_TOKEN`
-- **Behavior when unset:** beacon script tag is not injected in `BaseLayout.astro`, Cloudflare Web Analytics doesn't receive data. Site builds and works normally.
+- **Status:** deprecated in favor of Cloudflare "Automatic Setup" for Web Analytics.
+- **Why:** Cloudflare injects the beacon server-side for CF-managed domains, so we don't need a client-side token or env var. Zero code paths to maintain.
+- **Where Web Analytics data comes from:** Cloudflare dashboard → Analytics & Logs → Web Analytics → `claudeatlas.com`. Toggle Automatic Setup to disable.
 
 ### `SALT_SECRET` — Worker IP hashing salt
 

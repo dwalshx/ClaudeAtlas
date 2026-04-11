@@ -7,7 +7,8 @@ const defaultDescription = `Discover the best Claude skills — ${pstats.total_d
 const { title = 'ClaudeAtlas', description = defaultDescription } = Astro.props;
 const fullTitle = title === 'ClaudeAtlas' ? title : `${title} | ClaudeAtlas`;
 const posthogSnippet = buildPosthogSnippet();
-const cfBeaconToken = import.meta.env.PUBLIC_CF_ANALYTICS_TOKEN || '';
+// Cloudflare Web Analytics uses "Automatic Setup" — beacon injected server-side
+// by Cloudflare for CF-managed domains. No manual token needed.
 ---
 
 <!DOCTYPE html>
@@ -28,7 +29,6 @@ const cfBeaconToken = import.meta.env.PUBLIC_CF_ANALYTICS_TOKEN || '';
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
   {ANALYTICS_ENABLED && <script is:inline set:html={posthogSnippet} />}
-  {cfBeaconToken && <script defer src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon={`{"token": "${cfBeaconToken}"}`}></script>}
 </head>
 <body class="min-h-screen flex flex-col font-[Inter,system-ui,sans-serif]">
   <!-- Nav -->
