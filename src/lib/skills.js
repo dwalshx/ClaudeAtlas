@@ -146,8 +146,12 @@ export function getCreators() {
     rec.skills.sort((a, b) => (b.quality_score || 0) - (a.quality_score || 0));
     rec.total_skills = rec.skills.length;
     const sumScores = rec.skills.reduce((a, b) => a + (b.quality_score || 0), 0);
-    // Keep precise value for sorting (tie-breaker between otherwise-equal averages)
-    // and a display-rounded integer for the UI.
+    // Total quality = composite score rewarding both breadth and depth.
+    // 4 skills at 95 each (380) beats 2 skills at 99 each (198) — the right
+    // answer, because sustained multi-skill quality is a stronger signal
+    // than getting lucky with two high-scoring skills.
+    rec.total_quality_score = sumScores;
+    // Average is retained for the profile page header display
     rec.avg_quality_score_precise = rec.total_skills > 0 ? sumScores / rec.total_skills : 0;
     rec.avg_quality_score = Math.round(rec.avg_quality_score_precise);
 
@@ -195,14 +199,16 @@ export function getCreatorLeaderboards(topN = 10) {
     .sort((a, b) => (b.total_skills - a.total_skills) || (b.avg_quality_score - a.avg_quality_score))
     .slice(0, topN);
 
+  // Total Quality — composite score across all indexed skills.
+  // Rewards both breadth (more skills) and depth (higher avg) — the right
+  // answer when the catalog has a ceiling of 99 and lots of 2-skill creators
+  // tied at the top. `microsoft` with 8 skills at 92 (total 739) beats
+  // `affaan-m` with 2 skills at 99 (total 198), which matches intuition.
   const quality = [...creators]
     .filter(c => c.total_skills >= 2)
     .sort((a, b) =>
-      // Precise avg first (breaks ties that round() would hide)
-      (b.avg_quality_score_precise - a.avg_quality_score_precise)
-      // Then skill count — more skills at the same level = stronger signal
+      (b.total_quality_score - a.total_quality_score)
       || (b.total_skills - a.total_skills)
-      // Then total stars as a final tiebreaker
       || (b.total_stars - a.total_stars)
     )
     .slice(0, topN);
