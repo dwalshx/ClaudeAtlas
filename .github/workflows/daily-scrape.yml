@@ -49,17 +49,20 @@ jobs:
             exit 1
           fi
 
-      # Build site
+      # Build site (with analytics env vars — empty defaults are no-ops)
       - name: Build Astro site
         run: npm run build
+        env:
+          PUBLIC_POSTHOG_KEY: ${{ secrets.PUBLIC_POSTHOG_KEY }}
+          PUBLIC_CF_ANALYTICS_TOKEN: ${{ secrets.PUBLIC_CF_ANALYTICS_TOKEN }}
 
-      # Deploy to Cloudflare Pages
-      - name: Deploy to Cloudflare Pages
+      # Deploy to Cloudflare Workers Static Assets
+      - name: Deploy to Cloudflare Workers
         uses: cloudflare/wrangler-action@v3
         with:
           apiToken: ${{ secrets.CF_API_TOKEN }}
           accountId: ${{ secrets.CF_ACCOUNT_ID }}
-          command: pages deploy dist --project-name=claudeatlas
+          command: deploy
 
       # Health check
       - name: Health check

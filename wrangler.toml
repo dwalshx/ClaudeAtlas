@@ -1,23 +1,25 @@
 name = "claudeatlas"
 compatibility_date = "2026-04-10"
 
+# Worker entry point — handles /api/log-search and falls through to ASSETS
+# for all other requests. The ASSETS binding is provided automatically by
+# the [assets] block below.
+main = "worker/log-search.js"
+
 [assets]
 directory = "./dist"
 not_found_handling = "404-page"
+binding = "ASSETS"
 
 # --- Phase 5 Analytics: D1 search query log ---
-# To activate:
-#   1) wrangler d1 create claudeatlas-search-log
+# To activate (see docs/SECRETS.md for the full walkthrough):
+#   1) npx wrangler d1 create claudeatlas-search-log
 #   2) Copy the database_id printed by step 1 into the block below and uncomment
-#   3) wrangler d1 execute claudeatlas-search-log --file=worker/schema.sql
-#   4) Set SALT_SECRET via `wrangler secret put SALT_SECRET`
-#   5) wrangler deploy
+#   3) npx wrangler d1 execute claudeatlas-search-log --remote --file=worker/schema.sql
+#   4) Set SALT_SECRET via `npx wrangler secret put SALT_SECRET`
+#   5) npx wrangler deploy
 #
 # [[d1_databases]]
 # binding = "DB"
 # database_name = "claudeatlas-search-log"
 # database_id = "REPLACE_WITH_DATABASE_ID"
-#
-# Once the D1 binding is live, also set main = "worker/log-search.js" above
-# the [assets] block so the Worker handles POST /api/log-search and falls
-# through to Static Assets for everything else.

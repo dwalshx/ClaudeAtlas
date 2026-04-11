@@ -101,13 +101,29 @@ export async function logSearch(request, env) {
   });
 }
 
-// Default export so this file can act as a standalone Worker if needed
+// Default export — this is the Worker entry point when wrangler.toml sets
+// `main = "worker/log-search.js"`. It handles the /api/log-search route and
+// falls through to the Static Assets binding (env.ASSETS) for everything else,
+// which is how Workers Static Assets expects custom handlers to coexist with
+// the static asset server.
+//
+// https://developers.cloudflare.com/workers/static-assets/binding/
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
+
+    // API routes handled by this worker
     if (url.pathname === '/api/log-search') {
       return logSearch(request, env);
     }
+
+    // Everything else → serve static assets from dist/
+    // (env.ASSETS is bound automatically by the [assets] block in wrangler.toml)
+    if (env && env.ASSETS) {
+      return env.ASSETS.fetch(request);
+    }
+
+    // Fallback: if the binding is missing (shouldn't happen in production)
     return new Response('Not Found', { status: 404 });
   },
 };
