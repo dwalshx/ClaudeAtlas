@@ -107,34 +107,33 @@ Explicitly excluded from Phase 1.5 — documented to prevent scope creep during 
 
 ## Traceability
 
-Populated by the roadmapper during Step 8 of `/gsd:new-project`. Each requirement maps to exactly one phase.
+Each requirement maps to exactly one phase in `.planning/ROADMAP.md`.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| UX-01 | TBD | Pending |
-| UX-02 | TBD | Pending |
-| UX-03 | TBD | Pending |
-| UX-04 | TBD | Pending |
-| DATA-01 | TBD | Pending |
-| DATA-02 | TBD | Pending |
-| DATA-03 | TBD | Pending |
-| DATA-04 | TBD | Pending |
-| DIST-01 | TBD | Pending |
-| DIST-02 | TBD | Pending |
-| CREATOR-01 | TBD | Pending |
-| CREATOR-02 | TBD | Pending |
-| CREATOR-03 | TBD | Pending |
-| ANALYTICS-01 | TBD | Pending |
-| ANALYTICS-02 | TBD | Pending |
-| ANALYTICS-03 | TBD | Pending |
-| INFRA-01 | TBD | Pending |
-| INFRA-02 | TBD | Pending |
+| UX-01 | Phase 1 — Content & UX Fixes | Pending |
+| UX-02 | Phase 1 — Content & UX Fixes | Pending |
+| UX-03 | Phase 1 — Content & UX Fixes | Pending |
+| UX-04 | Phase 1 — Content & UX Fixes | Pending |
+| DATA-01 | Phase 2 — Data Moats | Pending |
+| DATA-02 | Phase 2 — Data Moats | Pending |
+| DATA-03 | Phase 2 — Data Moats | Pending |
+| DATA-04 | Phase 2 — Data Moats | Pending |
+| DIST-01 | Phase 3 — Distribution | Pending |
+| DIST-02 | Phase 3 — Distribution | Pending |
+| CREATOR-01 | Phase 4 — Creator Pages | Pending |
+| CREATOR-02 | Phase 4 — Creator Pages | Pending |
+| CREATOR-03 | Phase 4 — Creator Pages | Pending |
+| ANALYTICS-01 | Phase 5 — Analytics | Pending |
+| ANALYTICS-02 | Phase 5 — Analytics | Pending |
+| ANALYTICS-03 | Phase 5 — Analytics | Pending |
+| INFRA-01 | Phase 6 — Infrastructure Groundwork | Pending |
+| INFRA-02 | Phase 6 — Infrastructure Groundwork | Pending |
 
 **Coverage:**
 - v1 requirements: 18 total
-- Mapped to phases: 0 (pending roadmap creation)
-- Unmapped: 18 ⚠️ (will be resolved by roadmapper)
+- Mapped to phases: 18 / Unmapped: 0 ✓
 
 ---
 *Requirements defined: 2026-04-10*
-*Last updated: 2026-04-10 after Phase 1.5 initialization*
+*Last updated: 2026-04-10 — traceability populated by roadmapper*

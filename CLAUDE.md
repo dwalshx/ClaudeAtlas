@@ -209,3 +209,63 @@ npm run preview
 - **Planning methodology:** Org OS (see `.objective/` locally — not committed to repo)
 - **Execution methodology (recommended for Phase 1.5+):** GSD (`.planning/` directory, phase-based delegation)
 - **Project history:** Phase 1 was planned with a full Org OS 12-phase pipeline and executed in one long session. Phase 1.5 onward should use GSD for execution discipline.
+
+<!-- GSD:project-start source:PROJECT.md -->
+## Project
+
+**ClaudeAtlas**
+
+ClaudeAtlas is a curated discovery index of top Claude ecosystem skills. It automatically discovers SKILL.md files across GitHub, scores them on 7 transparent signals, categorizes them, and publishes a browsable static site at [claudeatlas.com](https://claudeatlas.com). Built for Claude Code users and agent authors who want to find trustworthy, high-quality skills without wading through thousands of repos.
+
+**Core Value:** **Users can find the best Claude skill for a given task in under 30 seconds, with visible signals for why it's trustworthy.**
+
+If everything else fails, this must work — the single browse-and-discover loop drives every other decision about moats, creator tools, analytics, and infrastructure.
+
+### Constraints
+
+- **Tech stack:** Astro 5 + Cloudflare Workers Static Assets — locked. Do not swap renderers or hosts.
+- **Cost:** Free tier for everything except the domain (~$12/year). Any Phase 1.5 addition that breaks this (paid analytics, paid D1 capacity, paid Workers) requires explicit approval.
+- **Scraper footprint:** GitHub API rate limit is 5,000 requests/hour with a PAT. Any Phase 1.5 feature that needs backfill (skill birth dates, star history) must fit inside the rate limit with room for the daily cron.
+- **Data integrity:** Do not drift from the calibrated filter rules in `scripts/filter.js` without re-running against `skills-raw.json` and comparing the before/after distributions.
+- **Deployment:** Zero-downtime rollout is mandatory. The live site must keep serving through every Phase 1.5 deploy.
+- **Privacy:** Any analytics/search logging must hash or omit PII. Search query log uses hashed IP for dedup only; no raw identifiers.
+- **Static-site discipline:** Wherever possible, compute at build time and serve static files. Cloudflare Workers endpoints are allowed for the search query log (D1 insert) but should not be used for anything that can be baked.
+<!-- GSD:project-end -->
+
+<!-- GSD:stack-start source:STACK.md -->
+## Technology Stack
+
+Technology stack not yet documented. Will populate after codebase mapping or first phase.
+<!-- GSD:stack-end -->
+
+<!-- GSD:conventions-start source:CONVENTIONS.md -->
+## Conventions
+
+Conventions not yet established. Will populate as patterns emerge during development.
+<!-- GSD:conventions-end -->
+
+<!-- GSD:architecture-start source:ARCHITECTURE.md -->
+## Architecture
+
+Architecture not yet mapped. Follow existing patterns found in the codebase.
+<!-- GSD:architecture-end -->
+
+<!-- GSD:workflow-start source:GSD defaults -->
+## GSD Workflow Enforcement
+
+Before using Edit, Write, or other file-changing tools, start work through a GSD command so planning artifacts and execution context stay in sync.
+
+Use these entry points:
+- `/gsd:quick` for small fixes, doc updates, and ad-hoc tasks
+- `/gsd:debug` for investigation and bug fixing
+- `/gsd:execute-phase` for planned phase work
+
+Do not make direct repo edits outside a GSD workflow unless the user explicitly asks to bypass it.
+<!-- GSD:workflow-end -->
+
+<!-- GSD:profile-start -->
+## Developer Profile
+
+> Profile not yet configured. Run `/gsd:profile-user` to generate your developer profile.
+> This section is managed by `generate-claude-profile` -- do not edit manually.
+<!-- GSD:profile-end -->
