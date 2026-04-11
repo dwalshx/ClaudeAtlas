@@ -11,7 +11,7 @@
  * 5. Tier recalibration: Featured 90+, Solid 70-89, Listed <70
  */
 
-import { readFileSync, writeFileSync } from 'fs';
+import { readFileSync, writeFileSync, existsSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 
@@ -19,6 +19,37 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..');
 const RAW_PATH = join(ROOT, 'data', 'skills-raw.json');  // Always read from raw
 const OUTPUT_PATH = join(ROOT, 'data', 'skills.json');
+
+// --- Enrichment preservation ---
+// Some fields (skill_first_commit_at from Phase 2 DATA-01) are backfilled
+// out-of-band and don't live in skills-raw.json. We load the current
+// skills.json if it exists and copy these enrichments forward so they
+// survive each filter run. Never overwrites a good value with null.
+const PRESERVED_FIELDS = ['skill_first_commit_at'];
+
+function loadPriorEnrichments() {
+  if (!existsSync(OUTPUT_PATH)) return new Map();
+  try {
+    const prior = JSON.parse(readFileSync(OUTPUT_PATH, 'utf-8'));
+    if (!Array.isArray(prior)) return new Map();
+    const map = new Map();
+    for (const p of prior) {
+      if (!p || !p.id) continue;
+      const enrichments = {};
+      let anyValue = false;
+      for (const field of PRESERVED_FIELDS) {
+        if (p[field] != null) {
+          enrichments[field] = p[field];
+          anyValue = true;
+        }
+      }
+      if (anyValue) map.set(p.id, enrichments);
+    }
+    return map;
+  } catch {
+    return new Map();
+  }
+}
 
 // --- Config ---
 const CONFIG = {
@@ -103,6 +134,12 @@ function main() {
   const raw = JSON.parse(readFileSync(RAW_PATH, 'utf-8'));
   console.log(`Raw skills: ${raw.length}`);
 
+  // Load prior enrichments (skill_first_commit_at, etc.) from existing skills.json
+  const priorEnrichments = loadPriorEnrichments();
+  if (priorEnrichments.size > 0) {
+    console.log(`Prior enrichments to preserve: ${priorEnrichments.size} records`);
+  }
+
   // --- Step 1: Filter by repo stars and AI slop ---
   let filtered = raw.filter(s => {
     if (s.repo_stars < CONFIG.MIN_STARS) return false;
@@ -152,6 +189,24 @@ function main() {
     delete s.etag_repo;
     delete s.etag_content;
     delete s.consecutive_404s;
+  }
+
+  // --- Step 4c: Preserve enrichments from the previous skills.json ---
+  // Keeps skill_first_commit_at (DATA-01 backfill) alive across cron runs.
+  // Only copies forward — never wipes a value already present in the raw pipeline.
+  let preservedCount = 0;
+  for (const s of capped) {
+    const prior = priorEnrichments.get(s.id);
+    if (!prior) continue;
+    for (const field of PRESERVED_FIELDS) {
+      if (s[field] == null && prior[field] != null) {
+        s[field] = prior[field];
+        preservedCount++;
+      }
+    }
+  }
+  if (preservedCount > 0) {
+    console.log(`Preserved ${preservedCount} enrichment values from prior skills.json`);
   }
 
   // --- Stats ---
