@@ -21,6 +21,7 @@ import { categorizeSkill } from './categorize.js';
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..');
 const DATA_DIR = join(ROOT, 'data');
+const HISTORY_DIR = join(DATA_DIR, 'history');
 const SKILLS_PATH = join(DATA_DIR, 'skills-raw.json');  // Scraper writes raw data; filter produces skills.json
 const ETAG_PATH = join(DATA_DIR, 'etag-cache.json');
 const STATS_PATH = join(DATA_DIR, 'pipeline-stats.json');
@@ -195,6 +196,52 @@ async function fetchWithETag(url, retries = 3) {
 function saveETagCache() {
   if (!existsSync(DATA_DIR)) mkdirSync(DATA_DIR, { recursive: true });
   writeFileSync(ETAG_PATH, JSON.stringify(etagCache), 'utf-8');
+}
+
+// --- Daily history snapshot ---
+//
+// Writes a tiny per-day JSON file with the star/fork/issues/pushed_at state
+// of every repo we have metadata for. These snapshots compound over time into
+// a full time-series of the Claude skills ecosystem — the basis for star history
+// charts, momentum detection, and "trending this week" views.
+//
+// Snapshot files are small (~100-200 KB) and live in data/history/ — committed
+// to the repo so daily GitHub Actions runs append to the series automatically.
+// A new snapshot is only written if one doesn't already exist for today's date.
+function writeHistorySnapshot(repoMetadataCache) {
+  if (!existsSync(HISTORY_DIR)) mkdirSync(HISTORY_DIR, { recursive: true });
+
+  const today = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
+  const snapshotPath = join(HISTORY_DIR, `${today}.json`);
+
+  // Skip if today's snapshot already exists (scrape re-run on same day)
+  if (existsSync(snapshotPath)) {
+    console.log(`[history] Snapshot for ${today} already exists, skipping`);
+    return;
+  }
+
+  const repos = {};
+  for (const [repoName, meta] of repoMetadataCache.entries()) {
+    // Skip archived/forked repos — they're noise in the time series
+    if (meta.repo_archived || meta.repo_is_fork) continue;
+
+    repos[repoName] = {
+      s: meta.repo_stars,          // stars (short keys to keep file size tiny)
+      f: meta.repo_forks,
+      i: meta.repo_open_issues,
+      p: meta.repo_pushed_at,      // ISO timestamp of last push
+    };
+  }
+
+  const snapshot = {
+    date: today,
+    timestamp: new Date().toISOString(),
+    repo_count: Object.keys(repos).length,
+    repos,
+  };
+
+  writeFileSync(snapshotPath, JSON.stringify(snapshot), 'utf-8');
+  console.log(`[history] Wrote snapshot: ${snapshotPath} (${Object.keys(repos).length} repos)`);
 }
 
 // --- Code search with size-range partitioning ---
@@ -497,6 +544,11 @@ async function main() {
   }
 
   console.log(`[metadata] Fetched metadata for ${repoMetadataCache.size}/${uniqueRepos.size} repos`);
+
+  // --- Step 2b: Write daily history snapshot (for star trajectory charts) ---
+  // Tiny per-day file with {repo_full_name: {stars, forks, open_issues, pushed_at}}
+  // Compounds forever — the longer we run this, the deeper the time-series moat.
+  writeHistorySnapshot(repoMetadataCache);
 
   // --- Step 3: Fetch and parse SKILL.md content ---
   console.log('\n[3/5] Fetching and parsing SKILL.md content...');

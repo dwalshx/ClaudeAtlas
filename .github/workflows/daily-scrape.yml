@@ -71,11 +71,11 @@ jobs:
             echo "::warning::Site health check returned HTTP $STATUS (may still be deploying)"
           fi
 
-      # Commit updated data back to repo
+      # Commit updated data back to repo (including daily history snapshot)
       - name: Commit skills data
         run: |
           git config user.name "ClaudeAtlas Bot"
           git config user.email "bot@claudeatlas.com"
-          git add data/skills.json data/pipeline-stats.json || true
+          git add data/skills.json data/pipeline-stats.json data/history/ || true
           git diff --cached --quiet || git commit -m "chore: update skills data $(date -u +%Y-%m-%d)"
           git push || true
