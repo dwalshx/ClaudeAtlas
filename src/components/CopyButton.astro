@@ -31,6 +31,11 @@ const { text, label = 'Copy' } = Astro.props;
       copyIcon.classList.add('hidden');
       checkIcon.classList.remove('hidden');
 
+      // PostHog: copy_install_command
+      try {
+        (window as any).posthog?.capture?.('copy_install_command', { text });
+      } catch { /* noop */ }
+
       setTimeout(() => {
         copyIcon.classList.remove('hidden');
         checkIcon.classList.add('hidden');

@@ -1,10 +1,13 @@
 ---
 import { getPipelineStats } from '../lib/skills.js';
+import { buildPosthogSnippet, ANALYTICS_ENABLED } from '../lib/analytics.js';
 
 const pstats = getPipelineStats();
 const defaultDescription = `Discover the best Claude skills — ${pstats.total_discovered.toLocaleString()} analyzed, ${pstats.total_indexed.toLocaleString()} indexed, ${pstats.total_featured} Featured. Auto-updated daily.`;
 const { title = 'ClaudeAtlas', description = defaultDescription } = Astro.props;
 const fullTitle = title === 'ClaudeAtlas' ? title : `${title} | ClaudeAtlas`;
+const posthogSnippet = buildPosthogSnippet();
+const cfBeaconToken = import.meta.env.PUBLIC_CF_ANALYTICS_TOKEN || '';
 ---
 
 <!DOCTYPE html>
@@ -24,6 +27,8 @@ const fullTitle = title === 'ClaudeAtlas' ? title : `${title} | ClaudeAtlas`;
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  {ANALYTICS_ENABLED && <script is:inline set:html={posthogSnippet} />}
+  {cfBeaconToken && <script defer src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon={`{"token": "${cfBeaconToken}"}`}></script>}
 </head>
 <body class="min-h-screen flex flex-col font-[Inter,system-ui,sans-serif]">
   <!-- Nav -->
@@ -50,6 +55,79 @@ const fullTitle = title === 'ClaudeAtlas' ? title : `${title} | ClaudeAtlas`;
   <main class="flex-1">
     <slot />
   </main>
+
+  <!-- Analytics event delegation (no-op if PostHog isn't loaded) -->
+  <script is:inline>
+    (function() {
+      function ph() {
+        return (window.posthog && typeof window.posthog.capture === 'function') ? window.posthog : null;
+      }
+
+      function capture(event, props) {
+        try {
+          const p = ph();
+          if (p) p.capture(event, props || {});
+        } catch (e) { /* noop */ }
+
+        // Also POST search queries to the D1 log endpoint (best-effort)
+        if (event === 'search_query' && props && props.query) {
+          try {
+            fetch('/api/log-search', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ query: String(props.query).slice(0, 200) }),
+              keepalive: true,
+            }).catch(function() {});
+          } catch (e) { /* noop */ }
+        }
+      }
+
+      // Pageview on every load
+      var path = window.location.pathname || '/';
+      if (path.indexOf('/skills/') === 0) {
+        capture('view_skill_detail', { path: path });
+      } else {
+        capture('$pageview', { path: path });
+      }
+
+      // Badge click — the inbound ?ref=badge param means traffic came from an embedded badge
+      if (window.location.search && window.location.search.indexOf('ref=badge') !== -1) {
+        capture('badge_click', { path: path });
+      }
+
+      // Delegated click handlers
+      document.addEventListener('click', function(e) {
+        var target = e.target;
+        if (!(target instanceof Element)) return;
+
+        var githubLink = target.closest('a[href*="github.com"]');
+        if (githubLink) {
+          capture('click_github_link', { href: githubLink.getAttribute('href') });
+        }
+
+        var categoryChip = target.closest('[data-category-chip]');
+        if (categoryChip) {
+          capture('category_click', { category: categoryChip.getAttribute('data-category-chip') });
+        }
+      });
+
+      // Search query (debounced, 500ms)
+      var searchInput = document.getElementById('skill-search');
+      if (searchInput) {
+        var timer = null;
+        searchInput.addEventListener('input', function(e) {
+          clearTimeout(timer);
+          var val = e.target && e.target.value || '';
+          val = String(val).trim();
+          timer = setTimeout(function() {
+            if (val.length > 0) {
+              capture('search_query', { query: val });
+            }
+          }, 500);
+        });
+      }
+    })();
+  </script>
 
   <!-- Footer -->
   <footer class="border-t border-gray-800 py-8 mt-16">
