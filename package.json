@@ -7,6 +7,8 @@
     "scrape": "node scripts/scrape.js",
     "filter": "node scripts/filter.js",
     "pipeline": "node scripts/scrape.js && node scripts/filter.js",
+    "badges": "node scripts/generate-badges.js",
+    "prebuild": "node scripts/generate-badges.js",
     "dev": "astro dev",
     "build": "astro build",
     "preview": "astro preview",

@@ -35,3 +35,6 @@ data/star-history.json.partial
 scripts/backfill-star-history.log
 data/skills.json.birth-partial
 scripts/backfill-skill-birth-dates.log
+
+# Generated badge SVGs (rebuilt each build via scripts/generate-badges.js)
+public/badge/
