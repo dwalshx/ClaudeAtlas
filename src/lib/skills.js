@@ -72,6 +72,127 @@ export function getPipelineStats() {
   };
 }
 
+// --- Creator aggregation helpers (Phase 4) ---
+
+const MS_PER_DAY = 24 * 60 * 60 * 1000;
+
+/**
+ * Build a Map of creator records from `allSkills`. A creator = the `owner`
+ * segment of `repo_full_name`. Each record has aggregate stats, badge flags,
+ * and their sorted skill list.
+ *
+ * Bios use the top-scored skill's `repo_description` as a fallback — real
+ * GitHub user bios require a user API fetch which is deferred to Phase 2.5.
+ */
+export function getCreators() {
+  const map = new Map();
+
+  for (const skill of allSkills) {
+    const username = (skill.repo_full_name || '').split('/')[0];
+    if (!username) continue;
+
+    let rec = map.get(username);
+    if (!rec) {
+      rec = {
+        username,
+        avatar_url: skill.repo_owner_avatar || null,
+        type: skill.repo_owner_type || 'User',
+        bio_fallback: null,
+        skills: [],
+        total_skills: 0,
+        total_stars: 0,
+        avg_quality_score: 0,
+        tier_counts: { featured: 0, solid: 0, listed: 0 },
+        categories: new Set(),
+        first_commit_at: null,
+        rising_since: null, // earliest first_commit_at among Featured skills
+        isProlific: false,
+        isQuality: false,
+        isRising: false,
+      };
+      map.set(username, rec);
+    }
+
+    rec.skills.push(skill);
+    rec.total_stars += skill.repo_stars || 0;
+    rec.tier_counts[skill.quality_tier] = (rec.tier_counts[skill.quality_tier] || 0) + 1;
+    if (skill.category) rec.categories.add(skill.category);
+
+    const commitAt = skill.skill_first_commit_at || skill.repo_created_at || null;
+    if (commitAt) {
+      if (!rec.first_commit_at || new Date(commitAt) < new Date(rec.first_commit_at)) {
+        rec.first_commit_at = commitAt;
+      }
+      if (skill.quality_tier === 'featured') {
+        if (!rec.rising_since || new Date(commitAt) > new Date(rec.rising_since)) {
+          rec.rising_since = commitAt;
+        }
+      }
+    }
+  }
+
+  const now = Date.now();
+
+  for (const rec of map.values()) {
+    rec.skills.sort((a, b) => (b.quality_score || 0) - (a.quality_score || 0));
+    rec.total_skills = rec.skills.length;
+    const sumScores = rec.skills.reduce((a, b) => a + (b.quality_score || 0), 0);
+    rec.avg_quality_score = rec.total_skills > 0 ? Math.round(sumScores / rec.total_skills) : 0;
+
+    // Fallback bio from the top-scored skill's repo_description
+    const top = rec.skills[0];
+    rec.bio_fallback = top?.repo_description || null;
+
+    // Convert categories Set → sorted array for template iteration
+    rec.categories = [...rec.categories].sort();
+
+    // Badges
+    rec.isProlific = rec.total_skills >= 5;
+    rec.isQuality = rec.total_skills >= 2 && rec.tier_counts.featured === rec.total_skills;
+    if (rec.rising_since) {
+      const age = (now - Date.parse(rec.rising_since)) / MS_PER_DAY;
+      rec.isRising = age >= 0 && age <= 30;
+    }
+  }
+
+  return map;
+}
+
+export function getCreatorByUsername(username) {
+  if (!username) return null;
+  const creators = getCreators();
+  return creators.get(username) || null;
+}
+
+/**
+ * Leaderboards for /creators index. Returns an object with four top-10
+ * arrays. Each element is a creator record from getCreators().
+ */
+export function getCreatorLeaderboards(topN = 10) {
+  const creators = [...getCreators().values()];
+
+  const byFeatured = [...creators]
+    .filter(c => c.tier_counts.featured > 0)
+    .sort((a, b) => (b.tier_counts.featured - a.tier_counts.featured) || (b.avg_quality_score - a.avg_quality_score))
+    .slice(0, topN);
+
+  const prolific = [...creators]
+    .sort((a, b) => (b.total_skills - a.total_skills) || (b.avg_quality_score - a.avg_quality_score))
+    .slice(0, topN);
+
+  const quality = [...creators]
+    .filter(c => c.total_skills >= 2)
+    .sort((a, b) => (b.avg_quality_score - a.avg_quality_score) || (b.total_skills - a.total_skills))
+    .slice(0, topN);
+
+  const rising = [...creators]
+    .filter(c => c.rising_since)
+    .sort((a, b) => new Date(b.rising_since).getTime() - new Date(a.rising_since).getTime())
+    .slice(0, topN);
+
+  return { byFeatured, prolific, quality, rising };
+}
+
 export function getRelatedSkills(skill, limit = 4) {
   return allSkills
     .filter(s => s.category === skill.category && s.id !== skill.id)

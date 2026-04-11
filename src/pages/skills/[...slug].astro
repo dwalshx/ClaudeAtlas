@@ -139,7 +139,9 @@ const jsonLd = {
       <dl class="grid grid-cols-2 gap-4 text-sm">
         <div>
           <dt class="text-gray-500">Author</dt>
-          <dd class="text-white font-mono">{skill.repo_full_name.split('/')[0]}</dd>
+          <dd class="text-white font-mono">
+            <a href={`/creators/${skill.repo_full_name.split('/')[0]}/`} class="hover:text-atlas-400 transition-colors">{skill.repo_full_name.split('/')[0]}</a>
+          </dd>
         </div>
         <div>
           <dt class="text-gray-500">Repository</dt>

@@ -1,0 +1,99 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import SkillCard from '../../components/SkillCard.astro';
+import CategoryChip from '../../components/CategoryChip.astro';
+import { getCreators } from '../../lib/skills.js';
+
+export async function getStaticPaths() {
+  const creators = getCreators();
+  return [...creators.values()].map(c => ({
+    params: { username: c.username },
+    props: { creator: c },
+  }));
+}
+
+const { creator } = Astro.props;
+
+const badges = [
+  creator.isProlific && { label: 'Prolific', desc: '5+ indexed skills', bg: 'bg-indigo-500/20', text: 'text-indigo-300', border: 'border-indigo-500/40' },
+  creator.isQuality && { label: 'Quality', desc: 'Every skill is Featured', bg: 'bg-amber-500/20', text: 'text-amber-300', border: 'border-amber-500/40' },
+  creator.isRising && { label: 'Rising', desc: 'New Featured skill in last 30 days', bg: 'bg-emerald-500/20', text: 'text-emerald-300', border: 'border-emerald-500/40' },
+].filter(Boolean);
+
+const description = creator.bio_fallback
+  ? `${creator.username} on ClaudeAtlas — ${creator.total_skills} indexed skills. ${creator.bio_fallback}`
+  : `${creator.username} on ClaudeAtlas — ${creator.total_skills} indexed skills.`;
+---
+
+<BaseLayout title={`${creator.username} · Creators`} description={description}>
+  <section class="max-w-4xl mx-auto px-4 py-12">
+    <a href="/creators/" class="text-sm text-gray-500 hover:text-atlas-400 transition-colors mb-6 inline-flex items-center gap-1">
+      ← All creators
+    </a>
+
+    <header class="flex flex-col sm:flex-row items-start gap-6 mb-10 mt-4">
+      {creator.avatar_url && (
+        <img src={creator.avatar_url} alt="" loading="lazy" class="w-24 h-24 rounded-xl bg-gray-800 border border-gray-700" />
+      )}
+      <div class="flex-1 min-w-0">
+        <div class="flex items-baseline gap-3 flex-wrap">
+          <h1 class="text-3xl font-bold text-white">{creator.username}</h1>
+          <span class="text-xs text-gray-600 uppercase tracking-wide">{creator.type}</span>
+        </div>
+        {creator.bio_fallback && (
+          <p class="text-gray-400 mt-2 max-w-2xl">{creator.bio_fallback}</p>
+        )}
+        <div class="flex gap-4 mt-4 text-sm text-gray-500 font-mono flex-wrap">
+          <span>{creator.total_skills} indexed</span>
+          <span>·</span>
+          <span>{creator.tier_counts.featured} Featured</span>
+          <span>·</span>
+          <span>{creator.total_stars.toLocaleString()} stars</span>
+          <span>·</span>
+          <span>avg score {creator.avg_quality_score}</span>
+        </div>
+        {badges.length > 0 && (
+          <div class="flex gap-2 mt-4 flex-wrap">
+            {badges.map((b: any) => (
+              <span class={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium border ${b.bg} ${b.text} ${b.border}`} title={b.desc}>
+                {b.label}
+              </span>
+            ))}
+          </div>
+        )}
+        <div class="mt-4">
+          <a href={`https://github.com/${creator.username}`} target="_blank" rel="noopener" class="text-sm text-atlas-400 hover:underline">
+            View on GitHub →
+          </a>
+        </div>
+      </div>
+    </header>
+
+    {creator.categories.length > 0 && (
+      <section class="mb-8">
+        <h2 class="text-sm font-semibold text-gray-400 uppercase tracking-wide mb-3">Categories</h2>
+        <div class="flex flex-wrap gap-2">
+          {creator.categories.map((cat: string) => (
+            <CategoryChip category={cat} count={creator.skills.filter((s: any) => s.category === cat).length} />
+          ))}
+        </div>
+      </section>
+    )}
+
+    <section>
+      <h2 class="text-xl font-semibold text-white mb-6 flex items-center gap-2">
+        <span class="w-2 h-2 rounded-full bg-atlas-500"></span>
+        Indexed Skills ({creator.total_skills})
+      </h2>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {creator.skills.map((skill: any) => (
+          <SkillCard skill={skill} />
+        ))}
+      </div>
+    </section>
+
+    <p class="text-xs text-gray-600 mt-10 text-center">
+      Bio shown is the top-scored skill's repo description as a fallback — real GitHub bios land in a future update.
+    </p>
+  </section>
+</BaseLayout>
