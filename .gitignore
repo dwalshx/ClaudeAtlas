@@ -38,3 +38,5 @@ scripts/backfill-skill-birth-dates.log
 
 # Generated badge SVGs (rebuilt each build via scripts/generate-badges.js)
 public/badge/
+# Generated registry (rebuilt each build via scripts/generate-registry.js)
+public/skills-registry.json

@@ -45,6 +45,33 @@ npm run build
 
 Quality scoring is fully transparent. See [claudeatlas.com/methodology](https://claudeatlas.com/methodology/) for the complete formula.
 
+## For agents and tools
+
+ClaudeAtlas publishes a machine-readable catalog of every indexed skill so agents, CLIs, and integrations can discover them programmatically:
+
+**`https://claudeatlas.com/skills-registry.json`**
+
+```bash
+curl -s https://claudeatlas.com/skills-registry.json | jq '.count, .skills[0]'
+```
+
+Each entry contains: `name`, `slug`, `description`, `category`, `quality_tier`, `quality_score`, `install_command`, `repo_url`, `repo_stars`, `detail_url`, and `badge_url`. The file is regenerated on every daily build and served from Cloudflare's edge.
+
+Every indexed skill also has an embeddable tier badge and a star-history chart at:
+
+```
+https://claudeatlas.com/badge/[author]/[skill].svg
+https://claudeatlas.com/badge/[author]/[skill]-history.svg
+```
+
+Markdown embed:
+
+```markdown
+[![ClaudeAtlas](https://claudeatlas.com/badge/anthropics/claude-api.svg)](https://claudeatlas.com/skills/anthropics/claude-api/?ref=badge)
+```
+
+A natural-language query API (`/api/v1/search`) is planned for a future release — watch `docs/FUTURE-WORK.md` for status.
+
 ## License
 
 Code: MIT. Data: CC-BY-4.0.
