@@ -16,7 +16,7 @@ Phase 1 MVP shipped 2026-04-10 with 33,078 skills scraped, 1,078 curated, and 30
 - Integer phases (1, 2, 3): Planned milestone work
 - Decimal phases (2.1, 2.2): Urgent insertions (marked with INSERTED)
 
-- [ ] **Phase 1: Content & UX Fixes** - Fix the hero stat and rebuild search UX so every indexed skill is reachable above the fold
+- [x] **Phase 1: Content & UX Fixes** - Fix the hero stat and rebuild search UX so every indexed skill is reachable above the fold
 - [ ] **Phase 2: Data Moats** - Backfill skill birth dates and star history, then chart growth and active-maintenance signals
 - [ ] **Phase 3: Distribution** - Publish embeddable tier-badge and star-history SVGs so creators can link back from their READMEs
 - [ ] **Phase 4: Creator Pages** - Give every creator a profile, a leaderboard home, and computed badges
@@ -104,7 +104,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6. Phase 6 can op
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Content & UX Fixes | 0/TBD | Not started | - |
+| 1. Content & UX Fixes | 2/2 | Complete | 2026-04-10 |
 | 2. Data Moats | 0/TBD | Not started | - |
 | 3. Distribution | 0/TBD | Not started | - |
 | 4. Creator Pages | 0/TBD | Not started | - |
