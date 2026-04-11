@@ -33,3 +33,5 @@ data/etag-cache.json
 data/scrape-log.txt
 data/star-history.json.partial
 scripts/backfill-star-history.log
+data/skills.json.birth-partial
+scripts/backfill-skill-birth-dates.log

@@ -3,6 +3,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 import SkillCard from '../components/SkillCard.astro';
 import CategoryChip from '../components/CategoryChip.astro';
 import { allSkills, getFeaturedSkills, getAllCategories, getStats, getPipelineStats } from '../lib/skills.js';
+import { buildNewSkillsWeekChart, buildMaintenanceChart } from '../lib/charts.js';
 
 const stats = getStats();
 const pstats = getPipelineStats();
@@ -15,6 +16,10 @@ const HOMEPAGE_LIMIT = 60;
 const allSorted = [...allSkills].sort((a, b) => b.quality_score - a.quality_score);
 const topSkills = allSorted.slice(0, HOMEPAGE_LIMIT);
 const extraSkills = allSorted.slice(HOMEPAGE_LIMIT);
+
+// Build-time SVG charts (pure, cached across builds, no client JS)
+const newSkillsChartSvg = buildNewSkillsWeekChart(allSkills);
+const maintenanceChartSvg = buildMaintenanceChart(allSkills);
 ---
 
 <BaseLayout>
@@ -84,6 +89,36 @@ const extraSkills = allSorted.slice(HOMEPAGE_LIMIT);
     </section>
   )}
 
+  <!-- Ecosystem Pulse (charts) -->
+  <section id="ecosystem-section" class="px-4 pb-12">
+    <div class="max-w-3xl mx-auto">
+      <h2 class="text-xl font-semibold text-white mb-6 flex items-center gap-2">
+        <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+        Ecosystem Pulse
+      </h2>
+
+      <!-- New skills per week -->
+      <div class="bg-gray-900 border border-gray-800 rounded-xl p-6 mb-6">
+        <div class="flex items-baseline justify-between mb-3">
+          <h3 class="text-sm font-semibold text-gray-300 uppercase tracking-wide">New skills per week</h3>
+          <span class="text-xs text-gray-500 font-mono">Last 52 weeks</span>
+        </div>
+        <div set:html={newSkillsChartSvg} />
+        <p class="text-xs text-gray-500 mt-3">Based on the first commit that touched each skill file. Falls back to the repo's creation date where commit history is unavailable.</p>
+      </div>
+
+      <!-- Active maintenance -->
+      <div class="bg-gray-900 border border-gray-800 rounded-xl p-6">
+        <div class="flex items-baseline justify-between mb-3">
+          <h3 class="text-sm font-semibold text-gray-300 uppercase tracking-wide">Active maintenance</h3>
+          <span class="text-xs text-gray-500 font-mono">By last push</span>
+        </div>
+        <div set:html={maintenanceChartSvg} />
+        <p class="text-xs text-gray-500 mt-3">How many indexed skill repos have been pushed to recently. "Stale" means no pushes in 6+ months — still indexed, but not currently maintained.</p>
+      </div>
+    </div>
+  </section>
+
   <!-- Top Skills / Full Catalog -->
   <section class="px-4 pb-16">
     <div class="max-w-6xl mx-auto">
@@ -125,6 +160,7 @@ const extraSkills = allSorted.slice(HOMEPAGE_LIMIT);
   const searchInput = document.getElementById('skill-search') as HTMLInputElement | null;
   const searchClear = document.getElementById('search-clear') as HTMLButtonElement | null;
   const featuredSection = document.getElementById('featured-section');
+  const ecosystemSection = document.getElementById('ecosystem-section');
   const browseMore = document.getElementById('browse-more');
   const skillsHeadingText = document.getElementById('skills-heading-text');
   const skillsCount = document.getElementById('skills-count');
@@ -146,6 +182,11 @@ const extraSkills = allSorted.slice(HOMEPAGE_LIMIT);
     // Toggle Featured section (hide when searching)
     if (featuredSection) {
       (featuredSection as HTMLElement).style.display = isSearching ? 'none' : '';
+    }
+
+    // Toggle Ecosystem Pulse section (hide when searching)
+    if (ecosystemSection) {
+      (ecosystemSection as HTMLElement).style.display = isSearching ? 'none' : '';
     }
 
     // Toggle browse-more footer (hide when searching)
