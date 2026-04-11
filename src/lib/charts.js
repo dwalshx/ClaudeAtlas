@@ -94,13 +94,15 @@ export function buildNewSkillsWeekChart(skills, opts = {}) {
     svg += `<text x="${padding.left - 6}" y="${y + 3}" text-anchor="end" font-size="10" font-family="ui-monospace, monospace" fill="${COLORS.text}">${tick}</text>`;
   }
 
-  // Bars
+  // Bars — each rect carries data attrs so client JS can drive a positioned tooltip
   for (let i = 0; i < WEEKS; i++) {
     const b = buckets[i];
     const h = (b.count / maxCount) * plotH;
     const x = padding.left + i * barWidth;
     const y = padding.top + plotH - h;
-    svg += `<rect x="${x + 0.5}" y="${y}" width="${Math.max(0.5, barWidth - 1)}" height="${h}" fill="${COLORS.bar}"><title>${b.count} new in week of ${new Date(b.start).toISOString().slice(0, 10)}</title></rect>`;
+    const weekStart = new Date(b.start).toISOString().slice(0, 10);
+    const weekEnd = new Date(b.start + 6 * MS_PER_DAY).toISOString().slice(0, 10);
+    svg += `<rect class="chart-bar" data-tooltip="${b.count} new skill${b.count === 1 ? '' : 's'} · week of ${weekStart} → ${weekEnd}" x="${x + 0.5}" y="${y}" width="${Math.max(0.5, barWidth - 1)}" height="${h}" fill="${COLORS.bar}"><title>${b.count} new in week of ${weekStart}</title></rect>`;
   }
 
   // X-axis labels: earliest and latest week only
@@ -170,11 +172,11 @@ export function buildMaintenanceChart(skills, opts = {}) {
   for (const b of buckets) {
     const segWidth = (b.count / total) * barWidth;
     if (segWidth > 0) {
-      svg += `<rect x="${xCursor}" y="${barY}" width="${segWidth}" height="${barHeight}" fill="${b.color}"><title>${escapeXml(b.label)}: ${b.count} (${Math.round((b.count / total) * 100)}%)</title></rect>`;
-      // Inline percentage label if segment is wide enough
       const pct = Math.round((b.count / total) * 100);
+      svg += `<rect class="chart-bar" data-tooltip="${escapeXml(b.label)} · ${b.count} skills · ${pct}%" x="${xCursor}" y="${barY}" width="${segWidth}" height="${barHeight}" fill="${b.color}"><title>${escapeXml(b.label)}: ${b.count} (${pct}%)</title></rect>`;
+      // Inline percentage label if segment is wide enough
       if (segWidth > 40) {
-        svg += `<text x="${xCursor + segWidth / 2}" y="${barY + barHeight / 2 + 4}" text-anchor="middle" font-size="11" font-weight="600" font-family="ui-monospace, monospace" fill="#0a0a0a">${pct}%</text>`;
+        svg += `<text x="${xCursor + segWidth / 2}" y="${barY + barHeight / 2 + 4}" text-anchor="middle" font-size="11" font-weight="600" font-family="ui-monospace, monospace" fill="#0a0a0a" pointer-events="none">${pct}%</text>`;
       }
     }
     xCursor += segWidth;

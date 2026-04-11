@@ -101,7 +101,12 @@ export function getCreators() {
         skills: [],
         total_skills: 0,
         total_stars: 0,
+        // Track which repos we've already counted stars for, so creators
+        // with multiple skills in the same repo don't get double-counted
+        // (GitHub stars are repo-level, not skill-level).
+        _counted_repos: new Set(),
         avg_quality_score: 0,
+        avg_quality_score_precise: 0,
         tier_counts: { featured: 0, solid: 0, listed: 0 },
         categories: new Set(),
         first_commit_at: null,
@@ -114,7 +119,11 @@ export function getCreators() {
     }
 
     rec.skills.push(skill);
-    rec.total_stars += skill.repo_stars || 0;
+    // Dedupe stars at the repo level — one repo's star count is one contribution
+    if (skill.repo_full_name && !rec._counted_repos.has(skill.repo_full_name)) {
+      rec._counted_repos.add(skill.repo_full_name);
+      rec.total_stars += skill.repo_stars || 0;
+    }
     rec.tier_counts[skill.quality_tier] = (rec.tier_counts[skill.quality_tier] || 0) + 1;
     if (skill.category) rec.categories.add(skill.category);
 
@@ -137,7 +146,13 @@ export function getCreators() {
     rec.skills.sort((a, b) => (b.quality_score || 0) - (a.quality_score || 0));
     rec.total_skills = rec.skills.length;
     const sumScores = rec.skills.reduce((a, b) => a + (b.quality_score || 0), 0);
-    rec.avg_quality_score = rec.total_skills > 0 ? Math.round(sumScores / rec.total_skills) : 0;
+    // Keep precise value for sorting (tie-breaker between otherwise-equal averages)
+    // and a display-rounded integer for the UI.
+    rec.avg_quality_score_precise = rec.total_skills > 0 ? sumScores / rec.total_skills : 0;
+    rec.avg_quality_score = Math.round(rec.avg_quality_score_precise);
+
+    // Strip the temporary _counted_repos helper before exposing the record
+    delete rec._counted_repos;
 
     // Fallback bio from the top-scored skill's repo_description
     const top = rec.skills[0];
@@ -182,7 +197,14 @@ export function getCreatorLeaderboards(topN = 10) {
 
   const quality = [...creators]
     .filter(c => c.total_skills >= 2)
-    .sort((a, b) => (b.avg_quality_score - a.avg_quality_score) || (b.total_skills - a.total_skills))
+    .sort((a, b) =>
+      // Precise avg first (breaks ties that round() would hide)
+      (b.avg_quality_score_precise - a.avg_quality_score_precise)
+      // Then skill count — more skills at the same level = stronger signal
+      || (b.total_skills - a.total_skills)
+      // Then total stars as a final tiebreaker
+      || (b.total_stars - a.total_stars)
+    )
     .slice(0, topN);
 
   const rising = [...creators]

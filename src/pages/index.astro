@@ -20,6 +20,11 @@ const extraSkills = allSorted.slice(HOMEPAGE_LIMIT);
 // Build-time SVG charts (pure, cached across builds, no client JS)
 const newSkillsChartSvg = buildNewSkillsWeekChart(allSkills);
 const maintenanceChartSvg = buildMaintenanceChart(allSkills);
+
+// Human-readable "last updated" label for the hero. Prefers pipeline-stats
+// timestamp (when the scraper last ran) and falls back to build time.
+const updatedDate = pstats.updated_at ? new Date(pstats.updated_at) : new Date();
+const updatedLabel = `Updated ${updatedDate.toISOString().slice(0, 10)}`;
 ---
 
 <BaseLayout>
@@ -60,7 +65,7 @@ const maintenanceChartSvg = buildMaintenanceChart(allSkills);
         The curated index for production-quality Claude ecosystem skills.
       </p>
       <p class="text-sm text-gray-500 mb-8 font-mono">
-        {pstats.total_discovered.toLocaleString()} analyzed &middot; {pstats.total_indexed.toLocaleString()} indexed &middot; {pstats.total_featured} Featured &middot; Updated daily
+        {pstats.total_discovered.toLocaleString()}+ analyzed &middot; {pstats.total_indexed.toLocaleString()} indexed &middot; {pstats.total_featured} Featured &middot; {updatedLabel}
       </p>
 
       <!-- Category chips -->
@@ -90,7 +95,9 @@ const maintenanceChartSvg = buildMaintenanceChart(allSkills);
   )}
 
   <!-- Ecosystem Pulse (charts) -->
-  <section id="ecosystem-section" class="px-4 pb-12">
+  <section id="ecosystem-section" class="px-4 pb-12 relative">
+    <!-- Shared hover tooltip for both Pulse charts. Positioned by JS below. -->
+    <div id="chart-tooltip" class="pointer-events-none fixed hidden z-[60] rounded-lg bg-gray-950 border border-gray-700 shadow-xl px-3 py-2 text-xs font-mono text-gray-100 whitespace-nowrap"></div>
     <div class="max-w-3xl mx-auto">
       <h2 class="text-xl font-semibold text-white mb-6 flex items-center gap-2">
         <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
@@ -247,4 +254,41 @@ const maintenanceChartSvg = buildMaintenanceChart(allSkills);
 
   // Initialize state on page load
   applyFilter('');
+
+  // --- Ecosystem Pulse chart tooltips ---
+  const tooltipEl = document.getElementById('chart-tooltip');
+  if (tooltipEl) {
+    const ecosystemSectionEl = document.getElementById('ecosystem-section');
+    if (ecosystemSectionEl) {
+      ecosystemSectionEl.addEventListener('mousemove', (e) => {
+        const target = (e.target as Element).closest('.chart-bar') as SVGElement | null;
+        if (!target) {
+          tooltipEl.classList.add('hidden');
+          return;
+        }
+        const text = target.getAttribute('data-tooltip');
+        if (!text) {
+          tooltipEl.classList.add('hidden');
+          return;
+        }
+        tooltipEl.textContent = text;
+        tooltipEl.classList.remove('hidden');
+        // Position relative to the viewport, offset from cursor
+        const pad = 14;
+        const ttW = tooltipEl.offsetWidth;
+        const ttH = tooltipEl.offsetHeight;
+        const me = e as MouseEvent;
+        let left = me.clientX + pad;
+        let top = me.clientY + pad;
+        if (left + ttW + pad > window.innerWidth) left = me.clientX - ttW - pad;
+        if (top + ttH + pad > window.innerHeight) top = me.clientY - ttH - pad;
+        tooltipEl.style.left = `${left}px`;
+        tooltipEl.style.top = `${top}px`;
+      });
+
+      ecosystemSectionEl.addEventListener('mouseleave', () => {
+        tooltipEl.classList.add('hidden');
+      });
+    }
+  }
 </script>

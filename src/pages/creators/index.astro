@@ -6,10 +6,17 @@ const creators = getCreators();
 const leaderboards = getCreatorLeaderboards(10);
 const totalCreators = creators.size;
 
+function formatQualityMetric(c: any) {
+  // Show one decimal when the precise and rounded differ enough to matter
+  const precise = c.avg_quality_score_precise ?? c.avg_quality_score;
+  const display = Number.isInteger(precise) ? `${precise}` : precise.toFixed(1);
+  return `${display} · ${c.total_skills} skills`;
+}
+
 const boards = [
   { key: 'byFeatured', title: 'Most Featured', desc: 'Creators with the most Featured-tier skills', data: leaderboards.byFeatured, metric: (c: any) => `${c.tier_counts.featured} Featured` },
   { key: 'prolific', title: 'Prolific', desc: 'Creators with the most indexed skills', data: leaderboards.prolific, metric: (c: any) => `${c.total_skills} skills` },
-  { key: 'quality', title: 'Quality', desc: 'Highest average quality score (2+ skills)', data: leaderboards.quality, metric: (c: any) => `score ${c.avg_quality_score}` },
+  { key: 'quality', title: 'Quality', desc: 'Highest average quality score (2+ skills)', data: leaderboards.quality, metric: formatQualityMetric },
   { key: 'rising', title: 'Rising', desc: 'Newest Featured skills first', data: leaderboards.rising, metric: (c: any) => c.rising_since ? new Date(c.rising_since).toISOString().slice(0, 10) : '—' },
 ];
 ---
