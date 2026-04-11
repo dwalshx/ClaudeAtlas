@@ -20,8 +20,9 @@ Phase 1 MVP shipped 2026-04-10 with 33,078 skills scraped, 1,078 curated, and 30
 - [x] **Phase 2: Data Moats** - Backfill skill birth dates and star history, then chart growth and active-maintenance signals
 - [x] **Phase 3: Distribution** - Publish embeddable tier-badge and star-history SVGs so creators can link back from their READMEs
 - [x] **Phase 4: Creator Pages** - Give every creator a profile, a leaderboard home, and computed badges
-- [~] **Phase 5: Analytics** - Wire Cloudflare Web Analytics, PostHog custom events, and a D1-backed search query log (code shipped; 3 external steps need morning hands)
+- [x] **Phase 5: Analytics** - Wire Cloudflare Web Analytics, PostHog custom events, and a D1-backed search query log
 - [x] **Phase 6: Infrastructure Groundwork** - Publish a machine-readable `/skills-registry.json` and document it for agents
+- [ ] **Phase 1.5.1: Creators Browse Page** (INSERTED) - Full sortable/filterable table of every creator at `/creators/all/`
 
 ## Phase Details
 
