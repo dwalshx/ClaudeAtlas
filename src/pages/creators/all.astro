@@ -1,0 +1,400 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { getCreatorsForBrowse, getAllCategories, getCategorySlug } from '../../lib/skills.js';
+
+const creators = getCreatorsForBrowse();
+const categories = getAllCategories();
+const totalCreators = creators.length;
+
+// Attach slug to each category for URL params
+const categoriesWithSlugs = categories.map(c => ({
+  ...c,
+  slug: getCategorySlug(c.name),
+}));
+
+const description = `Browse all ${totalCreators.toLocaleString()} Claude skill creators indexed on ClaudeAtlas. Sort by quality, stars, skill count, or creation date. Filter by category and creator type.`;
+---
+
+<BaseLayout title="All creators" description={description}>
+  <section class="max-w-6xl mx-auto px-4 py-12">
+    <!-- Header -->
+    <header class="mb-8">
+      <div class="flex items-start justify-between gap-4 mb-2">
+        <h1 class="text-3xl font-bold text-white">All creators</h1>
+        <a href="/creators/" class="text-sm text-gray-500 hover:text-atlas-400 transition-colors mt-2 inline-flex items-center gap-1">
+          ← Leaderboards
+        </a>
+      </div>
+      <p class="text-gray-400 max-w-2xl">
+        Every creator with at least one indexed skill. Click any column to sort. Filter by category or type to narrow down. All {totalCreators.toLocaleString()} rows render at once — no pagination.
+      </p>
+    </header>
+
+    <!-- Filter bar -->
+    <div class="bg-gray-900 border border-gray-800 rounded-xl p-5 mb-6 space-y-4">
+      <!-- Search + type toggle row -->
+      <div class="flex flex-col sm:flex-row gap-3">
+        <div class="relative flex-1">
+          <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+            <circle cx="11" cy="11" r="8"/>
+            <path d="m21 21-4.35-4.35"/>
+          </svg>
+          <input
+            type="text"
+            id="creator-search"
+            placeholder="Search by username..."
+            autocomplete="off"
+            class="w-full pl-9 pr-3 py-2 bg-gray-950 border border-gray-700 rounded-lg text-sm text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-atlas-500 focus:border-transparent"
+          />
+        </div>
+        <div class="inline-flex rounded-lg border border-gray-700 bg-gray-950 text-sm overflow-hidden" role="group" aria-label="Filter by creator type">
+          <button type="button" data-type-filter="all" class="type-btn px-3 py-2 text-gray-300 hover:bg-gray-800 transition-colors" aria-pressed="true">All</button>
+          <button type="button" data-type-filter="user" class="type-btn px-3 py-2 text-gray-300 hover:bg-gray-800 transition-colors border-l border-gray-700" aria-pressed="false">Users</button>
+          <button type="button" data-type-filter="org" class="type-btn px-3 py-2 text-gray-300 hover:bg-gray-800 transition-colors border-l border-gray-700" aria-pressed="false">Orgs</button>
+        </div>
+      </div>
+
+      <!-- Category chips -->
+      <div>
+        <p class="text-xs text-gray-500 uppercase tracking-wide mb-2">Filter by category</p>
+        <div class="flex flex-wrap gap-2">
+          {categoriesWithSlugs.map(cat => (
+            <button
+              type="button"
+              data-cat-filter={cat.slug}
+              class="cat-btn inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium bg-gray-800 text-gray-300 hover:bg-gray-700 border border-gray-700 transition-colors"
+              aria-pressed="false"
+            >
+              {cat.name}
+              <span class="text-gray-500">({cat.count})</span>
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <!-- Result count + clear -->
+      <div class="flex items-center justify-between text-sm">
+        <span id="creator-count" class="text-gray-400">
+          Showing <span class="text-white font-semibold">{totalCreators}</span> of <span class="text-white font-semibold">{totalCreators}</span> creators
+        </span>
+        <button id="clear-filters" type="button" class="hidden text-atlas-400 hover:text-atlas-300 text-xs underline">
+          Clear filters
+        </button>
+      </div>
+    </div>
+
+    <!-- Sortable table -->
+    <div class="overflow-x-auto bg-gray-900 border border-gray-800 rounded-xl">
+      <table id="creators-table" class="w-full text-sm">
+        <thead class="border-b border-gray-800 bg-gray-900">
+          <tr class="text-left text-gray-400">
+            <th class="py-3 px-2 w-12"><span class="sr-only">Avatar</span></th>
+            <th class="py-3 px-2" aria-sort="none"><button type="button" data-sort-key="username" class="sort-btn inline-flex items-center gap-1 hover:text-white transition-colors">Creator <span class="sort-arrow text-gray-600">↕</span></button></th>
+            <th class="py-3 px-2 hidden sm:table-cell" aria-sort="none"><button type="button" data-sort-key="type" class="sort-btn inline-flex items-center gap-1 hover:text-white transition-colors">Type <span class="sort-arrow text-gray-600">↕</span></button></th>
+            <th class="py-3 px-2 text-right" aria-sort="none"><button type="button" data-sort-key="total_skills" class="sort-btn inline-flex items-center gap-1 hover:text-white transition-colors">Skills <span class="sort-arrow text-gray-600">↕</span></button></th>
+            <th class="py-3 px-2 text-right" aria-sort="none"><button type="button" data-sort-key="featured_count" class="sort-btn inline-flex items-center gap-1 hover:text-white transition-colors">Featured <span class="sort-arrow text-gray-600">↕</span></button></th>
+            <th class="py-3 px-2 text-right hidden md:table-cell" aria-sort="none"><button type="button" data-sort-key="total_stars" class="sort-btn inline-flex items-center gap-1 hover:text-white transition-colors">Stars <span class="sort-arrow text-gray-600">↕</span></button></th>
+            <th class="py-3 px-2 text-right" aria-sort="descending"><button type="button" data-sort-key="total_quality_score" class="sort-btn inline-flex items-center gap-1 hover:text-white transition-colors">Quality <span class="sort-arrow text-atlas-400">↓</span></button></th>
+            <th class="py-3 px-2 text-right hidden lg:table-cell" aria-sort="none"><button type="button" data-sort-key="first_commit_at" class="sort-btn inline-flex items-center gap-1 hover:text-white transition-colors">First commit <span class="sort-arrow text-gray-600">↕</span></button></th>
+          </tr>
+        </thead>
+        <tbody id="creators-tbody" class="text-gray-300">
+          {creators.map(c => (
+            <tr
+              class="creator-row border-t border-gray-800 hover:bg-gray-800/50 cursor-pointer transition-colors"
+              data-username={c.username.toLowerCase()}
+              data-username-orig={c.username}
+              data-type={(c.type || 'User').toLowerCase() === 'organization' ? 'org' : 'user'}
+              data-total-skills={c.total_skills}
+              data-featured-count={c.featured_count}
+              data-total-stars={c.total_stars}
+              data-total-quality-score={c.total_quality_score}
+              data-first-commit-at={c.first_commit_at || ''}
+              data-categories={(c.categories || []).map((n: string) => getCategorySlug(n)).join(',')}
+              data-href={`/creators/${c.username}/`}
+            >
+              <td class="py-2 px-2">
+                {c.avatar_url && (
+                  <img src={c.avatar_url} alt="" loading="lazy" class="w-7 h-7 rounded-full bg-gray-800" />
+                )}
+              </td>
+              <td class="py-2 px-2 font-medium text-white truncate max-w-[200px]">
+                <a href={`/creators/${c.username}/`} class="hover:text-atlas-400 transition-colors">{c.username}</a>
+              </td>
+              <td class="py-2 px-2 hidden sm:table-cell">
+                <span class="text-xs uppercase tracking-wide text-gray-500">{c.type === 'Organization' ? 'Org' : 'User'}</span>
+              </td>
+              <td class="py-2 px-2 text-right font-mono">{c.total_skills}</td>
+              <td class="py-2 px-2 text-right font-mono">
+                {c.featured_count > 0 ? (
+                  <span class="text-amber-400">{c.featured_count}</span>
+                ) : (
+                  <span class="text-gray-600">—</span>
+                )}
+              </td>
+              <td class="py-2 px-2 text-right font-mono hidden md:table-cell">{c.total_stars.toLocaleString()}</td>
+              <td class="py-2 px-2 text-right font-mono text-white">{c.total_quality_score}</td>
+              <td class="py-2 px-2 text-right font-mono text-gray-500 hidden lg:table-cell">
+                {c.first_commit_at ? new Date(c.first_commit_at).toISOString().slice(0, 10) : '—'}
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      <div id="creators-empty" class="hidden text-center py-16 text-gray-500">
+        <p class="mb-3">No creators match your filters.</p>
+        <button type="button" id="clear-filters-empty" class="text-atlas-400 hover:text-atlas-300 text-sm underline">Clear filters</button>
+      </div>
+    </div>
+
+    <p class="text-xs text-gray-600 mt-6 text-center">
+      Click any row to open the creator's profile. URL updates as you filter so you can share the view.
+    </p>
+  </section>
+</BaseLayout>
+
+<script>
+  // --- Data ---
+  const rows = Array.from(document.querySelectorAll<HTMLTableRowElement>('.creator-row'));
+  const tbody = document.getElementById('creators-tbody') as HTMLElement | null;
+  const emptyEl = document.getElementById('creators-empty');
+  const countEl = document.getElementById('creator-count');
+  const clearBtn = document.getElementById('clear-filters') as HTMLButtonElement | null;
+  const clearBtnEmpty = document.getElementById('clear-filters-empty') as HTMLButtonElement | null;
+  const searchInput = document.getElementById('creator-search') as HTMLInputElement | null;
+  const typeButtons = Array.from(document.querySelectorAll<HTMLButtonElement>('.type-btn'));
+  const catButtons = Array.from(document.querySelectorAll<HTMLButtonElement>('.cat-btn'));
+  const sortButtons = Array.from(document.querySelectorAll<HTMLButtonElement>('.sort-btn'));
+  const headers = Array.from(document.querySelectorAll<HTMLTableCellElement>('thead th'));
+
+  const TOTAL = rows.length;
+
+  // Comparators per sort key
+  const COMPARATORS: Record<string, (a: HTMLTableRowElement, b: HTMLTableRowElement) => number> = {
+    username: (a, b) => (a.dataset.username || '').localeCompare(b.dataset.username || ''),
+    type: (a, b) => (a.dataset.type || '').localeCompare(b.dataset.type || ''),
+    total_skills: (a, b) => (+(a.dataset.totalSkills || 0)) - (+(b.dataset.totalSkills || 0)),
+    featured_count: (a, b) => (+(a.dataset.featuredCount || 0)) - (+(b.dataset.featuredCount || 0)),
+    total_stars: (a, b) => (+(a.dataset.totalStars || 0)) - (+(b.dataset.totalStars || 0)),
+    total_quality_score: (a, b) => (+(a.dataset.totalQualityScore || 0)) - (+(b.dataset.totalQualityScore || 0)),
+    first_commit_at: (a, b) => {
+      const da = Date.parse(a.dataset.firstCommitAt || '') || 0;
+      const db = Date.parse(b.dataset.firstCommitAt || '') || 0;
+      return da - db;
+    },
+  };
+
+  // --- State ---
+  const state = {
+    q: '',
+    sort: 'total_quality_score',
+    dir: 'desc' as 'asc' | 'desc',
+    cats: new Set<string>(),
+    type: 'all' as 'all' | 'user' | 'org',
+  };
+
+  // --- URL sync ---
+  function readStateFromUrl() {
+    const params = new URLSearchParams(window.location.search);
+    state.q = params.get('q') || '';
+    const sort = params.get('sort');
+    if (sort && COMPARATORS[sort]) state.sort = sort;
+    const dir = params.get('dir');
+    if (dir === 'asc' || dir === 'desc') state.dir = dir;
+    const cat = params.get('cat');
+    if (cat) state.cats = new Set(cat.split(',').filter(Boolean));
+    const type = params.get('type');
+    if (type === 'user' || type === 'org') state.type = type;
+  }
+
+  function writeStateToUrl() {
+    const params = new URLSearchParams();
+    if (state.q) params.set('q', state.q);
+    if (state.sort !== 'total_quality_score') params.set('sort', state.sort);
+    if (state.dir !== 'desc') params.set('dir', state.dir);
+    if (state.cats.size > 0) params.set('cat', [...state.cats].join(','));
+    if (state.type !== 'all') params.set('type', state.type);
+    const qs = params.toString();
+    const newUrl = window.location.pathname + (qs ? '?' + qs : '');
+    window.history.replaceState({}, '', newUrl);
+  }
+
+  // --- Apply state to DOM ---
+  function applyFilters() {
+    const q = state.q.toLowerCase();
+    let visible = 0;
+    for (const row of rows) {
+      const username = row.dataset.username || '';
+      const rowType = row.dataset.type || 'user';
+      const rowCats = (row.dataset.categories || '').split(',');
+
+      let show = true;
+      if (q && !username.includes(q)) show = false;
+      if (show && state.type !== 'all' && rowType !== state.type) show = false;
+      if (show && state.cats.size > 0) {
+        let matchesAny = false;
+        for (const cat of state.cats) {
+          if (rowCats.includes(cat)) { matchesAny = true; break; }
+        }
+        if (!matchesAny) show = false;
+      }
+
+      row.style.display = show ? '' : 'none';
+      if (show) visible++;
+    }
+
+    // Update count label
+    if (countEl) {
+      countEl.innerHTML = `Showing <span class="text-white font-semibold">${visible}</span> of <span class="text-white font-semibold">${TOTAL}</span> creators`;
+    }
+
+    // Empty state
+    if (emptyEl) emptyEl.classList.toggle('hidden', visible > 0);
+
+    // Clear button visibility
+    const hasActiveFilters = Boolean(state.q) || state.type !== 'all' || state.cats.size > 0 || state.sort !== 'total_quality_score' || state.dir !== 'desc';
+    if (clearBtn) clearBtn.classList.toggle('hidden', !hasActiveFilters);
+  }
+
+  function applySort() {
+    const cmp = COMPARATORS[state.sort];
+    if (!cmp || !tbody) return;
+    const sorted = [...rows].sort((a, b) => {
+      const r = cmp(a, b);
+      return state.dir === 'desc' ? -r : r;
+    });
+    // Reattach in new order
+    for (const row of sorted) tbody.appendChild(row);
+
+    // Update header indicators
+    for (const th of headers) {
+      const btn = th.querySelector<HTMLButtonElement>('.sort-btn');
+      if (!btn) continue;
+      const key = btn.dataset.sortKey;
+      const arrow = btn.querySelector<HTMLElement>('.sort-arrow');
+      if (!key || !arrow) continue;
+      if (key === state.sort) {
+        arrow.textContent = state.dir === 'desc' ? '↓' : '↑';
+        arrow.classList.remove('text-gray-600');
+        arrow.classList.add('text-atlas-400');
+        th.setAttribute('aria-sort', state.dir === 'desc' ? 'descending' : 'ascending');
+      } else {
+        arrow.textContent = '↕';
+        arrow.classList.remove('text-atlas-400');
+        arrow.classList.add('text-gray-600');
+        th.setAttribute('aria-sort', 'none');
+      }
+    }
+  }
+
+  function applyTypeButtons() {
+    for (const btn of typeButtons) {
+      const active = btn.dataset.typeFilter === state.type;
+      btn.setAttribute('aria-pressed', active ? 'true' : 'false');
+      if (active) {
+        btn.classList.add('bg-atlas-600', 'text-white');
+        btn.classList.remove('text-gray-300');
+      } else {
+        btn.classList.remove('bg-atlas-600', 'text-white');
+        btn.classList.add('text-gray-300');
+      }
+    }
+  }
+
+  function applyCatButtons() {
+    for (const btn of catButtons) {
+      const slug = btn.dataset.catFilter || '';
+      const active = state.cats.has(slug);
+      btn.setAttribute('aria-pressed', active ? 'true' : 'false');
+      if (active) {
+        btn.classList.add('bg-atlas-600', 'text-white', 'border-atlas-500');
+        btn.classList.remove('bg-gray-800', 'text-gray-300', 'border-gray-700');
+      } else {
+        btn.classList.remove('bg-atlas-600', 'text-white', 'border-atlas-500');
+        btn.classList.add('bg-gray-800', 'text-gray-300', 'border-gray-700');
+      }
+    }
+  }
+
+  function render() {
+    applyTypeButtons();
+    applyCatButtons();
+    applySort();
+    applyFilters();
+    writeStateToUrl();
+  }
+
+  // --- Event wiring ---
+  let searchTimer: number | null = null;
+  searchInput?.addEventListener('input', (e) => {
+    const val = (e.target as HTMLInputElement).value;
+    if (searchTimer) window.clearTimeout(searchTimer);
+    searchTimer = window.setTimeout(() => {
+      state.q = val.trim();
+      applyFilters();
+      writeStateToUrl();
+    }, 150);
+  });
+
+  for (const btn of typeButtons) {
+    btn.addEventListener('click', () => {
+      state.type = (btn.dataset.typeFilter as 'all' | 'user' | 'org') || 'all';
+      render();
+    });
+  }
+
+  for (const btn of catButtons) {
+    btn.addEventListener('click', () => {
+      const slug = btn.dataset.catFilter || '';
+      if (!slug) return;
+      if (state.cats.has(slug)) state.cats.delete(slug);
+      else state.cats.add(slug);
+      render();
+    });
+  }
+
+  for (const btn of sortButtons) {
+    btn.addEventListener('click', () => {
+      const key = btn.dataset.sortKey || '';
+      if (!COMPARATORS[key]) return;
+      if (state.sort === key) {
+        state.dir = state.dir === 'desc' ? 'asc' : 'desc';
+      } else {
+        state.sort = key;
+        // Sensible initial direction per column: text asc, numeric desc
+        state.dir = (key === 'username' || key === 'type') ? 'asc' : 'desc';
+      }
+      render();
+    });
+  }
+
+  function clearAll() {
+    state.q = '';
+    state.sort = 'total_quality_score';
+    state.dir = 'desc';
+    state.cats = new Set();
+    state.type = 'all';
+    if (searchInput) searchInput.value = '';
+    render();
+  }
+
+  clearBtn?.addEventListener('click', clearAll);
+  clearBtnEmpty?.addEventListener('click', clearAll);
+
+  // Row click → navigate. Allow cmd/ctrl-click to open in new tab
+  // naturally via the <a> inside username cell.
+  for (const row of rows) {
+    row.addEventListener('click', (e) => {
+      const target = e.target as HTMLElement;
+      // Skip if the user clicked on the existing <a> inside username column — let it handle itself
+      if (target.closest('a')) return;
+      const href = row.dataset.href;
+      if (href) window.location.href = href;
+    });
+  }
+
+  // --- Initial load ---
+  readStateFromUrl();
+  if (searchInput && state.q) searchInput.value = state.q;
+  render();
+</script>

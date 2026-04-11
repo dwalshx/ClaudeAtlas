@@ -221,6 +221,30 @@ export function getCreatorLeaderboards(topN = 10) {
   return { byFeatured, prolific, quality, rising };
 }
 
+/**
+ * Browse-page-friendly view of every creator. Omits heavy fields (the
+ * `skills` array) and keeps only what the browse table displays or filters
+ * on. Returned as a plain array sorted by total_quality_score desc
+ * (the default sort for /creators/all/).
+ */
+export function getCreatorsForBrowse() {
+  const creators = [...getCreators().values()];
+  return creators
+    .map(c => ({
+      username: c.username,
+      avatar_url: c.avatar_url,
+      type: c.type,
+      total_skills: c.total_skills,
+      featured_count: c.tier_counts?.featured || 0,
+      total_stars: c.total_stars,
+      total_quality_score: c.total_quality_score,
+      avg_quality_score_precise: c.avg_quality_score_precise,
+      first_commit_at: c.first_commit_at,
+      categories: Array.isArray(c.categories) ? c.categories : [...(c.categories || [])],
+    }))
+    .sort((a, b) => (b.total_quality_score - a.total_quality_score) || (b.total_skills - a.total_skills));
+}
+
 export function getRelatedSkills(skill, limit = 4) {
   return allSkills
     .filter(s => s.category === skill.category && s.id !== skill.id)
