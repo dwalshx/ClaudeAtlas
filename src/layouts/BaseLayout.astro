@@ -1,8 +1,9 @@
 ---
-import { getStats } from '../lib/skills.js';
+import { getPipelineStats } from '../lib/skills.js';
 
-const { title = 'ClaudeAtlas', description = 'Discover the best agent skills — curated, scored, and auto-updated daily.' } = Astro.props;
-const stats = getStats();
+const pstats = getPipelineStats();
+const defaultDescription = `Discover the best Claude skills — ${pstats.total_discovered.toLocaleString()} analyzed, ${pstats.total_indexed.toLocaleString()} indexed, ${pstats.total_featured} Featured. Auto-updated daily.`;
+const { title = 'ClaudeAtlas', description = defaultDescription } = Astro.props;
 const fullTitle = title === 'ClaudeAtlas' ? title : `${title} | ClaudeAtlas`;
 ---
 
@@ -55,7 +56,7 @@ const fullTitle = title === 'ClaudeAtlas' ? title : `${title} | ClaudeAtlas`;
     <div class="max-w-6xl mx-auto px-4">
       <div class="flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-gray-500">
         <div>
-          <span class="font-medium text-gray-400">ClaudeAtlas</span> — {stats.total} skills analyzed, {stats.featured} featured
+          <span class="font-medium text-gray-400">ClaudeAtlas</span> — {pstats.total_discovered.toLocaleString()} analyzed, {pstats.total_indexed.toLocaleString()} indexed, {pstats.total_featured} Featured
         </div>
         <div class="flex items-center gap-4">
           <a href="/methodology/" class="hover:text-gray-300 transition-colors">Methodology</a>

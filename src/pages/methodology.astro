@@ -1,5 +1,8 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
+import { getPipelineStats } from '../lib/skills.js';
+
+const pstats = getPipelineStats();
 ---
 
 <BaseLayout title="Methodology" description="How ClaudeAtlas scores and ranks Claude ecosystem skills.">
@@ -10,7 +13,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
       <section>
         <h2 class="text-xl font-semibold text-white mb-4">Discovery</h2>
         <p class="text-gray-300 leading-relaxed">
-          ClaudeAtlas automatically discovers skills by scanning GitHub for <code class="text-atlas-400 bg-gray-800 px-1 rounded">SKILL.md</code> files using the GitHub Code Search API. We use size-range partitioning to exceed the API's 1,000-result cap, supplemented by GitHub Topics search and known skill repositories. The scraper runs daily via GitHub Actions.
+          ClaudeAtlas automatically discovers skills by scanning GitHub for <code class="text-atlas-400 bg-gray-800 px-1 rounded">SKILL.md</code> files using the GitHub Code Search API. We use size-range partitioning to exceed the API's 1,000-result cap, supplemented by GitHub Topics search and known skill repositories. The scraper runs daily via GitHub Actions and has discovered <strong class="text-white">{pstats.total_discovered.toLocaleString()}</strong> skill files so far — of which <strong class="text-white">{pstats.total_indexed.toLocaleString()}</strong> pass our filters and are indexed, with <strong class="text-white">{pstats.total_featured}</strong> earning the Featured tier.
         </p>
       </section>
 

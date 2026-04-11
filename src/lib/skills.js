@@ -3,6 +3,7 @@
  */
 
 import skillsData from '../../data/skills.json';
+import pipelineStats from '../../data/pipeline-stats.json';
 
 /** @type {import('./types').Skill[]} */
 export const allSkills = skillsData;
@@ -53,6 +54,21 @@ export function getStats() {
     solid: allSkills.filter(s => s.quality_tier === 'solid').length,
     listed: allSkills.filter(s => s.quality_tier === 'listed').length,
     categories: getAllCategories().length,
+  };
+}
+
+/**
+ * Pipeline-wide stats. Always prefers pipeline-stats.json for `total_discovered`
+ * (the true scraped count, not just what survived filtering) and uses the
+ * current catalog for indexed/featured counts so numbers stay consistent with
+ * what's actually rendered.
+ */
+export function getPipelineStats() {
+  return {
+    total_discovered: pipelineStats.total_discovered || allSkills.length,
+    total_indexed: allSkills.length,
+    total_featured: allSkills.filter(s => s.quality_tier === 'featured').length,
+    updated_at: pipelineStats.timestamp || null,
   };
 }
 

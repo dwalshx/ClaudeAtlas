@@ -31,3 +31,5 @@ data/skills-raw.json
 data/skills.json.partial
 data/etag-cache.json
 data/scrape-log.txt
+data/star-history.json.partial
+scripts/backfill-star-history.log

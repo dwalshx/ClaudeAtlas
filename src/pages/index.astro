@@ -2,18 +2,49 @@
 import BaseLayout from '../layouts/BaseLayout.astro';
 import SkillCard from '../components/SkillCard.astro';
 import CategoryChip from '../components/CategoryChip.astro';
-import { allSkills, getFeaturedSkills, getAllCategories, getStats } from '../lib/skills.js';
+import { allSkills, getFeaturedSkills, getAllCategories, getStats, getPipelineStats } from '../lib/skills.js';
 
 const stats = getStats();
+const pstats = getPipelineStats();
 const featured = getFeaturedSkills(6);
 const categories = getAllCategories();
 
-// Only render top 60 skills on homepage (performance)
+// Render the full catalog but mark the default "top 60" set. The sticky
+// search expands visibility to the full list when a query is active.
 const HOMEPAGE_LIMIT = 60;
-const topSkills = [...allSkills].sort((a, b) => b.quality_score - a.quality_score).slice(0, HOMEPAGE_LIMIT);
+const allSorted = [...allSkills].sort((a, b) => b.quality_score - a.quality_score);
+const topSkills = allSorted.slice(0, HOMEPAGE_LIMIT);
+const extraSkills = allSorted.slice(HOMEPAGE_LIMIT);
 ---
 
 <BaseLayout>
+  <!-- Sticky Search Bar -->
+  <div id="search-bar" class="sticky top-[57px] z-40 bg-gray-950/90 backdrop-blur border-b border-gray-800 px-4 py-3">
+    <div class="max-w-3xl mx-auto relative">
+      <svg class="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+        <circle cx="11" cy="11" r="8"/>
+        <path d="m21 21-4.35-4.35"/>
+      </svg>
+      <input
+        type="text"
+        id="skill-search"
+        placeholder="Search 1,000+ Claude skills..."
+        autocomplete="off"
+        class="w-full pl-12 pr-12 py-3 bg-gray-900 border border-gray-700 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-atlas-500 focus:border-transparent text-base"
+      />
+      <button
+        id="search-clear"
+        type="button"
+        aria-label="Clear search"
+        class="hidden absolute right-3 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full text-gray-400 hover:text-white hover:bg-gray-800 flex items-center justify-center"
+      >
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+        </svg>
+      </button>
+    </div>
+  </div>
+
   <!-- Hero -->
   <section class="py-16 sm:py-24 px-4">
     <div class="max-w-6xl mx-auto text-center">
@@ -24,24 +55,8 @@ const topSkills = [...allSkills].sort((a, b) => b.quality_score - a.quality_scor
         The curated index for production-quality Claude ecosystem skills.
       </p>
       <p class="text-sm text-gray-500 mb-8 font-mono">
-        {stats.total.toLocaleString()} skills analyzed &middot; {stats.featured} featured &middot; Updated daily
+        {pstats.total_discovered.toLocaleString()} analyzed &middot; {pstats.total_indexed.toLocaleString()} indexed &middot; {pstats.total_featured} Featured &middot; Updated daily
       </p>
-
-      <!-- Search -->
-      <div class="max-w-xl mx-auto mb-10">
-        <div class="relative">
-          <svg class="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-            <circle cx="11" cy="11" r="8"/>
-            <path d="m21 21-4.35-4.35"/>
-          </svg>
-          <input
-            type="text"
-            id="skill-search"
-            placeholder="Search skills... (e.g. testing, docker, api)"
-            class="w-full pl-12 pr-4 py-3.5 bg-gray-900 border border-gray-700 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-atlas-500 focus:border-transparent text-base"
-          />
-        </div>
-      </div>
 
       <!-- Category chips -->
       <div class="flex flex-wrap justify-center gap-2 mb-4">
@@ -54,7 +69,7 @@ const topSkills = [...allSkills].sort((a, b) => b.quality_score - a.quality_scor
 
   <!-- Featured Skills -->
   {featured.length > 0 && (
-    <section class="px-4 pb-12">
+    <section id="featured-section" class="px-4 pb-12">
       <div class="max-w-6xl mx-auto">
         <h2 class="text-xl font-semibold text-white mb-6 flex items-center gap-2">
           <span class="w-2 h-2 rounded-full bg-amber-500"></span>
@@ -69,19 +84,24 @@ const topSkills = [...allSkills].sort((a, b) => b.quality_score - a.quality_scor
     </section>
   )}
 
-  <!-- Top Skills -->
+  <!-- Top Skills / Full Catalog -->
   <section class="px-4 pb-16">
     <div class="max-w-6xl mx-auto">
       <div class="flex items-end justify-between mb-6">
-        <h2 class="text-xl font-semibold text-white flex items-center gap-2">
+        <h2 id="skills-heading" class="text-xl font-semibold text-white flex items-center gap-2">
           <span class="w-2 h-2 rounded-full bg-atlas-500"></span>
-          Top Skills
+          <span id="skills-heading-text">Top Skills</span>
         </h2>
-        <span class="text-sm text-gray-500">Showing top {HOMEPAGE_LIMIT} of {stats.total}</span>
+        <span id="skills-count" class="text-sm text-gray-500">Showing top {HOMEPAGE_LIMIT} of {pstats.total_indexed.toLocaleString()}</span>
       </div>
       <div id="skills-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {topSkills.map(skill => (
-          <div class="skill-item" data-name={skill.name.toLowerCase()} data-desc={(skill.description || '').toLowerCase()} data-cat={skill.category.toLowerCase()}>
+          <div class="skill-item" data-default-visible="true" data-name={skill.name.toLowerCase()} data-desc={(skill.description || '').toLowerCase()} data-cat={skill.category.toLowerCase()} data-tier={skill.quality_tier}>
+            <SkillCard skill={skill} />
+          </div>
+        ))}
+        {extraSkills.map(skill => (
+          <div class="skill-item" data-default-visible="false" style="display: none;" data-name={skill.name.toLowerCase()} data-desc={(skill.description || '').toLowerCase()} data-cat={skill.category.toLowerCase()} data-tier={skill.quality_tier}>
             <SkillCard skill={skill} />
           </div>
         ))}
@@ -89,7 +109,7 @@ const topSkills = [...allSkills].sort((a, b) => b.quality_score - a.quality_scor
       <div id="no-results" class="hidden text-center py-12 text-gray-500">
         No skills match your search. Try different keywords or <a href="/category/ai-and-automation/" class="text-atlas-400 hover:underline">browse by category</a>.
       </div>
-      <div class="text-center mt-10">
+      <div id="browse-more" class="text-center mt-10">
         <p class="text-gray-500 text-sm mb-4">Want to explore more?</p>
         <div class="flex flex-wrap justify-center gap-2">
           {categories.map(cat => (
@@ -102,27 +122,88 @@ const topSkills = [...allSkills].sort((a, b) => b.quality_score - a.quality_scor
 </BaseLayout>
 
 <script>
-  const searchInput = document.getElementById('skill-search') as HTMLInputElement;
-  const skillItems = document.querySelectorAll('.skill-item');
+  const searchInput = document.getElementById('skill-search') as HTMLInputElement | null;
+  const searchClear = document.getElementById('search-clear') as HTMLButtonElement | null;
+  const featuredSection = document.getElementById('featured-section');
+  const browseMore = document.getElementById('browse-more');
+  const skillsHeadingText = document.getElementById('skills-heading-text');
+  const skillsCount = document.getElementById('skills-count');
   const noResults = document.getElementById('no-results');
+  const skillItems = document.querySelectorAll<HTMLElement>('.skill-item');
 
-  searchInput?.addEventListener('input', (e) => {
-    const query = (e.target as HTMLInputElement).value.toLowerCase().trim();
+  const totalIndexed = skillItems.length;
+  const initialCountText = skillsCount?.textContent || '';
+
+  function applyFilter(rawQuery: string) {
+    const query = rawQuery.toLowerCase().trim();
+    const isSearching = query.length > 0;
+
+    // Toggle clear button
+    if (searchClear) {
+      searchClear.classList.toggle('hidden', !isSearching);
+    }
+
+    // Toggle Featured section (hide when searching)
+    if (featuredSection) {
+      (featuredSection as HTMLElement).style.display = isSearching ? 'none' : '';
+    }
+
+    // Toggle browse-more footer (hide when searching)
+    if (browseMore) {
+      (browseMore as HTMLElement).style.display = isSearching ? 'none' : '';
+    }
+
+    // Update heading text
+    if (skillsHeadingText) {
+      skillsHeadingText.textContent = isSearching ? 'Search Results' : 'Top Skills';
+    }
+
     let visible = 0;
-
-    skillItems.forEach(item => {
-      const el = item as HTMLElement;
+    skillItems.forEach(el => {
       const name = el.dataset.name || '';
       const desc = el.dataset.desc || '';
       const cat = el.dataset.cat || '';
 
-      const matches = !query || name.includes(query) || desc.includes(query) || cat.includes(query);
+      if (!isSearching) {
+        // Empty-state: show only the default top-60
+        const shouldShow = el.dataset.defaultVisible === 'true';
+        el.style.display = shouldShow ? '' : 'none';
+        if (shouldShow) visible++;
+        return;
+      }
+
+      const matches = name.includes(query) || desc.includes(query) || cat.includes(query);
       el.style.display = matches ? '' : 'none';
       if (matches) visible++;
     });
 
+    // Update count label
+    if (skillsCount) {
+      if (!isSearching) {
+        skillsCount.textContent = initialCountText;
+      } else {
+        skillsCount.textContent = `${visible} result${visible === 1 ? '' : 's'} of ${totalIndexed.toLocaleString()}`;
+      }
+    }
+
+    // No-results message
     if (noResults) {
-      noResults.classList.toggle('hidden', visible > 0);
+      noResults.classList.toggle('hidden', visible > 0 || !isSearching);
+    }
+  }
+
+  searchInput?.addEventListener('input', (e) => {
+    applyFilter((e.target as HTMLInputElement).value);
+  });
+
+  searchClear?.addEventListener('click', () => {
+    if (searchInput) {
+      searchInput.value = '';
+      applyFilter('');
+      searchInput.focus();
     }
   });
+
+  // Initialize state on page load
+  applyFilter('');
 </script>
