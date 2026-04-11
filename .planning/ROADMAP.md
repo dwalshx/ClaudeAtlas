@@ -17,11 +17,11 @@ Phase 1 MVP shipped 2026-04-10 with 33,078 skills scraped, 1,078 curated, and 30
 - Decimal phases (2.1, 2.2): Urgent insertions (marked with INSERTED)
 
 - [x] **Phase 1: Content & UX Fixes** - Fix the hero stat and rebuild search UX so every indexed skill is reachable above the fold
-- [ ] **Phase 2: Data Moats** - Backfill skill birth dates and star history, then chart growth and active-maintenance signals
-- [ ] **Phase 3: Distribution** - Publish embeddable tier-badge and star-history SVGs so creators can link back from their READMEs
-- [ ] **Phase 4: Creator Pages** - Give every creator a profile, a leaderboard home, and computed badges
-- [ ] **Phase 5: Analytics** - Wire Cloudflare Web Analytics, PostHog custom events, and a D1-backed search query log
-- [ ] **Phase 6: Infrastructure Groundwork** - Publish a machine-readable `/skills-registry.json` and document it for agents
+- [x] **Phase 2: Data Moats** - Backfill skill birth dates and star history, then chart growth and active-maintenance signals
+- [x] **Phase 3: Distribution** - Publish embeddable tier-badge and star-history SVGs so creators can link back from their READMEs
+- [x] **Phase 4: Creator Pages** - Give every creator a profile, a leaderboard home, and computed badges
+- [~] **Phase 5: Analytics** - Wire Cloudflare Web Analytics, PostHog custom events, and a D1-backed search query log (code shipped; 3 external steps need morning hands)
+- [x] **Phase 6: Infrastructure Groundwork** - Publish a machine-readable `/skills-registry.json` and document it for agents
 
 ## Phase Details
 
@@ -105,8 +105,8 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6. Phase 6 can op
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Content & UX Fixes | 2/2 | Complete | 2026-04-10 |
-| 2. Data Moats | 0/TBD | Not started | - |
-| 3. Distribution | 0/TBD | Not started | - |
-| 4. Creator Pages | 0/TBD | Not started | - |
-| 5. Analytics | 0/TBD | Not started | - |
-| 6. Infrastructure Groundwork | 0/TBD | Not started | - |
+| 2. Data Moats | 1/1 | Complete (backfill data lands at end of run) | 2026-04-10 |
+| 3. Distribution | 1/1 | Complete | 2026-04-10 |
+| 4. Creator Pages | 1/1 | Complete | 2026-04-10 |
+| 5. Analytics | 1/1 | Code shipped; awaits morning external steps | 2026-04-10 |
+| 6. Infrastructure Groundwork | 1/1 | Complete | 2026-04-10 |
