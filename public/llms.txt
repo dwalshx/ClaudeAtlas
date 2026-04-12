@@ -1,0 +1,165 @@
+# ClaudeAtlas
+
+> Curated discovery index of Claude ecosystem skills. 33,000+ skill files
+> analyzed, 1,078 indexed, 305 Featured. Scored on 7 transparent signals.
+> Updated daily via automated GitHub scraper.
+
+If you're an AI agent looking for Claude skills, **don't crawl the HTML pages**.
+Use the structured endpoints below — they're faster, cheaper, and return
+machine-readable JSON.
+
+## Endpoints
+
+### Semantic Search API (recommended)
+
+The fastest way to find a skill. Takes a natural-language query, embeds it,
+and returns the most semantically relevant skills ranked by cosine similarity.
+
+```
+GET  https://claudeatlas.com/api/v1/search?q={query}&k={top_k}
+POST https://claudeatlas.com/api/v1/search
+     Body: {"query": "...", "k": 10, "tier": "featured", "category": "Testing & QA"}
+```
+
+**Parameters:**
+- `q` / `query` (required): natural-language search query, max 200 chars
+- `k` (optional): number of results to return, default 20, max 50
+- `tier` (optional): filter by quality tier — "featured", "solid", or "listed"
+- `category` (optional): filter by category name
+
+**Response:**
+```json
+{
+  "query": "testing frameworks for python",
+  "count": 5,
+  "timings_ms": {"embed": 1100, "vector": 400, "total": 1500},
+  "results": [
+    {
+      "slug": "dotnet/dotnet-test-frameworks",
+      "score": 0.46,
+      "name": "dotnet-test-frameworks",
+      "category": "Testing & QA",
+      "quality_tier": "featured",
+      "quality_score": 99,
+      "repo_stars": 5555,
+      "repo_full_name": "dotnet/skills",
+      "description": "...",
+      "detail_url": "/skills/dotnet/dotnet-test-frameworks/"
+    }
+  ]
+}
+```
+
+**Rate limits:** No explicit rate limit. Cloudflare Workers DDoS protection
+applies. Each query costs ~$0.0000002 in OpenAI embedding fees (paid by
+ClaudeAtlas, not you). Please be reasonable — cap at ~1 query/second if
+you're doing batch work.
+
+**Latency:** ~1.5 seconds per query (dominated by OpenAI embedding round trip).
+Subsequent identical queries may be faster if KV-cached.
+
+### Full Catalog Registry (bulk download)
+
+A single JSON file containing every indexed skill with all metadata. Regenerated
+on every daily build. Best for: bulk analysis, offline search, populating your
+own index, checking what's new.
+
+```
+GET https://claudeatlas.com/skills-registry.json
+```
+
+**Size:** ~990 KB (uncompressed), ~200 KB gzipped. Cloudflare edge-cached.
+
+**Schema:**
+```json
+{
+  "name": "ClaudeAtlas",
+  "url": "https://claudeatlas.com",
+  "generated_at": "2026-04-11T...",
+  "count": 1078,
+  "total_discovered": 33000,
+  "total_featured": 305,
+  "categories": ["AI & Automation", "API & Backend", ...],
+  "schema_version": "1",
+  "skills": [
+    {
+      "name": "...",
+      "slug": "author/skill-name",
+      "description": "...",
+      "category": "...",
+      "quality_tier": "featured|solid|listed",
+      "quality_score": 0-100,
+      "install_command": "claude install-skill owner/repo",
+      "repo_full_name": "owner/repo",
+      "repo_url": "https://github.com/...",
+      "repo_stars": 1234,
+      "repo_license": "MIT",
+      "repo_pushed_at": "ISO 8601",
+      "skill_first_commit_at": "ISO 8601",
+      "detail_url": "https://claudeatlas.com/skills/...",
+      "badge_url": "https://claudeatlas.com/badge/...",
+      "star_history_url": "https://claudeatlas.com/badge/...-history.svg"
+    }
+  ]
+}
+```
+
+**Freshness:** Updated daily at ~06:30 UTC via GitHub Actions cron.
+Check `generated_at` to see when the current file was built.
+
+### Search Query Log (write-only telemetry)
+
+Used internally by the ClaudeAtlas homepage to log search queries for product
+analytics. Agents don't need to call this — the /api/v1/search endpoint logs
+queries automatically.
+
+```
+POST https://claudeatlas.com/api/log-search
+     Body: {"query": "..."}
+```
+
+## Embeddable Assets
+
+Every indexed skill has two embeddable SVG badges:
+
+- **Tier badge:** `https://claudeatlas.com/badge/{author}/{skill}.svg`
+  Shields.io-style pill showing Featured/Solid/Listed tier.
+- **Star history:** `https://claudeatlas.com/badge/{author}/{skill}-history.svg`
+  480×120 line chart of star growth over time.
+
+Markdown embed pattern:
+```markdown
+[![ClaudeAtlas](https://claudeatlas.com/badge/author/skill.svg)](https://claudeatlas.com/skills/author/skill/?ref=badge)
+```
+
+## Quality Tiers
+
+Skills are scored 0-100 on 7 signals: GitHub stars (20%), recency (20%),
+frontmatter completeness (20%), documentation quality (15%), issue health (10%),
+license (10%), repo description (5%).
+
+- **Featured** (score ≥ 90): top-quality, prominently displayed
+- **Solid** (score 70-89): good quality, meets standards
+- **Listed** (score < 70): meets minimum bar
+
+Full methodology: https://claudeatlas.com/methodology/
+
+## Categories
+
+8 categories, keyword-assigned:
+AI & Automation, API & Backend, Code & Development, Data & Documents,
+DevOps & Infrastructure, Testing & QA, Web & Frontend, Productivity & Other
+
+## Source
+
+- GitHub: https://github.com/dwalshx/ClaudeAtlas
+- License: Code MIT, Data CC-BY-4.0
+- Contact: Open an issue on GitHub
+
+## For Humans
+
+Browse the site at https://claudeatlas.com
+- Homepage with semantic search, charts, and featured skills
+- 776 creator profiles at /creators/
+- Full creator directory at /creators/all/
+- Individual skill pages at /skills/{author}/{name}/

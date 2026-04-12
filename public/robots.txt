@@ -1,4 +1,45 @@
+# ClaudeAtlas — robots.txt
+#
+# ClaudeAtlas is a discovery index for AI agent skills. We explicitly welcome
+# AI agent crawlers and provide structured endpoints so they don't need to
+# parse HTML. See /llms.txt for structured API documentation.
+#
+# Content signals (Cloudflare AI Content Signals spec):
+#   ai-input=yes   — agents may use our data for real-time queries/RAG
+#   ai-train=no    — do not use our content corpus to train foundation models
+#   search=yes     — search engine indexing is welcome
+
 User-agent: *
+Content-Signal: search=yes,ai-input=yes,ai-train=no
+Allow: /
+
+# Explicitly welcome AI agent crawlers (overrides any Cloudflare managed blocks).
+# Note: if Cloudflare's "AI Content Signals" managed setting is enabled on the
+# zone, it will prepend Disallow rules for these bots. Toggle that setting to
+# "Allow" in the CF dashboard to let this robots.txt take effect.
+#
+# Preferred: use our structured endpoints instead of crawling HTML.
+# See: https://claudeatlas.com/llms.txt
+
+User-agent: ClaudeBot
+Allow: /
+
+User-agent: GPTBot
+Allow: /
+
+User-agent: Applebot-Extended
+Allow: /
+
+User-agent: Google-Extended
+Allow: /
+
+User-agent: Amazonbot
+Allow: /
+
+User-agent: CCBot
+Allow: /
+
+User-agent: meta-externalagent
 Allow: /
 
 Sitemap: https://claudeatlas.com/sitemap-index.xml
