@@ -44,3 +44,7 @@ public/skills-registry.json
 
 # Embed script log (not the ndjson itself — that's committed as a cache)
 scripts/embed-skills.log
+
+# Plugin scraper intermediate files
+data/plugins-raw.json.partial
+scripts/scrape-plugins.log
