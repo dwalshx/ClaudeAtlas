@@ -283,6 +283,30 @@ export function getRelatedSkills(skill, limit = 4) {
 }
 
 /**
+ * Returns the full API graph data for use by /apis/ pages.
+ * Loaded once at build time via readFileSync in this module (not in .astro
+ * files, where import.meta.url resolves to a Vite virtual module path).
+ */
+export function getApiGraph() {
+  return apiGraphData;
+}
+
+/**
+ * Returns all detected services sorted by skill count descending.
+ */
+export function getAllServices() {
+  const services = Object.values(apiGraphData.services || {});
+  return services.sort((a, b) => (b.skill_count || 0) - (a.skill_count || 0));
+}
+
+/**
+ * Returns a single service by ID, or null if not found.
+ */
+export function getServiceById(serviceId) {
+  return apiGraphData.services?.[serviceId] || null;
+}
+
+/**
  * Returns the list of API/service integrations for a given skill,
  * enriched with service metadata (name, category, url). The data comes
  * from the pre-computed api-graph.json produced by scripts/mine-apis.js.

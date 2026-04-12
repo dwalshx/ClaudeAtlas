@@ -1,49 +1,41 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import SkillCard from '../../components/SkillCard.astro';
-import { allSkills } from '../../lib/skills.js';
-import { readFileSync, existsSync } from 'fs';
-import { join, dirname } from 'path';
-import { fileURLToPath } from 'url';
+import { allSkills, getAllServices, getServiceById, getApiGraph } from '../../lib/skills.js';
 
-const __dirname = dirname(fileURLToPath(import.meta.url));
-const apiGraphPath = join(__dirname, '../../../data/api-graph.json');
-
-let apiGraph = { services: {}, skill_integrations: {} };
-if (existsSync(apiGraphPath)) {
-  try {
-    apiGraph = JSON.parse(readFileSync(apiGraphPath, 'utf-8'));
-  } catch {}
-}
+const apiGraph = getApiGraph();
 
 export function getStaticPaths() {
-  const graphPath = join(dirname(fileURLToPath(import.meta.url)), '../../../data/api-graph.json');
-  if (!existsSync(graphPath)) return [];
-  const graph = JSON.parse(readFileSync(graphPath, 'utf-8'));
-  return Object.values(graph.services).map((svc: any) => ({
+  // getAllServices is already imported at module scope above
+  return getAllServices().map((svc) => ({
     params: { service: svc.id },
-    props: { service: svc },
+    props: { serviceId: svc.id },
   }));
 }
 
-const { service } = Astro.props;
+const { serviceId } = Astro.props;
+const service = getServiceById(serviceId);
 
 // Get full skill records for the skills that reference this service
-const serviceSkills = (service.skills || [])
-  .map((slug: string) => allSkills.find(s => s.slug === slug))
-  .filter(Boolean)
-  .sort((a: any, b: any) => (b.quality_score || 0) - (a.quality_score || 0));
+const serviceSkills = service
+  ? (service.skills || [])
+      .map((slug) => allSkills.find(s => s.slug === slug))
+      .filter(Boolean)
+      .sort((a, b) => (b.quality_score || 0) - (a.quality_score || 0))
+  : [];
 
-const featuredCount = serviceSkills.filter((s: any) => s.quality_tier === 'featured').length;
-const totalStars = serviceSkills.reduce((sum: number, s: any) => sum + (s.repo_stars || 0), 0);
+const featuredCount = serviceSkills.filter((s) => s.quality_tier === 'featured').length;
+const totalStars = serviceSkills.reduce((sum, s) => sum + (s.repo_stars || 0), 0);
 
 // Find other services that commonly co-occur with this one
-const coServices = new Map<string, number>();
-for (const slug of service.skills || []) {
-  const integrations = (apiGraph.skill_integrations as any)?.[slug] || [];
-  for (const svcId of integrations) {
-    if (svcId === service.id) continue;
-    coServices.set(svcId, (coServices.get(svcId) || 0) + 1);
+const coServices = new Map();
+if (service) {
+  for (const slug of service.skills || []) {
+    const integrations = apiGraph.skill_integrations?.[slug] || [];
+    for (const svcId of integrations) {
+      if (svcId === service.id) continue;
+      coServices.set(svcId, (coServices.get(svcId) || 0) + 1);
+    }
   }
 }
 const topCoServices = [...coServices.entries()]
@@ -51,14 +43,18 @@ const topCoServices = [...coServices.entries()]
   .slice(0, 8)
   .map(([id, count]) => ({
     id,
-    name: (apiGraph.services as any)?.[id]?.name || id,
+    name: apiGraph.services?.[id]?.name || id,
     count,
   }));
 
-const description = `${service.skill_count} Claude skills integrate with ${service.name}. Browse skills that use the ${service.name} API, SDK, or platform.`;
+const svcName = service?.name || serviceId;
+const svcCategory = service?.category || '';
+const svcUrl = service?.url || '';
+const svcSkillCount = service?.skill_count || 0;
+const description = `${svcSkillCount} Claude skills integrate with ${svcName}. Browse skills that use the ${svcName} API, SDK, or platform.`;
 ---
 
-<BaseLayout title={`${service.name} · API Integrations`} description={description}>
+<BaseLayout title={`${svcName} · API Integrations`} description={description}>
   <section class="max-w-4xl mx-auto px-4 py-12">
     <a href="/apis/" class="text-sm text-gray-500 hover:text-atlas-400 transition-colors mb-6 inline-flex items-center gap-1">
       ← All integrations
@@ -66,16 +62,16 @@ const description = `${service.skill_count} Claude skills integrate with ${servi
 
     <header class="mb-10 mt-4">
       <div class="flex items-baseline gap-3 flex-wrap">
-        <h1 class="text-3xl font-bold text-white">{service.name}</h1>
-        <span class="text-xs text-gray-600 uppercase tracking-wide">{service.category}</span>
+        <h1 class="text-3xl font-bold text-white">{svcName}</h1>
+        <span class="text-xs text-gray-600 uppercase tracking-wide">{svcCategory}</span>
       </div>
-      {service.url && (
-        <a href={service.url} target="_blank" rel="noopener" class="text-sm text-atlas-400 hover:underline mt-1 inline-block">
-          {service.url.replace('https://', '')} →
+      {svcUrl && (
+        <a href={svcUrl} target="_blank" rel="noopener" class="text-sm text-atlas-400 hover:underline mt-1 inline-block">
+          {svcUrl.replace('https://', '')} →
         </a>
       )}
       <div class="flex gap-4 mt-4 text-sm text-gray-500 font-mono flex-wrap">
-        <span>{service.skill_count} skills</span>
+        <span>{svcSkillCount} skills</span>
         <span>·</span>
         <span>{featuredCount} Featured</span>
         <span>·</span>
@@ -100,10 +96,10 @@ const description = `${service.skill_count} Claude skills integrate with ${servi
     <section>
       <h2 class="text-xl font-semibold text-white mb-6 flex items-center gap-2">
         <span class="w-2 h-2 rounded-full bg-atlas-500"></span>
-        Skills using {service.name} ({service.skill_count})
+        Skills using {svcName} ({svcSkillCount})
       </h2>
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {serviceSkills.map((skill: any) => (
+        {serviceSkills.map((skill) => (
           <SkillCard skill={skill} />
         ))}
       </div>
