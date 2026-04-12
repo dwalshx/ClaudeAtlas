@@ -156,10 +156,27 @@ DevOps & Infrastructure, Testing & QA, Web & Frontend, Productivity & Other
 - License: Code MIT, Data CC-BY-4.0
 - Contact: Open an issue on GitHub
 
+## API & Service Integration Graph
+
+ClaudeAtlas automatically detects which APIs, services, and platforms each
+skill integrates with by analyzing skill content. Browse the full graph:
+
+```
+GET https://claudeatlas.com/apis/           — all detected services
+GET https://claudeatlas.com/apis/{service}/  — skills using a specific service
+```
+
+Each skill in the registry includes an `integrations` array listing the
+service IDs it references (e.g., `["openai", "github", "docker"]`).
+
+Top services by skill count: Anthropic (130), MCP (98), OpenAI (89),
+GitHub (51), npm (42), Next.js (30), Kubernetes (29).
+
 ## For Humans
 
 Browse the site at https://claudeatlas.com
 - Homepage with semantic search, charts, and featured skills
 - 776 creator profiles at /creators/
 - Full creator directory at /creators/all/
+- API & service integration graph at /apis/
 - Individual skill pages at /skills/{author}/{name}/

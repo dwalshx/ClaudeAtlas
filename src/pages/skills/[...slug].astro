@@ -4,7 +4,7 @@ import QualityBadge from '../../components/QualityBadge.astro';
 import CopyButton from '../../components/CopyButton.astro';
 import SkillCard from '../../components/SkillCard.astro';
 import ScoreBar from '../../components/ScoreBar.astro';
-import { allSkills, getRelatedSkills, getSimilarSkills, timeAgo, categoryColor, getCategorySlug } from '../../lib/skills.js';
+import { allSkills, getRelatedSkills, getSimilarSkills, getSkillIntegrations, timeAgo, categoryColor, getCategorySlug } from '../../lib/skills.js';
 
 function daysToRecency(dateStr) {
   if (!dateStr) return 0;
@@ -27,6 +27,7 @@ export function getStaticPaths() {
 const { skill } = Astro.props;
 const similar = getSimilarSkills(skill, 5);
 const related = similar.length > 0 ? [] : getRelatedSkills(skill, 3); // fall back to category-related if no similar data
+const integrations = getSkillIntegrations(skill);
 const cc = categoryColor(skill.category);
 const updated = timeAgo(skill.repo_pushed_at);
 const created = timeAgo(skill.repo_created_at);
@@ -166,6 +167,25 @@ const jsonLd = {
         </div>
       </dl>
     </div>
+
+    <!-- Integrates with (APIs/services detected in skill content) -->
+    {integrations.length > 0 && (
+      <section class="mb-8">
+        <h2 class="text-sm font-medium text-gray-400 mb-3 uppercase tracking-wider">Integrates with</h2>
+        <div class="flex flex-wrap gap-2">
+          {integrations.map((svc: any) => (
+            <a
+              href={`/apis/${svc.id}/`}
+              class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-gray-800 hover:bg-gray-700 border border-gray-700 rounded-full text-xs font-medium text-gray-300 hover:text-white transition-colors"
+            >
+              {svc.name}
+              <span class="text-gray-600">·</span>
+              <span class="text-gray-500">{svc.category}</span>
+            </a>
+          ))}
+        </div>
+      </section>
+    )}
 
     <!-- Similar Skills (semantic, from vector embeddings) -->
     {similar.length > 0 && (

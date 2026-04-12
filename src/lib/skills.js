@@ -24,6 +24,17 @@ if (existsSync(__similar_path)) {
   }
 }
 
+// API graph (services ↔ skills mapping)
+const __api_graph_path = join(__skills_dirname, '../../data/api-graph.json');
+let apiGraphData = { services: {}, skill_integrations: {} };
+if (existsSync(__api_graph_path)) {
+  try {
+    apiGraphData = JSON.parse(readFileSync(__api_graph_path, 'utf-8'));
+  } catch {
+    // Degrade gracefully
+  }
+}
+
 /** @type {import('./types').Skill[]} */
 export const allSkills = skillsData;
 
@@ -269,6 +280,20 @@ export function getRelatedSkills(skill, limit = 4) {
     .filter(s => s.category === skill.category && s.id !== skill.id)
     .sort((a, b) => b.quality_score - a.quality_score)
     .slice(0, limit);
+}
+
+/**
+ * Returns the list of API/service integrations for a given skill,
+ * enriched with service metadata (name, category, url). The data comes
+ * from the pre-computed api-graph.json produced by scripts/mine-apis.js.
+ */
+export function getSkillIntegrations(skill) {
+  if (!skill || !skill.slug) return [];
+  const integrationIds = apiGraphData?.skill_integrations?.[skill.slug] || [];
+  return integrationIds.map(id => {
+    const svc = apiGraphData.services?.[id];
+    return svc ? { id, name: svc.name, category: svc.category, url: svc.url } : null;
+  }).filter(Boolean);
 }
 
 /**

@@ -1,0 +1,3526 @@
+{
+  "generated_at": "2026-04-12T05:45:44.868Z",
+  "service_count": 69,
+  "skill_count": 1078,
+  "skills_with_integrations": 508,
+  "integration_rate": 47,
+  "services": {
+    "openai": {
+      "name": "OpenAI",
+      "id": "openai",
+      "category": "AI",
+      "url": "https://openai.com",
+      "skill_count": 89,
+      "skills": [
+        "AIPMAndy/dna-memory",
+        "AIPexStudio/skill-creator",
+        "AIPexStudio/ux-audit-walkthrough",
+        "ALBEDO-TABAI/video-expert-analyzer",
+        "AbYousef739/clawcache-free",
+        "Agents365-ai/video-podcast-maker",
+        "AgriciDaniel/seo-dataforseo",
+        "AndyShaman/gemini-mcp",
+        "AndyShaman/whisk-proxy",
+        "Aradotso/openclaude-multi-llm",
+        "ArcReel/generate-storyboard",
+        "BrianRWagner/de-ai-ify",
+        "CoWork-OS/idea-validation",
+        "CorporateSmalltalkConsultingLtd/smalltalk-mcp",
+        "DaWe35/imagerouter",
+        "ForteScarlet/codex-agent-collaboration",
+        "Galaxy-Dawn/ml-paper-writing",
+        "Galaxy-Dawn/writing-anti-ai",
+        "K-Dense-AI/research-lookup",
+        "METR/debug-stuck-eval",
+        "Mann1988/mckinsey-consultant",
+        "Mann1988/us-gov-shutdown-tracker",
+        "MicrosoftDocs/azure-active-directory-b2c",
+        "MicrosoftDocs/microsoft-foundry-classic",
+        "NousResearch/blackbox",
+        "NousResearch/honcho",
+        "OrcaQubits/acp-checkout-mcp",
+        "Prat011/algorithmic-art",
+        "Prat011/artifacts-builder",
+        "ReScienceLab/seo-geo",
+        "ThinkInAIXYZ/algorithmic-art",
+        "ThinkInAIXYZ/deepchat-settings",
+        "aaron-he-zhu/geo-content-optimizer",
+        "aden-hive/browser-edge-cases",
+        "aden-hive/hive.batch-ledger",
+        "agentic-box/codex",
+        "agentscope-ai/auto-arena",
+        "alirezarezvani/adversarial-reviewer",
+        "alirezarezvani/code-to-prd",
+        "apresmoi/up-init",
+        "benjaminshoemaker/codex-review",
+        "borghei/ml-ops-engineer",
+        "claude-world/super-helper",
+        "code-yeongyu/github-triage",
+        "code-yeongyu/pre-publish-review",
+        "cubenlp/dns",
+        "davila7/autogpt-agents",
+        "eosphoros-ai/walmart-sales-analyzer",
+        "eric861129/charles-proxy-extract",
+        "fcakyon/agent-browser",
+        "fcakyon/electron",
+        "feiskyer/codex-skill",
+        "gbessoni/seobuild-onpage",
+        "hashgraph-online/power-automate-monitoring",
+        "hashgraph-online/seo-backlinks",
+        "instavm/image-crop-rotate",
+        "instavm/pdf-text-replace",
+        "jezweb/brains-trust",
+        "jmagly/aiwg-regenerate-codex",
+        "joelhooks/docker-sandbox",
+        "keep-starknet-strange/starknet-agentic-skills",
+        "laguagu/ai-app",
+        "lingxling/avalonia-zafiro-development",
+        "lingxling/docx-official",
+        "luochang212/dive-into-langgraph",
+        "mcp-use/chatgpt-app-builder",
+        "mcp-use/mcp-apps-builder",
+        "microsoft/azure-ai-agents-persistent-dotnet",
+        "microsoft/azure-aigateway",
+        "mikedemarais/grok-skill",
+        "mk-knight23/agency-image-prompt-engineer",
+        "mnfst/manifest",
+        "mule-ai/mule-api",
+        "mvanhorn/last30days",
+        "nashsu/autocli",
+        "nicepkg/resource-scout",
+        "poemswe/academic-writing",
+        "ruska-ai/ralpharchive",
+        "shoryasethia/markdrop",
+        "sterlingcrispin/auditcodex",
+        "sterlingcrispin/auditcodexdirect",
+        "terrylica/server",
+        "theneoai/systems-engineer",
+        "trailofbits/agentic-actions-auditor",
+        "wanshuiyin/ablation-planner",
+        "wanshuiyin/comm-lit-review-claude-single",
+        "waynesutton/convex-agents",
+        "youware-labs/agent-builder",
+        "zscole/adversarial-spec"
+      ]
+    },
+    "anthropic": {
+      "name": "Anthropic",
+      "id": "anthropic",
+      "category": "AI",
+      "url": "https://anthropic.com",
+      "skill_count": 130,
+      "skills": [
+        "0xDarkMatter/find-replace",
+        "0xmariowu/search-conference-talks",
+        "AbYousef739/clawcache-free",
+        "Aradotso/openclaude-multi-llm",
+        "BbgnsurfTech/generating-docker-compose-files",
+        "Classic298/visualize",
+        "ComposioHQ/artifacts-builder",
+        "ComposioHQ/brand-guidelines",
+        "ComposioHQ/canvas-design",
+        "ComposioHQ/remotion-best-practices",
+        "CorporateSmalltalkConsultingLtd/smalltalk-mcp",
+        "Donchitos/adopt",
+        "Donchitos/architecture-decision",
+        "FlorianBruniaux/ccboard",
+        "FlorianBruniaux/cyber-defense-team",
+        "JuliusBrussee/caveman",
+        "JuliusBrussee/compress",
+        "K-Dense-AI/research-lookup",
+        "LeastBit/docx",
+        "LeeJuOh/claw-mo-down",
+        "Mann1988/mckinsey-consultant",
+        "Mann1988/us-gov-shutdown-tracker",
+        "NousResearch/blackbox",
+        "NousResearch/honcho",
+        "OpenAEC-Foundation/frappe-core-permissions",
+        "Prat011/algorithmic-art",
+        "Prat011/artifacts-builder",
+        "Quintui/depresearch",
+        "SamJHudson01/spec-writer",
+        "aaronjmars/agent-credit",
+        "addyosmani/browser-testing-with-devtools",
+        "aden-hive/browser-edge-cases",
+        "aden-hive/hive.batch-ledger",
+        "affaan-m/ck",
+        "affaan-m/videodb",
+        "alffei/writing-skills",
+        "alirezarezvani/adversarial-reviewer",
+        "alirezarezvani/code-to-prd",
+        "ancoleman/administering-linux",
+        "ancoleman/ai-data-engineering",
+        "anthropics/access",
+        "anthropics/configure",
+        "breath57/dingtalk-ai-table",
+        "breath57/dingtalk-ai-web-search",
+        "claude-world/auto-loop",
+        "claude-world/changelog",
+        "code-yeongyu/github-triage",
+        "code-yeongyu/pre-publish-review",
+        "cyijun/smith-matrix",
+        "danielmiessler/prompting",
+        "davila7/autogpt-agents",
+        "davila7/crewai-multi-agent",
+        "doncheli/doncheli-api-contract",
+        "doncheli/doncheli-prd",
+        "escapeboy/update-docs",
+        "florianbonnet14/analysis-planner",
+        "florianbonnet14/analytics-orchestrator",
+        "foryourhealth111-pixel/autonomous-builder",
+        "foryourhealth111-pixel/benchling-integration",
+        "fvadicamo/creating-skills",
+        "fvadicamo/github-pr-creation",
+        "gotalab/opus-4-5-migration",
+        "guanyang/algorithmic-art",
+        "guanyang/planning-with-files",
+        "ilang-ai/auto-quality",
+        "ilang-ai/best-choice",
+        "instavm/image-crop-rotate",
+        "instavm/pdf-text-replace",
+        "itsmostafa/bedrock",
+        "jeremylongshore/building-terraform-modules",
+        "jeremylongshore/juicebox-performance-tuning",
+        "jezweb/brains-trust",
+        "jezweb/cloudflare-api",
+        "jmagly/aiwg-regenerate-codex",
+        "jmagly/issue-update",
+        "keysersoose/agent-builder",
+        "laguagu/ai-app",
+        "laguagu/ai-elements",
+        "levnikolaevich/ln-001-push-all",
+        "levnikolaevich/ln-002-session-analyzer",
+        "lingxling/avalonia-zafiro-development",
+        "lingxling/docx-official",
+        "maton-ai/api-gateway",
+        "maxritter/create-skill",
+        "maxritter/prd",
+        "mcpware/organize",
+        "memvid/memory",
+        "memvid/mind",
+        "mhattingpete/code-execution",
+        "mhattingpete/code-refactor",
+        "mikedemarais/grok-skill",
+        "mnfst/manifest",
+        "nicepkg/resource-scout",
+        "op7418/feishu-bitable",
+        "op7418/feishu-create-doc",
+        "open-agreements/cloud-service-agreement",
+        "open-agreements/data-privacy-agreement",
+        "oprogramadorreal/brainstorm",
+        "oprogramadorreal/branch",
+        "parmartejass/governance-autoresearch",
+        "qwibitai/get-qodo-rules",
+        "qwibitai/qodo-pr-resolver",
+        "rtk-ai/code-simplifier",
+        "rtk-ai/design-patterns",
+        "ruvnet/flow-nexus-neural",
+        "ruvnet/flow-nexus-platform",
+        "santifer/career-ops",
+        "shajith003/algorithmic-art",
+        "shajith003/artifacts-builder",
+        "shanraisshan/agent-browser",
+        "shanraisshan/time-skill",
+        "shoryasethia/markdrop",
+        "tebjan/vvvv-editor-extensions",
+        "terrylica/server",
+        "terrylica/telemetry-terminology-similarity",
+        "thedotmack/knowledge-agent",
+        "thedotmack/make-plan",
+        "tylerwind/writing-skills",
+        "vibeeval/browser-automation",
+        "vibeeval/help",
+        "wshobson/multi-reviewer-patterns",
+        "wshobson/parallel-debugging",
+        "xiaobei930/api",
+        "xiaobei930/architecture",
+        "xu-xiang/golang-testing",
+        "youware-labs/agent-builder",
+        "zebbern/active-directory-attacks",
+        "zebbern/agent-skills-authoring",
+        "zebbern/api-fuzzing-for-bug-bounty",
+        "zscole/adversarial-spec"
+      ]
+    },
+    "huggingface": {
+      "name": "Hugging Face",
+      "id": "huggingface",
+      "category": "AI",
+      "url": "https://huggingface.co",
+      "skill_count": 10,
+      "skills": [
+        "Orchestra-Research/autoresearch",
+        "Orchestra-Research/implementing-llms-litgpt",
+        "bage2014/ai-tools",
+        "damionrashford/rival-search-mcp",
+        "lingxling/avalonia-zafiro-development",
+        "lingxling/docx-official",
+        "nashsu/autocli",
+        "ruvnet/flow-nexus-neural",
+        "ruvnet/flow-nexus-platform",
+        "theoddden/terradev-gpu-cloud"
+      ]
+    },
+    "stability-ai": {
+      "name": "Stability AI",
+      "id": "stability-ai",
+      "category": "AI",
+      "url": "https://stability.ai",
+      "skill_count": 4,
+      "skills": [
+        "AndyShaman/gemini-mcp",
+        "AndyShaman/whisk-proxy",
+        "itsmostafa/bedrock",
+        "mk-knight23/agency-image-prompt-engineer"
+      ]
+    },
+    "langchain": {
+      "name": "LangChain",
+      "id": "langchain",
+      "category": "AI",
+      "url": "https://langchain.com",
+      "skill_count": 7,
+      "skills": [
+        "davila7/autogpt-agents",
+        "davila7/crewai-multi-agent",
+        "giuseppe-trisciuoglio/chunking-strategy",
+        "giuseppe-trisciuoglio/prompt-engineering",
+        "luochang212/dive-into-langgraph",
+        "ruska-ai/ralpharchive",
+        "yonatangross/i18n-date-patterns"
+      ]
+    },
+    "ollama": {
+      "name": "Ollama",
+      "id": "ollama",
+      "category": "AI",
+      "url": "https://ollama.com",
+      "skill_count": 12,
+      "skills": [
+        "AbYousef739/clawcache-free",
+        "Aradotso/openclaude-multi-llm",
+        "CoWork-OS/idea-validation",
+        "Miosa-osa/hire",
+        "SynaLinks/synalinks",
+        "diagnostikon/opengork",
+        "groeimetai/gliderecord-patterns",
+        "omar-A-hassan/uniprot",
+        "ruska-ai/ralpharchive",
+        "theoddden/terradev-gpu-cloud",
+        "xuiltul/google-calendar-tool",
+        "xuiltul/local-llm-tool"
+      ]
+    },
+    "aws": {
+      "name": "AWS",
+      "id": "aws",
+      "category": "Cloud",
+      "url": "https://aws.amazon.com",
+      "skill_count": 9,
+      "skills": [
+        "gotalab/opus-4-5-migration",
+        "hoangsonww/health-check",
+        "itsmostafa/bedrock",
+        "shepherdjerred/hono-helper",
+        "webiny/webiny-api-event-publisher-catalog",
+        "webiny/webiny-skill-generator",
+        "zscole/adversarial-spec",
+        "zxkane/aws-agentic-ai",
+        "zxkane/aws-cdk-development"
+      ]
+    },
+    "gcp": {
+      "name": "Google Cloud",
+      "id": "gcp",
+      "category": "Cloud",
+      "url": "https://cloud.google.com",
+      "skill_count": 9,
+      "skills": [
+        "LukasNiessen/terrashark",
+        "ar0cket1/google-workspace",
+        "gotalab/opus-4-5-migration",
+        "indranilbanerjee/anomaly-scan",
+        "indranilbanerjee/competitor-monitor",
+        "marin-community/dev-tpu-ray",
+        "mprove-io/mprove-build-dashboard",
+        "trailofbits/firebase-apk-scanner",
+        "windmill-labs/write-script-bigquery"
+      ]
+    },
+    "azure": {
+      "name": "Azure",
+      "id": "azure",
+      "category": "Cloud",
+      "url": "https://azure.microsoft.com",
+      "skill_count": 14,
+      "skills": [
+        "LukasNiessen/terrashark",
+        "MicrosoftDocs/azure-active-directory-b2c",
+        "MicrosoftDocs/microsoft-foundry-classic",
+        "curiositech/terraform-iac-expert",
+        "gotalab/opus-4-5-migration",
+        "jeremylongshore/building-terraform-modules",
+        "microsoft/appinsights-instrumentation",
+        "microsoft/azure-ai-agents-persistent-dotnet",
+        "microsoft/azure-aigateway",
+        "qwibitai/qodo-pr-resolver",
+        "sanjay3290/azure-devops",
+        "snyk/drift-detector",
+        "webmaxru/agent-skill-deploy",
+        "xixu-me/github-actions-docs"
+      ]
+    },
+    "cloudflare": {
+      "name": "Cloudflare",
+      "id": "cloudflare",
+      "category": "Cloud",
+      "url": "https://cloudflare.com",
+      "skill_count": 8,
+      "skills": [
+        "chenhunghan/code-mode",
+        "glitternetwork/pinme",
+        "ilang-ai/best-choice",
+        "jezweb/brains-trust",
+        "jezweb/cloudflare-api",
+        "secondsky/cloudflare-d1",
+        "secondsky/inspira-ui",
+        "shepherdjerred/hono-helper"
+      ]
+    },
+    "vercel": {
+      "name": "Vercel",
+      "id": "vercel",
+      "category": "Cloud",
+      "url": "https://vercel.com",
+      "skill_count": 14,
+      "skills": [
+        "CherryHQ/vercel-react-best-practices",
+        "MystenLabs/memwal",
+        "RKiding/alphaear-deepear-lite",
+        "geoffreycrofte/raam-audit",
+        "geoffreycrofte/raam-code",
+        "itsOmSarraf/vercel-github-actions-deploy",
+        "laguagu/ai-app",
+        "laguagu/ai-elements",
+        "lingxling/avalonia-zafiro-development",
+        "lingxling/docx-official",
+        "majiayu000/code-review",
+        "majiayu000/idea-new",
+        "shepherdjerred/hono-helper",
+        "tonone-ai/forge-cost"
+      ]
+    },
+    "netlify": {
+      "name": "Netlify",
+      "id": "netlify",
+      "category": "Cloud",
+      "url": "https://netlify.com",
+      "skill_count": 1,
+      "skills": [
+        "tonone-ai/forge-cost"
+      ]
+    },
+    "supabase": {
+      "name": "Supabase",
+      "id": "supabase",
+      "category": "Cloud",
+      "url": "https://supabase.com",
+      "skill_count": 2,
+      "skills": [
+        "benjaminshoemaker/codex-review",
+        "mattgierhart/prd-v05-technical-stack-selection"
+      ]
+    },
+    "firebase": {
+      "name": "Firebase",
+      "id": "firebase",
+      "category": "Cloud",
+      "url": "https://firebase.google.com",
+      "skill_count": 5,
+      "skills": [
+        "evanca/firebase-in-app-messaging",
+        "fivestones/instantdb",
+        "kumaran-is/angular-spa",
+        "niklam/website",
+        "trailofbits/firebase-apk-scanner"
+      ]
+    },
+    "convex": {
+      "name": "Convex",
+      "id": "convex",
+      "category": "Cloud",
+      "url": "https://convex.dev",
+      "skill_count": 3,
+      "skills": [
+        "CloudAI-X/convex-backend",
+        "waynesutton/convex-agents",
+        "waynesutton/convex-component-authoring"
+      ]
+    },
+    "github": {
+      "name": "GitHub",
+      "id": "github",
+      "category": "DevTools",
+      "url": "https://github.com",
+      "skill_count": 51,
+      "skills": [
+        "AgnosticUI/fix-github-issue",
+        "Arcobalneo/gameclaw",
+        "Bhanunamikaze/seo",
+        "CatREFuse/cls-certify",
+        "Chachamaru127/ci",
+        "CloudAI-X/analyzing-projects",
+        "ComposioHQ/agent-orchestrator",
+        "DataRecce/claude-code-review",
+        "Jeffallan/code-reviewer",
+        "Mindrally/bitbucket-workflow",
+        "NSEvteev/merge",
+        "OutlineDriven/gh-fix-ci",
+        "RoopikLabs/create-pr",
+        "Viniciuscarvalho/swift-code-reviewer",
+        "abhinav/pull-request",
+        "automazeio/ccpm",
+        "breaking-brake/pr-review-analysis",
+        "cassiozen/ux-antipatterns",
+        "chenhunghan/code-mode",
+        "cohen-liel/gh-issues",
+        "computerlovetech/agr-release",
+        "damionrashford/rival-search-mcp",
+        "dchuk/testing-tauri-apps",
+        "escapeboy/update-docs",
+        "evalstate/pr-writing-review",
+        "fvadicamo/github-pr-creation",
+        "github/debugging-workflows",
+        "itsOmSarraf/vercel-github-actions-deploy",
+        "jaem1n207/code-reviewer",
+        "jnMetaCode/chinese-commit-conventions",
+        "joshmanders/github",
+        "keysersoose/agent-builder",
+        "lowdefy/l-pr",
+        "microsoft/create-pr",
+        "mnapoli/unknown-skill",
+        "mnfst/ensure-manifest-docs-consistency",
+        "nicepkg/resource-scout",
+        "oaustegard/creating-bookmarklets",
+        "open-gitagent/code-review",
+        "posit-dev/pr-create",
+        "rhesis-ai/sprint-review",
+        "sapiencexyz/push-pr",
+        "serejaris/weekly-retro",
+        "teng-lin/notebooklm",
+        "testdino-hq/playwright-skill",
+        "tirth8205/review-pr",
+        "trailofbits/agentic-actions-auditor",
+        "webmaxru/agent-skill-deploy",
+        "xixu-me/github-actions-docs",
+        "ykdojo/gha",
+        "yusufkaraaslan/skill-builder"
+      ]
+    },
+    "gitlab": {
+      "name": "GitLab",
+      "id": "gitlab",
+      "category": "DevTools",
+      "url": "https://gitlab.com",
+      "skill_count": 5,
+      "skills": [
+        "qwibitai/qodo-pr-resolver",
+        "redhat-developer/cqa-00b-directory-structure",
+        "testdino-hq/playwright-skill",
+        "trsoliu/mini-wiki",
+        "xixu-me/github-actions-docs"
+      ]
+    },
+    "bitbucket": {
+      "name": "Bitbucket",
+      "id": "bitbucket",
+      "category": "DevTools",
+      "url": "https://bitbucket.org",
+      "skill_count": 3,
+      "skills": [
+        "Mindrally/bitbucket-workflow",
+        "qwibitai/qodo-pr-resolver",
+        "trsoliu/mini-wiki"
+      ]
+    },
+    "circleci": {
+      "name": "CircleCI",
+      "id": "circleci",
+      "category": "DevTools",
+      "url": "https://circleci.com",
+      "skill_count": 2,
+      "skills": [
+        "testdino-hq/playwright-skill",
+        "xixu-me/github-actions-docs"
+      ]
+    },
+    "jenkins": {
+      "name": "Jenkins",
+      "id": "jenkins",
+      "category": "DevTools",
+      "url": "https://jenkins.io",
+      "skill_count": 3,
+      "skills": [
+        "kubesphere/kubesphere-devops-credentials",
+        "testdino-hq/playwright-skill",
+        "xixu-me/github-actions-docs"
+      ]
+    },
+    "slack": {
+      "name": "Slack",
+      "id": "slack",
+      "category": "Communication",
+      "url": "https://slack.com",
+      "skill_count": 1,
+      "skills": [
+        "maton-ai/api-gateway"
+      ]
+    },
+    "telegram": {
+      "name": "Telegram",
+      "id": "telegram",
+      "category": "Communication",
+      "url": "https://telegram.org",
+      "skill_count": 2,
+      "skills": [
+        "anthropics/configure",
+        "kfastov/tgcli"
+      ]
+    },
+    "twilio": {
+      "name": "Twilio",
+      "id": "twilio",
+      "category": "Communication",
+      "url": "https://twilio.com",
+      "skill_count": 2,
+      "skills": [
+        "kaivyy/voice-call",
+        "team-telnyx/telnyx-sip-integrations-python"
+      ]
+    },
+    "resend": {
+      "name": "Resend",
+      "id": "resend",
+      "category": "Communication",
+      "url": "https://resend.com",
+      "skill_count": 1,
+      "skills": [
+        "resend/resend-cli"
+      ]
+    },
+    "shopify": {
+      "name": "Shopify",
+      "id": "shopify",
+      "category": "Commerce",
+      "url": "https://shopify.com",
+      "skill_count": 6,
+      "skills": [
+        "OrcaQubits/acp-checkout-mcp",
+        "Shopify/shopify-customer",
+        "maton-ai/api-gateway",
+        "nexscope-ai/brand-monitoring",
+        "nexscope-ai/brand-protection-shopify",
+        "promptadvisers/n8n-workflow-architect"
+      ]
+    },
+    "postgres": {
+      "name": "PostgreSQL",
+      "id": "postgres",
+      "category": "Database",
+      "url": "https://postgresql.org",
+      "skill_count": 17,
+      "skills": [
+        "Altinn/docker",
+        "BagelHole/aws-rds",
+        "JetBrains/check-coverage",
+        "TheStack-ai/swing-mortem",
+        "badhope/database-design",
+        "dev-five-git/vespertide",
+        "kumaran-is/angular-spa",
+        "macro-inc/dump-schema",
+        "mprove-io/mprove-build-dashboard",
+        "mule-ai/mule-api",
+        "sanjay3290/azure-devops",
+        "sanjay3290/deep-research",
+        "sleepyvani/qt-qml",
+        "timescale/design-postgis-tables",
+        "timescale/find-hypertable-candidates",
+        "windmill-labs/write-script-bigquery",
+        "windmill-labs/write-script-graphql"
+      ]
+    },
+    "mongodb": {
+      "name": "MongoDB",
+      "id": "mongodb",
+      "category": "Database",
+      "url": "https://mongodb.com",
+      "skill_count": 5,
+      "skills": [
+        "badhope/database-design",
+        "ezbuy/ezorm-skills",
+        "hoangsonww/health-check",
+        "kaivyy/perseus-logic",
+        "sleepyvani/qt-qml"
+      ]
+    },
+    "redis": {
+      "name": "Redis",
+      "id": "redis",
+      "category": "Database",
+      "url": "https://redis.io",
+      "skill_count": 7,
+      "skills": [
+        "ComeOnOliver/exa-webhooks-events",
+        "badhope/database-design",
+        "bage2014/ai-tools",
+        "jnMetaCode/chinese-commit-conventions",
+        "mozilla/fxa-review-quick",
+        "oliver-kriska/labautoresearch",
+        "sleepyvani/qt-qml"
+      ]
+    },
+    "mysql": {
+      "name": "MySQL",
+      "id": "mysql",
+      "category": "Database",
+      "url": "https://mysql.com",
+      "skill_count": 8,
+      "skills": [
+        "BagelHole/aws-rds",
+        "JetBrains/check-coverage",
+        "badhope/database-design",
+        "dev-five-git/vespertide",
+        "ezbuy/ezorm-skills",
+        "sanjay3290/azure-devops",
+        "sanjay3290/deep-research",
+        "sleepyvani/qt-qml"
+      ]
+    },
+    "sqlite": {
+      "name": "SQLite",
+      "id": "sqlite",
+      "category": "Database",
+      "url": "https://sqlite.org",
+      "skill_count": 21,
+      "skills": [
+        "AbYousef739/clawcache-free",
+        "Bumblebiber/hmem-setup",
+        "KrauseFx/beeper-cli",
+        "NousResearch/blackbox",
+        "Zaloog/kanban-tui",
+        "agenmod/immortal-skill",
+        "cathrynlavery/voice-memo-organizer",
+        "dev-five-git/vespertide",
+        "dztabel-happy/codex-agent",
+        "ilang-ai/best-choice",
+        "lee-fuhr/session-index",
+        "liliang-cn/cortexdb",
+        "markmhendrickson/recover_sqlite_database",
+        "memvid/memory",
+        "memvid/mind",
+        "secondsky/cloudflare-d1",
+        "sleepyvani/qt-qml",
+        "swarm-ai-safety/swarm-safety",
+        "thedotmack/knowledge-agent",
+        "thedotmack/make-plan",
+        "tirth8205/build-graph"
+      ]
+    },
+    "elasticsearch": {
+      "name": "Elasticsearch",
+      "id": "elasticsearch",
+      "category": "Database",
+      "url": "https://elastic.co",
+      "skill_count": 3,
+      "skills": [
+        "TerminalSkills/search-engine-setup",
+        "baotoq/dotnet-core-expert",
+        "quickwit-oss/simple-pr"
+      ]
+    },
+    "weaviate": {
+      "name": "Weaviate",
+      "id": "weaviate",
+      "category": "Database",
+      "url": "https://weaviate.io",
+      "skill_count": 1,
+      "skills": [
+        "yusufkaraaslan/skill-builder"
+      ]
+    },
+    "qdrant": {
+      "name": "Qdrant",
+      "id": "qdrant",
+      "category": "Database",
+      "url": "https://qdrant.tech",
+      "skill_count": 1,
+      "skills": [
+        "yusufkaraaslan/skill-builder"
+      ]
+    },
+    "chromadb": {
+      "name": "ChromaDB",
+      "id": "chromadb",
+      "category": "Database",
+      "url": "https://trychroma.com",
+      "skill_count": 4,
+      "skills": [
+        "memvid/memory",
+        "memvid/mind",
+        "thedotmack/knowledge-agent",
+        "thedotmack/make-plan"
+      ]
+    },
+    "datadog": {
+      "name": "Datadog",
+      "id": "datadog",
+      "category": "Monitoring",
+      "url": "https://datadoghq.com",
+      "skill_count": 2,
+      "skills": [
+        "datadog-labs/dd-debugger",
+        "quickwit-oss/simple-pr"
+      ]
+    },
+    "sentry": {
+      "name": "Sentry",
+      "id": "sentry",
+      "category": "Monitoring",
+      "url": "https://sentry.io",
+      "skill_count": 1,
+      "skills": [
+        "getsentry/upgrade-otel"
+      ]
+    },
+    "grafana": {
+      "name": "Grafana",
+      "id": "grafana",
+      "category": "Monitoring",
+      "url": "https://grafana.com",
+      "skill_count": 2,
+      "skills": [
+        "Altinn/docker",
+        "Hmbown/magic-mouth"
+      ]
+    },
+    "posthog": {
+      "name": "PostHog",
+      "id": "posthog",
+      "category": "Analytics",
+      "url": "https://posthog.com",
+      "skill_count": 1,
+      "skills": [
+        "PostHog/error-tracking-go"
+      ]
+    },
+    "docker": {
+      "name": "Docker",
+      "id": "docker",
+      "category": "Infrastructure",
+      "url": "https://docker.com",
+      "skill_count": 15,
+      "skills": [
+        "Altinn/docker",
+        "BbgnsurfTech/generating-docker-compose-files",
+        "CloudAI-X/analyzing-projects",
+        "JuliusBrussee/compress",
+        "Lum1104/understand-chat",
+        "Lum1104/understand-dashboard",
+        "RaheesAhmed/python-engineer",
+        "awslabs/aws-architecture-diagram",
+        "davila7/autogpt-agents",
+        "hoangsonww/health-check",
+        "kurtosis-tech/cluster-manage",
+        "kurtosis-tech/starlark-dev",
+        "oimiragieo/container-expert",
+        "testdino-hq/playwright-skill",
+        "webmaxru/agent-skill-deploy"
+      ]
+    },
+    "kubernetes": {
+      "name": "Kubernetes",
+      "id": "kubernetes",
+      "category": "Infrastructure",
+      "url": "https://kubernetes.io",
+      "skill_count": 29,
+      "skills": [
+        "BagelHole/aws-rds",
+        "CloudAI-X/analyzing-projects",
+        "MicrosoftDocs/azure-active-directory-b2c",
+        "MicrosoftDocs/microsoft-foundry-classic",
+        "TencentBlueKing/node.js-",
+        "ancoleman/administering-linux",
+        "baotoq/dotnet-core-expert",
+        "boshu2/council",
+        "chenhunghan/code-mode",
+        "crazygit/kube-audit-kit",
+        "curiositech/terraform-iac-expert",
+        "diegosouzapw/kubernetes",
+        "dstackai/dstack",
+        "fluxcd/gitops-repo-audit",
+        "hoangsonww/health-check",
+        "i-am-bee/agentstack-server-debugging",
+        "kubesphere/kubesphere-devops-argocd",
+        "kubesphere/kubesphere-devops-credentials",
+        "kurtosis-tech/cluster-manage",
+        "kurtosis-tech/starlark-dev",
+        "nouamanecodes/lettactl",
+        "o11y-dev/opentelemetry-skill",
+        "oimiragieo/container-expert",
+        "samber/golang-cli",
+        "sandbox0-ai/sandbox0",
+        "sanjay3290/deep-research",
+        "theoddden/terradev-gpu-cloud",
+        "vinta/sync-skills",
+        "xixu-me/secure-linux-web-hosting"
+      ]
+    },
+    "terraform": {
+      "name": "Terraform",
+      "id": "terraform",
+      "category": "Infrastructure",
+      "url": "https://terraform.io",
+      "skill_count": 11,
+      "skills": [
+        "BagelHole/aws-rds",
+        "CloudAI-X/analyzing-projects",
+        "LukasNiessen/terrashark",
+        "antonbabenko/terraform-skill",
+        "awslabs/aws-architecture-diagram",
+        "curiositech/terraform-iac-expert",
+        "hoangsonww/health-check",
+        "jeremylongshore/building-terraform-modules",
+        "snyk/drift-detector",
+        "theoddden/terradev-gpu-cloud",
+        "tonone-ai/forge-cost"
+      ]
+    },
+    "react": {
+      "name": "React",
+      "id": "react",
+      "category": "Frontend",
+      "url": "https://react.dev",
+      "skill_count": 23,
+      "skills": [
+        "AgnosticUI/fix-github-issue",
+        "AgnosticUI/implement-ag-playbook",
+        "CherryHQ/vercel-react-best-practices",
+        "ComposioHQ/artifacts-builder",
+        "ComposioHQ/remotion-best-practices",
+        "HoangNguyen0403/angular-testing",
+        "HoangNguyen0403/common-api-design",
+        "JuliusBrussee/caveman",
+        "LottieFiles/dotlottie-web",
+        "Prat011/artifacts-builder",
+        "TanStack/devtools-app-setup",
+        "aiskillstore/prototype-to-production",
+        "glitternetwork/pinme",
+        "lablup/create-relay-nodes-component",
+        "mcp-use/chatgpt-app-builder",
+        "mxyhi/opencli",
+        "resend/resend-cli",
+        "shajith003/artifacts-builder",
+        "shelby/shelby",
+        "shepherdjerred/hono-helper",
+        "srdjan/zigts-expert",
+        "tripleyak/skillforge",
+        "yonatangross/i18n-date-patterns"
+      ]
+    },
+    "nextjs": {
+      "name": "Next.js",
+      "id": "nextjs",
+      "category": "Frontend",
+      "url": "https://nextjs.org",
+      "skill_count": 30,
+      "skills": [
+        "CherryHQ/vercel-react-best-practices",
+        "CloudAI-X/analyzing-projects",
+        "ComeOnOliver/canva-debug-bundle",
+        "ComeOnOliver/exa-webhooks-events",
+        "HoangNguyen0403/angular-testing",
+        "HoangNguyen0403/common-api-design",
+        "InfinityLoopLabs/library-build-sync",
+        "JCodesMore/clone-website",
+        "LottieFiles/dotlottie-web",
+        "Prismer-AI/community-browse",
+        "SamJHudson01/spec-writer",
+        "TanStack/lifecyclemigrate-from-nextjs",
+        "alirezarezvani/code-to-prd",
+        "bfree-trainer/colorize",
+        "getsentry/upgrade-otel",
+        "hoangsonww/health-check",
+        "ilang-ai/best-choice",
+        "kaivyy/perseus-logic",
+        "laguagu/ai-app",
+        "laguagu/ai-elements",
+        "lowdefy/l-pr",
+        "mattgierhart/prd-v05-technical-stack-selection",
+        "mcp-use/mcp-apps-builder",
+        "op7418/feishu-bitable",
+        "op7418/feishu-create-doc",
+        "suzuki3jp/create-spec",
+        "testdino-hq/playwright-core",
+        "testdino-hq/playwright-skill",
+        "webiny/webiny-api-event-publisher-catalog",
+        "webiny/webiny-skill-generator"
+      ]
+    },
+    "vue": {
+      "name": "Vue.js",
+      "id": "vue",
+      "category": "Frontend",
+      "url": "https://vuejs.org",
+      "skill_count": 7,
+      "skills": [
+        "CloudAI-X/analyzing-projects",
+        "alirezarezvani/code-to-prd",
+        "antfu/vueuse-functions",
+        "clerk/clerk-vue-patterns",
+        "sailscastshq/pellicule",
+        "secondsky/inspira-ui",
+        "vueuse/vueuse-functions"
+      ]
+    },
+    "svelte": {
+      "name": "Svelte",
+      "id": "svelte",
+      "category": "Frontend",
+      "url": "https://svelte.dev",
+      "skill_count": 5,
+      "skills": [
+        "AgnosticUI/fix-github-issue",
+        "AgnosticUI/implement-ag-playbook",
+        "LottieFiles/dotlottie-web",
+        "alirezarezvani/code-to-prd",
+        "seb1n/frontend-design"
+      ]
+    },
+    "angular": {
+      "name": "Angular",
+      "id": "angular",
+      "category": "Frontend",
+      "url": "https://angular.dev",
+      "skill_count": 2,
+      "skills": [
+        "HoangNguyen0403/angular-testing",
+        "kumaran-is/angular-spa"
+      ]
+    },
+    "tailwindcss": {
+      "name": "Tailwind CSS",
+      "id": "tailwindcss",
+      "category": "Frontend",
+      "url": "https://tailwindcss.com",
+      "skill_count": 15,
+      "skills": [
+        "ComposioHQ/artifacts-builder",
+        "InfinityLoopLabs/library-build-sync",
+        "JCodesMore/clone-website",
+        "Prat011/artifacts-builder",
+        "TheBushidoCollective/tailwind-configuration",
+        "capawesome-team/ionic-app-creation",
+        "hoangsonww/health-check",
+        "htmlstreamofficial/preline-theme-generator",
+        "kumaran-is/angular-spa",
+        "nextlevelbuilder/ckmbanner-design",
+        "nextlevelbuilder/ckmdesign-system",
+        "seb1n/frontend-design",
+        "secondsky/inspira-ui",
+        "shajith003/artifacts-builder",
+        "simota/flow"
+      ]
+    },
+    "fastapi": {
+      "name": "FastAPI",
+      "id": "fastapi",
+      "category": "Backend",
+      "url": "https://fastapi.tiangolo.com",
+      "skill_count": 11,
+      "skills": [
+        "CloudAI-X/analyzing-projects",
+        "JackyST0/api-doc-generator",
+        "RaheesAhmed/python-engineer",
+        "alirezarezvani/code-to-prd",
+        "borghei/ml-ops-engineer",
+        "dev-five-git/vespera",
+        "kaivyy/perseus-logic",
+        "nicepkg/resource-scout",
+        "pavelzbornik/coverage-check",
+        "win4r/claude-code-dispatch",
+        "yonatangross/i18n-date-patterns"
+      ]
+    },
+    "express": {
+      "name": "Express.js",
+      "id": "express",
+      "category": "Backend",
+      "url": "https://expressjs.com",
+      "skill_count": 1,
+      "skills": [
+        "auth0/auth0-android"
+      ]
+    },
+    "django": {
+      "name": "Django",
+      "id": "django",
+      "category": "Backend",
+      "url": "https://djangoproject.com",
+      "skill_count": 3,
+      "skills": [
+        "CloudAI-X/analyzing-projects",
+        "alirezarezvani/code-to-prd",
+        "kaivyy/perseus-logic"
+      ]
+    },
+    "rails": {
+      "name": "Ruby on Rails",
+      "id": "rails",
+      "category": "Backend",
+      "url": "https://rubyonrails.org",
+      "skill_count": 1,
+      "skills": [
+        "ombulabs/rails-upgrade"
+      ]
+    },
+    "spring": {
+      "name": "Spring",
+      "id": "spring",
+      "category": "Backend",
+      "url": "https://spring.io",
+      "skill_count": 4,
+      "skills": [
+        "CloudAI-X/analyzing-projects",
+        "bage2014/ai-tools",
+        "kaivyy/perseus-logic",
+        "kumaran-is/angular-spa"
+      ]
+    },
+    "laravel": {
+      "name": "Laravel",
+      "id": "laravel",
+      "category": "Backend",
+      "url": "https://laravel.com",
+      "skill_count": 5,
+      "skills": [
+        "HoangNguyen0403/angular-testing",
+        "HoangNguyen0403/common-api-design",
+        "kaivyy/perseus-logic",
+        "laravel/configure-nightwatch",
+        "sailscastshq/pellicule"
+      ]
+    },
+    "vitest": {
+      "name": "Vitest",
+      "id": "vitest",
+      "category": "Testing",
+      "url": "https://vitest.dev",
+      "skill_count": 6,
+      "skills": [
+        "Goldziher/typescript-strictest",
+        "HoangNguyen0403/angular-testing",
+        "dchuk/testing-tauri-apps",
+        "madarasz/e2e",
+        "rnavarych/unit-testing",
+        "rstackjs/migrate-to-rstest"
+      ]
+    },
+    "playwright": {
+      "name": "Playwright",
+      "id": "playwright",
+      "category": "Testing",
+      "url": "https://playwright.dev",
+      "skill_count": 18,
+      "skills": [
+        "Agents365-ai/video-podcast-maker",
+        "JCodesMore/clone-website",
+        "PramodDutta/secret-detection--prevention",
+        "Sunwood-ai-labs/logged-in-google-chrome",
+        "ai-dashboad/e2e-testing",
+        "fcakyon/agent-browser",
+        "hiyeshu/codeck-export",
+        "lackeyjb/playwright-skill",
+        "madarasz/e2e",
+        "malue-ai/deep-research",
+        "mediastormDev/dream-to-video",
+        "megalithic/web-debug",
+        "minsight-ai-info/ai-search-hub",
+        "nashsu/autocli",
+        "rudrankriyam/asc-app-create-ui",
+        "slopus/terminal-emulator",
+        "testdino-hq/playwright-core",
+        "testdino-hq/playwright-skill"
+      ]
+    },
+    "pytest": {
+      "name": "pytest",
+      "id": "pytest",
+      "category": "Testing",
+      "url": "https://docs.pytest.org",
+      "skill_count": 8,
+      "skills": [
+        "AsiaOstrich/ai-instruction-standards",
+        "ByteDance-Seed/veomni-develop",
+        "JetBrains/check-coverage",
+        "RaheesAhmed/python-engineer",
+        "haddock-development/python-project-creator",
+        "omega-memory/omega-memory",
+        "pavelzbornik/coverage-check",
+        "shanselman/nightscout-cgm"
+      ]
+    },
+    "airtable": {
+      "name": "Airtable",
+      "id": "airtable",
+      "category": "Productivity",
+      "url": "https://airtable.com",
+      "skill_count": 3,
+      "skills": [
+        "benjaminasterA/airtable-automation",
+        "maton-ai/api-gateway",
+        "promptadvisers/n8n-workflow-architect"
+      ]
+    },
+    "linear": {
+      "name": "Linear",
+      "id": "linear",
+      "category": "Productivity",
+      "url": "https://linear.app",
+      "skill_count": 2,
+      "skills": [
+        "bdsqqq/git",
+        "wrsmith108/linear"
+      ]
+    },
+    "jira": {
+      "name": "Jira",
+      "id": "jira",
+      "category": "Productivity",
+      "url": "https://atlassian.com/jira",
+      "skill_count": 7,
+      "skills": [
+        "Code-and-Sorts/jira-cli",
+        "LIDR-academy/openspec-ff-change",
+        "Mindrally/bitbucket-workflow",
+        "Zaloog/kanban-tui",
+        "sanjay3290/azure-devops",
+        "sanjay3290/deep-research",
+        "softaworks/daily-meeting-update"
+      ]
+    },
+    "wordpress": {
+      "name": "WordPress",
+      "id": "wordpress",
+      "category": "CMS",
+      "url": "https://wordpress.org",
+      "skill_count": 1,
+      "skills": [
+        "PeterBooker/profile"
+      ]
+    },
+    "auth0": {
+      "name": "Auth0",
+      "id": "auth0",
+      "category": "Auth",
+      "url": "https://auth0.com",
+      "skill_count": 1,
+      "skills": [
+        "auth0/auth0-android"
+      ]
+    },
+    "clerk": {
+      "name": "Clerk",
+      "id": "clerk",
+      "category": "Auth",
+      "url": "https://clerk.com",
+      "skill_count": 1,
+      "skills": [
+        "clerk/clerk-vue-patterns"
+      ]
+    },
+    "oauth": {
+      "name": "OAuth",
+      "id": "oauth",
+      "category": "Auth",
+      "url": "https://oauth.net",
+      "skill_count": 13,
+      "skills": [
+        "ComeOnOliver/canva-debug-bundle",
+        "K-Dense-AI/benchling-integration",
+        "TheStack-ai/swing-clarify",
+        "ar0cket1/google-workspace",
+        "bage2014/ai-tools",
+        "datadog-labs/dd-debugger",
+        "doncheli/doncheli-api-contract",
+        "foryourhealth111-pixel/benchling-integration",
+        "googleworkspace/gws-admin-reports",
+        "googleworkspace/gws-classroom",
+        "maton-ai/api-gateway",
+        "xixu-me/github-actions-docs",
+        "xuiltul/google-calendar-tool"
+      ]
+    },
+    "mcp": {
+      "name": "Model Context Protocol",
+      "id": "mcp",
+      "category": "AI",
+      "url": "https://modelcontextprotocol.io",
+      "skill_count": 98,
+      "skills": [
+        "AgriciDaniel/seo-dataforseo",
+        "AgriciDaniel/seo-image-gen",
+        "AndyShaman/gemini-mcp",
+        "BerriAI/delete-mcp",
+        "Bumblebiber/hmem-setup",
+        "ComposioHQ/abuselpdb-automation",
+        "ComposioHQ/artifacts-builder",
+        "ComposioHQ/canvas-design",
+        "ComposioHQ/ip2location-io-automation",
+        "CorporateSmalltalkConsultingLtd/smalltalk-mcp",
+        "FlorianBruniaux/ccboard",
+        "GoPlausible/haystack-router-interaction",
+        "HLND2T/find-csource2server_init-and-cgameeventmanager_init-and-gameeven",
+        "IgorGanapolsky/agent-memory",
+        "JCodesMore/clone-website",
+        "LIDR-academy/openspec-ff-change",
+        "Lionad-Morotar/-agent-skills",
+        "LukeRenton/build-agent",
+        "NeuZhou/finclaw",
+        "OrcaQubits/acp-checkout-mcp",
+        "RoopikLabs/create-pr",
+        "Yeachan-Heo/ecomode",
+        "addyosmani/browser-testing-with-devtools",
+        "ai-dashboad/e2e-testing",
+        "aimasteracc/plan-design-review",
+        "aiskillstore/claude-code-debug",
+        "alirezarezvani/agent-factory",
+        "anombyte93/sync",
+        "automateyournetwork/gns3-packet-capture",
+        "awslabs/model-deployment",
+        "barry-ran/file-ops",
+        "beita6969/review-writing",
+        "benjaminasterA/airtable-automation",
+        "chenhunghan/code-mode",
+        "christophacham/mezmo-automation",
+        "christophacham/skyfire-automation",
+        "claude-world/notebooklm-research",
+        "cubenlp/dns",
+        "fcakyon/agent-browser",
+        "fcakyon/electron",
+        "groeimetai/gliderecord-patterns",
+        "hvkshetry/weekly-health",
+        "indranilbanerjee/anomaly-scan",
+        "indranilbanerjee/competitor-monitor",
+        "ishu86/ae-mcp",
+        "jazzenchen/vibearound",
+        "jellydn/prd",
+        "jezweb/cloudflare-api",
+        "keysersoose/agent-builder",
+        "kumaran-is/angular-spa",
+        "levnikolaevich/ln-001-push-all",
+        "levnikolaevich/ln-002-session-analyzer",
+        "luongnv89/self-assessment",
+        "madeyexz/heptabase-cli",
+        "mcp-use/chatgpt-app-builder",
+        "mcp-use/mcp-apps-builder",
+        "mcpware/organize",
+        "microsoft/appinsights-instrumentation",
+        "microsoft/azure-ai-agents-persistent-dotnet",
+        "microsoft/azure-aigateway",
+        "microsoft/configure-canvas-mcp",
+        "microsoft/create-pr",
+        "microsoft/edit-action",
+        "microsoft/edit-canvas-app",
+        "mksglu/ctx-doctor",
+        "mksglu/ctx-purge",
+        "mprove-io/mprove-build-dashboard",
+        "nicepkg/resource-scout",
+        "nocobase/nocobase-acl-manage",
+        "oliver-kriska/labautoresearch",
+        "oliver-kriska/lvassigns",
+        "omar-A-hassan/uniprot",
+        "omega-memory/omega-memory",
+        "open-agreements/cloud-service-agreement",
+        "open-agreements/data-privacy-agreement",
+        "openakita/openakitaskillsgmail-automation",
+        "openteams-lab/forcemanager-automation",
+        "rohitg00/cost-tracker",
+        "ruvnet/flow-nexus-neural",
+        "sheeki03/fewword",
+        "srdjan/zigts-expert",
+        "theogbrand/plugin-structure",
+        "timescale/design-postgis-tables",
+        "timescale/find-hypertable-candidates",
+        "tirth8205/build-graph",
+        "vibeeval/browser-automation",
+        "vulhunt-re/byte-pattern-matching",
+        "w-winter/xcodebuildmcp",
+        "webiny/webiny-api-event-publisher-catalog",
+        "webiny/webiny-skill-generator",
+        "wells1137/audiomind",
+        "win4r/claude-code-dispatch",
+        "wrsmith108/linear",
+        "xunhe730/zotpilot",
+        "yangtaihong59/siyuan-mcp-sisyphus",
+        "yusufkaraaslan/skill-builder",
+        "zxkane/aws-agentic-ai",
+        "zxkane/aws-cdk-development"
+      ]
+    },
+    "npm": {
+      "name": "npm",
+      "id": "npm",
+      "category": "DevTools",
+      "url": "https://npmjs.com",
+      "skill_count": 42,
+      "skills": [
+        "Aradotso/openclaude-multi-llm",
+        "Bumblebiber/hmem-setup",
+        "CherryHQ/cherry-pr-test",
+        "Code-and-Sorts/calculator",
+        "IJONIS/geo-lint",
+        "JuliusBrussee/compress",
+        "LottieFiles/dotlottie-web",
+        "MoizIbnYousaf/code-documentation",
+        "NousResearch/blackbox",
+        "Quintui/depresearch",
+        "TanStack/devtools-app-setup",
+        "TermiX-official/bird",
+        "aaronjmars/agent-credit",
+        "ai-dashboad/e2e-testing",
+        "bergside/typeui-cli",
+        "capawesome-team/ionic-app-creation",
+        "cashubtc/cashu-wallet",
+        "code-yeongyu/pre-publish-review",
+        "dchuk/testing-tauri-apps",
+        "eigent-ai/docx",
+        "glitternetwork/pinme",
+        "jzOcb/upgrade-guard",
+        "kfastov/tgcli",
+        "laguagu/ai-elements",
+        "malob/docx",
+        "matsonj/mviz",
+        "membranedev/alphasense",
+        "membranedev/junip",
+        "mxyhi/opencli",
+        "openclaw/alphasense",
+        "openclaw/junip",
+        "openclawfice/openclawfice",
+        "progrmoiz/stripe-pulse",
+        "resend/resend-cli",
+        "shepherdjerred/hono-helper",
+        "sliday/daub-ui",
+        "srod/node-minify",
+        "w-winter/xcodebuildmcp",
+        "waynesutton/convex-agents",
+        "webiny/webiny-skill-generator",
+        "webmaxru/agent-skill-deploy",
+        "zakirkun/missing-or-ignored-dependency-lockfile"
+      ]
+    },
+    "graphql": {
+      "name": "GraphQL",
+      "id": "graphql",
+      "category": "API",
+      "url": "https://graphql.org",
+      "skill_count": 19,
+      "skills": [
+        "JackyST0/api-doc-generator",
+        "Shopify/shopify-customer",
+        "TermiX-official/bird",
+        "addyosmani/api-and-interface-design",
+        "aexol-studio/frontend-navigation",
+        "dojoengine/dojo-indexer",
+        "doncheli/doncheli-api-contract",
+        "first-fluke/oma-backend",
+        "github/phoenix-cli",
+        "holon-run/uxc",
+        "jezweb/cloudflare-api",
+        "joshmanders/github",
+        "lablup/create-relay-nodes-component",
+        "omega-memory/omega-memory",
+        "webiny/webiny-api-event-publisher-catalog",
+        "webiny/webiny-skill-generator",
+        "windmill-labs/write-script-graphql",
+        "wrsmith108/linear",
+        "zebbern/api-fuzzing-for-bug-bounty"
+      ]
+    },
+    "rest-api": {
+      "name": "REST API",
+      "id": "rest-api",
+      "category": "API",
+      "url": "",
+      "skill_count": 25,
+      "skills": [
+        "Aaronontheweb/serialization",
+        "HoangNguyen0403/common-api-design",
+        "JackyST0/api-doc-generator",
+        "K-Dense-AI/benchling-integration",
+        "NousResearch/blackbox",
+        "addyosmani/api-and-interface-design",
+        "aehrc/fhir-api",
+        "alps-asd/alps",
+        "anthropics/build-zoom-phone-integration",
+        "cloudnative-co/coding-standards",
+        "cohen-liel/gh-issues",
+        "decebals/api-contract-review",
+        "first-fluke/oma-backend",
+        "foryourhealth111-pixel/benchling-integration",
+        "itsmostafa/api-gateway",
+        "jabrena/031-architecture-adr-functional-requirements",
+        "jezweb/cloudflare-api",
+        "mukul975/evaluating-threat-intelligence-platforms",
+        "omar-A-hassan/uniprot",
+        "sanjay3290/azure-devops",
+        "win4r/claude-code-dispatch",
+        "xiaobei930/api",
+        "ythx-101/antigravity-bridge",
+        "zebbern/api-fuzzing-for-bug-bounty",
+        "zxkane/aws-agentic-ai"
+      ]
+    },
+    "websocket": {
+      "name": "WebSocket",
+      "id": "websocket",
+      "category": "API",
+      "url": "",
+      "skill_count": 5,
+      "skills": [
+        "FritzAndFriends/bwfc-identity-migration",
+        "itsmostafa/api-gateway",
+        "lablup/create-relay-nodes-component",
+        "offgrid-ing/arpc",
+        "okx/okx-dex-token"
+      ]
+    },
+    "grpc": {
+      "name": "gRPC",
+      "id": "grpc",
+      "category": "API",
+      "url": "https://grpc.io",
+      "skill_count": 5,
+      "skills": [
+        "Aaronontheweb/serialization",
+        "dojoengine/dojo-indexer",
+        "doncheli/doncheli-api-contract",
+        "holon-run/uxc",
+        "o11y-dev/opentelemetry-skill"
+      ]
+    }
+  },
+  "skill_integrations": {
+    "affaan-m/videodb": [
+      "anthropic"
+    ],
+    "affaan-m/ck": [
+      "anthropic"
+    ],
+    "ruvnet/flow-nexus-neural": [
+      "anthropic",
+      "huggingface",
+      "mcp"
+    ],
+    "ruvnet/flow-nexus-platform": [
+      "anthropic",
+      "huggingface"
+    ],
+    "github/phoenix-cli": [
+      "graphql"
+    ],
+    "santifer/career-ops": [
+      "anthropic"
+    ],
+    "qwibitai/get-qodo-rules": [
+      "anthropic"
+    ],
+    "davila7/autogpt-agents": [
+      "openai",
+      "anthropic",
+      "langchain",
+      "docker"
+    ],
+    "davila7/crewai-multi-agent": [
+      "anthropic",
+      "langchain"
+    ],
+    "rtk-ai/code-simplifier": [
+      "anthropic"
+    ],
+    "rtk-ai/design-patterns": [
+      "anthropic"
+    ],
+    "mvanhorn/last30days": [
+      "openai"
+    ],
+    "K-Dense-AI/benchling-integration": [
+      "oauth",
+      "rest-api"
+    ],
+    "TanStack/lifecyclemigrate-from-nextjs": [
+      "nextjs"
+    ],
+    "alirezarezvani/adversarial-reviewer": [
+      "openai",
+      "anthropic"
+    ],
+    "alirezarezvani/code-to-prd": [
+      "openai",
+      "anthropic",
+      "nextjs",
+      "vue",
+      "svelte",
+      "fastapi",
+      "django"
+    ],
+    "Donchitos/adopt": [
+      "anthropic"
+    ],
+    "Donchitos/architecture-decision": [
+      "anthropic"
+    ],
+    "Orchestra-Research/autoresearch": [
+      "huggingface"
+    ],
+    "Orchestra-Research/implementing-llms-litgpt": [
+      "huggingface"
+    ],
+    "AgriciDaniel/seo-image-gen": [
+      "mcp"
+    ],
+    "AgriciDaniel/seo-dataforseo": [
+      "openai",
+      "mcp"
+    ],
+    "mukul975/evaluating-threat-intelligence-platforms": [
+      "rest-api"
+    ],
+    "openclaw/alphasense": [
+      "npm"
+    ],
+    "openclaw/junip": [
+      "npm"
+    ],
+    "microsoft/azure-aigateway": [
+      "openai",
+      "azure",
+      "mcp"
+    ],
+    "jeremylongshore/juicebox-performance-tuning": [
+      "anthropic"
+    ],
+    "jeremylongshore/building-terraform-modules": [
+      "anthropic",
+      "azure",
+      "terraform"
+    ],
+    "timescale/design-postgis-tables": [
+      "postgres",
+      "mcp"
+    ],
+    "timescale/find-hypertable-candidates": [
+      "postgres",
+      "mcp"
+    ],
+    "foryourhealth111-pixel/autonomous-builder": [
+      "anthropic"
+    ],
+    "foryourhealth111-pixel/benchling-integration": [
+      "anthropic",
+      "oauth",
+      "rest-api"
+    ],
+    "samber/golang-cli": [
+      "kubernetes"
+    ],
+    "openakita/openakitaskillsgmail-automation": [
+      "mcp"
+    ],
+    "aaron-he-zhu/geo-content-optimizer": [
+      "openai"
+    ],
+    "jezweb/brains-trust": [
+      "openai",
+      "anthropic",
+      "cloudflare"
+    ],
+    "nextlevelbuilder/ckmbanner-design": [
+      "tailwindcss"
+    ],
+    "nextlevelbuilder/ckmdesign-system": [
+      "tailwindcss"
+    ],
+    "Jeffallan/code-reviewer": [
+      "github"
+    ],
+    "open-gitagent/code-review": [
+      "github"
+    ],
+    "guanyang/planning-with-files": [
+      "anthropic"
+    ],
+    "Chachamaru127/ci": [
+      "github"
+    ],
+    "vibeeval/browser-automation": [
+      "anthropic",
+      "mcp"
+    ],
+    "vibeeval/help": [
+      "anthropic"
+    ],
+    "NousResearch/blackbox": [
+      "openai",
+      "anthropic",
+      "sqlite",
+      "npm",
+      "rest-api"
+    ],
+    "NousResearch/honcho": [
+      "openai",
+      "anthropic"
+    ],
+    "wshobson/multi-reviewer-patterns": [
+      "anthropic"
+    ],
+    "wshobson/parallel-debugging": [
+      "anthropic"
+    ],
+    "qwibitai/qodo-pr-resolver": [
+      "anthropic",
+      "azure",
+      "gitlab",
+      "bitbucket"
+    ],
+    "googleworkspace/gws-admin-reports": [
+      "oauth"
+    ],
+    "googleworkspace/gws-classroom": [
+      "oauth"
+    ],
+    "luongnv89/self-assessment": [
+      "mcp"
+    ],
+    "eigent-ai/docx": [
+      "npm"
+    ],
+    "anthropics/build-zoom-phone-integration": [
+      "rest-api"
+    ],
+    "Lum1104/understand-chat": [
+      "docker"
+    ],
+    "Lum1104/understand-dashboard": [
+      "docker"
+    ],
+    "tirth8205/review-pr": [
+      "github"
+    ],
+    "wanshuiyin/ablation-planner": [
+      "openai"
+    ],
+    "wanshuiyin/comm-lit-review-claude-single": [
+      "openai"
+    ],
+    "ThinkInAIXYZ/algorithmic-art": [
+      "openai"
+    ],
+    "ThinkInAIXYZ/deepchat-settings": [
+      "openai"
+    ],
+    "trailofbits/firebase-apk-scanner": [
+      "gcp",
+      "firebase"
+    ],
+    "mnfst/manifest": [
+      "openai",
+      "anthropic"
+    ],
+    "zebbern/active-directory-attacks": [
+      "anthropic"
+    ],
+    "zebbern/api-fuzzing-for-bug-bounty": [
+      "anthropic",
+      "graphql",
+      "rest-api"
+    ],
+    "FlorianBruniaux/ccboard": [
+      "anthropic",
+      "mcp"
+    ],
+    "FlorianBruniaux/cyber-defense-team": [
+      "anthropic"
+    ],
+    "lowdefy/l-pr": [
+      "github",
+      "nextjs"
+    ],
+    "microsoft/azure-ai-agents-persistent-dotnet": [
+      "openai",
+      "azure",
+      "mcp"
+    ],
+    "AIPexStudio/skill-creator": [
+      "openai"
+    ],
+    "AIPexStudio/ux-audit-walkthrough": [
+      "openai"
+    ],
+    "MoizIbnYousaf/code-documentation": [
+      "npm"
+    ],
+    "awslabs/aws-architecture-diagram": [
+      "docker",
+      "terraform"
+    ],
+    "Agents365-ai/video-podcast-maker": [
+      "openai",
+      "playwright"
+    ],
+    "levnikolaevich/ln-001-push-all": [
+      "anthropic",
+      "mcp"
+    ],
+    "levnikolaevich/ln-002-session-analyzer": [
+      "anthropic",
+      "mcp"
+    ],
+    "ComposioHQ/agent-orchestrator": [
+      "github"
+    ],
+    "antfu/vueuse-functions": [
+      "vue"
+    ],
+    "feiskyer/codex-skill": [
+      "openai"
+    ],
+    "jezweb/cloudflare-api": [
+      "anthropic",
+      "cloudflare",
+      "mcp",
+      "graphql",
+      "rest-api"
+    ],
+    "datadog-labs/dd-debugger": [
+      "datadog",
+      "oauth"
+    ],
+    "microsoft/appinsights-instrumentation": [
+      "azure",
+      "mcp"
+    ],
+    "oliver-kriska/labautoresearch": [
+      "redis",
+      "mcp"
+    ],
+    "oliver-kriska/lvassigns": [
+      "mcp"
+    ],
+    "shanraisshan/agent-browser": [
+      "anthropic"
+    ],
+    "slopus/terminal-emulator": [
+      "playwright"
+    ],
+    "JCodesMore/clone-website": [
+      "nextjs",
+      "tailwindcss",
+      "playwright",
+      "mcp"
+    ],
+    "tirth8205/build-graph": [
+      "sqlite",
+      "mcp"
+    ],
+    "itsmostafa/api-gateway": [
+      "rest-api",
+      "websocket"
+    ],
+    "itsmostafa/bedrock": [
+      "anthropic",
+      "stability-ai",
+      "aws"
+    ],
+    "guanyang/algorithmic-art": [
+      "anthropic"
+    ],
+    "fcakyon/electron": [
+      "openai",
+      "mcp"
+    ],
+    "fcakyon/agent-browser": [
+      "openai",
+      "playwright",
+      "mcp"
+    ],
+    "agenmod/immortal-skill": [
+      "sqlite"
+    ],
+    "majiayu000/code-review": [
+      "vercel"
+    ],
+    "majiayu000/idea-new": [
+      "vercel"
+    ],
+    "CherryHQ/vercel-react-best-practices": [
+      "vercel",
+      "react",
+      "nextjs"
+    ],
+    "eosphoros-ai/walmart-sales-analyzer": [
+      "openai"
+    ],
+    "yusufkaraaslan/skill-builder": [
+      "github",
+      "weaviate",
+      "qdrant",
+      "mcp"
+    ],
+    "danielmiessler/prompting": [
+      "anthropic"
+    ],
+    "addyosmani/api-and-interface-design": [
+      "graphql",
+      "rest-api"
+    ],
+    "addyosmani/browser-testing-with-devtools": [
+      "anthropic",
+      "mcp"
+    ],
+    "teng-lin/notebooklm": [
+      "github"
+    ],
+    "mcp-use/chatgpt-app-builder": [
+      "openai",
+      "react",
+      "mcp"
+    ],
+    "mcp-use/mcp-apps-builder": [
+      "openai",
+      "nextjs",
+      "mcp"
+    ],
+    "JuliusBrussee/compress": [
+      "anthropic",
+      "docker",
+      "npm"
+    ],
+    "JuliusBrussee/caveman": [
+      "anthropic",
+      "react"
+    ],
+    "trailofbits/agentic-actions-auditor": [
+      "openai",
+      "github"
+    ],
+    "mnfst/ensure-manifest-docs-consistency": [
+      "github"
+    ],
+    "evalstate/pr-writing-review": [
+      "github"
+    ],
+    "glitternetwork/pinme": [
+      "cloudflare",
+      "react",
+      "npm"
+    ],
+    "ByteDance-Seed/veomni-develop": [
+      "pytest"
+    ],
+    "AgnosticUI/fix-github-issue": [
+      "github",
+      "react",
+      "svelte"
+    ],
+    "AgnosticUI/implement-ag-playbook": [
+      "react",
+      "svelte"
+    ],
+    "Aaronontheweb/serialization": [
+      "rest-api",
+      "grpc"
+    ],
+    "mozilla/fxa-review-quick": [
+      "redis"
+    ],
+    "awslabs/model-deployment": [
+      "mcp"
+    ],
+    "LottieFiles/dotlottie-web": [
+      "react",
+      "nextjs",
+      "svelte",
+      "npm"
+    ],
+    "TanStack/devtools-app-setup": [
+      "react",
+      "npm"
+    ],
+    "jabrena/031-architecture-adr-functional-requirements": [
+      "rest-api"
+    ],
+    "shanraisshan/time-skill": [
+      "anthropic"
+    ],
+    "quickwit-oss/simple-pr": [
+      "elasticsearch",
+      "datadog"
+    ],
+    "Code-and-Sorts/jira-cli": [
+      "jira"
+    ],
+    "malob/docx": [
+      "npm"
+    ],
+    "microsoft/configure-canvas-mcp": [
+      "mcp"
+    ],
+    "microsoft/edit-canvas-app": [
+      "mcp"
+    ],
+    "secondsky/cloudflare-d1": [
+      "cloudflare",
+      "sqlite"
+    ],
+    "secondsky/inspira-ui": [
+      "cloudflare",
+      "vue",
+      "tailwindcss"
+    ],
+    "resend/resend-cli": [
+      "resend",
+      "react",
+      "npm"
+    ],
+    "automazeio/ccpm": [
+      "github"
+    ],
+    "github/debugging-workflows": [
+      "github"
+    ],
+    "softaworks/daily-meeting-update": [
+      "jira"
+    ],
+    "first-fluke/oma-backend": [
+      "graphql",
+      "rest-api"
+    ],
+    "tripleyak/skillforge": [
+      "react"
+    ],
+    "agentscope-ai/auto-arena": [
+      "openai"
+    ],
+    "srod/node-minify": [
+      "npm"
+    ],
+    "MicrosoftDocs/microsoft-foundry-classic": [
+      "openai",
+      "azure",
+      "kubernetes"
+    ],
+    "MicrosoftDocs/azure-active-directory-b2c": [
+      "openai",
+      "azure",
+      "kubernetes"
+    ],
+    "FritzAndFriends/bwfc-identity-migration": [
+      "websocket"
+    ],
+    "JackyST0/api-doc-generator": [
+      "fastapi",
+      "graphql",
+      "rest-api"
+    ],
+    "computerlovetech/agr-release": [
+      "github"
+    ],
+    "automateyournetwork/gns3-packet-capture": [
+      "mcp"
+    ],
+    "waynesutton/convex-agents": [
+      "openai",
+      "convex",
+      "npm"
+    ],
+    "waynesutton/convex-component-authoring": [
+      "convex"
+    ],
+    "laravel/configure-nightwatch": [
+      "laravel"
+    ],
+    "posit-dev/pr-create": [
+      "github"
+    ],
+    "mxyhi/opencli": [
+      "react",
+      "npm"
+    ],
+    "nexscope-ai/brand-monitoring": [
+      "shopify"
+    ],
+    "nexscope-ai/brand-protection-shopify": [
+      "shopify"
+    ],
+    "CherryHQ/cherry-pr-test": [
+      "npm"
+    ],
+    "aden-hive/browser-edge-cases": [
+      "openai",
+      "anthropic"
+    ],
+    "getsentry/upgrade-otel": [
+      "sentry",
+      "nextjs"
+    ],
+    "dstackai/dstack": [
+      "kubernetes"
+    ],
+    "instavm/image-crop-rotate": [
+      "openai",
+      "anthropic"
+    ],
+    "jnMetaCode/chinese-commit-conventions": [
+      "github",
+      "redis"
+    ],
+    "ReScienceLab/seo-geo": [
+      "openai"
+    ],
+    "Code-and-Sorts/calculator": [
+      "npm"
+    ],
+    "mcpware/organize": [
+      "anthropic",
+      "mcp"
+    ],
+    "mediastormDev/dream-to-video": [
+      "playwright"
+    ],
+    "LukeRenton/build-agent": [
+      "mcp"
+    ],
+    "giuseppe-trisciuoglio/chunking-strategy": [
+      "langchain"
+    ],
+    "giuseppe-trisciuoglio/prompt-engineering": [
+      "langchain"
+    ],
+    "hashgraph-online/seo-backlinks": [
+      "openai"
+    ],
+    "ComposioHQ/brand-guidelines": [
+      "anthropic"
+    ],
+    "Galaxy-Dawn/ml-paper-writing": [
+      "openai"
+    ],
+    "Galaxy-Dawn/writing-anti-ai": [
+      "openai"
+    ],
+    "K-Dense-AI/research-lookup": [
+      "openai",
+      "anthropic"
+    ],
+    "rudrankriyam/asc-app-create-ui": [
+      "playwright"
+    ],
+    "evanca/firebase-in-app-messaging": [
+      "firebase"
+    ],
+    "zscole/adversarial-spec": [
+      "openai",
+      "anthropic",
+      "aws"
+    ],
+    "DataRecce/claude-code-review": [
+      "github"
+    ],
+    "HoangNguyen0403/common-api-design": [
+      "react",
+      "nextjs",
+      "laravel",
+      "rest-api"
+    ],
+    "xuiltul/local-llm-tool": [
+      "ollama"
+    ],
+    "xuiltul/google-calendar-tool": [
+      "ollama",
+      "oauth"
+    ],
+    "testdino-hq/playwright-skill": [
+      "github",
+      "gitlab",
+      "circleci",
+      "jenkins",
+      "docker",
+      "nextjs",
+      "playwright"
+    ],
+    "ai-dashboad/e2e-testing": [
+      "playwright",
+      "mcp",
+      "npm"
+    ],
+    "team-telnyx/telnyx-sip-integrations-python": [
+      "twilio"
+    ],
+    "vinta/sync-skills": [
+      "kubernetes"
+    ],
+    "fluxcd/gitops-repo-audit": [
+      "kubernetes"
+    ],
+    "omega-memory/omega-memory": [
+      "pytest",
+      "mcp",
+      "graphql"
+    ],
+    "lingxling/docx-official": [
+      "openai",
+      "anthropic",
+      "huggingface",
+      "vercel"
+    ],
+    "aden-hive/hive.batch-ledger": [
+      "openai",
+      "anthropic"
+    ],
+    "RKiding/alphaear-deepear-lite": [
+      "vercel"
+    ],
+    "maxritter/create-skill": [
+      "anthropic"
+    ],
+    "maxritter/prd": [
+      "anthropic"
+    ],
+    "ArcReel/generate-storyboard": [
+      "openai"
+    ],
+    "CloudAI-X/analyzing-projects": [
+      "github",
+      "docker",
+      "kubernetes",
+      "terraform",
+      "nextjs",
+      "vue",
+      "fastapi",
+      "django",
+      "spring"
+    ],
+    "CloudAI-X/convex-backend": [
+      "convex"
+    ],
+    "instavm/pdf-text-replace": [
+      "openai",
+      "anthropic"
+    ],
+    "xu-xiang/golang-testing": [
+      "anthropic"
+    ],
+    "vueuse/vueuse-functions": [
+      "vue"
+    ],
+    "barry-ran/file-ops": [
+      "mcp"
+    ],
+    "holon-run/uxc": [
+      "graphql",
+      "grpc"
+    ],
+    "wrsmith108/linear": [
+      "linear",
+      "mcp",
+      "graphql"
+    ],
+    "poemswe/academic-writing": [
+      "openai"
+    ],
+    "Hmbown/magic-mouth": [
+      "grafana"
+    ],
+    "TerminalSkills/search-engine-setup": [
+      "elasticsearch"
+    ],
+    "i-am-bee/agentstack-server-debugging": [
+      "kubernetes"
+    ],
+    "Prismer-AI/community-browse": [
+      "nextjs"
+    ],
+    "HoangNguyen0403/angular-testing": [
+      "react",
+      "nextjs",
+      "angular",
+      "laravel",
+      "vitest"
+    ],
+    "zxkane/aws-agentic-ai": [
+      "aws",
+      "mcp",
+      "rest-api"
+    ],
+    "zxkane/aws-cdk-development": [
+      "aws",
+      "mcp"
+    ],
+    "Zaloog/kanban-tui": [
+      "sqlite",
+      "jira"
+    ],
+    "Classic298/visualize": [
+      "anthropic"
+    ],
+    "openteams-lab/forcemanager-automation": [
+      "mcp"
+    ],
+    "LukasNiessen/terrashark": [
+      "gcp",
+      "azure",
+      "terraform"
+    ],
+    "LIDR-academy/openspec-ff-change": [
+      "jira",
+      "mcp"
+    ],
+    "cohen-liel/gh-issues": [
+      "github",
+      "rest-api"
+    ],
+    "jellydn/prd": [
+      "mcp"
+    ],
+    "hashgraph-online/power-automate-monitoring": [
+      "openai"
+    ],
+    "benjaminasterA/airtable-automation": [
+      "airtable",
+      "mcp"
+    ],
+    "aimasteracc/plan-design-review": [
+      "mcp"
+    ],
+    "kumaran-is/angular-spa": [
+      "firebase",
+      "postgres",
+      "angular",
+      "tailwindcss",
+      "spring",
+      "mcp"
+    ],
+    "diegosouzapw/kubernetes": [
+      "kubernetes"
+    ],
+    "anthropics/access": [
+      "anthropic"
+    ],
+    "anthropics/configure": [
+      "anthropic",
+      "telegram"
+    ],
+    "SynaLinks/synalinks": [
+      "ollama"
+    ],
+    "mhattingpete/code-execution": [
+      "anthropic"
+    ],
+    "mhattingpete/code-refactor": [
+      "anthropic"
+    ],
+    "kurtosis-tech/starlark-dev": [
+      "docker",
+      "kubernetes"
+    ],
+    "decebals/api-contract-review": [
+      "rest-api"
+    ],
+    "CoWork-OS/idea-validation": [
+      "openai",
+      "ollama"
+    ],
+    "sanjay3290/azure-devops": [
+      "azure",
+      "postgres",
+      "mysql",
+      "jira",
+      "rest-api"
+    ],
+    "sanjay3290/deep-research": [
+      "postgres",
+      "mysql",
+      "kubernetes",
+      "jira"
+    ],
+    "testdino-hq/playwright-core": [
+      "nextjs",
+      "playwright"
+    ],
+    "claude-world/notebooklm-research": [
+      "mcp"
+    ],
+    "curiositech/terraform-iac-expert": [
+      "azure",
+      "kubernetes",
+      "terraform"
+    ],
+    "benjaminshoemaker/codex-review": [
+      "openai",
+      "supabase"
+    ],
+    "lingxling/avalonia-zafiro-development": [
+      "openai",
+      "anthropic",
+      "huggingface",
+      "vercel"
+    ],
+    "xiaobei930/api": [
+      "anthropic",
+      "rest-api"
+    ],
+    "xiaobei930/architecture": [
+      "anthropic"
+    ],
+    "memvid/memory": [
+      "anthropic",
+      "sqlite",
+      "chromadb"
+    ],
+    "memvid/mind": [
+      "anthropic",
+      "sqlite",
+      "chromadb"
+    ],
+    "Bhanunamikaze/seo": [
+      "github"
+    ],
+    "boshu2/council": [
+      "kubernetes"
+    ],
+    "aiskillstore/prototype-to-production": [
+      "react"
+    ],
+    "aiskillstore/claude-code-debug": [
+      "mcp"
+    ],
+    "ombulabs/rails-upgrade": [
+      "rails"
+    ],
+    "yonatangross/i18n-date-patterns": [
+      "langchain",
+      "react",
+      "fastapi"
+    ],
+    "serejaris/weekly-retro": [
+      "github"
+    ],
+    "cloudnative-co/coding-standards": [
+      "rest-api"
+    ],
+    "jmagly/aiwg-regenerate-codex": [
+      "openai",
+      "anthropic"
+    ],
+    "jmagly/issue-update": [
+      "anthropic"
+    ],
+    "claude-world/super-helper": [
+      "openai"
+    ],
+    "offgrid-ing/arpc": [
+      "websocket"
+    ],
+    "theogbrand/plugin-structure": [
+      "mcp"
+    ],
+    "Mann1988/mckinsey-consultant": [
+      "openai",
+      "anthropic"
+    ],
+    "Mann1988/us-gov-shutdown-tracker": [
+      "openai",
+      "anthropic"
+    ],
+    "joshmanders/github": [
+      "github",
+      "graphql"
+    ],
+    "IJONIS/geo-lint": [
+      "npm"
+    ],
+    "tonone-ai/forge-cost": [
+      "vercel",
+      "netlify",
+      "terraform"
+    ],
+    "microsoft/create-pr": [
+      "github",
+      "mcp"
+    ],
+    "ykdojo/gha": [
+      "github"
+    ],
+    "mksglu/ctx-doctor": [
+      "mcp"
+    ],
+    "mksglu/ctx-purge": [
+      "mcp"
+    ],
+    "marin-community/dev-tpu-ray": [
+      "gcp"
+    ],
+    "kurtosis-tech/cluster-manage": [
+      "docker",
+      "kubernetes"
+    ],
+    "oaustegard/creating-bookmarklets": [
+      "github"
+    ],
+    "claude-world/auto-loop": [
+      "anthropic"
+    ],
+    "claude-world/changelog": [
+      "anthropic"
+    ],
+    "eric861129/charles-proxy-extract": [
+      "openai"
+    ],
+    "Shopify/shopify-customer": [
+      "shopify",
+      "graphql"
+    ],
+    "open-agreements/cloud-service-agreement": [
+      "anthropic",
+      "mcp"
+    ],
+    "open-agreements/data-privacy-agreement": [
+      "anthropic",
+      "mcp"
+    ],
+    "laguagu/ai-app": [
+      "openai",
+      "anthropic",
+      "vercel",
+      "nextjs"
+    ],
+    "laguagu/ai-elements": [
+      "anthropic",
+      "vercel",
+      "nextjs",
+      "npm"
+    ],
+    "snyk/drift-detector": [
+      "azure",
+      "terraform"
+    ],
+    "lee-fuhr/session-index": [
+      "sqlite"
+    ],
+    "ar0cket1/google-workspace": [
+      "gcp",
+      "oauth"
+    ],
+    "code-yeongyu/github-triage": [
+      "openai",
+      "anthropic"
+    ],
+    "code-yeongyu/pre-publish-review": [
+      "openai",
+      "anthropic",
+      "npm"
+    ],
+    "thedotmack/make-plan": [
+      "anthropic",
+      "sqlite",
+      "chromadb"
+    ],
+    "thedotmack/knowledge-agent": [
+      "anthropic",
+      "sqlite",
+      "chromadb"
+    ],
+    "webiny/webiny-skill-generator": [
+      "aws",
+      "nextjs",
+      "mcp",
+      "npm",
+      "graphql"
+    ],
+    "lackeyjb/playwright-skill": [
+      "playwright"
+    ],
+    "rohitg00/cost-tracker": [
+      "mcp"
+    ],
+    "beita6969/review-writing": [
+      "mcp"
+    ],
+    "gotalab/opus-4-5-migration": [
+      "anthropic",
+      "aws",
+      "gcp",
+      "azure"
+    ],
+    "nashsu/autocli": [
+      "openai",
+      "huggingface",
+      "playwright"
+    ],
+    "shoryasethia/markdrop": [
+      "openai",
+      "anthropic"
+    ],
+    "nicepkg/resource-scout": [
+      "openai",
+      "anthropic",
+      "github",
+      "fastapi",
+      "mcp"
+    ],
+    "microsoft/edit-action": [
+      "mcp"
+    ],
+    "jazzenchen/vibearound": [
+      "mcp"
+    ],
+    "fvadicamo/creating-skills": [
+      "anthropic"
+    ],
+    "fvadicamo/github-pr-creation": [
+      "anthropic",
+      "github"
+    ],
+    "seb1n/frontend-design": [
+      "svelte",
+      "tailwindcss"
+    ],
+    "liliang-cn/cortexdb": [
+      "sqlite"
+    ],
+    "NSEvteev/merge": [
+      "github"
+    ],
+    "maton-ai/api-gateway": [
+      "anthropic",
+      "slack",
+      "shopify",
+      "airtable",
+      "oauth"
+    ],
+    "capawesome-team/ionic-app-creation": [
+      "tailwindcss",
+      "npm"
+    ],
+    "Yeachan-Heo/ecomode": [
+      "mcp"
+    ],
+    "webiny/webiny-api-event-publisher-catalog": [
+      "aws",
+      "nextjs",
+      "mcp",
+      "graphql"
+    ],
+    "op7418/feishu-bitable": [
+      "anthropic",
+      "nextjs"
+    ],
+    "op7418/feishu-create-doc": [
+      "anthropic",
+      "nextjs"
+    ],
+    "ComposioHQ/remotion-best-practices": [
+      "anthropic",
+      "react"
+    ],
+    "alirezarezvani/agent-factory": [
+      "mcp"
+    ],
+    "BrianRWagner/de-ai-ify": [
+      "openai"
+    ],
+    "damionrashford/rival-search-mcp": [
+      "huggingface",
+      "github"
+    ],
+    "AIPMAndy/dna-memory": [
+      "openai"
+    ],
+    "doncheli/doncheli-api-contract": [
+      "anthropic",
+      "oauth",
+      "graphql",
+      "grpc"
+    ],
+    "doncheli/doncheli-prd": [
+      "anthropic"
+    ],
+    "xixu-me/github-actions-docs": [
+      "azure",
+      "github",
+      "gitlab",
+      "circleci",
+      "jenkins",
+      "oauth"
+    ],
+    "xixu-me/secure-linux-web-hosting": [
+      "kubernetes"
+    ],
+    "TheStack-ai/swing-clarify": [
+      "oauth"
+    ],
+    "TheStack-ai/swing-mortem": [
+      "postgres"
+    ],
+    "LeeJuOh/claw-mo-down": [
+      "anthropic"
+    ],
+    "BagelHole/aws-rds": [
+      "postgres",
+      "mysql",
+      "kubernetes",
+      "terraform"
+    ],
+    "OutlineDriven/gh-fix-ci": [
+      "github"
+    ],
+    "ComposioHQ/ip2location-io-automation": [
+      "mcp"
+    ],
+    "ComposioHQ/abuselpdb-automation": [
+      "mcp"
+    ],
+    "kubesphere/kubesphere-devops-argocd": [
+      "kubernetes"
+    ],
+    "kubesphere/kubesphere-devops-credentials": [
+      "jenkins",
+      "kubernetes"
+    ],
+    "htmlstreamofficial/preline-theme-generator": [
+      "tailwindcss"
+    ],
+    "antonbabenko/terraform-skill": [
+      "terraform"
+    ],
+    "minsight-ai-info/ai-search-hub": [
+      "playwright"
+    ],
+    "pavelzbornik/coverage-check": [
+      "fastapi",
+      "pytest"
+    ],
+    "PramodDutta/secret-detection--prevention": [
+      "playwright"
+    ],
+    "ilang-ai/auto-quality": [
+      "anthropic"
+    ],
+    "ilang-ai/best-choice": [
+      "anthropic",
+      "cloudflare",
+      "sqlite",
+      "nextjs"
+    ],
+    "rstackjs/migrate-to-rstest": [
+      "vitest"
+    ],
+    "indranilbanerjee/anomaly-scan": [
+      "gcp",
+      "mcp"
+    ],
+    "indranilbanerjee/competitor-monitor": [
+      "gcp",
+      "mcp"
+    ],
+    "NeuZhou/finclaw": [
+      "mcp"
+    ],
+    "progrmoiz/stripe-pulse": [
+      "npm"
+    ],
+    "cubenlp/dns": [
+      "openai",
+      "mcp"
+    ],
+    "KrauseFx/beeper-cli": [
+      "sqlite"
+    ],
+    "ComeOnOliver/canva-debug-bundle": [
+      "nextjs",
+      "oauth"
+    ],
+    "ComeOnOliver/exa-webhooks-events": [
+      "redis",
+      "nextjs"
+    ],
+    "simota/flow": [
+      "tailwindcss"
+    ],
+    "OrcaQubits/acp-checkout-mcp": [
+      "openai",
+      "shopify",
+      "mcp"
+    ],
+    "BerriAI/delete-mcp": [
+      "mcp"
+    ],
+    "bergside/typeui-cli": [
+      "npm"
+    ],
+    "ancoleman/administering-linux": [
+      "anthropic",
+      "kubernetes"
+    ],
+    "ancoleman/ai-data-engineering": [
+      "anthropic"
+    ],
+    "megalithic/web-debug": [
+      "playwright"
+    ],
+    "okx/okx-dex-token": [
+      "websocket"
+    ],
+    "TermiX-official/bird": [
+      "npm",
+      "graphql"
+    ],
+    "gbessoni/seobuild-onpage": [
+      "openai"
+    ],
+    "Goldziher/typescript-strictest": [
+      "vitest"
+    ],
+    "w-winter/xcodebuildmcp": [
+      "mcp",
+      "npm"
+    ],
+    "RaheesAhmed/python-engineer": [
+      "docker",
+      "fastapi",
+      "pytest"
+    ],
+    "kaivyy/perseus-logic": [
+      "mongodb",
+      "nextjs",
+      "fastapi",
+      "django",
+      "spring",
+      "laravel"
+    ],
+    "Mindrally/bitbucket-workflow": [
+      "github",
+      "bitbucket",
+      "jira"
+    ],
+    "joelhooks/docker-sandbox": [
+      "openai"
+    ],
+    "HLND2T/find-csource2server_init-and-cgameeventmanager_init-and-gameeven": [
+      "mcp"
+    ],
+    "SamJHudson01/spec-writer": [
+      "anthropic",
+      "nextjs"
+    ],
+    "mattgierhart/prd-v05-technical-stack-selection": [
+      "supabase",
+      "nextjs"
+    ],
+    "itsOmSarraf/vercel-github-actions-deploy": [
+      "vercel",
+      "github"
+    ],
+    "swarm-ai-safety/swarm-safety": [
+      "sqlite"
+    ],
+    "AbYousef739/clawcache-free": [
+      "openai",
+      "anthropic",
+      "ollama",
+      "sqlite"
+    ],
+    "fivestones/instantdb": [
+      "firebase"
+    ],
+    "Arcobalneo/gameclaw": [
+      "github"
+    ],
+    "windmill-labs/write-script-bigquery": [
+      "gcp",
+      "postgres"
+    ],
+    "windmill-labs/write-script-graphql": [
+      "postgres",
+      "graphql"
+    ],
+    "TencentBlueKing/node.js-": [
+      "kubernetes"
+    ],
+    "lablup/create-relay-nodes-component": [
+      "react",
+      "graphql",
+      "websocket"
+    ],
+    "aehrc/fhir-api": [
+      "rest-api"
+    ],
+    "CatREFuse/cls-certify": [
+      "github"
+    ],
+    "anombyte93/sync": [
+      "mcp"
+    ],
+    "OpenAEC-Foundation/frappe-core-permissions": [
+      "anthropic"
+    ],
+    "trsoliu/mini-wiki": [
+      "gitlab",
+      "bitbucket"
+    ],
+    "alps-asd/alps": [
+      "rest-api"
+    ],
+    "oprogramadorreal/brainstorm": [
+      "anthropic"
+    ],
+    "oprogramadorreal/branch": [
+      "anthropic"
+    ],
+    "aexol-studio/frontend-navigation": [
+      "graphql"
+    ],
+    "christophacham/mezmo-automation": [
+      "mcp"
+    ],
+    "christophacham/skyfire-automation": [
+      "mcp"
+    ],
+    "geoffreycrofte/raam-audit": [
+      "vercel"
+    ],
+    "geoffreycrofte/raam-code": [
+      "vercel"
+    ],
+    "xunhe730/zotpilot": [
+      "mcp"
+    ],
+    "dev-five-git/vespertide": [
+      "postgres",
+      "mysql",
+      "sqlite"
+    ],
+    "bage2014/ai-tools": [
+      "huggingface",
+      "redis",
+      "spring",
+      "oauth"
+    ],
+    "luochang212/dive-into-langgraph": [
+      "openai",
+      "langchain"
+    ],
+    "LeastBit/docx": [
+      "anthropic"
+    ],
+    "TheBushidoCollective/tailwind-configuration": [
+      "tailwindcss"
+    ],
+    "baotoq/dotnet-core-expert": [
+      "elasticsearch",
+      "kubernetes"
+    ],
+    "borghei/ml-ops-engineer": [
+      "openai",
+      "fastapi"
+    ],
+    "GoPlausible/haystack-router-interaction": [
+      "mcp"
+    ],
+    "nouamanecodes/lettactl": [
+      "kubernetes"
+    ],
+    "terrylica/server": [
+      "openai",
+      "anthropic"
+    ],
+    "terrylica/telemetry-terminology-similarity": [
+      "anthropic"
+    ],
+    "cashubtc/cashu-wallet": [
+      "npm"
+    ],
+    "kaivyy/voice-call": [
+      "twilio"
+    ],
+    "CorporateSmalltalkConsultingLtd/smalltalk-mcp": [
+      "openai",
+      "anthropic",
+      "mcp"
+    ],
+    "florianbonnet14/analytics-orchestrator": [
+      "anthropic"
+    ],
+    "breaking-brake/pr-review-analysis": [
+      "github"
+    ],
+    "ComposioHQ/artifacts-builder": [
+      "anthropic",
+      "react",
+      "tailwindcss",
+      "mcp"
+    ],
+    "ComposioHQ/canvas-design": [
+      "anthropic",
+      "mcp"
+    ],
+    "hiyeshu/codeck-export": [
+      "playwright"
+    ],
+    "Altinn/docker": [
+      "postgres",
+      "grafana",
+      "docker"
+    ],
+    "keep-starknet-strange/starknet-agentic-skills": [
+      "openai"
+    ],
+    "groeimetai/gliderecord-patterns": [
+      "ollama",
+      "mcp"
+    ],
+    "keysersoose/agent-builder": [
+      "anthropic",
+      "github",
+      "mcp"
+    ],
+    "Viniciuscarvalho/swift-code-reviewer": [
+      "github"
+    ],
+    "hvkshetry/weekly-health": [
+      "mcp"
+    ],
+    "cyijun/smith-matrix": [
+      "anthropic"
+    ],
+    "jzOcb/upgrade-guard": [
+      "npm"
+    ],
+    "Prat011/algorithmic-art": [
+      "openai",
+      "anthropic"
+    ],
+    "Prat011/artifacts-builder": [
+      "openai",
+      "anthropic",
+      "react",
+      "tailwindcss"
+    ],
+    "rhesis-ai/sprint-review": [
+      "github"
+    ],
+    "Miosa-osa/hire": [
+      "ollama"
+    ],
+    "agentic-box/codex": [
+      "openai"
+    ],
+    "dojoengine/dojo-indexer": [
+      "graphql",
+      "grpc"
+    ],
+    "theneoai/systems-engineer": [
+      "openai"
+    ],
+    "ForteScarlet/codex-agent-collaboration": [
+      "openai"
+    ],
+    "sandbox0-ai/sandbox0": [
+      "kubernetes"
+    ],
+    "tylerwind/writing-skills": [
+      "anthropic"
+    ],
+    "youware-labs/agent-builder": [
+      "openai",
+      "anthropic"
+    ],
+    "chenhunghan/code-mode": [
+      "cloudflare",
+      "github",
+      "kubernetes",
+      "mcp"
+    ],
+    "omar-A-hassan/uniprot": [
+      "ollama",
+      "mcp",
+      "rest-api"
+    ],
+    "RoopikLabs/create-pr": [
+      "github",
+      "mcp"
+    ],
+    "suzuki3jp/create-spec": [
+      "nextjs"
+    ],
+    "IgorGanapolsky/agent-memory": [
+      "mcp"
+    ],
+    "mprove-io/mprove-build-dashboard": [
+      "gcp",
+      "postgres",
+      "mcp"
+    ],
+    "InfinityLoopLabs/library-build-sync": [
+      "nextjs",
+      "tailwindcss"
+    ],
+    "sailscastshq/pellicule": [
+      "vue",
+      "laravel"
+    ],
+    "ythx-101/antigravity-bridge": [
+      "rest-api"
+    ],
+    "bfree-trainer/colorize": [
+      "nextjs"
+    ],
+    "webmaxru/agent-skill-deploy": [
+      "azure",
+      "github",
+      "docker",
+      "npm"
+    ],
+    "Aradotso/openclaude-multi-llm": [
+      "openai",
+      "anthropic",
+      "ollama",
+      "npm"
+    ],
+    "auth0/auth0-android": [
+      "express",
+      "auth0"
+    ],
+    "zebbern/agent-skills-authoring": [
+      "anthropic"
+    ],
+    "o11y-dev/opentelemetry-skill": [
+      "kubernetes",
+      "grpc"
+    ],
+    "AndyShaman/whisk-proxy": [
+      "openai",
+      "stability-ai"
+    ],
+    "florianbonnet14/analysis-planner": [
+      "anthropic"
+    ],
+    "mnapoli/unknown-skill": [
+      "github"
+    ],
+    "mk-knight23/agency-image-prompt-engineer": [
+      "openai",
+      "stability-ai"
+    ],
+    "badhope/database-design": [
+      "postgres",
+      "mongodb",
+      "redis",
+      "mysql"
+    ],
+    "AndyShaman/gemini-mcp": [
+      "openai",
+      "stability-ai",
+      "mcp"
+    ],
+    "shajith003/algorithmic-art": [
+      "anthropic"
+    ],
+    "shajith003/artifacts-builder": [
+      "anthropic",
+      "react",
+      "tailwindcss"
+    ],
+    "0xDarkMatter/find-replace": [
+      "anthropic"
+    ],
+    "cassiozen/ux-antipatterns": [
+      "github"
+    ],
+    "ishu86/ae-mcp": [
+      "mcp"
+    ],
+    "0xmariowu/search-conference-talks": [
+      "anthropic"
+    ],
+    "ALBEDO-TABAI/video-expert-analyzer": [
+      "openai"
+    ],
+    "macro-inc/dump-schema": [
+      "postgres"
+    ],
+    "AsiaOstrich/ai-instruction-standards": [
+      "pytest"
+    ],
+    "sliday/daub-ui": [
+      "npm"
+    ],
+    "clerk/clerk-vue-patterns": [
+      "vue",
+      "clerk"
+    ],
+    "crazygit/kube-audit-kit": [
+      "kubernetes"
+    ],
+    "zakirkun/missing-or-ignored-dependency-lockfile": [
+      "npm"
+    ],
+    "diagnostikon/opengork": [
+      "ollama"
+    ],
+    "PeterBooker/profile": [
+      "wordpress"
+    ],
+    "matsonj/mviz": [
+      "npm"
+    ],
+    "breath57/dingtalk-ai-table": [
+      "anthropic"
+    ],
+    "breath57/dingtalk-ai-web-search": [
+      "anthropic"
+    ],
+    "METR/debug-stuck-eval": [
+      "openai"
+    ],
+    "redhat-developer/cqa-00b-directory-structure": [
+      "gitlab"
+    ],
+    "wells1137/audiomind": [
+      "mcp"
+    ],
+    "PostHog/error-tracking-go": [
+      "posthog"
+    ],
+    "Bumblebiber/hmem-setup": [
+      "sqlite",
+      "mcp",
+      "npm"
+    ],
+    "ezbuy/ezorm-skills": [
+      "mongodb",
+      "mysql"
+    ],
+    "shanselman/nightscout-cgm": [
+      "pytest"
+    ],
+    "kfastov/tgcli": [
+      "telegram",
+      "npm"
+    ],
+    "malue-ai/deep-research": [
+      "playwright"
+    ],
+    "dev-five-git/vespera": [
+      "fastapi"
+    ],
+    "tebjan/vvvv-editor-extensions": [
+      "anthropic"
+    ],
+    "niklam/website": [
+      "firebase"
+    ],
+    "apresmoi/up-init": [
+      "openai"
+    ],
+    "sterlingcrispin/auditcodex": [
+      "openai"
+    ],
+    "sterlingcrispin/auditcodexdirect": [
+      "openai"
+    ],
+    "haddock-development/python-project-creator": [
+      "pytest"
+    ],
+    "shepherdjerred/hono-helper": [
+      "aws",
+      "cloudflare",
+      "vercel",
+      "react",
+      "npm"
+    ],
+    "srdjan/zigts-expert": [
+      "react",
+      "mcp"
+    ],
+    "hoangsonww/health-check": [
+      "aws",
+      "mongodb",
+      "docker",
+      "kubernetes",
+      "terraform",
+      "nextjs",
+      "tailwindcss"
+    ],
+    "jaem1n207/code-reviewer": [
+      "github"
+    ],
+    "ruska-ai/ralpharchive": [
+      "openai",
+      "langchain",
+      "ollama"
+    ],
+    "win4r/claude-code-dispatch": [
+      "fastapi",
+      "mcp",
+      "rest-api"
+    ],
+    "sheeki03/fewword": [
+      "mcp"
+    ],
+    "mikedemarais/grok-skill": [
+      "openai",
+      "anthropic"
+    ],
+    "cathrynlavery/voice-memo-organizer": [
+      "sqlite"
+    ],
+    "madeyexz/heptabase-cli": [
+      "mcp"
+    ],
+    "theoddden/terradev-gpu-cloud": [
+      "huggingface",
+      "ollama",
+      "kubernetes",
+      "terraform"
+    ],
+    "dztabel-happy/codex-agent": [
+      "sqlite"
+    ],
+    "mule-ai/mule-api": [
+      "openai",
+      "postgres"
+    ],
+    "Sunwood-ai-labs/logged-in-google-chrome": [
+      "playwright"
+    ],
+    "parmartejass/governance-autoresearch": [
+      "anthropic"
+    ],
+    "MystenLabs/memwal": [
+      "vercel"
+    ],
+    "markmhendrickson/recover_sqlite_database": [
+      "sqlite"
+    ],
+    "escapeboy/update-docs": [
+      "anthropic",
+      "github"
+    ],
+    "aaronjmars/agent-credit": [
+      "anthropic",
+      "npm"
+    ],
+    "yangtaihong59/siyuan-mcp-sisyphus": [
+      "mcp"
+    ],
+    "rnavarych/unit-testing": [
+      "vitest"
+    ],
+    "BbgnsurfTech/generating-docker-compose-files": [
+      "anthropic",
+      "docker"
+    ],
+    "DaWe35/imagerouter": [
+      "openai"
+    ],
+    "alffei/writing-skills": [
+      "anthropic"
+    ],
+    "openclawfice/openclawfice": [
+      "npm"
+    ],
+    "Quintui/depresearch": [
+      "anthropic",
+      "npm"
+    ],
+    "dchuk/testing-tauri-apps": [
+      "github",
+      "vitest",
+      "npm"
+    ],
+    "Lionad-Morotar/-agent-skills": [
+      "mcp"
+    ],
+    "sleepyvani/qt-qml": [
+      "postgres",
+      "mongodb",
+      "redis",
+      "mysql",
+      "sqlite"
+    ],
+    "vulhunt-re/byte-pattern-matching": [
+      "mcp"
+    ],
+    "promptadvisers/n8n-workflow-architect": [
+      "shopify",
+      "airtable"
+    ],
+    "membranedev/alphasense": [
+      "npm"
+    ],
+    "membranedev/junip": [
+      "npm"
+    ],
+    "oimiragieo/container-expert": [
+      "docker",
+      "kubernetes"
+    ],
+    "shelby/shelby": [
+      "react"
+    ],
+    "nocobase/nocobase-acl-manage": [
+      "mcp"
+    ],
+    "abhinav/pull-request": [
+      "github"
+    ],
+    "JetBrains/check-coverage": [
+      "postgres",
+      "mysql",
+      "pytest"
+    ],
+    "bdsqqq/git": [
+      "linear"
+    ],
+    "madarasz/e2e": [
+      "vitest",
+      "playwright"
+    ],
+    "sapiencexyz/push-pr": [
+      "github"
+    ]
+  },
+  "top_services": [
+    {
+      "id": "anthropic",
+      "name": "Anthropic",
+      "category": "AI",
+      "skill_count": 130
+    },
+    {
+      "id": "mcp",
+      "name": "Model Context Protocol",
+      "category": "AI",
+      "skill_count": 98
+    },
+    {
+      "id": "openai",
+      "name": "OpenAI",
+      "category": "AI",
+      "skill_count": 89
+    },
+    {
+      "id": "github",
+      "name": "GitHub",
+      "category": "DevTools",
+      "skill_count": 51
+    },
+    {
+      "id": "npm",
+      "name": "npm",
+      "category": "DevTools",
+      "skill_count": 42
+    },
+    {
+      "id": "nextjs",
+      "name": "Next.js",
+      "category": "Frontend",
+      "skill_count": 30
+    },
+    {
+      "id": "kubernetes",
+      "name": "Kubernetes",
+      "category": "Infrastructure",
+      "skill_count": 29
+    },
+    {
+      "id": "rest-api",
+      "name": "REST API",
+      "category": "API",
+      "skill_count": 25
+    },
+    {
+      "id": "react",
+      "name": "React",
+      "category": "Frontend",
+      "skill_count": 23
+    },
+    {
+      "id": "sqlite",
+      "name": "SQLite",
+      "category": "Database",
+      "skill_count": 21
+    },
+    {
+      "id": "graphql",
+      "name": "GraphQL",
+      "category": "API",
+      "skill_count": 19
+    },
+    {
+      "id": "playwright",
+      "name": "Playwright",
+      "category": "Testing",
+      "skill_count": 18
+    },
+    {
+      "id": "postgres",
+      "name": "PostgreSQL",
+      "category": "Database",
+      "skill_count": 17
+    },
+    {
+      "id": "docker",
+      "name": "Docker",
+      "category": "Infrastructure",
+      "skill_count": 15
+    },
+    {
+      "id": "tailwindcss",
+      "name": "Tailwind CSS",
+      "category": "Frontend",
+      "skill_count": 15
+    },
+    {
+      "id": "azure",
+      "name": "Azure",
+      "category": "Cloud",
+      "skill_count": 14
+    },
+    {
+      "id": "vercel",
+      "name": "Vercel",
+      "category": "Cloud",
+      "skill_count": 14
+    },
+    {
+      "id": "oauth",
+      "name": "OAuth",
+      "category": "Auth",
+      "skill_count": 13
+    },
+    {
+      "id": "ollama",
+      "name": "Ollama",
+      "category": "AI",
+      "skill_count": 12
+    },
+    {
+      "id": "terraform",
+      "name": "Terraform",
+      "category": "Infrastructure",
+      "skill_count": 11
+    }
+  ]
+}

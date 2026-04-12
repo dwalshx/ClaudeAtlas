@@ -24,6 +24,7 @@ const STATS_PATH = join(DATA_DIR, 'pipeline-stats.json');
 const PUBLIC_DIR = join(ROOT, 'public');
 const OUTPUT_PATH = join(PUBLIC_DIR, 'skills-registry.json');
 
+const API_GRAPH_PATH = join(DATA_DIR, 'api-graph.json');
 const SITE_URL = 'https://claudeatlas.com';
 
 function log(msg) {
@@ -39,6 +40,14 @@ function main() {
   }
 
   const skills = JSON.parse(readFileSync(SKILLS_PATH, 'utf-8'));
+
+  // Load API graph for integrations enrichment
+  let apiGraph = { skill_integrations: {} };
+  if (existsSync(API_GRAPH_PATH)) {
+    try {
+      apiGraph = JSON.parse(readFileSync(API_GRAPH_PATH, 'utf-8'));
+    } catch {}
+  }
 
   let stats = {};
   if (existsSync(STATS_PATH)) {
@@ -67,9 +76,11 @@ function main() {
     repo_license: s.repo_license || null,
     repo_pushed_at: s.repo_pushed_at || null,
     skill_first_commit_at: s.skill_first_commit_at || null,
+    integrations: apiGraph.skill_integrations?.[s.slug] || [],
     detail_url: `${SITE_URL}/skills/${s.slug}/`,
     badge_url: `${SITE_URL}/badge/${s.slug}.svg`,
     star_history_url: `${SITE_URL}/badge/${s.slug}-history.svg`,
+    integrations_url: `${SITE_URL}/apis/`,
   }));
 
   const registry = {
