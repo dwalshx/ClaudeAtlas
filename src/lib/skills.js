@@ -2,8 +2,27 @@
  * Skills data loader and helpers
  */
 
+import { readFileSync, existsSync } from 'fs';
+import { join, dirname } from 'path';
+import { fileURLToPath } from 'url';
+
 import skillsData from '../../data/skills.json';
 import pipelineStats from '../../data/pipeline-stats.json';
+
+// Similar skills are pre-computed at build time by scripts/compute-similar.js.
+// We use readFileSync instead of import because the file may not exist on the
+// very first build (before compute-similar.js has ever run). Import would make
+// the entire build fail; readFileSync lets us degrade gracefully.
+const __skills_dirname = dirname(fileURLToPath(import.meta.url));
+const __similar_path = join(__skills_dirname, '../../data/similar-skills.json');
+let similarSkillsData = { similar: {} };
+if (existsSync(__similar_path)) {
+  try {
+    similarSkillsData = JSON.parse(readFileSync(__similar_path, 'utf-8'));
+  } catch {
+    // Malformed file — degrade gracefully
+  }
+}
 
 /** @type {import('./types').Skill[]} */
 export const allSkills = skillsData;
@@ -250,6 +269,29 @@ export function getRelatedSkills(skill, limit = 4) {
     .filter(s => s.category === skill.category && s.id !== skill.id)
     .sort((a, b) => b.quality_score - a.quality_score)
     .slice(0, limit);
+}
+
+/**
+ * Semantically similar skills for a given skill, pre-computed from the
+ * vector embeddings by scripts/compute-similar.js. Returns an array of
+ * {slug, score, name, category, quality_tier} objects, or an empty array
+ * if similar-skills.json hasn't been generated yet.
+ *
+ * These are different from getRelatedSkills() which just filters by
+ * same-category. getSimilarSkills() uses cosine similarity over the
+ * full skill content embedding — it finds skills that are semantically
+ * about the same thing, regardless of which category they're in.
+ */
+export function getSimilarSkills(skill, limit = 5) {
+  if (!skill || !skill.slug) return [];
+  const map = similarSkillsData?.similar || {};
+  const entries = map[skill.slug];
+  if (!Array.isArray(entries)) return [];
+  // Enrich with full skill records so the template can use SkillCard
+  return entries.slice(0, limit).map(entry => {
+    const fullSkill = allSkills.find(s => s.slug === entry.slug);
+    return fullSkill ? { ...fullSkill, similarity_score: entry.score } : null;
+  }).filter(Boolean);
 }
 
 export function timeAgo(dateStr) {

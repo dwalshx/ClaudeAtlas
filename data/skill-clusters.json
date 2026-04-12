@@ -1,0 +1,1532 @@
+{
+  "generated_at": "2026-04-12T05:27:59.542Z",
+  "k": 16,
+  "iterations": 22,
+  "cost": 395.3343,
+  "total_skills": 1072,
+  "clusters": [
+    {
+      "id": 6,
+      "size": 137,
+      "label": "design + user + plan",
+      "dominant_category": "AI & Automation",
+      "dominant_pct": 41,
+      "category_distribution": {
+        "AI & Automation": 56,
+        "Web & Frontend": 21,
+        "Data & Documents": 30,
+        "Testing & QA": 9,
+        "Code & Development": 18,
+        "DevOps & Infrastructure": 1,
+        "API & Backend": 2
+      },
+      "top_skills": [
+        {
+          "slug": "oprogramadorreal/brainstorm",
+          "name": "brainstorm",
+          "category": "AI & Automation",
+          "quality_tier": "solid",
+          "description": "Guides structured design brainstorming — explores the codebase, asks clarifying questions, proposes multiple approaches with trade-offs, and writes an approved design doc to the project. Use before implementation to think through design decisions and avoid premature coding. Produces a persistent artifact that feeds into plan mode and TDD.",
+          "distance": 0.2505
+        },
+        {
+          "slug": "aimasteracc/plan-design-review",
+          "name": "plan-design-review",
+          "category": "Web & Frontend",
+          "quality_tier": "solid",
+          "description": "Designer's eye plan review — interactive, like CEO and Eng review. Rates each design dimension 0-10, explains what would make it a 10, then fixes the plan to get there. Works in plan mode. For live site visual audits, use /design-review. Use when asked to \"review the design plan\" or \"design critique\". Proactively suggest when the user has a plan with UI/UX components that should be reviewed before implementation.",
+          "distance": 0.2581
+        },
+        {
+          "slug": "maxritter/prd",
+          "name": "prd",
+          "category": "AI & Automation",
+          "quality_tier": "solid",
+          "description": "Generate Product Requirements Documents with optional research — brainstorm, challenge assumptions, define scope",
+          "distance": 0.2585
+        },
+        {
+          "slug": "proyecto26/deep-research",
+          "name": "deep-research",
+          "category": "Data & Documents",
+          "quality_tier": "solid",
+          "description": "Generate format-controlled research reports with evidence tracking, citations, and iterative review. This skill should be used when users request a research report, literature review, market or industry analysis, competitive landscape, policy or technical brief, or require a strict report template and section formatting that a single deepresearch pass cannot reliably enforce.",
+          "distance": 0.2664
+        },
+        {
+          "slug": "ankitjha67/product-architect",
+          "name": "product-architect",
+          "category": "AI & Automation",
+          "quality_tier": "featured",
+          "description": "Complete product development system with 31 specialized agents and 23 frameworks. Use when user asks to build a product, write a PRD, create a roadmap, plan an MVP, design an app, do a security audit, create a financial model, plan hiring, launch a product, set up operations, prepare for IPO, or write a compliance policy. Also triggers on help me plan, product strategy, go-to-market, fundraising, pitch deck, unit economics, competitive analysis, user personas, sprint planning, SOP, checklist for, or how do I start a company. Do NOT use for general knowledge questions, coding tutorials, or creative writing unrelated to product development.",
+          "distance": 0.2697
+        },
+        {
+          "slug": "rsmdt/specify",
+          "name": "specify",
+          "category": "Testing & QA",
+          "quality_tier": "featured",
+          "description": "Create a comprehensive specification from a brief description. Manages specification workflow including directory creation, README tracking, and phase transitions.",
+          "distance": 0.2737
+        },
+        {
+          "slug": "zrosenfield/brainstorming-design-docs",
+          "name": "brainstorming-design-docs",
+          "category": "Web & Frontend",
+          "quality_tier": "solid",
+          "description": "Guides a raw idea through structured brainstorming into a fully fleshed-out design document formatted for SharePoint. Asks clarifying questions one at a time, proposes alternative approaches with trade-offs, builds the design incrementally with user approval, then delivers a complete SharePoint-ready document. Use when a user wants to develop an idea, proposal, project plan, or initiative into a structured doc. Triggers include \"help me think through this\", \"turn this idea into a design doc\", \"I want to design a new [process/project/feature/solution]\", \"brainstorm this with me\", or when a user describes a rough idea and wants to make it concrete.",
+          "distance": 0.2849
+        },
+        {
+          "slug": "jabrena/031-architecture-adr-functional-requirements",
+          "name": "031-architecture-adr-functional-requirements",
+          "category": "AI & Automation",
+          "quality_tier": "featured",
+          "description": "Facilitates conversational discovery to create Architectural Decision Records (ADRs) for functional requirements covering CLI, REST/HTTP APIs, or both. Use when the user wants to document command-line or HTTP service architecture, capture functional requirements, create ADRs for CLI or API projects, or design interfaces with documented decisions. Part of the skills-for-java project",
+          "distance": 0.285
+        },
+        {
+          "slug": "avibebuilder/research",
+          "name": "research",
+          "category": "Data & Documents",
+          "quality_tier": "solid",
+          "description": "Gather facts and context from codebase, docs, and web,... Use when exploring patterns, finding implementations, looking up documentation, or researching before decisions.",
+          "distance": 0.2862
+        },
+        {
+          "slug": "first-fluke/oma-brainstorm",
+          "name": "oma-brainstorm",
+          "category": "AI & Automation",
+          "quality_tier": "featured",
+          "description": "Design-first ideation that explores user intent, constraints, and approaches before any planning or implementation. Use for brainstorming, ideation, exploring concepts, and evaluating approaches.",
+          "distance": 0.2868
+        }
+      ]
+    },
+    {
+      "id": 1,
+      "size": 107,
+      "label": "code + claude + user",
+      "dominant_category": "AI & Automation",
+      "dominant_pct": 65,
+      "category_distribution": {
+        "AI & Automation": 70,
+        "Data & Documents": 16,
+        "Code & Development": 10,
+        "Web & Frontend": 5,
+        "DevOps & Infrastructure": 4,
+        "Testing & QA": 2
+      },
+      "top_skills": [
+        {
+          "slug": "affaan-m/ck",
+          "name": "ck",
+          "category": "AI & Automation",
+          "quality_tier": "featured",
+          "description": "Persistent per-project memory for Claude Code. Auto-loads project context on session start, tracks sessions with git activity, and writes to native memory. Commands run deterministic Node.js scripts — behavior is consistent across model versions.",
+          "distance": 0.2562
+        },
+        {
+          "slug": "ZhenHuangLab/collaborating-with-claude-code",
+          "name": "collaborating-with-claude-code",
+          "category": "AI & Automation",
+          "quality_tier": "solid",
+          "description": "Delegate code implementation/review/debugging/alternatives to Claude Code via a JSON bridge script. Multi-turn via SESSION_ID.",
+          "distance": 0.2634
+        },
+        {
+          "slug": "dztabel-happy/codex-agent",
+          "name": "codex-agent",
+          "category": "AI & Automation",
+          "quality_tier": "listed",
+          "description": "用 OpenClaw 驱动 Codex CLI 的受管运行时。支持交互式 tmux 会话、一次性 exec 任务、会话状态查询、显式 session-id 路由、启动阻塞识别与完成通知。",
+          "distance": 0.2639
+        },
+        {
+          "slug": "aiskillstore/claude-code-debug",
+          "name": "claude-code-debug",
+          "category": "AI & Automation",
+          "quality_tier": "solid",
+          "description": "Troubleshoot Claude Code extensions and behavior. Triggers on: debug, troubleshoot, not working, skill not loading, hook not running, agent not found.",
+          "distance": 0.2746
+        },
+        {
+          "slug": "anombyte93/sync",
+          "name": "sync",
+          "category": "AI & Automation",
+          "quality_tier": "solid",
+          "description": "Fast save-point: sync all session-context files and MEMORY.md with current progress. Zero questions, zero delay. Use when user says /sync, save progress, save state, sync context, or /sync --full for capability inventory.",
+          "distance": 0.2871
+        },
+        {
+          "slug": "tzachbon/command-development",
+          "name": "command-development",
+          "category": "AI & Automation",
+          "quality_tier": "featured",
+          "description": "This skill should be used when the user asks to \"create a slash command\", \"add a command\", \"write a custom command\", \"define command arguments\", \"use command frontmatter\", \"organize commands\", \"create command with file references\", \"interactive command\", \"use AskUserQuestion in command\", or needs guidance on slash command structure, YAML frontmatter fields, dynamic arguments, bash execution in commands, user interaction patterns, or command development best practices for Claude Code.",
+          "distance": 0.2919
+        },
+        {
+          "slug": "memvid/mind",
+          "name": "mind",
+          "category": "AI & Automation",
+          "quality_tier": "solid",
+          "description": "Claude Mind - Search and manage Claude's persistent memory stored in a single portable .mv2 file",
+          "distance": 0.2967
+        },
+        {
+          "slug": "chenhunghan/code-mode",
+          "name": "code-mode",
+          "category": "AI & Automation",
+          "quality_tier": "solid",
+          "description": "Add a \"code mode\" tool to an existing MCP server so LLMs can write small processing scripts that run against large API responses in a sandboxed runtime — only the script's compact output enters the LLM context window. Use this skill whenever someone wants to add code mode, context reduction, script execution, sandbox execution, or LLM-generated-code processing to an MCP server. Also trigger when users mention reducing token usage, shrinking API responses, running user-provided code safely, or adding a code execution tool to their MCP server — in any language (TypeScript, Python, Go, Rust, etc.).",
+          "distance": 0.2982
+        },
+        {
+          "slug": "parcadei/help",
+          "name": "help",
+          "category": "AI & Automation",
+          "quality_tier": "featured",
+          "description": "Interactive workspace discovery - learn what tools, workflows, agents, and hooks are available",
+          "distance": 0.2992
+        },
+        {
+          "slug": "lee-fuhr/session-index",
+          "name": "session-index",
+          "category": "AI & Automation",
+          "quality_tier": "solid",
+          "description": "Search, analyze, and synthesize across all your Claude Code sessions. Ask \"what did I try last time?\" and get answers with resume links.",
+          "distance": 0.3034
+        }
+      ]
+    },
+    {
+      "id": 15,
+      "size": 101,
+      "label": "skill + user + skills",
+      "dominant_category": "Data & Documents",
+      "dominant_pct": 46,
+      "category_distribution": {
+        "AI & Automation": 26,
+        "Web & Frontend": 11,
+        "Data & Documents": 46,
+        "Code & Development": 9,
+        "DevOps & Infrastructure": 5,
+        "API & Backend": 3,
+        "Testing & QA": 1
+      },
+      "top_skills": [
+        {
+          "slug": "AIPexStudio/skill-creator",
+          "name": "skill-creator",
+          "category": "AI & Automation",
+          "quality_tier": "featured",
+          "description": "Guide for creating effective skills. This skill should be used when users want to create a new skill (or update an existing skill) that extends AIPex's capabilities with specialized knowledge, workflows, or tool integrations.",
+          "distance": 0.1938
+        },
+        {
+          "slug": "RKiding/skill-creator",
+          "name": "skill-creator",
+          "category": "Web & Frontend",
+          "quality_tier": "featured",
+          "description": "Create or update AgentSkills. Use when designing, structuring, or packaging skills with scripts, references, and assets.",
+          "distance": 0.1994
+        },
+        {
+          "slug": "alffei/writing-skills",
+          "name": "writing-skills",
+          "category": "Data & Documents",
+          "quality_tier": "listed",
+          "description": "Use when creating new skills, editing existing skills, or verifying skills work before deployment",
+          "distance": 0.2054
+        },
+        {
+          "slug": "tylerwind/writing-skills",
+          "name": "writing-skills",
+          "category": "Data & Documents",
+          "quality_tier": "solid",
+          "description": "Use when creating new skills, editing existing skills, or verifying skills work before deployment",
+          "distance": 0.2055
+        },
+        {
+          "slug": "zebbern/agent-skills-authoring",
+          "name": "agent-skills-authoring",
+          "category": "AI & Automation",
+          "quality_tier": "solid",
+          "description": "Guides agents through creating, validating, and optimizing Agent Skills (SKILL.md files) from user requests. Covers all YAML frontmatter fields, directory layout, progressive disclosure, scripts, quality patterns, and evaluation workflows. Use when a user asks you to create, edit, audit, or improve an Agent Skill, even if they don't use the word \"skill\" — any request about reusable agent instructions, workflow packaging, or capability extension should trigger this skill.",
+          "distance": 0.2069
+        },
+        {
+          "slug": "iOfficeAI/skill-creator",
+          "name": "skill-creator",
+          "category": "AI & Automation",
+          "quality_tier": "featured",
+          "description": "Guide for creating effective skills. This skill should be used when users want to create a new skill (or update an existing skill) that extends Claude's capabilities with specialized knowledge, workflows, or tool integrations.",
+          "distance": 0.2111
+        },
+        {
+          "slug": "fvadicamo/creating-skills",
+          "name": "creating-skills",
+          "category": "Code & Development",
+          "quality_tier": "solid",
+          "description": "Guide for creating Claude Code skills following Anthropic's official best practices. Use when user wants to create a new skill, build a skill, write SKILL.md, update an existing skill, or needs skill creation guidelines. Provides structure, frontmatter fields, naming conventions, and new features like dynamic context injection and subagent execution.",
+          "distance": 0.2163
+        },
+        {
+          "slug": "LukeRenton/build-skill",
+          "name": "build-skill",
+          "category": "Web & Frontend",
+          "quality_tier": "featured",
+          "description": "Builds new Claude Code skills with consistent structure, enforced standards, and project-aware configuration. Use when creating a new skill, when the user describes a workflow they want automated, or when the user says they want a new slash command.",
+          "distance": 0.2231
+        },
+        {
+          "slug": "maxritter/create-skill",
+          "name": "create-skill",
+          "category": "AI & Automation",
+          "quality_tier": "solid",
+          "description": "Create a well-structured skill — provide a topic to explore the codebase and build a skill interactively, or capture a workflow from the current session",
+          "distance": 0.2239
+        },
+        {
+          "slug": "vinta/sync-skills",
+          "name": "sync-skills",
+          "category": "Data & Documents",
+          "quality_tier": "solid",
+          "description": "(project) Use when a skill in skills/ has its name or description changed, or is added or removed — syncs README.md, settings.json, and hal_dotfiles.json",
+          "distance": 0.226
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "size": 87,
+      "label": "security + code + audit",
+      "dominant_category": "AI & Automation",
+      "dominant_pct": 39,
+      "category_distribution": {
+        "Data & Documents": 16,
+        "AI & Automation": 34,
+        "Code & Development": 8,
+        "DevOps & Infrastructure": 15,
+        "Testing & QA": 5,
+        "Web & Frontend": 7,
+        "API & Backend": 2
+      },
+      "top_skills": [
+        {
+          "slug": "krispuckett/skill-issue",
+          "name": "skill-issue",
+          "category": "Data & Documents",
+          "quality_tier": "solid",
+          "description": "Audit and review all installed agent skills. Run on-demand or via cron to get a health report: skill inventory, usage tracking, version checks, dependency health, and actionable recommendations (keep, update, review, remove). Use when asked to review skills, check for skill updates, find unused skills, or audit the skill ecosystem.",
+          "distance": 0.2085
+        },
+        {
+          "slug": "app-incubator-xyz/skill-vetter",
+          "name": "skill-vetter",
+          "category": "AI & Automation",
+          "quality_tier": "listed",
+          "description": "Multi-scanner security gate. TRIGGER when: user mentions installing, adding, or reviewing a skill to Claude Code, OpenClaw, or any other AI agent. Detects malicious code, vulnerabilities, and suspicious patterns.",
+          "distance": 0.2384
+        },
+        {
+          "slug": "ez-lbz/code-security-review",
+          "name": "code-security-review",
+          "category": "Code & Development",
+          "quality_tier": "listed",
+          "description": "AI-driven code security review skill. Provides a complete methodology for conducting security audits on source code, including: security audit prompts, false positive filtering rules (hard exclusions + AI-based filtering), severity/confidence scoring guidelines, and customizable scan/filter instructions. Supports all programming languages.",
+          "distance": 0.2418
+        },
+        {
+          "slug": "Jeffallan/security-reviewer",
+          "name": "security-reviewer",
+          "category": "Code & Development",
+          "quality_tier": "featured",
+          "description": "Identifies security vulnerabilities, generates structured audit reports with severity ratings, and provides actionable remediation guidance. Use when conducting security audits, reviewing code for vulnerabilities, or analyzing infrastructure security. Invoke for SAST scans, penetration testing, DevSecOps practices, cloud security reviews, dependency audits, secrets scanning, or compliance checks. Produces vulnerability reports, prioritized recommendations, and compliance checklists.",
+          "distance": 0.2428
+        },
+        {
+          "slug": "3stoneBrother/code-audit",
+          "name": "code-audit",
+          "category": "DevOps & Infrastructure",
+          "quality_tier": "solid",
+          "description": "Professional code security audit skill covering 55+ vulnerability types. Enhanced with WooYun 88,636 real-world vulnerability cases (2010-2016). This skill should be used when performing security audits, vulnerability scanning, penetration testing preparation, or code review for security issues. Supports 9 languages: Java, Python, Go, PHP, JavaScript/Node.js, C/C++, .NET/C#, Ruby, Rust. Includes 143 mandatory detection items across all languages with language-specific checklists. Covers SQL injection, XSS, RCE, deserialization, SSRF, JNDI injection, JDBC protocol injection, authentication bypass, business logic flaws, race conditions, and modern security domains (LLM, Serverless, Android). WooYun integration adds: statistical-driven parameter priority, bypass techniques library, logic vulnerability patterns, and real-case references. v1.0: Initial public release with Docker deployment verification framework.",
+          "distance": 0.246
+        },
+        {
+          "slug": "trailofbits/agentic-actions-auditor",
+          "name": "agentic-actions-auditor",
+          "category": "AI & Automation",
+          "quality_tier": "featured",
+          "description": "Audits GitHub Actions workflows for security vulnerabilities in AI agent integrations including Claude Code Action, Gemini CLI, OpenAI Codex, and GitHub AI Inference. Detects attack vectors where attacker-controlled input reaches AI agents running in CI/CD pipelines, including env var intermediary patterns, direct expression injection, dangerous sandbox configurations, and wildcard user allowlists. Use when reviewing workflow files that invoke AI coding agents, auditing CI/CD pipeline security for prompt injection risks, or evaluating agentic action configurations.",
+          "distance": 0.2658
+        },
+        {
+          "slug": "jason-allen-oneal/skill-scanner-guard",
+          "name": "skill-scanner-guard",
+          "category": "AI & Automation",
+          "quality_tier": "listed",
+          "description": "Security gate for OpenClaw AgentSkills. Scans folder/ClawHub skills with cisco-ai-defense/skill-scanner before installation. Supports manual scans, staged installs, and auto-quarantine of high-risk skills via systemd.",
+          "distance": 0.2751
+        },
+        {
+          "slug": "tdimino/test-harness-auditor",
+          "name": "test-harness-auditor",
+          "category": "Testing & QA",
+          "quality_tier": "solid",
+          "description": "This skill should be used when auditing a repo's test, lint, type-check, static analysis, build, and debug infrastructure for AI coding agents. Use when entering a new repo, when asked to 'audit tests', 'audit harness', 'check test infrastructure', 'lint audit', 'what testing tools are configured', or when a repo has no .claude/lint-rules.json. Generates optimized configs for the lint-on-write hook.",
+          "distance": 0.2772
+        },
+        {
+          "slug": "CatREFuse/cls-certify",
+          "name": "cls-certify",
+          "category": "Data & Documents",
+          "quality_tier": "solid",
+          "description": "CocoLoop Safe (CLS) Skill 安全认证。对 Agent Skills 进行六维深度安全分析（静态代码、动态行为、依赖审计、网络流量、隐私合规、威胁情报），输出 S+/S/A/B/C/D 等级评估和 HTML/PDF 可视化报告。使用当用户需要检查 skill 安全性、验证 skill 是否可信、分析 skill 代码安全性、评估 skill 风险等级时。",
+          "distance": 0.2776
+        },
+        {
+          "slug": "holger1411/qa",
+          "name": "qa",
+          "category": "Testing & QA",
+          "quality_tier": "solid",
+          "description": "Use when completing any task (final validation step), running audits, preparing for deployment, or when ESLint/TypeScript/build errors occur.",
+          "distance": 0.2897
+        }
+      ]
+    },
+    {
+      "id": 7,
+      "size": 86,
+      "label": "patterns + code + testing",
+      "dominant_category": "Web & Frontend",
+      "dominant_pct": 49,
+      "category_distribution": {
+        "Code & Development": 12,
+        "Testing & QA": 14,
+        "Web & Frontend": 42,
+        "AI & Automation": 11,
+        "DevOps & Infrastructure": 1,
+        "Data & Documents": 4,
+        "API & Backend": 2
+      },
+      "top_skills": [
+        {
+          "slug": "cloudnative-co/coding-standards",
+          "name": "coding-standards",
+          "category": "Code & Development",
+          "quality_tier": "solid",
+          "description": "Universal coding standards, best practices, and patterns for TypeScript, JavaScript, React, and Node.js development.",
+          "distance": 0.228
+        },
+        {
+          "slug": "siberiacancode/juniors-best-practice",
+          "name": "juniors-best-practice",
+          "category": "Code & Development",
+          "quality_tier": "solid",
+          "description": "Juniors-focused React and TypeScript best practices. Use this skill when writing or reviewing code to enforce clear, consistent, and maintainable patterns across common scopes like React, TypeScript, styling, devtools, assets, and Git.",
+          "distance": 0.2645
+        },
+        {
+          "slug": "testdino-hq/playwright-core",
+          "name": "playwright-core",
+          "category": "Testing & QA",
+          "quality_tier": "solid",
+          "description": "Battle-tested Playwright patterns for E2E, API, component, visual, accessibility, and security testing. Covers locators, assertions, fixtures, network mocking, auth flows, debugging, and framework recipes for React, Next.js, Vue, and Angular. TypeScript and JavaScript.",
+          "distance": 0.2736
+        },
+        {
+          "slug": "cassiozen/ux-antipatterns",
+          "name": "ux-antipatterns",
+          "category": "Web & Frontend",
+          "quality_tier": "solid",
+          "description": "Use when reviewing, building, or refactoring frontend UI — components, pages, forms, or interactive flows. Triggers on code review, pull requests, and new feature implementation involving user-facing interfaces.",
+          "distance": 0.2835
+        },
+        {
+          "slug": "kumaran-is/angular-spa",
+          "name": "angular-spa",
+          "category": "Web & Frontend",
+          "quality_tier": "solid",
+          "description": "Angular 21.x SPA development skill with TailwindCSS 4.x and daisyUI 5.5.5. Use when building Angular standalone components, services, lazy-loaded routes, unit tests, or creating UI with TailwindCSS + daisyUI. Covers component scaffolding, UI/UX design, accessibility audits, and design systems.",
+          "distance": 0.2839
+        },
+        {
+          "slug": "CherryHQ/vercel-react-best-practices",
+          "name": "vercel-react-best-practices",
+          "category": "Web & Frontend",
+          "quality_tier": "featured",
+          "description": "React and Next.js performance optimization guidelines from Vercel Engineering. This skill should be used when writing, reviewing, or refactoring React/Next.js code to ensure optimal performance patterns. Triggers on tasks involving React components, Next.js pages, data fetching, bundle optimization, or performance improvements.",
+          "distance": 0.2852
+        },
+        {
+          "slug": "GiorgioBertolotti/coding-standards",
+          "name": "coding-standards",
+          "category": "Code & Development",
+          "quality_tier": "listed",
+          "description": "Universal coding standards, best practices, and patterns for TypeScript, JavaScript, React, and Node.js development.",
+          "distance": 0.2906
+        },
+        {
+          "slug": "vanviegen/aberdeen",
+          "name": "aberdeen",
+          "category": "Web & Frontend",
+          "quality_tier": "solid",
+          "description": "Expert guidance for building reactive UIs with the Aberdeen library. Covers element creation, reactive state management, efficient list rendering, CSS integration, routing, transitions, and optimistic updates.",
+          "distance": 0.2913
+        },
+        {
+          "slug": "weapp-vite/weapp-vite-vue-sfc-best-practices",
+          "name": "weapp-vite-vue-sfc-best-practices",
+          "category": "Web & Frontend",
+          "quality_tier": "solid",
+          "description": "面向使用 weapp-vite 的小程序项目的 Vue SFC 实践手册，覆盖 `<script setup lang=\"ts\">`、JSON 宏、`definePageMeta`/layout、`defineModel`、`usingComponents`、模板指令兼容、`.weapp-vite` 类型支持文件、受管 `prepare` 工作流，以及和脚手架 `AGENTS.md` / 本地 `dist/docs` 对齐的当前 SFC 约定。",
+          "distance": 0.2966
+        },
+        {
+          "slug": "seb1n/frontend-design",
+          "name": "frontend-design",
+          "category": "Web & Frontend",
+          "quality_tier": "solid",
+          "description": "Design and build production-ready frontend interfaces with design systems, responsive layouts, accessible components, and dark mode support.",
+          "distance": 0.2967
+        }
+      ]
+    },
+    {
+      "id": 8,
+      "size": 79,
+      "label": "skill + user + agent",
+      "dominant_category": "AI & Automation",
+      "dominant_pct": 43,
+      "category_distribution": {
+        "Data & Documents": 31,
+        "AI & Automation": 34,
+        "Code & Development": 8,
+        "API & Backend": 1,
+        "Web & Frontend": 5
+      },
+      "top_skills": [
+        {
+          "slug": "OrangeViolin/content-pipeline",
+          "name": "content-pipeline",
+          "category": "Data & Documents",
+          "quality_tier": "solid",
+          "description": "内容生产和分发统一管线。素材收集→出稿→排版→封面→朋友圈文案→多平台转换→一键分发。涵盖公众号写作、小红书轮播图、即刻文案、播客音频、品牌视频、Chrome CDP 自动发布。",
+          "distance": 0.217
+        },
+        {
+          "slug": "Mann1988/mckinsey-consultant",
+          "name": "mckinsey-consultant",
+          "category": "AI & Automation",
+          "quality_tier": "solid",
+          "description": "McKinsey顾问式问题解决系统。从商业问题出发,通过假设驱动的结构化分析方法,生成McKinsey风格研究报告和PPT。融合Problem Solving方法论、MECE原则、Issue Tree拆解、Hypotheses形成、Dummy Page设计、智能数据收集和专业PPT生成能力。",
+          "distance": 0.2177
+        },
+        {
+          "slug": "CheeMao/wechat-content-skill",
+          "name": "wechat-content-skill",
+          "category": "AI & Automation",
+          "quality_tier": "listed",
+          "description": "公众号内容创作助手 - 帮助高效采集素材、筛选选题、创作优质文章",
+          "distance": 0.2317
+        },
+        {
+          "slug": "Lionad-Morotar/-agent-skills",
+          "name": "-agent-skills",
+          "category": "AI & Automation",
+          "quality_tier": "listed",
+          "description": "如何编写 Agent Skills - 完整指南",
+          "distance": 0.2459
+        },
+        {
+          "slug": "jnMetaCode/brainstorming",
+          "name": "brainstorming",
+          "category": "AI & Automation",
+          "quality_tier": "featured",
+          "description": "在任何创造性工作之前必须使用此技能——创建功能、构建组件、添加功能或修改行为。在实现之前先探索用户意图、需求和设计。",
+          "distance": 0.2466
+        },
+        {
+          "slug": "wilingna/ai-ppt-toolkit",
+          "name": "ai-ppt-toolkit",
+          "category": "AI & Automation",
+          "quality_tier": "solid",
+          "description": "使用 NotebookLM + Gemini + Gamma \"三件套\"将零散资料快速转化为高质量 PPT 的完整工作流。 当用户需要制作职场汇报 PPT、演示文稿，或提到\"做 PPT\"、\"汇报\"、\"演示\"、\"NotebookLM\"、\"Gamma\"、\"三件套\"时，务必触发此 skill。 适用于：老板临时交办汇报任务、会议素材整理、行业分析演示、HR/管理层汇报等场景。 即使用户只说\"帮我准备个汇报\"或\"资料很乱不知道怎么整理\"，也应主动推荐此流程。",
+          "distance": 0.2485
+        },
+        {
+          "slug": "AsiaOstrich/ai-instruction-standards",
+          "name": "ai-instruction-standards",
+          "category": "Code & Development",
+          "quality_tier": "solid",
+          "description": "创建和维护 AI 指令文件（CLAUDE.md、.cursorrules 等）并采用适当结构。 使用时机：创建 AI 指令文件、区分通用与项目特定规则、配置 AI 工具。 关键字：CLAUDE.md, cursorrules, windsurfrules, clinerules, AI instructions, system prompt, 指令文件, AI 设定.",
+          "distance": 0.2526
+        },
+        {
+          "slug": "Panniantong/agent-reach",
+          "name": "agent-reach",
+          "category": "AI & Automation",
+          "quality_tier": "featured",
+          "description": "Give your AI agent eyes to see the entire internet. 17 platforms via CLI, MCP, curl, and Python scripts. Zero config for 8 channels. 【路由方式】SKILL.md 包含路由表和常用命令，复杂场景需按需阅读对应分类的 references/*.md。 分类：search / social (小红书/抖音/微博/推特/B站/V2EX/Reddit) / career(LinkedIn) / dev(github) / web(网页/文章/公众号/RSS) / video(YouTube/B站/播客). Use when user asks to search, read, or interact on any supported platform, shares a URL, or asks to search the web.",
+          "distance": 0.2567
+        },
+        {
+          "slug": "na57/chinese-copyright-application",
+          "name": "chinese-copyright-application",
+          "category": "Data & Documents",
+          "quality_tier": "solid",
+          "description": "用于生成中国软件著作权申请材料的完整工具包。支持从项目代码、文档等自动提取信息，生成软件著作权登记申请表、源代码文档（前后各30页）、用户手册和设计说明书，并自动转换为PDF文件。适用于微信小程序、Web应用、移动App、桌面应用等各类软件项目。当用户需要申请中国软件著作权时使用此skill。",
+          "distance": 0.2672
+        },
+        {
+          "slug": "breath57/dingtalk-ai-table",
+          "name": "dingtalk-ai-table",
+          "category": "AI & Automation",
+          "quality_tier": "solid",
+          "description": "钉钉 AI 表格（多维表格）操作。当用户提到\"钉钉AI表格\"、\"AI表格\"、\"多维表格\"、\"工作表\"、\"字段\"、\"记录\"、\"新增记录\"、\"查询记录\"、\"更新记录\"、\"删除记录\"、\"新建字段\"、\"删除字段\"、\"dingtalk AI table\"、\"dingtalk notable\"、\"able文件\"时使用此技能。支持工作表管理、字段管理、记录的增删改查等全部操作。",
+          "distance": 0.2713
+        }
+      ]
+    },
+    {
+      "id": 10,
+      "size": 78,
+      "label": "agent + agents + code",
+      "dominant_category": "AI & Automation",
+      "dominant_pct": 81,
+      "category_distribution": {
+        "AI & Automation": 63,
+        "Data & Documents": 3,
+        "API & Backend": 5,
+        "Web & Frontend": 2,
+        "DevOps & Infrastructure": 4,
+        "Testing & QA": 1
+      },
+      "top_skills": [
+        {
+          "slug": "ComposioHQ/agent-orchestrator",
+          "name": "agent-orchestrator",
+          "category": "AI & Automation",
+          "quality_tier": "featured",
+          "description": "Open-source, pluggable agentic coding orchestrator. Manages durable coding agents (Claude Code, Codex, OpenCode) through a simple interface — spawn agents, track progress, and let feedback loops like PR reviews and CI failures automatically route to the right agents. Use for fixing bugs, building features, working on GitHub issues, checking status, and managing agent sessions.",
+          "distance": 0.213
+        },
+        {
+          "slug": "shareAI-lab/agent-builder",
+          "name": "agent-builder",
+          "category": "AI & Automation",
+          "quality_tier": "featured",
+          "description": "Design and build AI agents for any domain. Use when users: (1) ask to \"create an agent\", \"build an assistant\", or \"design an AI system\" (2) want to understand agent architecture, agentic patterns, or autonomous AI (3) need help with capabilities, subagents, planning, or skill mechanisms (4) ask about Claude Code, Cursor, or similar agent internals (5) want to build agents for business, research, creative, or operational tasks Keywords: agent, assistant, autonomous, workflow, tool use, multi-step, orchestration",
+          "distance": 0.2134
+        },
+        {
+          "slug": "keysersoose/agent-builder",
+          "name": "agent-builder",
+          "category": "AI & Automation",
+          "quality_tier": "solid",
+          "description": "Build custom AI agents in Claude Code from a user's problem statement. This skill analyzes the user's use case, asks smart clarifying questions, researches the internet for similar agents (GitHub repos, blogs, Claude Code community patterns), and then architects and builds production-ready Claude Code agents — including subagents, skills, hooks, slash commands, MCP integrations, and CLAUDE.md configuration. Use this skill whenever the user wants to create an agent, build an automation workflow, set up a Claude Code subagent, design a multi-agent system, or says things like 'build me an agent for...', 'automate this with Claude Code', 'I want a subagent that...', 'help me create a workflow', 'set up an agent pipeline', or any variation of wanting Claude Code to do something specialized. Also trigger when the user mentions agent architecture, agent SDK, agentic workflows, or task delegation in Claude Code — even if they don't use the word 'agent' explicitly.",
+          "distance": 0.2187
+        },
+        {
+          "slug": "boshu2/using-agentops",
+          "name": "using-agentops",
+          "category": "AI & Automation",
+          "quality_tier": "solid",
+          "description": "Meta skill explaining the AgentOps operating model. Hook-capable runtimes inject it at session start; Codex uses it through the explicit startup fallback. Covers bookkeeping, validation, primitives, flows, the RPI lifecycle, and the skill catalog.",
+          "distance": 0.2283
+        },
+        {
+          "slug": "LukeRenton/build-agent",
+          "name": "build-agent",
+          "category": "AI & Automation",
+          "quality_tier": "featured",
+          "description": "Builds new Claude Code agents with consistent structure, enforced standards, and project-aware configuration. Use when creating a new agent, when the user describes a specialised role they want delegated to, or when discussing team composition.",
+          "distance": 0.2293
+        },
+        {
+          "slug": "alirezarezvani/agent-factory",
+          "name": "agent-factory",
+          "category": "AI & Automation",
+          "quality_tier": "solid",
+          "description": "Claude Code agent generation system that creates custom agents and sub-agents with enhanced YAML frontmatter, tool access patterns, and MCP integration support following proven production patterns",
+          "distance": 0.2309
+        },
+        {
+          "slug": "kochetkov-ma/brewcodeagents",
+          "name": "brewcodeagents",
+          "category": "AI & Automation",
+          "quality_tier": "solid",
+          "description": "Interactive agent creation and improvement orchestrator. Create or improve Claude Code agents.",
+          "distance": 0.241
+        },
+        {
+          "slug": "davila7/crewai-multi-agent",
+          "name": "crewai-multi-agent",
+          "category": "AI & Automation",
+          "quality_tier": "featured",
+          "description": "Multi-agent orchestration framework for autonomous AI collaboration. Use when building teams of specialized agents working together on complex tasks, when you need role-based agent collaboration with memory, or for production workflows requiring sequential/hierarchical execution. Built without LangChain dependencies for lean, fast execution.",
+          "distance": 0.2431
+        },
+        {
+          "slug": "Othmane-Khadri/agent-architecture-planner",
+          "name": "agent-architecture-planner",
+          "category": "AI & Automation",
+          "quality_tier": "solid",
+          "description": "Use when designing an autonomous agent, planning agent architecture, building a scheduled automation, or creating a Claude Code agent workflow. Triggers: 'design an agent', 'build an automation', 'agent architecture', 'automate this workflow', 'create a scheduled agent', 'shell script agent'.",
+          "distance": 0.2464
+        },
+        {
+          "slug": "zxkane/aws-agentic-ai",
+          "name": "aws-agentic-ai",
+          "category": "AI & Automation",
+          "quality_tier": "solid",
+          "description": "AWS Bedrock AgentCore comprehensive expert for deploying and managing all AgentCore services. Use when working with Gateway, Runtime, Memory, Identity, or any AgentCore component. Covers MCP target deployment, credential management, schema optimization, runtime configuration, memory management, and identity services.",
+          "distance": 0.2476
+        }
+      ]
+    },
+    {
+      "id": 12,
+      "size": 73,
+      "label": "search + seo + user",
+      "dominant_category": "AI & Automation",
+      "dominant_pct": 55,
+      "category_distribution": {
+        "Data & Documents": 14,
+        "AI & Automation": 40,
+        "Code & Development": 7,
+        "DevOps & Infrastructure": 2,
+        "Web & Frontend": 6,
+        "API & Backend": 2,
+        "Testing & QA": 2
+      },
+      "top_skills": [
+        {
+          "slug": "kostja94/seo-monitoring",
+          "name": "seo-monitoring",
+          "category": "Data & Documents",
+          "quality_tier": "featured",
+          "description": "When the user wants to build an SEO data analysis system, monitor indexing/traffic/keywords/backlinks, or set up benchmarks. Also use when the user mentions \"SEO data analysis,\" \"SEO monitoring,\" \"article database,\" \"traffic benchmark,\" \"penalty recovery,\" \"SEO work document,\" \"SEO dashboard,\" \"keyword tracking,\" \"ranking monitoring,\" \"indexing report,\" or \"backlink monitoring.\" For GSC API, use google-search-console.",
+          "distance": 0.2486
+        },
+        {
+          "slug": "ReScienceLab/seo-geo",
+          "name": "seo-geo",
+          "category": "AI & Automation",
+          "quality_tier": "featured",
+          "description": "SEO & GEO (Generative Engine Optimization) for websites. Analyze keywords, generate schema markup, optimize for AI search engines (ChatGPT, Perplexity, Gemini, Copilot, Claude) and traditional search (Google, Bing). Use when user wants to improve search visibility, search optimization, search ranking, AI visibility, ChatGPT ranking, Google AI Overview, indexing, JSON-LD, meta tags, or keyword research.",
+          "distance": 0.2542
+        },
+        {
+          "slug": "gbessoni/seobuild-onpage",
+          "name": "seobuild-onpage",
+          "category": "AI & Automation",
+          "quality_tier": "solid",
+          "description": "Write SEO pages that rank on Google AND get cited by LLMs. Uses live SERP data, 500-token chunk architecture, and the Reddit Test quality gate. Triggers on: \"write an SEO page\", \"seo-agi\", \"seo page for [keyword]\", \"rank for [keyword]\", \"rewrite this page for SEO\", \"GEO\", \"AEO\", \"write a page that ranks\".",
+          "distance": 0.2652
+        },
+        {
+          "slug": "Bhanunamikaze/seo",
+          "name": "seo",
+          "category": "Code & Development",
+          "quality_tier": "solid",
+          "description": "Deterministic LLM-first SEO audits for websites, blog posts, and GitHub repositories. Use this when the user asks to \"perform SEO analysis\", \"run SEO audit\", \"analyze SEO\", \"check technical SEO\", \"review schema\", \"Core Web Vitals\", \"E-E-A-T\", \"hreflang\", \"GEO\", \"AEO\", or GitHub repository SEO optimization. For full/page/repo audits, run bundled scripts for evidence and return prioritized, confidence-labeled fixes.",
+          "distance": 0.269
+        },
+        {
+          "slug": "ferdinandobons/startup-competitors",
+          "name": "startup-competitors",
+          "category": "Data & Documents",
+          "quality_tier": "solid",
+          "description": "Deep competitive intelligence for any market. Analyzes competitors' products, pricing, customer sentiment, GTM strategy, and growth signals using real web data. Produces battle cards, pricing landscape, and feature matrix. Use when the user wants to understand their competitive landscape, analyze competitors, compare products in a market, or research who they're competing against. Triggers for \"who are my competitors\", \"competitive analysis\", \"competitor research\", \"battle cards\", \"pricing comparison\", \"competitor pricing\", \"market players\", \"competitive intelligence\", \"competitive landscape\", \"who else is in this space\", \"competitive moat\", or any request to profile, compare, or map competitors in a category. Works standalone — no prior startup-design session needed.",
+          "distance": 0.2756
+        },
+        {
+          "slug": "kostja94/google-search-console",
+          "name": "google-search-console",
+          "category": "Data & Documents",
+          "quality_tier": "featured",
+          "description": "When the user wants to analyze Google Search Console data, use the GSC API, or interpret search performance. Also use when the user mentions \"GSC,\" \"Search Console,\" \"indexing report,\" \"Core Web Vitals,\" \"Enhancements,\" \"Insights report,\" \"search performance,\" \"search queries,\" \"search performance report,\" \"URL inspection,\" \"impressions,\" \"CTR,\" \"average position,\" \"index coverage,\" \"GSC data analysis,\" \"Search Console API,\" or \"searchanalytics.query.\" When the user wants to rewrite title tags (not only report on them), use title-tag. For meta description rewrites, use meta-description.",
+          "distance": 0.2873
+        },
+        {
+          "slug": "dkyazzentwatwa/osint-investigator",
+          "name": "osint-investigator",
+          "category": "Data & Documents",
+          "quality_tier": "listed",
+          "description": "OSINT Investigator v2.1 — comprehensive open-source intelligence skill. Triggers on: OSINT, recon, digital footprint, dorking, social media investigation, username lookups, email tracing, domain recon, entity mapping, OPSEC, image verification, metadata analysis, threat intel, people search, background research. Slash commands: /dork, /recon, /pivot, /entity, /timeline, /analyze-metadata, /verif-photo, /sock-opsec, /report, /simple-report, /full, /track, /link, /entities, /confidence, /export-entities, /import-entities, /compare, /timeline-entity, /find-path, /visualize, /stats, /export-graph, /risk-score, /anomaly, /pattern, /threat-model, /sanitize, /export-risk, /wizard, /template, /simple-mode, /progress, /save-checkpoint, /load-checkpoint, /qa-check, /coverage, /gaps, /verify-sources. Professional playbooks: journalist verification, HR background checks, cyber threat intel, private investigation. Integrations: Maltego, Obsidian, Notion.",
+          "distance": 0.2979
+        },
+        {
+          "slug": "nicepkg/resource-scout",
+          "name": "resource-scout",
+          "category": "AI & Automation",
+          "quality_tier": "solid",
+          "description": "Search and discover Claude Code skills and MCP servers from marketplaces, GitHub repositories, and registries. Use when (1) user asks to find skills for a specific task, (2) looking for MCP servers to connect external tools, (3) user mentions \"find skill\", \"search MCP\", \"discover tools\", or \"what skills exist for X\", (4) before creating a custom skill to check if one already exists.",
+          "distance": 0.3031
+        },
+        {
+          "slug": "CnxLuc/token-analysis",
+          "name": "token-analysis",
+          "category": "Data & Documents",
+          "quality_tier": "solid",
+          "description": "Founder-first research framework for early-stage crypto tokens. 6-step analysis, watchlist, and monitoring. Triggers: \"analyze token\", \"should I buy\", \"token research\", \"watchlist\", or any DexScreener link.",
+          "distance": 0.3093
+        },
+        {
+          "slug": "aaron-he-zhu/geo-content-optimizer",
+          "name": "geo-content-optimizer",
+          "category": "AI & Automation",
+          "quality_tier": "featured",
+          "description": "Optimize content for AI citations in ChatGPT, Perplexity, AI Overviews, Gemini, Claude. AI引用优化/GEO优化/AI搜索",
+          "distance": 0.3178
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "size": 68,
+      "label": "api + user + cli",
+      "dominant_category": "Data & Documents",
+      "dominant_pct": 43,
+      "category_distribution": {
+        "AI & Automation": 18,
+        "Data & Documents": 29,
+        "API & Backend": 13,
+        "Web & Frontend": 5,
+        "Code & Development": 2,
+        "DevOps & Infrastructure": 1
+      },
+      "top_skills": [
+        {
+          "slug": "kfastov/tgcli",
+          "name": "tgcli",
+          "category": "AI & Automation",
+          "quality_tier": "solid",
+          "description": "Telegram CLI for reading/searching messages, syncing archives, and sending or downloading files. Use when the user asks about Telegram chats, messages, contacts, groups, or files.",
+          "distance": 0.3217
+        },
+        {
+          "slug": "KrauseFx/beeper-cli",
+          "name": "beeper-cli",
+          "category": "Data & Documents",
+          "quality_tier": "solid",
+          "description": "Read-only CLI for browsing, opening, and searching local Beeper chat history (SQLite-based)",
+          "distance": 0.3243
+        },
+        {
+          "slug": "madeyexz/heptabase-cli",
+          "name": "heptabase-cli",
+          "category": "Data & Documents",
+          "quality_tier": "listed",
+          "description": "Interact with user's Heptabase knowledge base from the terminal. Use when the user wants to search notes, read cards or journals, save new notes, append to journals, or work with PDFs in Heptabase. Triggers on mentions of \"heptabase\", \"whiteboard\", \"journal\", \"note card\", or \"personal knowledge base\".",
+          "distance": 0.3351
+        },
+        {
+          "slug": "sanjay3290/deep-research",
+          "name": "deep-research",
+          "category": "API & Backend",
+          "quality_tier": "solid",
+          "description": "Execute autonomous multi-step research using Google Gemini Deep Research Agent. Use for: market analysis, competitive landscaping, literature reviews, technical research, due diligence. Takes 2-10 minutes but produces detailed, cited reports. Costs $2-5 per task.",
+          "distance": 0.3421
+        },
+        {
+          "slug": "claude-world/super-helper",
+          "name": "super-helper",
+          "category": "Data & Documents",
+          "quality_tier": "solid",
+          "description": "A helpful skill that does many things",
+          "distance": 0.344
+        },
+        {
+          "slug": "TermiX-official/bird",
+          "name": "bird",
+          "category": "Data & Documents",
+          "quality_tier": "solid",
+          "description": "X/Twitter CLI for reading, searching, posting, and engagement via cookies.",
+          "distance": 0.3484
+        },
+        {
+          "slug": "K-Dense-AI/benchling-integration",
+          "name": "benchling-integration",
+          "category": "AI & Automation",
+          "quality_tier": "featured",
+          "description": "Benchling R&D platform integration. Access registry (DNA, proteins), inventory, ELN entries, workflows via API, build Benchling Apps, query Data Warehouse, for lab data management automation.",
+          "distance": 0.3522
+        },
+        {
+          "slug": "foryourhealth111-pixel/benchling-integration",
+          "name": "benchling-integration",
+          "category": "AI & Automation",
+          "quality_tier": "featured",
+          "description": "Benchling R&D platform integration. Access registry (DNA, proteins), inventory, ELN entries, workflows via API, build Benchling Apps, query Data Warehouse, for lab data management automation.",
+          "distance": 0.3522
+        },
+        {
+          "slug": "jackwener/xhs-cli",
+          "name": "xhs-cli",
+          "category": "Data & Documents",
+          "quality_tier": "featured",
+          "description": "Headless-browser-based CLI skill for Xiaohongshu (小红书, RedNote, XHS) to search notes, read posts, browse profiles, like, favorite, comment, and publish from the terminal",
+          "distance": 0.358
+        },
+        {
+          "slug": "membranedev/alphasense",
+          "name": "alphasense",
+          "category": "AI & Automation",
+          "quality_tier": "listed",
+          "description": "AlphaSense integration. Manage data, records, and automate workflows. Use when the user wants to interact with AlphaSense data.",
+          "distance": 0.3587
+        }
+      ]
+    },
+    {
+      "id": 14,
+      "size": 65,
+      "label": "art + create + video",
+      "dominant_category": "AI & Automation",
+      "dominant_pct": 55,
+      "category_distribution": {
+        "AI & Automation": 36,
+        "Web & Frontend": 17,
+        "Data & Documents": 5,
+        "Code & Development": 6,
+        "DevOps & Infrastructure": 1
+      },
+      "top_skills": [
+        {
+          "slug": "wells1137/image-studio",
+          "name": "image-studio",
+          "category": "AI & Automation",
+          "quality_tier": "solid",
+          "description": "Tired of juggling 8 API keys? This skill gives you one-command access to Midjourney, Flux, Ideogram, and more, with zero setup. Use when you want to generate any image without worrying about API keys.",
+          "distance": 0.2695
+        },
+        {
+          "slug": "ThinkInAIXYZ/algorithmic-art",
+          "name": "algorithmic-art",
+          "category": "AI & Automation",
+          "quality_tier": "featured",
+          "description": "Creating algorithmic art using p5.js with seeded randomness and interactive parameter exploration. Use this when users request creating art using code, generative art, algorithmic art, flow fields, or particle systems. Create original algorithmic art rather than copying existing artists' work to avoid copyright violations.",
+          "distance": 0.2713
+        },
+        {
+          "slug": "guanyang/algorithmic-art",
+          "name": "algorithmic-art",
+          "category": "AI & Automation",
+          "quality_tier": "featured",
+          "description": "Creating algorithmic art using p5.js with seeded randomness and interactive parameter exploration. Use this when users request creating art using code, generative art, algorithmic art, flow fields, or particle systems. Create original algorithmic art rather than copying existing artists' work to avoid copyright violations.",
+          "distance": 0.2713
+        },
+        {
+          "slug": "Prat011/algorithmic-art",
+          "name": "algorithmic-art",
+          "category": "AI & Automation",
+          "quality_tier": "solid",
+          "description": "Creating algorithmic art using p5.js with seeded randomness and interactive parameter exploration. Use this when users request creating art using code, generative art, algorithmic art, flow fields, or particle systems. Create original algorithmic art rather than copying existing artists' work to avoid copyright violations.",
+          "distance": 0.2713
+        },
+        {
+          "slug": "shajith003/algorithmic-art",
+          "name": "algorithmic-art",
+          "category": "AI & Automation",
+          "quality_tier": "solid",
+          "description": "Creating algorithmic art using p5.js with seeded randomness and interactive parameter exploration. Use this when users request creating art using code, generative art, algorithmic art, flow fields, or particle systems. Create original algorithmic art rather than copying existing artists' work to avoid copyright violations.",
+          "distance": 0.2713
+        },
+        {
+          "slug": "seaworld008/algorithmic-art",
+          "name": "algorithmic-art",
+          "category": "AI & Automation",
+          "quality_tier": "solid",
+          "description": "Creating algorithmic art using p5.js with seeded randomness and interactive parameter exploration. Use this when users request creating art using code, generative art, algorithmic art, flow fields, or particle systems. Create original algorithmic art rather than copying existing artists' work to avoid copyright violations.",
+          "distance": 0.2713
+        },
+        {
+          "slug": "ComposioHQ/canvas-design",
+          "name": "canvas-design",
+          "category": "Web & Frontend",
+          "quality_tier": "solid",
+          "description": "Create beautiful visual art in .png and .pdf documents using design philosophy. You should use this skill when the user asks to create a poster, piece of art, design, or other static piece. Create original visual designs, never copying existing artists' work to avoid copyright violations.",
+          "distance": 0.2763
+        },
+        {
+          "slug": "anthropics/algorithmic-art",
+          "name": "algorithmic-art",
+          "category": "Web & Frontend",
+          "quality_tier": "solid",
+          "description": "Creating algorithmic art using p5.js with seeded randomness and interactive parameter exploration. Use this when users request creating art using code, generative art, algorithmic art, flow fields, or particle systems. Create original algorithmic art rather than copying existing artists' work to avoid copyright violations.",
+          "distance": 0.2797
+        },
+        {
+          "slug": "anthropics/canvas-design",
+          "name": "canvas-design",
+          "category": "Web & Frontend",
+          "quality_tier": "solid",
+          "description": "Create beautiful visual art in .png and .pdf documents using design philosophy. You should use this skill when the user asks to create a poster, piece of art, design, or other static piece. Create original visual designs, never copying existing artists' work to avoid copyright violations.",
+          "distance": 0.2844
+        },
+        {
+          "slug": "bitwize-music-studio/album-art-director",
+          "name": "album-art-director",
+          "category": "AI & Automation",
+          "quality_tier": "solid",
+          "description": "Creates visual concepts for album artwork and generates AI art prompts. Use during planning for concept discussion, or after all tracks are Final for actual artwork generation.",
+          "distance": 0.2958
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "size": 50,
+      "label": "review + code + github",
+      "dominant_category": "Code & Development",
+      "dominant_pct": 58,
+      "category_distribution": {
+        "Code & Development": 29,
+        "AI & Automation": 14,
+        "DevOps & Infrastructure": 1,
+        "Testing & QA": 1,
+        "Web & Frontend": 2,
+        "Data & Documents": 3
+      },
+      "top_skills": [
+        {
+          "slug": "DataRecce/claude-code-review",
+          "name": "claude-code-review",
+          "category": "Code & Development",
+          "quality_tier": "solid",
+          "description": "Use when asked to review a PR, or when /review is invoked with a PR number or URL. Performs a focused code review checking for bugs, security, performance, and test gaps, then posts findings as a PR comment and formal GitHub review.",
+          "distance": 0.181
+        },
+        {
+          "slug": "fvadicamo/github-pr-creation",
+          "name": "github-pr-creation",
+          "category": "Code & Development",
+          "quality_tier": "solid",
+          "description": "Creates GitHub Pull Requests with automated validation and task tracking. Use when user wants to create PR, open pull request, submit for review, or check if ready for PR. Analyzes commits, validates task completion, generates Conventional Commits title and description, suggests labels. NOTE - for merging existing PRs, use github-pr-merge instead.",
+          "distance": 0.1978
+        },
+        {
+          "slug": "Jeffallan/code-reviewer",
+          "name": "code-reviewer",
+          "category": "Code & Development",
+          "quality_tier": "featured",
+          "description": "Analyzes code diffs and files to identify bugs, security vulnerabilities (SQL injection, XSS, insecure deserialization), code smells, N+1 queries, naming issues, and architectural concerns, then produces a structured review report with prioritized, actionable feedback. Use when reviewing pull requests, conducting code quality audits, identifying refactoring opportunities, or checking for security issues. Invoke for PR reviews, code quality checks, refactoring suggestions, review code, code quality. Complements specialized skills (security-reviewer, test-master) by providing broad-scope review across correctness, performance, maintainability, and test coverage in a single pass.",
+          "distance": 0.2135
+        },
+        {
+          "slug": "tirth8205/review-pr",
+          "name": "review-pr",
+          "category": "Code & Development",
+          "quality_tier": "featured",
+          "description": "Review a PR or branch diff using the knowledge graph for full structural context. Outputs a structured review with blast-radius analysis.",
+          "distance": 0.2151
+        },
+        {
+          "slug": "evalstate/pr-writing-review",
+          "name": "pr-writing-review",
+          "category": "Code & Development",
+          "quality_tier": "featured",
+          "description": "Extract and analyze writing improvements from GitHub PR review comments. Use when asked to show review feedback, style changes, or editorial improvements from a GitHub pull request URL. Handles both explicit suggestions and plain text feedback. Produces structured output comparing original phrasing with reviewer suggestions to help refine future writing.",
+          "distance": 0.2196
+        },
+        {
+          "slug": "huangjia2019/code-reviewing",
+          "name": "code-reviewing",
+          "category": "Code & Development",
+          "quality_tier": "solid",
+          "description": "Review code for quality, security, and best practices. Use when the user asks for code review, wants feedback on their code, mentions reviewing changes, or asks about code quality.",
+          "distance": 0.2348
+        },
+        {
+          "slug": "posit-dev/pr-create",
+          "name": "pr-create",
+          "category": "Code & Development",
+          "quality_tier": "featured",
+          "description": "Creates a pull request from current changes, monitors GitHub CI, and debugs any failures until CI passes. Use this when the user says \"create pr\", \"make a pr\", \"open pull request\", \"submit pr\", \"pr for these changes\", or wants to get their current work into a reviewable PR. Assumes the project uses git, is hosted on GitHub, and has GitHub Actions CI with automated checks (lint, build, tests, etc.). Does NOT merge - stops when CI passes and provides the PR link.",
+          "distance": 0.2351
+        },
+        {
+          "slug": "onsails/review-loop",
+          "name": "review-loop",
+          "category": "Code & Development",
+          "quality_tier": "solid",
+          "description": "Runs multi-pass automated code review with per-issue fix subagents. Triggers when preparing a branch for PR, reviewing code changes, or when thorough automated code quality review is needed.",
+          "distance": 0.2413
+        },
+        {
+          "slug": "jaem1n207/code-reviewer",
+          "name": "code-reviewer",
+          "category": "Code & Development",
+          "quality_tier": "listed",
+          "description": "Perform thorough code reviews with actionable, prioritized feedback. Use when a user asks to review code, check code quality, find bugs, review a pull request, audit code for issues, or get feedback on implementation. Covers correctness, security, performance, readability, and best practices across languages.",
+          "distance": 0.2461
+        },
+        {
+          "slug": "Zhow01/code-review",
+          "name": "code-review",
+          "category": "Code & Development",
+          "quality_tier": "listed",
+          "description": "Code review assistance with linting, style checking, and best practices",
+          "distance": 0.2483
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "size": 46,
+      "label": "update + git + release",
+      "dominant_category": "AI & Automation",
+      "dominant_pct": 30,
+      "category_distribution": {
+        "AI & Automation": 14,
+        "Code & Development": 13,
+        "Data & Documents": 10,
+        "DevOps & Infrastructure": 2,
+        "Testing & QA": 3,
+        "Web & Frontend": 4
+      },
+      "top_skills": [
+        {
+          "slug": "levnikolaevich/ln-001-push-all",
+          "name": "ln-001-push-all",
+          "category": "AI & Automation",
+          "quality_tier": "featured",
+          "description": "Commits and pushes all changes (staged, unstaged, untracked) to remote. Use when you need a quick push of everything at once.",
+          "distance": 0.2967
+        },
+        {
+          "slug": "alexei-led/evolving-config",
+          "name": "evolving-config",
+          "category": "Code & Development",
+          "quality_tier": "solid",
+          "description": "Audit Claude Code configuration against latest features and best practices. Use when user says \"evolve\", \"self-improve\", \"audit config\", \"what's new in claude code\", \"upgrade configuration\", \"check for improvements\", \"are we up to date\".",
+          "distance": 0.3028
+        },
+        {
+          "slug": "lbb00/update-docs",
+          "name": "update-docs",
+          "category": "AI & Automation",
+          "quality_tier": "solid",
+          "description": "Update all project documentation after code changes.",
+          "distance": 0.3042
+        },
+        {
+          "slug": "toongri/git-master",
+          "name": "git-master",
+          "category": "Code & Development",
+          "quality_tier": "solid",
+          "description": "Use when committing changes to git or naming branches. Triggers include \"commit\", \"커밋\", \"git commit\", \"finalize changes\", \"save to git\", \"commit my work\", \"branch name\", \"브랜치 이름\", \"what should I name this branch\".",
+          "distance": 0.3052
+        },
+        {
+          "slug": "cubetribe/release",
+          "name": "release",
+          "category": "AI & Automation",
+          "quality_tier": "listed",
+          "description": "Version-first workflow, semantic versioning rules, pre-push checklist, and release process for CC_GodMode",
+          "distance": 0.3065
+        },
+        {
+          "slug": "claude-world/changelog",
+          "name": "changelog",
+          "category": "AI & Automation",
+          "quality_tier": "solid",
+          "description": "View and manage the runtime changelog for observability",
+          "distance": 0.3182
+        },
+        {
+          "slug": "Renkunzhao/commit",
+          "name": "commit",
+          "category": "Code & Development",
+          "quality_tier": "listed",
+          "description": "Summarize current session changes using git status/diff, then propose 3 Conventional Commit messages with scope limited to model|motion|ui. Only run git commands that read state; never commit/push without approval.",
+          "distance": 0.3213
+        },
+        {
+          "slug": "escapeboy/update-docs",
+          "name": "update-docs",
+          "category": "Data & Documents",
+          "quality_tier": "listed",
+          "description": "Keep project documentation current by researching latest patterns, fetching sources, and updating docs with findings",
+          "distance": 0.3257
+        },
+        {
+          "slug": "bdsqqq/git",
+          "name": "git",
+          "category": "Code & Development",
+          "quality_tier": "listed",
+          "description": "git workflows for agents: ship (stage → commit → push), worktree (parallel branches), hunks (selective staging). never force push, never git add -A, conventional commits. triggers on: commit, push, stage, ship, git add, worktree, hunks, selective staging.",
+          "distance": 0.3292
+        },
+        {
+          "slug": "tobihagemann/update-dependencies",
+          "name": "update-dependencies",
+          "category": "DevOps & Infrastructure",
+          "quality_tier": "featured",
+          "description": "Upgrade project dependencies with breaking change research for major version updates. Use when the user asks to \"update dependencies\", \"upgrade packages\", \"upgrade dependencies\", \"update deps\", \"upgrade deps\", \"update npm deps\", \"update Swift packages\", \"cargo update\", \"go get updates\", \"bundle update\", or \"pip upgrade\".",
+          "distance": 0.3295
+        }
+      ]
+    },
+    {
+      "id": 0,
+      "size": 37,
+      "label": "browser + app + web",
+      "dominant_category": "AI & Automation",
+      "dominant_pct": 49,
+      "category_distribution": {
+        "Web & Frontend": 13,
+        "AI & Automation": 18,
+        "Testing & QA": 4,
+        "Data & Documents": 2
+      },
+      "top_skills": [
+        {
+          "slug": "fcakyon/agent-browser",
+          "name": "agent-browser",
+          "category": "Web & Frontend",
+          "quality_tier": "featured",
+          "description": "Browser automation CLI for AI agents. Use when the user needs to interact with websites, including navigating pages, filling forms, clicking buttons, taking screenshots, extracting data, testing web apps, or automating any browser task. Triggers include requests to \"open a website\", \"fill out a form\", \"click a button\", \"take a screenshot\", \"scrape data from a page\", \"test this web app\", \"login to a site\", \"automate browser actions\", or any task requiring programmatic web interaction.",
+          "distance": 0.1686
+        },
+        {
+          "slug": "shanraisshan/agent-browser",
+          "name": "agent-browser",
+          "category": "AI & Automation",
+          "quality_tier": "featured",
+          "description": "Browser automation CLI for AI agents. Use when the user needs to interact with websites, including navigating pages, filling forms, clicking buttons, taking screenshots, extracting data, testing web apps, or automating any browser task. Triggers include requests to \"open a website\", \"fill out a form\", \"click a button\", \"take a screenshot\", \"scrape data from a page\", \"test this web app\", \"login to a site\", \"automate browser actions\", or any task requiring programmatic web interaction.",
+          "distance": 0.1794
+        },
+        {
+          "slug": "avibebuilder/agent-browser",
+          "name": "agent-browser",
+          "category": "AI & Automation",
+          "quality_tier": "solid",
+          "description": "Browser automation CLI for AI agents. Use when the user needs to interact with websites, including navigating pages, filling forms, clicking buttons, taking screenshots, extracting data, testing web apps, or automating any browser task. Triggers include requests to \"open a website\", \"fill out a form\", \"click a button\", \"take a screenshot\", \"scrape data from a page\", \"test this web app\", \"login to a site\", \"automate browser actions\", or any task requiring programmatic web interaction.",
+          "distance": 0.1856
+        },
+        {
+          "slug": "slopus/agent-browser",
+          "name": "agent-browser",
+          "category": "AI & Automation",
+          "quality_tier": "featured",
+          "description": "Browser automation CLI for AI agents. Use this when asked to test something in a real browser.",
+          "distance": 0.1868
+        },
+        {
+          "slug": "vibeeval/browser-automation",
+          "name": "browser-automation",
+          "category": "AI & Automation",
+          "quality_tier": "featured",
+          "description": "AI browser automation - navigate, interact, extract, verify via browser-use MCP",
+          "distance": 0.2066
+        },
+        {
+          "slug": "KnoWhiz/browser-use",
+          "name": "browser-use",
+          "category": "Web & Frontend",
+          "quality_tier": "solid",
+          "description": "Automates browser interactions for web testing, form filling, screenshots, and data extraction. Use when the user needs to navigate websites, interact with web pages, fill forms, take screenshots, or extract information from web pages.",
+          "distance": 0.2101
+        },
+        {
+          "slug": "lackeyjb/playwright-skill",
+          "name": "playwright-skill",
+          "category": "Testing & QA",
+          "quality_tier": "solid",
+          "description": "Complete browser automation with Playwright. Auto-detects dev servers, writes clean test scripts to /tmp. Test pages, fill forms, take screenshots, check responsive design, validate UX, test login flows, check links, automate any browser task. Use when user wants to test websites, automate browser interactions, validate web functionality, or perform any browser-based testing.",
+          "distance": 0.247
+        },
+        {
+          "slug": "fcakyon/electron",
+          "name": "electron",
+          "category": "AI & Automation",
+          "quality_tier": "featured",
+          "description": "Automate Electron desktop apps (VS Code, Slack, Discord, Figma, Notion, Spotify, etc.) using agent-browser via Chrome DevTools Protocol. Use when the user needs to interact with an Electron app, automate a desktop app, connect to a running app, control a native app, or test an Electron application. Triggers include \"automate Slack app\", \"control VS Code\", \"interact with Discord app\", \"test this Electron app\", \"connect to desktop app\", or any task requiring automation of a native Electron application.",
+          "distance": 0.2542
+        },
+        {
+          "slug": "minsight-ai-info/ai-search-hub",
+          "name": "ai-search-hub",
+          "category": "AI & Automation",
+          "quality_tier": "solid",
+          "description": "Run the AI Search Hub browser automation scripts for Yuanbao, LongCat, Doubao, Qwen, Gemini, Grok, and MiniMax. Use this skill when the user wants to ask one of those sites a prompt, auto-start or attach to a Chrome DevTools session on port 9222, seed an isolated debug browser profile from the user's local browser data, detect whether login is required, wait for the user to finish logging in if needed, and then continue automatically.",
+          "distance": 0.2756
+        },
+        {
+          "slug": "addyosmani/browser-testing-with-devtools",
+          "name": "browser-testing-with-devtools",
+          "category": "Testing & QA",
+          "quality_tier": "featured",
+          "description": "Tests in real browsers. Use when building or debugging anything that runs in a browser. Use when you need to inspect the DOM, capture console errors, analyze network requests, profile performance, or verify visual output with real runtime data via Chrome DevTools MCP.",
+          "distance": 0.2824
+        }
+      ]
+    },
+    {
+      "id": 9,
+      "size": 33,
+      "label": "api + design + fhir",
+      "dominant_category": "API & Backend",
+      "dominant_pct": 55,
+      "category_distribution": {
+        "API & Backend": 18,
+        "Web & Frontend": 5,
+        "AI & Automation": 3,
+        "Data & Documents": 6,
+        "Code & Development": 1
+      },
+      "top_skills": [
+        {
+          "slug": "MoizIbnYousaf/backend-development",
+          "name": "backend-development",
+          "category": "API & Backend",
+          "quality_tier": "featured",
+          "description": "Backend API design, database architecture, microservices patterns, and test-driven development. Use for designing APIs, database schemas, or backend system architecture.",
+          "distance": 0.2246
+        },
+        {
+          "slug": "HoangNguyen0403/common-api-design",
+          "name": "common-api-design",
+          "category": "Web & Frontend",
+          "quality_tier": "solid",
+          "description": "Apply REST API conventions — HTTP semantics, status codes, versioning, pagination, and OpenAPI standards for any framework. Use when designing endpoints, choosing HTTP methods, implementing pagination, or writing OpenAPI specs. (triggers: **/*.controller.ts, **/*.router.ts, **/*.routes.ts, **/routes/**, **/controllers/**, **/handlers/**, rest api, endpoint, http method, status code, versioning, pagination, openapi, api design, api contract)",
+          "distance": 0.2264
+        },
+        {
+          "slug": "addyosmani/api-and-interface-design",
+          "name": "api-and-interface-design",
+          "category": "API & Backend",
+          "quality_tier": "featured",
+          "description": "Guides stable API and interface design. Use when designing APIs, module boundaries, or any public interface. Use when creating REST or GraphQL endpoints, defining type contracts between modules, or establishing boundaries between frontend and backend.",
+          "distance": 0.2483
+        },
+        {
+          "slug": "first-fluke/oma-backend",
+          "name": "oma-backend",
+          "category": "API & Backend",
+          "quality_tier": "featured",
+          "description": "Backend specialist for APIs, databases, authentication with clean architecture (Repository/Service/Router pattern). Use for API, endpoint, REST, database, server, migration, and auth work.",
+          "distance": 0.2609
+        },
+        {
+          "slug": "MadAppGang/database-patterns",
+          "name": "database-patterns",
+          "category": "API & Backend",
+          "quality_tier": "featured",
+          "description": "Use when designing database schemas, implementing repository patterns, writing optimized queries, managing migrations, or working with indexes and transactions for SQL/NoSQL databases.",
+          "distance": 0.2775
+        },
+        {
+          "slug": "xiaobei930/api",
+          "name": "api",
+          "category": "AI & Automation",
+          "quality_tier": "solid",
+          "description": "RESTful API design patterns and best practices. Use when creating endpoints, designing APIs, or implementing routes.",
+          "distance": 0.3094
+        },
+        {
+          "slug": "hainamchung/sql-optimization-patterns",
+          "name": "sql-optimization-patterns",
+          "category": "API & Backend",
+          "quality_tier": "solid",
+          "description": "Transform slow database queries into lightning-fast operations through systematic optimization, proper indexing, and query plan analysis.",
+          "distance": 0.329
+        },
+        {
+          "slug": "aehrc/fhir-api",
+          "name": "fhir-api",
+          "category": "API & Backend",
+          "quality_tier": "solid",
+          "description": "Expert guidance for implementing FHIR RESTful API servers and clients following the HL7 FHIR specification. Use this skill when implementing a FHIR server with REST endpoints, building a FHIR client, designing FHIR API routes and handlers, implementing FHIR operations (read, create, update, delete, search, history), working with FHIR bundles, batch requests, or transactions, handling FHIR content negotiation, headers, and versioning, or implementing conditional operations. Trigger keywords include \"FHIR REST\", \"FHIR API\", \"FHIR server\", \"FHIR client\", \"FHIR endpoint\", \"FHIR operations\", \"RESTful FHIR\", \"implement FHIR\".",
+          "distance": 0.3342
+        },
+        {
+          "slug": "CloudAI-X/convex-backend",
+          "name": "convex-backend",
+          "category": "API & Backend",
+          "quality_tier": "solid",
+          "description": "Convex backend development guidelines. Use when writing Convex functions, schemas, queries, mutations, actions, or any backend code in a Convex project. Triggers on tasks involving Convex database operations, real-time subscriptions, file storage, or serverless functions.",
+          "distance": 0.3364
+        },
+        {
+          "slug": "itsmostafa/api-gateway",
+          "name": "api-gateway",
+          "category": "API & Backend",
+          "quality_tier": "featured",
+          "description": "AWS API Gateway for REST and HTTP API management. Use when creating APIs, configuring integrations, setting up authorization, managing stages, implementing rate limiting, or troubleshooting API issues.",
+          "distance": 0.3376
+        }
+      ]
+    },
+    {
+      "id": 13,
+      "size": 18,
+      "label": "mcp + server + permissions",
+      "dominant_category": "AI & Automation",
+      "dominant_pct": 83,
+      "category_distribution": {
+        "AI & Automation": 15,
+        "API & Backend": 1,
+        "Data & Documents": 2
+      },
+      "top_skills": [
+        {
+          "slug": "christophacham/mezmo-automation",
+          "name": "mezmo-automation",
+          "category": "AI & Automation",
+          "quality_tier": "solid",
+          "description": "Automate Mezmo tasks via Rube MCP (Composio). Always search tools first for current schemas.",
+          "distance": 0.1916
+        },
+        {
+          "slug": "ComposioHQ/abuselpdb-automation",
+          "name": "abuselpdb-automation",
+          "category": "AI & Automation",
+          "quality_tier": "solid",
+          "description": "Automate Abuselpdb tasks via Rube MCP (Composio). Always search tools first for current schemas.",
+          "distance": 0.1991
+        },
+        {
+          "slug": "christophacham/skyfire-automation",
+          "name": "skyfire-automation",
+          "category": "AI & Automation",
+          "quality_tier": "solid",
+          "description": "Automate Skyfire tasks via Rube MCP (Composio). Always search tools first for current schemas.",
+          "distance": 0.2113
+        },
+        {
+          "slug": "openteams-lab/forcemanager-automation",
+          "name": "forcemanager-automation",
+          "category": "AI & Automation",
+          "quality_tier": "solid",
+          "description": "Automate Forcemanager tasks via Rube MCP (Composio). Always search tools first for current schemas.",
+          "distance": 0.2131
+        },
+        {
+          "slug": "benjaminasterA/airtable-automation",
+          "name": "airtable-automation",
+          "category": "AI & Automation",
+          "quality_tier": "solid",
+          "description": "Automate Airtable tasks via Rube MCP (Composio): records, bases, tables, fields, views. Always search tools first for current schemas.",
+          "distance": 0.2151
+        },
+        {
+          "slug": "ComposioHQ/ip2location-io-automation",
+          "name": "ip2location-io-automation",
+          "category": "AI & Automation",
+          "quality_tier": "solid",
+          "description": "Automate Ip2location IO tasks via Rube MCP (Composio). Always search tools first for current schemas.",
+          "distance": 0.2227
+        },
+        {
+          "slug": "OrcaQubits/acp-checkout-mcp",
+          "name": "acp-checkout-mcp",
+          "category": "AI & Automation",
+          "quality_tier": "solid",
+          "description": "Implement ACP checkout as an MCP server, exposing checkout operations as MCP tools. Use when building an MCP-based commerce server for AI agents that use tool-calling to complete purchases.",
+          "distance": 0.2864
+        },
+        {
+          "slug": "mcp-use/mcp-apps-builder",
+          "name": "mcp-apps-builder",
+          "category": "AI & Automation",
+          "quality_tier": "featured",
+          "description": "**MANDATORY for ALL MCP server work** - mcp-use framework best practices and patterns. **READ THIS FIRST** before any MCP server work, including: - Creating new MCP servers - Modifying existing MCP servers (adding/updating tools, resources, prompts, widgets) - Debugging MCP server issues or errors - Reviewing MCP server code for quality, security, or performance - Answering questions about MCP development or mcp-use patterns - Making ANY changes to server.tool(), server.resource(), server.prompt(), or widgets This skill contains critical architecture decisions, security patterns, and common pitfalls. Always consult the relevant reference files BEFORE implementing MCP features.",
+          "distance": 0.2933
+        },
+        {
+          "slug": "openakita/openakitaskillsgmail-automation",
+          "name": "openakitaskillsgmail-automation",
+          "category": "AI & Automation",
+          "quality_tier": "featured",
+          "description": "Automate Gmail tasks via Rube MCP (Composio): send/reply, search, labels, drafts, attachments. Always search tools first for current schemas.",
+          "distance": 0.2999
+        },
+        {
+          "slug": "microsoft/configure-canvas-mcp",
+          "name": "configure-canvas-mcp",
+          "category": "AI & Automation",
+          "quality_tier": "featured",
+          "description": "Configure the Canvas Authoring MCP server for Claude Code, VS Code Copilot, or GitHub Copilot CLI. USE WHEN \"configure MCP\", \"set up MCP server\", \"MCP not working\", \"connect Canvas Apps MCP\", \"canvas-authoring not available\", \"MCP not configured\", \"set up canvas apps\". DO NOT USE WHEN prerequisites are missing — direct the user to install .NET 10 SDK first.",
+          "distance": 0.3144
+        }
+      ]
+    },
+    {
+      "id": 11,
+      "size": 7,
+      "label": "graph + data + generates",
+      "dominant_category": "Data & Documents",
+      "dominant_pct": 57,
+      "category_distribution": {
+        "Data & Documents": 4,
+        "AI & Automation": 1,
+        "Code & Development": 1,
+        "API & Backend": 1
+      },
+      "top_skills": [
+        {
+          "slug": "agenticnotetaking/graph",
+          "name": "graph",
+          "category": "Data & Documents",
+          "quality_tier": "featured",
+          "description": "Interactive knowledge graph analysis. Routes natural language questions to graph scripts, interprets results in domain vocabulary, and suggests concrete actions. Triggers on \"/graph\", \"/graph health\", \"/graph triangles\", \"find synthesis opportunities\", \"graph analysis\".",
+          "distance": 0.2327
+        },
+        {
+          "slug": "OpenRaiser/academic-plotting",
+          "name": "academic-plotting",
+          "category": "AI & Automation",
+          "quality_tier": "featured",
+          "description": "Generates publication-quality figures for ML papers from research context. Given a paper section or description, extracts system components and relationships to generate architecture diagrams via Gemini. Given experiment results or data, auto-selects chart type and generates data-driven figures via matplotlib/seaborn. Use when creating any figure for a conference paper.",
+          "distance": 0.2758
+        },
+        {
+          "slug": "ECNU-ICALK/extract_circuit_netlist_edge_features",
+          "name": "extract_circuit_netlist_edge_features",
+          "category": "Data & Documents",
+          "quality_tier": "solid",
+          "description": "Extracts structured edge features from a bipartite circuit netlist graph, handling device/net ordering, terminal extraction, color mapping, and parallel edge detection.",
+          "distance": 0.3102
+        },
+        {
+          "slug": "causify-ai/graphviz.causal_kg_style",
+          "name": "graphviz.causal_kg_style",
+          "category": "Code & Development",
+          "quality_tier": "solid",
+          "description": "Represent a causal knowledge graph in Graphviz DOT format following visual conventions for causal inference",
+          "distance": 0.3157
+        },
+        {
+          "slug": "Agile-V/schematic-generator",
+          "name": "schematic-generator",
+          "category": "API & Backend",
+          "quality_tier": "solid",
+          "description": "Generates schematics, netlists, or HDL from requirements for hardware/PCB projects. Validates physical constraints. Use when building PCB, HDL, or hardware designs from approved requirements.",
+          "distance": 0.3227
+        },
+        {
+          "slug": "freeman5860/chart",
+          "name": "chart",
+          "category": "Data & Documents",
+          "quality_tier": "solid",
+          "description": "从 wiki 数据生成 matplotlib 可视化图表。Use when the user wants to create charts, diagrams, or visualizations from wiki data.",
+          "distance": 0.3671
+        },
+        {
+          "slug": "automateyournetwork/gns3-packet-capture",
+          "name": "gns3-packet-capture",
+          "category": "Data & Documents",
+          "quality_tier": "featured",
+          "description": "Capture network traffic on GNS3 links - start/stop captures, retrieve PCAP data",
+          "distance": 0.421
+        }
+      ]
+    }
+  ]
+}

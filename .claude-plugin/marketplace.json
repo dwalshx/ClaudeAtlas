@@ -1,0 +1,3479 @@
+{
+  "name": "claudeatlas",
+  "owner": {
+    "name": "ClaudeAtlas",
+    "email": "dan@claudeatlas.com"
+  },
+  "metadata": {
+    "description": "Curated discovery index of top Claude ecosystem skills — 305 Featured, scored on 7 transparent signals, updated daily.",
+    "version": "1.0.0"
+  },
+  "plugins": [
+    {
+      "name": "videodb",
+      "source": {
+        "source": "github",
+        "repo": "affaan-m/everything-claude-code"
+      },
+      "description": "See, Understand, Act on video and audio. See- ingest from local files, URLs, RTSP/live feeds, or live record desktop; return realtime context and playable stream links. Understand- extract frames, bui",
+      "version": "1.0.0",
+      "author": {
+        "name": "affaan-m"
+      },
+      "category": "AI & Automation",
+      "tags": [
+        "featured",
+        "ai-automation",
+        "javascript"
+      ]
+    },
+    {
+      "name": "flow-nexus-neural",
+      "source": {
+        "source": "github",
+        "repo": "ruvnet/ruflo"
+      },
+      "description": "Train and deploy neural networks in distributed E2B sandboxes with Flow Nexus",
+      "version": "1.0.0",
+      "author": {
+        "name": "ruvnet"
+      },
+      "category": "AI & Automation",
+      "tags": [
+        "featured",
+        "ai-automation",
+        "typescript"
+      ]
+    },
+    {
+      "name": "geofeed-tuner",
+      "source": {
+        "source": "github",
+        "repo": "github/awesome-copilot"
+      },
+      "description": "Use this skill whenever the user mentions IP geolocation feeds, RFC 8805, geofeeds, or wants help creating, tuning, validating, or publishing a self-published IP geolocation feed in CSV format. Intend",
+      "version": "1.0.0",
+      "author": {
+        "name": "github"
+      },
+      "category": "AI & Automation",
+      "tags": [
+        "featured",
+        "ai-automation",
+        "python"
+      ]
+    },
+    {
+      "name": "career-ops",
+      "source": {
+        "source": "github",
+        "repo": "santifer/career-ops"
+      },
+      "description": "AI job search command center -- evaluate offers, generate CVs, scan portals, track applications",
+      "version": "1.0.0",
+      "author": {
+        "name": "santifer"
+      },
+      "category": "AI & Automation",
+      "tags": [
+        "featured",
+        "ai-automation",
+        "javascript"
+      ]
+    },
+    {
+      "name": "deep-dive",
+      "source": {
+        "source": "github",
+        "repo": "Yeachan-Heo/oh-my-claudecode"
+      },
+      "description": "2-stage pipeline: trace (causal investigation) -> deep-interview (requirements crystallization) with 3-point injection",
+      "version": "1.0.0",
+      "author": {
+        "name": "Yeachan-Heo"
+      },
+      "category": "AI & Automation",
+      "tags": [
+        "featured",
+        "ai-automation",
+        "typescript"
+      ]
+    },
+    {
+      "name": "get-qodo-rules",
+      "source": {
+        "source": "github",
+        "repo": "qwibitai/nanoclaw"
+      },
+      "description": "Loads org- and repo-level coding rules from Qodo before code tasks begin, ensuring all generation and modification follows team standards. Use before any code generation or modification task when rule",
+      "version": "1.0.0",
+      "author": {
+        "name": "qwibitai"
+      },
+      "category": "AI & Automation",
+      "tags": [
+        "featured",
+        "ai-automation",
+        "typescript"
+      ]
+    },
+    {
+      "name": "autogpt-agents",
+      "source": {
+        "source": "github",
+        "repo": "davila7/claude-code-templates"
+      },
+      "description": "Autonomous AI agent platform for building and deploying continuous agents. Use when creating visual workflow agents, deploying persistent autonomous agents, or building complex multi-step AI automatio",
+      "version": "1.0.0",
+      "author": {
+        "name": "davila7"
+      },
+      "category": "AI & Automation",
+      "tags": [
+        "featured",
+        "ai-automation",
+        "python"
+      ]
+    },
+    {
+      "name": "code-simplifier",
+      "source": {
+        "source": "github",
+        "repo": "rtk-ai/rtk"
+      },
+      "description": "Review RTK Rust code for idiomatic simplification. Detects over-engineering, unnecessary allocations, verbose patterns. Applies Rust idioms without changing behavior.",
+      "version": "1.0.0",
+      "author": {
+        "name": "rtk-ai"
+      },
+      "category": "AI & Automation",
+      "tags": [
+        "featured",
+        "ai-automation",
+        "rust"
+      ]
+    },
+    {
+      "name": "moltbook",
+      "source": {
+        "source": "github",
+        "repo": "iOfficeAI/AionUi"
+      },
+      "description": "The social network for AI agents. Post, comment, upvote, and create communities.",
+      "version": "1.0.0",
+      "author": {
+        "name": "iOfficeAI"
+      },
+      "category": "AI & Automation",
+      "tags": [
+        "featured",
+        "ai-automation",
+        "typescript"
+      ]
+    },
+    {
+      "name": "last30days",
+      "source": {
+        "source": "github",
+        "repo": "mvanhorn/last30days-skill"
+      },
+      "description": "Multi-query social search with intelligent planning. Agent plans queries when possible, falls back to Gemini/OpenAI when not. Research any topic across Reddit, X, YouTube, TikTok, Instagram, Hacker Ne",
+      "version": "1.0.0",
+      "author": {
+        "name": "mvanhorn"
+      },
+      "category": "AI & Automation",
+      "tags": [
+        "featured",
+        "ai-automation",
+        "python"
+      ]
+    },
+    {
+      "name": "planning-with-files",
+      "source": {
+        "source": "github",
+        "repo": "OthmanAdi/planning-with-files"
+      },
+      "description": "Implements Manus-style file-based planning to organize and track progress on complex tasks. Creates task_plan.md, findings.md, and progress.md. Use when asked to plan out, break down, or organize a mu",
+      "version": "1.0.0",
+      "author": {
+        "name": "OthmanAdi"
+      },
+      "category": "Data & Documents",
+      "tags": [
+        "featured",
+        "data-documents",
+        "python"
+      ]
+    },
+    {
+      "name": "benchling-integration",
+      "source": {
+        "source": "github",
+        "repo": "K-Dense-AI/scientific-agent-skills"
+      },
+      "description": "Benchling R&D platform integration. Access registry (DNA, proteins), inventory, ELN entries, workflows via API, build Benchling Apps, query Data Warehouse, for lab data management automation.",
+      "version": "1.0.0",
+      "author": {
+        "name": "K-Dense-AI"
+      },
+      "category": "AI & Automation",
+      "tags": [
+        "featured",
+        "ai-automation",
+        "python"
+      ]
+    },
+    {
+      "name": "lifecyclemigrate-from-nextjs",
+      "source": {
+        "source": "github",
+        "repo": "TanStack/router"
+      },
+      "description": "Step-by-step migration from Next.js App Router to TanStack Start: route definition conversion, API mapping, server function conversion from Server Actions, middleware conversion, data fetching pattern",
+      "version": "1.0.0",
+      "author": {
+        "name": "TanStack"
+      },
+      "category": "Web & Frontend",
+      "tags": [
+        "featured",
+        "web-frontend",
+        "typescript"
+      ]
+    },
+    {
+      "name": "adversarial-reviewer",
+      "source": {
+        "source": "github",
+        "repo": "alirezarezvani/claude-skills"
+      },
+      "description": "Adversarial code review that breaks the self-review monoculture. Use when you want a genuinely critical review of recent changes, before merging a PR, or when you suspect Claude is being too agreeable",
+      "version": "1.0.0",
+      "author": {
+        "name": "alirezarezvani"
+      },
+      "category": "AI & Automation",
+      "tags": [
+        "featured",
+        "ai-automation",
+        "python"
+      ]
+    },
+    {
+      "name": "adopt",
+      "source": {
+        "source": "github",
+        "repo": "Donchitos/Claude-Code-Game-Studios"
+      },
+      "description": "Brownfield onboarding — audits existing project artifacts for template format compliance (not just existence), classifies gaps by impact, and produces a numbered migration plan. Run this when joining ",
+      "version": "1.0.0",
+      "author": {
+        "name": "Donchitos"
+      },
+      "category": "AI & Automation",
+      "tags": [
+        "featured",
+        "ai-automation",
+        "shell"
+      ]
+    },
+    {
+      "name": "autoresearch",
+      "source": {
+        "source": "github",
+        "repo": "Orchestra-Research/AI-Research-SKILLs"
+      },
+      "description": "Orchestrates end-to-end autonomous AI research projects using a two-loop architecture. The inner loop runs rapid experiment iterations with clear optimization targets. The outer loop synthesizes resul",
+      "version": "1.0.0",
+      "author": {
+        "name": "Orchestra-Research"
+      },
+      "category": "AI & Automation",
+      "tags": [
+        "featured",
+        "ai-automation",
+        "tex"
+      ]
+    },
+    {
+      "name": "openspec-apply-change",
+      "source": {
+        "source": "github",
+        "repo": "fengshao1227/ccg-workflow"
+      },
+      "description": "Implement tasks from an OpenSpec change. Use when the user wants to start implementing, continue implementation, or work through tasks.",
+      "version": "1.0.0",
+      "author": {
+        "name": "fengshao1227"
+      },
+      "category": "AI & Automation",
+      "tags": [
+        "featured",
+        "ai-automation",
+        "go"
+      ]
+    },
+    {
+      "name": "seo-image-gen",
+      "source": {
+        "source": "github",
+        "repo": "AgriciDaniel/claude-seo"
+      },
+      "description": "AI image generation for SEO assets: OG/social preview images, blog hero images, schema images, product photography, infographics. Powered by Gemini via nanobanana-mcp. Requires banana extension instal",
+      "version": "1.0.0",
+      "author": {
+        "name": "AgriciDaniel"
+      },
+      "category": "AI & Automation",
+      "tags": [
+        "featured",
+        "ai-automation",
+        "python"
+      ]
+    },
+    {
+      "name": "peon-ping-use",
+      "source": {
+        "source": "github",
+        "repo": "PeonPing/peon-ping"
+      },
+      "description": "Set which voice pack (character voice) plays for the current chat session. Automatically enables session_override rotation mode if not already set. Use when user wants a specific character voice like ",
+      "version": "1.0.0",
+      "author": {
+        "name": "PeonPing"
+      },
+      "category": "AI & Automation",
+      "tags": [
+        "featured",
+        "ai-automation",
+        "shell"
+      ]
+    },
+    {
+      "name": "evaluating-threat-intelligence-platforms",
+      "source": {
+        "source": "github",
+        "repo": "mukul975/Anthropic-Cybersecurity-Skills"
+      },
+      "description": "Evaluates and selects Threat Intelligence Platform (TIP) products based on organizational requirements including feed integration capability, STIX/TAXII support, workflow automation, analyst interface",
+      "version": "1.0.0",
+      "author": {
+        "name": "mukul975"
+      },
+      "category": "AI & Automation",
+      "tags": [
+        "featured",
+        "ai-automation",
+        "python"
+      ]
+    },
+    {
+      "name": "alphasense",
+      "source": {
+        "source": "github",
+        "repo": "openclaw/skills"
+      },
+      "description": "AlphaSense integration. Manage data, records, and automate workflows. Use when the user wants to interact with AlphaSense data.",
+      "version": "1.0.0",
+      "author": {
+        "name": "openclaw"
+      },
+      "category": "Data & Documents",
+      "tags": [
+        "featured",
+        "data-documents",
+        "python"
+      ]
+    },
+    {
+      "name": "dashboard",
+      "source": {
+        "source": "github",
+        "repo": "davepoon/buildwithclaude"
+      },
+      "description": "View all tracked vulnerabilities and their current status",
+      "version": "1.0.0",
+      "author": {
+        "name": "davepoon"
+      },
+      "category": "AI & Automation",
+      "tags": [
+        "featured",
+        "ai-automation",
+        "python"
+      ]
+    },
+    {
+      "name": "azure-aigateway",
+      "source": {
+        "source": "github",
+        "repo": "microsoft/skills"
+      },
+      "description": "Configure Azure API Management as an AI Gateway for AI models, MCP tools, and agents. WHEN: semantic caching, token limit, content safety, load balancing, AI model governance, MCP rate limiting, jailb",
+      "version": "1.0.0",
+      "author": {
+        "name": "microsoft"
+      },
+      "category": "AI & Automation",
+      "tags": [
+        "featured",
+        "ai-automation",
+        "typescript"
+      ]
+    },
+    {
+      "name": "juicebox-performance-tuning",
+      "source": {
+        "source": "github",
+        "repo": "jeremylongshore/claude-code-plugins-plus-skills"
+      },
+      "description": "Optimize Juicebox performance. Trigger: \"juicebox performance\", \"optimize juicebox\".",
+      "version": "1.0.0",
+      "author": {
+        "name": "jeremylongshore"
+      },
+      "category": "AI & Automation",
+      "tags": [
+        "featured",
+        "ai-automation",
+        "python"
+      ]
+    },
+    {
+      "name": "design-postgis-tables",
+      "source": {
+        "source": "github",
+        "repo": "timescale/pg-aiguide"
+      },
+      "description": "Comprehensive PostGIS spatial table design reference covering geometry types, coordinate systems, spatial indexing, and performance patterns for location-based applications",
+      "version": "1.0.0",
+      "author": {
+        "name": "timescale"
+      },
+      "category": "API & Backend",
+      "tags": [
+        "featured",
+        "api-backend",
+        "python"
+      ]
+    },
+    {
+      "name": "autonomous-builder",
+      "source": {
+        "source": "github",
+        "repo": "foryourhealth111-pixel/Vibe-Skills"
+      },
+      "description": "Full-stack autonomous software development agent: handles design, implementation, testing, and deployment end-to-end. Auto-activates for project creation, feature development, bug fixing, code refacto",
+      "version": "1.0.0",
+      "author": {
+        "name": "foryourhealth111-pixel"
+      },
+      "category": "AI & Automation",
+      "tags": [
+        "featured",
+        "ai-automation",
+        "python"
+      ]
+    },
+    {
+      "name": "golang-benchmark",
+      "source": {
+        "source": "github",
+        "repo": "samber/cc-skills-golang"
+      },
+      "description": "Golang benchmarking, profiling, and performance measurement. Use when writing, running, or comparing Go benchmarks, profiling hot paths with pprof, interpreting CPU/memory/trace profiles, analyzing re",
+      "version": "1.0.0",
+      "author": {
+        "name": "samber"
+      },
+      "category": "Testing & QA",
+      "tags": [
+        "featured",
+        "testing-qa",
+        "go"
+      ]
+    },
+    {
+      "name": "autoresearch",
+      "source": {
+        "source": "github",
+        "repo": "OpenRaiser/NanoResearch"
+      },
+      "description": "Orchestrates end-to-end autonomous AI research projects using a two-loop architecture. The inner loop runs rapid experiment iterations with clear optimization targets. The outer loop synthesizes resul",
+      "version": "1.0.0",
+      "author": {
+        "name": "OpenRaiser"
+      },
+      "category": "AI & Automation",
+      "tags": [
+        "featured",
+        "ai-automation",
+        "python"
+      ]
+    },
+    {
+      "name": "azure-aigateway",
+      "source": {
+        "source": "github",
+        "repo": "microsoft/azure-skills"
+      },
+      "description": "Configure Azure API Management as an AI Gateway for AI models, MCP tools, and agents. WHEN: semantic caching, token limit, content safety, load balancing, AI model governance, MCP rate limiting, jailb",
+      "version": "1.0.0",
+      "author": {
+        "name": "microsoft"
+      },
+      "category": "AI & Automation",
+      "tags": [
+        "featured",
+        "ai-automation",
+        "bicep"
+      ]
+    },
+    {
+      "name": "planning-with-files",
+      "source": {
+        "source": "github",
+        "repo": "guanyang/antigravity-skills"
+      },
+      "description": "Implements Manus-style file-based planning to organize and track progress on complex tasks. Creates task_plan.md, findings.md, and progress.md. Use when asked to plan out, break down, or organize a mu",
+      "version": "1.0.0",
+      "author": {
+        "name": "guanyang"
+      },
+      "category": "AI & Automation",
+      "tags": [
+        "featured",
+        "ai-automation",
+        "python"
+      ]
+    },
+    {
+      "name": "windows-shell-reliability",
+      "source": {
+        "source": "github",
+        "repo": "sickn33/antigravity-awesome-skills"
+      },
+      "description": "Reliable command execution on Windows: paths, encoding, and common binary pitfalls.",
+      "version": "1.0.0",
+      "author": {
+        "name": "sickn33"
+      },
+      "category": "AI & Automation",
+      "tags": [
+        "featured",
+        "ai-automation",
+        "python"
+      ]
+    },
+    {
+      "name": "openakitaskillsgmail-automation",
+      "source": {
+        "source": "github",
+        "repo": "openakita/openakita"
+      },
+      "description": "Automate Gmail tasks via Rube MCP (Composio): send/reply, search, labels, drafts, attachments. Always search tools first for current schemas.",
+      "version": "1.0.0",
+      "author": {
+        "name": "openakita"
+      },
+      "category": "AI & Automation",
+      "tags": [
+        "featured",
+        "ai-automation",
+        "python"
+      ]
+    },
+    {
+      "name": "ctf-ai-ml",
+      "source": {
+        "source": "github",
+        "repo": "ljagiello/ctf-skills"
+      },
+      "description": "Provides AI and machine learning techniques for CTF challenges. Use when attacking ML models, crafting adversarial examples, performing model extraction, prompt injection, membership inference, traini",
+      "version": "1.0.0",
+      "author": {
+        "name": "ljagiello"
+      },
+      "category": "AI & Automation",
+      "tags": [
+        "featured",
+        "ai-automation",
+        "python"
+      ]
+    },
+    {
+      "name": "geo-content-optimizer",
+      "source": {
+        "source": "github",
+        "repo": "aaron-he-zhu/seo-geo-claude-skills"
+      },
+      "description": "Optimize content for AI citations in ChatGPT, Perplexity, AI Overviews, Gemini, Claude. AI引用优化/GEO优化/AI搜索",
+      "version": "1.0.0",
+      "author": {
+        "name": "aaron-he-zhu"
+      },
+      "category": "AI & Automation",
+      "tags": [
+        "featured",
+        "ai-automation",
+        "python"
+      ]
+    },
+    {
+      "name": "handoff-protocols",
+      "source": {
+        "source": "github",
+        "repo": "rohitg00/skillkit"
+      },
+      "description": "Manages work transitions between team members or agents by creating structured handoff documents, summarizing project status, documenting key decisions, blockers, and open questions, and generating on",
+      "version": "1.0.0",
+      "author": {
+        "name": "rohitg00"
+      },
+      "category": "Data & Documents",
+      "tags": [
+        "featured",
+        "data-documents",
+        "typescript"
+      ]
+    },
+    {
+      "name": "brains-trust",
+      "source": {
+        "source": "github",
+        "repo": "jezweb/claude-skills"
+      },
+      "description": "Get a second opinion from leading AI models on code, architecture, strategy, prompting, or anything. Queries models via OpenRouter, Gemini, or OpenAI APIs. Supports single opinion, multi-model consens",
+      "version": "1.0.0",
+      "author": {
+        "name": "jezweb"
+      },
+      "category": "AI & Automation",
+      "tags": [
+        "featured",
+        "ai-automation",
+        "python"
+      ]
+    },
+    {
+      "name": "ckmbanner-design",
+      "source": {
+        "source": "github",
+        "repo": "nextlevelbuilder/ui-ux-pro-max-skill"
+      },
+      "description": "Design banners for social media, ads, website heroes, creative assets, and print. Multiple art direction options with AI-generated visuals. Actions: design, create, generate banner. Platforms: Faceboo",
+      "version": "1.0.0",
+      "author": {
+        "name": "nextlevelbuilder"
+      },
+      "category": "Web & Frontend",
+      "tags": [
+        "featured",
+        "web-frontend",
+        "python"
+      ]
+    },
+    {
+      "name": "beads",
+      "source": {
+        "source": "github",
+        "repo": "gastownhall/beads"
+      },
+      "description": "Dolt-powered issue tracker for multi-session work with dependencies and persistent memory across conversation compaction. Use when work spans sessions, has blockers, or needs context recovery after co",
+      "version": "1.0.0",
+      "author": {
+        "name": "gastownhall"
+      },
+      "category": "AI & Automation",
+      "tags": [
+        "featured",
+        "ai-automation",
+        "go"
+      ]
+    },
+    {
+      "name": "pr-sheriff",
+      "source": {
+        "source": "github",
+        "repo": "gastownhall/gastown"
+      },
+      "description": "PR Sheriff workflow: triage PRs into easy-wins and crew assignments. Prints recommendations inline - does NOT post to GitHub.",
+      "version": "1.0.0",
+      "author": {
+        "name": "gastownhall"
+      },
+      "category": "AI & Automation",
+      "tags": [
+        "featured",
+        "ai-automation",
+        "go"
+      ]
+    },
+    {
+      "name": "code-reviewer",
+      "source": {
+        "source": "github",
+        "repo": "Jeffallan/claude-skills"
+      },
+      "description": "Analyzes code diffs and files to identify bugs, security vulnerabilities (SQL injection, XSS, insecure deserialization), code smells, N+1 queries, naming issues, and architectural concerns, then produ",
+      "version": "1.0.0",
+      "author": {
+        "name": "Jeffallan"
+      },
+      "category": "Code & Development",
+      "tags": [
+        "featured",
+        "code-development",
+        "python"
+      ]
+    },
+    {
+      "name": "code-review-asm-xtensa",
+      "source": {
+        "source": "github",
+        "repo": "FastLED/FastLED"
+      },
+      "description": "Review Xtensa assembly code for ESP32 platforms. Checks for critical errors in inline assembly, ABI compliance, and optimization opportunities. Use after modifying ESP32 assembly or inline asm code.",
+      "version": "1.0.0",
+      "author": {
+        "name": "FastLED"
+      },
+      "category": "Code & Development",
+      "tags": [
+        "featured",
+        "code-development",
+        "c++"
+      ]
+    },
+    {
+      "name": "google-maps-scraper",
+      "source": {
+        "source": "github",
+        "repo": "gosom/google-maps-scraper"
+      },
+      "description": "Free and open-source Google Maps scraper using Docker. Use when the user wants to find businesses, extract leads, emails, reviews, or ratings from Google Maps. Triggers on requests like \"find all <bus",
+      "version": "1.0.0",
+      "author": {
+        "name": "gosom"
+      },
+      "category": "Data & Documents",
+      "tags": [
+        "featured",
+        "data-documents",
+        "go"
+      ]
+    },
+    {
+      "name": "muapi-seedance-2",
+      "source": {
+        "source": "github",
+        "repo": "SamurAIGPT/Generative-Media-Skills"
+      },
+      "description": "Expert Cinema Director skill for Seedance 2.0 (ByteDance) — high-fidelity video generation using technical camera grammar and multimodal references. Supports text-to-video, image-to-video, video exten",
+      "version": "1.0.0",
+      "author": {
+        "name": "SamurAIGPT"
+      },
+      "category": "AI & Automation",
+      "tags": [
+        "featured",
+        "ai-automation",
+        "shell"
+      ]
+    },
+    {
+      "name": "document-review",
+      "source": {
+        "source": "github",
+        "repo": "open-gitagent/gitagent"
+      },
+      "description": "Reviews financial documents (prospectuses, ADVs, marketing materials) for FINRA 2210 compliance, required disclosures, and balanced presentation. Use when reviewing financial statements, audit documen",
+      "version": "1.0.0",
+      "author": {
+        "name": "open-gitagent"
+      },
+      "category": "Code & Development",
+      "tags": [
+        "featured",
+        "code-development",
+        "typescript"
+      ]
+    },
+    {
+      "name": "airflow-dag-analyzer",
+      "source": {
+        "source": "github",
+        "repo": "a5c-ai/babysitter"
+      },
+      "description": "Analyzes, validates, and optimizes Apache Airflow DAGs for reliability, performance, and best practices adherence.",
+      "version": "1.0.0",
+      "author": {
+        "name": "a5c-ai"
+      },
+      "category": "AI & Automation",
+      "tags": [
+        "featured",
+        "ai-automation",
+        "javascript"
+      ]
+    },
+    {
+      "name": "ci",
+      "source": {
+        "source": "github",
+        "repo": "Chachamaru127/claude-code-harness"
+      },
+      "description": "CIが赤くなったら呼んで。パイプライン消防隊、出動します。Use when user mentions CI failures, build errors, test failures, or pipeline issues. Do NOT load for: local builds, standard implementation work, reviews, or setup.",
+      "version": "1.0.0",
+      "author": {
+        "name": "Chachamaru127"
+      },
+      "category": "DevOps & Infrastructure",
+      "tags": [
+        "featured",
+        "devops-infrastructure",
+        "shell"
+      ]
+    },
+    {
+      "name": "browser-automation",
+      "source": {
+        "source": "github",
+        "repo": "vibeeval/vibecosystem"
+      },
+      "description": "AI browser automation - navigate, interact, extract, verify via browser-use MCP",
+      "version": "1.0.0",
+      "author": {
+        "name": "vibeeval"
+      },
+      "category": "AI & Automation",
+      "tags": [
+        "featured",
+        "ai-automation",
+        "c#"
+      ]
+    },
+    {
+      "name": "help",
+      "source": {
+        "source": "github",
+        "repo": "parcadei/Continuous-Claude-v3"
+      },
+      "description": "Interactive workspace discovery - learn what tools, workflows, agents, and hooks are available",
+      "version": "1.0.0",
+      "author": {
+        "name": "parcadei"
+      },
+      "category": "AI & Automation",
+      "tags": [
+        "featured",
+        "ai-automation",
+        "python"
+      ]
+    },
+    {
+      "name": "code-review",
+      "source": {
+        "source": "github",
+        "repo": "majiayu000/claude-skill-registry"
+      },
+      "description": "Review commits from a starting commit hash to HEAD. Use when user says \"review commits from <hash>\", \"code review starting from <hash>\", \"review changes since <hash>\", or provides a commit hash for re",
+      "version": "1.0.0",
+      "author": {
+        "name": "majiayu000"
+      },
+      "category": "Code & Development",
+      "tags": [
+        "featured",
+        "code-development",
+        "python"
+      ]
+    },
+    {
+      "name": "blackbox",
+      "source": {
+        "source": "github",
+        "repo": "NousResearch/hermes-agent"
+      },
+      "description": "Delegate coding tasks to Blackbox AI CLI agent. Multi-model agent with built-in judge that runs tasks through multiple LLMs and picks the best result. Requires the blackbox CLI and a Blackbox AI API k",
+      "version": "1.0.0",
+      "author": {
+        "name": "NousResearch"
+      },
+      "category": "AI & Automation",
+      "tags": [
+        "featured",
+        "ai-automation",
+        "python"
+      ]
+    },
+    {
+      "name": "multi-reviewer-patterns",
+      "source": {
+        "source": "github",
+        "repo": "wshobson/agents"
+      },
+      "description": "Coordinate parallel code reviews across multiple quality dimensions with finding deduplication, severity calibration, and consolidated reporting. Use this skill when organizing multi-reviewer code rev",
+      "version": "1.0.0",
+      "author": {
+        "name": "wshobson"
+      },
+      "category": "AI & Automation",
+      "tags": [
+        "featured",
+        "ai-automation",
+        "python"
+      ]
+    },
+    {
+      "name": "gws-admin-reports",
+      "source": {
+        "source": "github",
+        "repo": "googleworkspace/cli"
+      },
+      "description": "Google Workspace Admin SDK: Audit logs and usage reports.",
+      "version": "1.0.0",
+      "author": {
+        "name": "googleworkspace"
+      },
+      "category": "Data & Documents",
+      "tags": [
+        "featured",
+        "data-documents",
+        "rust"
+      ]
+    },
+    {
+      "name": "lesson-quiz",
+      "source": {
+        "source": "github",
+        "repo": "luongnv89/claude-howto"
+      },
+      "description": "Interactive lesson-level quiz for Claude Code tutorials. Tests understanding of a specific lesson (01-10) with 8-10 questions mixing conceptual and practical knowledge. Use before a lesson to pre-test",
+      "version": "1.0.0",
+      "author": {
+        "name": "luongnv89"
+      },
+      "category": "Web & Frontend",
+      "tags": [
+        "featured",
+        "web-frontend",
+        "python"
+      ]
+    },
+    {
+      "name": "onboard",
+      "source": {
+        "source": "github",
+        "repo": "pbakaus/impeccable"
+      },
+      "description": "Designs and improves onboarding flows, empty states, and first-run experiences to help users reach value quickly. Use when the user mentions onboarding, first-time users, empty states, activation, get",
+      "version": "1.0.0",
+      "author": {
+        "name": "pbakaus"
+      },
+      "category": "Web & Frontend",
+      "tags": [
+        "featured",
+        "web-frontend",
+        "javascript"
+      ]
+    },
+    {
+      "name": "agent-browser",
+      "source": {
+        "source": "github",
+        "repo": "slopus/happy"
+      },
+      "description": "Browser automation CLI for AI agents. Use this when asked to test something in a real browser.",
+      "version": "1.0.0",
+      "author": {
+        "name": "slopus"
+      },
+      "category": "AI & Automation",
+      "tags": [
+        "featured",
+        "ai-automation",
+        "typescript"
+      ]
+    },
+    {
+      "name": "docx",
+      "source": {
+        "source": "github",
+        "repo": "eigent-ai/eigent"
+      },
+      "description": "Use this skill whenever the user wants to create, read, edit, or manipulate Word documents (.docx files). Triggers include: any mention of \"Word doc\", \"word document\", \".docx\", or requests to produce ",
+      "version": "1.0.0",
+      "author": {
+        "name": "eigent-ai"
+      },
+      "category": "Data & Documents",
+      "tags": [
+        "featured",
+        "data-documents",
+        "typescript"
+      ]
+    },
+    {
+      "name": "build-zoom-phone-integration",
+      "source": {
+        "source": "github",
+        "repo": "anthropics/knowledge-work-plugins"
+      },
+      "description": "Reference skill for Zoom Phone. Use after routing to a phone workflow when implementing OAuth, Phone APIs, webhooks, Smart Embed events, URI schemes, CRM or CTI dialers, or call handling automation.",
+      "version": "1.0.0",
+      "author": {
+        "name": "anthropics"
+      },
+      "category": "Web & Frontend",
+      "tags": [
+        "featured",
+        "web-frontend",
+        "python"
+      ]
+    },
+    {
+      "name": "understand-chat",
+      "source": {
+        "source": "github",
+        "repo": "Lum1104/Understand-Anything"
+      },
+      "description": "Use when you need to ask questions about a codebase or understand code using a knowledge graph",
+      "version": "1.0.0",
+      "author": {
+        "name": "Lum1104"
+      },
+      "category": "AI & Automation",
+      "tags": [
+        "featured",
+        "ai-automation",
+        "typescript"
+      ]
+    },
+    {
+      "name": "review-pr",
+      "source": {
+        "source": "github",
+        "repo": "tirth8205/code-review-graph"
+      },
+      "description": "Review a PR or branch diff using the knowledge graph for full structural context. Outputs a structured review with blast-radius analysis.",
+      "version": "1.0.0",
+      "author": {
+        "name": "tirth8205"
+      },
+      "category": "Code & Development",
+      "tags": [
+        "featured",
+        "code-development",
+        "python"
+      ]
+    },
+    {
+      "name": "ablation-planner",
+      "source": {
+        "source": "github",
+        "repo": "wanshuiyin/Auto-claude-code-research-in-sleep"
+      },
+      "description": "Use when main results pass result-to-claim (`claim_supported = yes` or `partial`) and ablation studies are needed for paper submission. A secondary Codex agent designs ablations from a reviewer's pers",
+      "version": "1.0.0",
+      "author": {
+        "name": "wanshuiyin"
+      },
+      "category": "AI & Automation",
+      "tags": [
+        "featured",
+        "ai-automation",
+        "python"
+      ]
+    },
+    {
+      "name": "algorithmic-art",
+      "source": {
+        "source": "github",
+        "repo": "ThinkInAIXYZ/deepchat"
+      },
+      "description": "Creating algorithmic art using p5.js with seeded randomness and interactive parameter exploration. Use this when users request creating art using code, generative art, algorithmic art, flow fields, or",
+      "version": "1.0.0",
+      "author": {
+        "name": "ThinkInAIXYZ"
+      },
+      "category": "AI & Automation",
+      "tags": [
+        "featured",
+        "ai-automation",
+        "typescript"
+      ]
+    },
+    {
+      "name": "firebase-apk-scanner",
+      "source": {
+        "source": "github",
+        "repo": "trailofbits/skills"
+      },
+      "description": "Scans Android APKs for Firebase security misconfigurations including open databases, storage buckets, authentication issues, and exposed cloud functions. Use when analyzing APK files for Firebase vuln",
+      "version": "1.0.0",
+      "author": {
+        "name": "trailofbits"
+      },
+      "category": "API & Backend",
+      "tags": [
+        "featured",
+        "api-backend",
+        "python"
+      ]
+    },
+    {
+      "name": "manifest",
+      "source": {
+        "source": "github",
+        "repo": "mnfst/manifest"
+      },
+      "description": "Model Router for OpenClaw. Save up to 70% by routing requests to the right model. Choose LLM fallback to avoid API rate limits, set thresholds and reduce token consumption.",
+      "version": "1.0.0",
+      "author": {
+        "name": "mnfst"
+      },
+      "category": "AI & Automation",
+      "tags": [
+        "featured",
+        "ai-automation",
+        "typescript"
+      ]
+    },
+    {
+      "name": "plannotator-compound",
+      "source": {
+        "source": "github",
+        "repo": "backnotprop/plannotator"
+      },
+      "description": "Analyze a user's Plannotator plan archive to extract denial patterns, feedback taxonomy, evolution over time, and actionable prompt improvements — then produce a polished HTML dashboard report. Falls ",
+      "version": "1.0.0",
+      "author": {
+        "name": "backnotprop"
+      },
+      "category": "Data & Documents",
+      "tags": [
+        "featured",
+        "data-documents",
+        "typescript"
+      ]
+    },
+    {
+      "name": "active-directory-attacks",
+      "source": {
+        "source": "github",
+        "repo": "zebbern/claude-code-guide"
+      },
+      "description": "This skill should be used when the user asks to \"attack Active Directory\", \"exploit AD\", \"Kerberoasting\", \"DCSync\", \"pass-the-hash\", \"BloodHound enumeration\", \"Golden Ticket\", \"Silver Ticket\", \"AS-REP",
+      "version": "1.0.0",
+      "author": {
+        "name": "zebbern"
+      },
+      "category": "AI & Automation",
+      "tags": [
+        "featured",
+        "ai-automation"
+      ]
+    },
+    {
+      "name": "ccboard",
+      "source": {
+        "source": "github",
+        "repo": "FlorianBruniaux/claude-code-ultimate-guide"
+      },
+      "description": "Launch and navigate the ccboard TUI/Web dashboard for Claude Code. Use when monitoring token usage, tracking costs, browsing sessions, or checking MCP server status across projects.",
+      "version": "1.0.0",
+      "author": {
+        "name": "FlorianBruniaux"
+      },
+      "category": "AI & Automation",
+      "tags": [
+        "featured",
+        "ai-automation",
+        "typescript"
+      ]
+    },
+    {
+      "name": "kiro-spec-design",
+      "source": {
+        "source": "github",
+        "repo": "gotalab/cc-sdd"
+      },
+      "description": "Create comprehensive technical design for a specification",
+      "version": "1.0.0",
+      "author": {
+        "name": "gotalab"
+      },
+      "category": "Web & Frontend",
+      "tags": [
+        "featured",
+        "web-frontend",
+        "typescript"
+      ]
+    },
+    {
+      "name": "l-pr",
+      "source": {
+        "source": "github",
+        "repo": "lowdefy/lowdefy"
+      },
+      "description": "Create a draft pull request targeting develop. Auto-generates PR body from design files, GitHub issues, and/or commit history. Use when opening a PR.",
+      "version": "1.0.0",
+      "author": {
+        "name": "lowdefy"
+      },
+      "category": "Web & Frontend",
+      "tags": [
+        "featured",
+        "web-frontend",
+        "javascript"
+      ]
+    },
+    {
+      "name": "vibe-agents",
+      "source": {
+        "source": "github",
+        "repo": "KhazP/vibe-coding-prompt-template"
+      },
+      "description": "Generate AGENTS.md and AI configuration files for your project. Use when the user wants to create agent instructions, set up AI configs, or says \"create AGENTS.md\", \"configure my AI assistant\", or \"ge",
+      "version": "1.0.0",
+      "author": {
+        "name": "KhazP"
+      },
+      "category": "AI & Automation",
+      "tags": [
+        "featured",
+        "ai-automation"
+      ]
+    },
+    {
+      "name": "marketing-ideas",
+      "source": {
+        "source": "github",
+        "repo": "LeoYeAI/openclaw-master-skills"
+      },
+      "description": "When the user needs marketing ideas, inspiration, or strategies for their SaaS or software product. Also use when the user asks for 'marketing ideas,' 'growth ideas,' 'how to market,' 'marketing strat",
+      "version": "1.0.0",
+      "author": {
+        "name": "LeoYeAI"
+      },
+      "category": "Code & Development",
+      "tags": [
+        "featured",
+        "code-development",
+        "python"
+      ]
+    },
+    {
+      "name": "skill-creator",
+      "source": {
+        "source": "github",
+        "repo": "AIPexStudio/AIPex"
+      },
+      "description": "Guide for creating effective skills. This skill should be used when users want to create a new skill (or update an existing skill) that extends AIPex's capabilities with specialized knowledge, workflo",
+      "version": "1.0.0",
+      "author": {
+        "name": "AIPexStudio"
+      },
+      "category": "AI & Automation",
+      "tags": [
+        "featured",
+        "ai-automation",
+        "typescript"
+      ]
+    },
+    {
+      "name": "backend-development",
+      "source": {
+        "source": "github",
+        "repo": "MoizIbnYousaf/Ai-Agent-Skills"
+      },
+      "description": "Backend API design, database architecture, microservices patterns, and test-driven development. Use for designing APIs, database schemas, or backend system architecture.",
+      "version": "1.0.0",
+      "author": {
+        "name": "MoizIbnYousaf"
+      },
+      "category": "API & Backend",
+      "tags": [
+        "featured",
+        "api-backend",
+        "javascript"
+      ]
+    },
+    {
+      "name": "minutes-cleanup",
+      "source": {
+        "source": "github",
+        "repo": "silverstein/minutes"
+      },
+      "description": "Manage old recordings — find large files, archive old meetings, delete processed originals. Use when the user says \"clean up recordings\", \"how much space are meetings using\", \"delete old recordings\", ",
+      "version": "1.0.0",
+      "author": {
+        "name": "silverstein"
+      },
+      "category": "AI & Automation",
+      "tags": [
+        "featured",
+        "ai-automation",
+        "rust"
+      ]
+    },
+    {
+      "name": "aws-architecture-diagram",
+      "source": {
+        "source": "github",
+        "repo": "awslabs/agent-plugins"
+      },
+      "description": "Generate validated AWS architecture diagrams as draw.io XML using official AWS4 icon libraries. Use this skill whenever the user wants to create, generate, or design AWS architecture diagrams, cloud i",
+      "version": "1.0.0",
+      "author": {
+        "name": "awslabs"
+      },
+      "category": "DevOps & Infrastructure",
+      "tags": [
+        "featured",
+        "devops-infrastructure",
+        "python"
+      ]
+    },
+    {
+      "name": "video-podcast-maker",
+      "source": {
+        "source": "github",
+        "repo": "Agents365-ai/video-podcast-maker"
+      },
+      "description": "Use when user provides a topic and wants an automated video podcast created, OR when user wants to learn/analyze video design patterns from reference videos — handles research, script writing, TTS aud",
+      "version": "1.0.0",
+      "author": {
+        "name": "Agents365-ai"
+      },
+      "category": "AI & Automation",
+      "tags": [
+        "featured",
+        "ai-automation",
+        "typescript"
+      ]
+    },
+    {
+      "name": "ln-001-push-all",
+      "source": {
+        "source": "github",
+        "repo": "levnikolaevich/claude-code-skills"
+      },
+      "description": "Commits and pushes all changes (staged, unstaged, untracked) to remote. Use when you need a quick push of everything at once.",
+      "version": "1.0.0",
+      "author": {
+        "name": "levnikolaevich"
+      },
+      "category": "AI & Automation",
+      "tags": [
+        "featured",
+        "ai-automation",
+        "javascript"
+      ]
+    },
+    {
+      "name": "nw-abr-critique-dimensions",
+      "source": {
+        "source": "github",
+        "repo": "nWave-ai/nWave"
+      },
+      "description": "Review dimensions for validating agent quality - template compliance, safety, testing, and priority validation",
+      "version": "1.0.0",
+      "author": {
+        "name": "nWave-ai"
+      },
+      "category": "Testing & QA",
+      "tags": [
+        "featured",
+        "testing-qa",
+        "python"
+      ]
+    },
+    {
+      "name": "sf-datacloud-connect",
+      "source": {
+        "source": "github",
+        "repo": "Jaganpro/sf-skills"
+      },
+      "description": "Salesforce Data Cloud Connect phase. TRIGGER when: user manages Data Cloud connections, connectors, connector metadata, tests a connection, browses source objects or databases, or sets up a new source",
+      "version": "1.0.0",
+      "author": {
+        "name": "Jaganpro"
+      },
+      "category": "Data & Documents",
+      "tags": [
+        "featured",
+        "data-documents",
+        "python"
+      ]
+    },
+    {
+      "name": "agent-browser",
+      "source": {
+        "source": "github",
+        "repo": "shanraisshan/claude-code-best-practice"
+      },
+      "description": "Browser automation CLI for AI agents. Use when the user needs to interact with websites, including navigating pages, filling forms, clicking buttons, taking screenshots, extracting data, testing web a",
+      "version": "1.0.0",
+      "author": {
+        "name": "shanraisshan"
+      },
+      "category": "AI & Automation",
+      "tags": [
+        "featured",
+        "ai-automation",
+        "html"
+      ]
+    },
+    {
+      "name": "skill-creator",
+      "source": {
+        "source": "github",
+        "repo": "RKiding/Awesome-finance-skills"
+      },
+      "description": "Create or update AgentSkills. Use when designing, structuring, or packaging skills with scripts, references, and assets.",
+      "version": "1.0.0",
+      "author": {
+        "name": "RKiding"
+      },
+      "category": "Web & Frontend",
+      "tags": [
+        "featured",
+        "web-frontend",
+        "python"
+      ]
+    },
+    {
+      "name": "agent-orchestrator",
+      "source": {
+        "source": "github",
+        "repo": "ComposioHQ/agent-orchestrator"
+      },
+      "description": "Open-source, pluggable agentic coding orchestrator. Manages durable coding agents (Claude Code, Codex, OpenCode) through a simple interface — spawn agents, track progress, and let feedback loops like ",
+      "version": "1.0.0",
+      "author": {
+        "name": "ComposioHQ"
+      },
+      "category": "AI & Automation",
+      "tags": [
+        "featured",
+        "ai-automation",
+        "typescript"
+      ]
+    },
+    {
+      "name": "vueuse-functions",
+      "source": {
+        "source": "github",
+        "repo": "antfu/skills"
+      },
+      "description": "Apply VueUse composables where appropriate to build concise, maintainable Vue.js / Nuxt features.",
+      "version": "1.0.0",
+      "author": {
+        "name": "antfu"
+      },
+      "category": "Web & Frontend",
+      "tags": [
+        "featured",
+        "web-frontend",
+        "typescript"
+      ]
+    },
+    {
+      "name": "codex-skill",
+      "source": {
+        "source": "github",
+        "repo": "feiskyer/claude-code-settings"
+      },
+      "description": "Leverage OpenAI Codex/GPT models for autonomous code implementation. Triggers: \"codex\", \"use gpt\", \"gpt-5\", \"let openai\", \"full-auto\", \"用codex\", \"让gpt实现\". Use this skill whenever the user wants to del",
+      "version": "1.0.0",
+      "author": {
+        "name": "feiskyer"
+      },
+      "category": "AI & Automation",
+      "tags": [
+        "featured",
+        "ai-automation",
+        "python"
+      ]
+    },
+    {
+      "name": "exp-dotnet-test-frameworks",
+      "source": {
+        "source": "github",
+        "repo": "dotnet/skills"
+      },
+      "description": "Reference data for .NET test framework detection patterns, assertion APIs, skip annotations, setup/teardown methods, and common test smell indicators across MSTest, xUnit, NUnit, and TUnit. DO NOT USE",
+      "version": "1.0.0",
+      "author": {
+        "name": "dotnet"
+      },
+      "category": "Testing & QA",
+      "tags": [
+        "featured",
+        "testing-qa",
+        "c#"
+      ]
+    },
+    {
+      "name": "dd-debugger",
+      "source": {
+        "source": "github",
+        "repo": "datadog-labs/pup"
+      },
+      "description": "Live Debugger - inspect runtime argument/variable values in production by placing log probes on methods. Use when asked what values a function receives, what parameters look like at runtime, or to cap",
+      "version": "1.0.0",
+      "author": {
+        "name": "datadog-labs"
+      },
+      "category": "Code & Development",
+      "tags": [
+        "featured",
+        "code-development",
+        "rust"
+      ]
+    },
+    {
+      "name": "narrator-ai-cli",
+      "source": {
+        "source": "github",
+        "repo": "GridLtd-ProductDev/narrator-ai-cli-skill"
+      },
+      "description": "Create AI-narrated film/drama commentary videos via CLI. Two workflow paths (Original & Adapted narration), 93 movies, 146 BGM tracks, 63 dubbing voices in 11 languages, 90+ narration templates. Use w",
+      "version": "1.0.0",
+      "author": {
+        "name": "GridLtd-ProductDev"
+      },
+      "category": "AI & Automation",
+      "tags": [
+        "featured",
+        "ai-automation"
+      ]
+    },
+    {
+      "name": "labautoresearch",
+      "source": {
+        "source": "github",
+        "repo": "oliver-kriska/claude-elixir-phoenix"
+      },
+      "description": "Self-improving loop for plugin skills. Reads program.md, proposes one mutation per iteration, evaluates against deterministic scorer, keeps improvements via git, reverts failures. Targets weakest skil",
+      "version": "1.0.0",
+      "author": {
+        "name": "oliver-kriska"
+      },
+      "category": "AI & Automation",
+      "tags": [
+        "featured",
+        "ai-automation",
+        "python"
+      ]
+    },
+    {
+      "name": "simple-pr",
+      "source": {
+        "source": "github",
+        "repo": "quickwit-oss/tantivy"
+      },
+      "description": "Create a simple PR from staged changes with an auto-generated commit message",
+      "version": "1.0.0",
+      "author": {
+        "name": "quickwit-oss"
+      },
+      "category": "Code & Development",
+      "tags": [
+        "featured",
+        "code-development",
+        "rust"
+      ]
+    },
+    {
+      "name": "clone-website",
+      "source": {
+        "source": "github",
+        "repo": "JCodesMore/ai-website-cloner-template"
+      },
+      "description": "Reverse-engineer and clone one or more websites in one shot — extracts assets, CSS, and content section-by-section and proactively dispatches parallel builder agents in worktrees as it goes. Use this ",
+      "version": "1.0.0",
+      "author": {
+        "name": "JCodesMore"
+      },
+      "category": "Web & Frontend",
+      "tags": [
+        "featured",
+        "web-frontend",
+        "typescript"
+      ]
+    },
+    {
+      "name": "prompt-master",
+      "source": {
+        "source": "github",
+        "repo": "nidhinjs/prompt-master"
+      },
+      "description": "Generates optimized prompts for any AI tool. Use when writing, fixing, improving, or adapting a prompt for LLM, Cursor, Midjourney, image AI, video AI, coding agents, or any other AI tool.",
+      "version": "1.0.0",
+      "author": {
+        "name": "nidhinjs"
+      },
+      "category": "AI & Automation",
+      "tags": [
+        "featured",
+        "ai-automation"
+      ]
+    },
+    {
+      "name": "avoid-acting-on-assumptions",
+      "source": {
+        "source": "github",
+        "repo": "aiming-lab/MetaClaw"
+      },
+      "description": "Common mistake — proceeding with assumptions about ambiguous requirements instead of asking a clarifying question first. This skill reminds you to stop and ask before acting on uncertain interpretatio",
+      "version": "1.0.0",
+      "author": {
+        "name": "aiming-lab"
+      },
+      "category": "AI & Automation",
+      "tags": [
+        "featured",
+        "ai-automation",
+        "python"
+      ]
+    },
+    {
+      "name": "graph",
+      "source": {
+        "source": "github",
+        "repo": "agenticnotetaking/arscontexta"
+      },
+      "description": "Interactive knowledge graph analysis. Routes natural language questions to graph scripts, interprets results in domain vocabulary, and suggests concrete actions. Triggers on \"/graph\", \"/graph health\",",
+      "version": "1.0.0",
+      "author": {
+        "name": "agenticnotetaking"
+      },
+      "category": "Data & Documents",
+      "tags": [
+        "featured",
+        "data-documents",
+        "shell"
+      ]
+    },
+    {
+      "name": "accessibility",
+      "source": {
+        "source": "github",
+        "repo": "addyosmani/web-quality-skills"
+      },
+      "description": "Audit and improve web accessibility following WCAG 2.2 guidelines. Use when asked to \"improve accessibility\", \"a11y audit\", \"WCAG compliance\", \"screen reader support\", \"keyboard navigation\", or \"make ",
+      "version": "1.0.0",
+      "author": {
+        "name": "addyosmani"
+      },
+      "category": "Web & Frontend",
+      "tags": [
+        "featured",
+        "web-frontend",
+        "shell"
+      ]
+    },
+    {
+      "name": "api-gateway",
+      "source": {
+        "source": "github",
+        "repo": "itsmostafa/aws-agent-skills"
+      },
+      "description": "AWS API Gateway for REST and HTTP API management. Use when creating APIs, configuring integrations, setting up authorization, managing stages, implementing rate limiting, or troubleshooting API issues",
+      "version": "1.0.0",
+      "author": {
+        "name": "itsmostafa"
+      },
+      "category": "API & Backend",
+      "tags": [
+        "featured",
+        "api-backend",
+        "python"
+      ]
+    },
+    {
+      "name": "electron",
+      "source": {
+        "source": "github",
+        "repo": "fcakyon/claude-codex-settings"
+      },
+      "description": "Automate Electron desktop apps (VS Code, Slack, Discord, Figma, Notion, Spotify, etc.) using agent-browser via Chrome DevTools Protocol. Use when the user needs to interact with an Electron app, autom",
+      "version": "1.0.0",
+      "author": {
+        "name": "fcakyon"
+      },
+      "category": "AI & Automation",
+      "tags": [
+        "featured",
+        "ai-automation",
+        "python"
+      ]
+    },
+    {
+      "name": "immortal-skill",
+      "source": {
+        "source": "github",
+        "repo": "agenmod/immortal-skill"
+      },
+      "description": "通用数字永生框架：从聊天记录、社交媒体、文档等多平台数据中蒸馏任何人的数字分身——支持自己、同事、导师、亲人、伴侣/前任、朋友、公众人物 7 种角色模板，接入国内外 12+ 数据平台。",
+      "version": "1.0.0",
+      "author": {
+        "name": "agenmod"
+      },
+      "category": "AI & Automation",
+      "tags": [
+        "featured",
+        "ai-automation",
+        "python"
+      ]
+    },
+    {
+      "name": "ghost-repo-context",
+      "source": {
+        "source": "github",
+        "repo": "ghostsecurity/skills"
+      },
+      "description": "Scans directory structure, detects projects, maps dependencies, and documents code organization into a repo.md file. Use when the user needs a codebase overview, project structure map, or repository c",
+      "version": "1.0.0",
+      "author": {
+        "name": "ghostsecurity"
+      },
+      "category": "Data & Documents",
+      "tags": [
+        "featured",
+        "data-documents",
+        "shell"
+      ]
+    },
+    {
+      "name": "development-workflow",
+      "source": {
+        "source": "github",
+        "repo": "athola/claude-night-market"
+      },
+      "description": "detailed development workflow with modular patterns for git, code review, testing, documentation, and deployment",
+      "version": "1.0.0",
+      "author": {
+        "name": "athola"
+      },
+      "category": "AI & Automation",
+      "tags": [
+        "featured",
+        "ai-automation",
+        "python"
+      ]
+    },
+    {
+      "name": "simple-pr",
+      "source": {
+        "source": "github",
+        "repo": "quickwit-oss/quickwit"
+      },
+      "description": "Create a simple PR from staged changes with an auto-generated commit message",
+      "version": "1.0.0",
+      "author": {
+        "name": "quickwit-oss"
+      },
+      "category": "Data & Documents",
+      "tags": [
+        "featured",
+        "data-documents",
+        "rust"
+      ]
+    },
+    {
+      "name": "agent-builder",
+      "source": {
+        "source": "github",
+        "repo": "shareAI-lab/learn-claude-code"
+      },
+      "description": "Design and build AI agents for any domain. Use when users: (1) ask to \"create an agent\", \"build an assistant\", or \"design an AI system\" (2) want to understand agent architecture, agentic patterns, or ",
+      "version": "1.0.0",
+      "author": {
+        "name": "shareAI-lab"
+      },
+      "category": "AI & Automation",
+      "tags": [
+        "featured",
+        "ai-automation",
+        "typescript"
+      ]
+    },
+    {
+      "name": "vercel-react-best-practices",
+      "source": {
+        "source": "github",
+        "repo": "CherryHQ/cherry-studio"
+      },
+      "description": "React and Next.js performance optimization guidelines from Vercel Engineering. This skill should be used when writing, reviewing, or refactoring React/Next.js code to ensure optimal performance patter",
+      "version": "1.0.0",
+      "author": {
+        "name": "CherryHQ"
+      },
+      "category": "Web & Frontend",
+      "tags": [
+        "featured",
+        "web-frontend",
+        "typescript"
+      ]
+    },
+    {
+      "name": "electron-api",
+      "source": {
+        "source": "github",
+        "repo": "wavetermdev/waveterm"
+      },
+      "description": "Guide for adding new Electron APIs to Wave Terminal. Use when implementing new frontend-to-electron communications via preload/IPC.",
+      "version": "1.0.0",
+      "author": {
+        "name": "wavetermdev"
+      },
+      "category": "Web & Frontend",
+      "tags": [
+        "featured",
+        "web-frontend",
+        "go"
+      ]
+    },
+    {
+      "name": "walmart-sales-analyzer",
+      "source": {
+        "source": "github",
+        "repo": "eosphoros-ai/DB-GPT"
+      },
+      "description": "Analyze Walmart sales data to explore trends between store sales and unemployment rates. Generate insightful visualizations and a beautiful HTML report with deep analysis. Suitable for quick insights ",
+      "version": "1.0.0",
+      "author": {
+        "name": "eosphoros-ai"
+      },
+      "category": "AI & Automation",
+      "tags": [
+        "featured",
+        "ai-automation",
+        "python"
+      ]
+    },
+    {
+      "name": "implement-flet-extension",
+      "source": {
+        "source": "github",
+        "repo": "flet-dev/flet"
+      },
+      "description": "Implement a new Flet extension/control that wraps a third-party Flutter package end-to-end, including dependency selection, version pinning, compatibility checks, Python/Flutter integration, docs, exa",
+      "version": "1.0.0",
+      "author": {
+        "name": "flet-dev"
+      },
+      "category": "Web & Frontend",
+      "tags": [
+        "featured",
+        "web-frontend",
+        "python"
+      ]
+    },
+    {
+      "name": "skill-builder",
+      "source": {
+        "source": "github",
+        "repo": "yusufkaraaslan/Skill_Seekers"
+      },
+      "description": "Automatically detect source types and build AI skills using Skill Seekers. Use when the user wants to create skills from documentation, repos, PDFs, videos, or other knowledge sources.",
+      "version": "1.0.0",
+      "author": {
+        "name": "yusufkaraaslan"
+      },
+      "category": "Web & Frontend",
+      "tags": [
+        "featured",
+        "web-frontend",
+        "python"
+      ]
+    },
+    {
+      "name": "prompting",
+      "source": {
+        "source": "github",
+        "repo": "danielmiessler/Personal_AI_Infrastructure"
+      },
+      "description": "Meta-prompting system for dynamic prompt generation using templates, standards, and patterns. USE WHEN meta-prompting, template generation, prompt optimization, or programmatic prompt composition.",
+      "version": "1.0.0",
+      "author": {
+        "name": "danielmiessler"
+      },
+      "category": "AI & Automation",
+      "tags": [
+        "featured",
+        "ai-automation",
+        "typescript"
+      ]
+    },
+    {
+      "name": "api-and-interface-design",
+      "source": {
+        "source": "github",
+        "repo": "addyosmani/agent-skills"
+      },
+      "description": "Guides stable API and interface design. Use when designing APIs, module boundaries, or any public interface. Use when creating REST or GraphQL endpoints, defining type contracts between modules, or es",
+      "version": "1.0.0",
+      "author": {
+        "name": "addyosmani"
+      },
+      "category": "API & Backend",
+      "tags": [
+        "featured",
+        "api-backend",
+        "shell"
+      ]
+    },
+    {
+      "name": "notebooklm",
+      "source": {
+        "source": "github",
+        "repo": "teng-lin/notebooklm-py"
+      },
+      "description": "Complete API for Google NotebookLM - full programmatic access including features not in the web UI. Create notebooks, add sources, generate all artifact types, download in multiple formats. Activates ",
+      "version": "1.0.0",
+      "author": {
+        "name": "teng-lin"
+      },
+      "category": "Web & Frontend",
+      "tags": [
+        "featured",
+        "web-frontend",
+        "python"
+      ]
+    },
+    {
+      "name": "chatgpt-app-builder",
+      "source": {
+        "source": "github",
+        "repo": "mcp-use/mcp-use"
+      },
+      "description": "DEPRECATED: This skill has been replaced by `mcp-app-builder`. Check if `mcp-app-builder` is available in the skills folder. If not, install it: `npx skills install mcp-use/mcp-use --skill mcp-app-bui",
+      "version": "1.0.0",
+      "author": {
+        "name": "mcp-use"
+      },
+      "category": "AI & Automation",
+      "tags": [
+        "featured",
+        "ai-automation",
+        "typescript"
+      ]
+    },
+    {
+      "name": "compress",
+      "source": {
+        "source": "github",
+        "repo": "JuliusBrussee/caveman"
+      },
+      "description": "Compress natural language memory files (CLAUDE.md, todos, preferences) into caveman format to save input tokens. Preserves all technical substance, code, URLs, and structure. Compressed version overwr",
+      "version": "1.0.0",
+      "author": {
+        "name": "JuliusBrussee"
+      },
+      "category": "AI & Automation",
+      "tags": [
+        "featured",
+        "ai-automation",
+        "python"
+      ]
+    },
+    {
+      "name": "pinchtab-dev",
+      "source": {
+        "source": "github",
+        "repo": "pinchtab/pinchtab"
+      },
+      "description": "Develop and contribute to the PinchTab project. Use when working on PinchTab source code, adding features, fixing bugs, running tests, or preparing PRs. Triggers on \"work on pinchtab\", \"pinchtab devel",
+      "version": "1.0.0",
+      "author": {
+        "name": "pinchtab"
+      },
+      "category": "Web & Frontend",
+      "tags": [
+        "featured",
+        "web-frontend",
+        "go"
+      ]
+    },
+    {
+      "name": "pdf-page-verification-correction",
+      "source": {
+        "source": "github",
+        "repo": "HKUDS/OpenSpace"
+      },
+      "description": "Iterative workflow to verify PDF page counts and adjust layout parameters until requirements are met",
+      "version": "1.0.0",
+      "author": {
+        "name": "HKUDS"
+      },
+      "category": "Data & Documents",
+      "tags": [
+        "featured",
+        "data-documents",
+        "python"
+      ]
+    },
+    {
+      "name": "pr-writing-review",
+      "source": {
+        "source": "github",
+        "repo": "evalstate/fast-agent"
+      },
+      "description": "Extract and analyze writing improvements from GitHub PR review comments. Use when asked to show review feedback, style changes, or editorial improvements from a GitHub pull request URL. Handles both e",
+      "version": "1.0.0",
+      "author": {
+        "name": "evalstate"
+      },
+      "category": "Code & Development",
+      "tags": [
+        "featured",
+        "code-development",
+        "python"
+      ]
+    },
+    {
+      "name": "pinme-api",
+      "source": {
+        "source": "github",
+        "repo": "glitternetwork/pinme"
+      },
+      "description": "Use this skill when a PinMe project (Worker TypeScript) needs to integrate email sending (send_email) or LLM API calls (chat/completions). Guides AI to generate correct Worker TS code.",
+      "version": "1.0.0",
+      "author": {
+        "name": "glitternetwork"
+      },
+      "category": "API & Backend",
+      "tags": [
+        "featured",
+        "api-backend",
+        "typescript"
+      ]
+    },
+    {
+      "name": "veomni-develop",
+      "source": {
+        "source": "github",
+        "repo": "ByteDance-Seed/VeOmni"
+      },
+      "description": "VeOmni-specific checklist for feature development and refactoring. Covers impact analysis across modalities, trainer hierarchy, data pipeline, and distributed code. Use before implementing any non-tri",
+      "version": "1.0.0",
+      "author": {
+        "name": "ByteDance-Seed"
+      },
+      "category": "AI & Automation",
+      "tags": [
+        "featured",
+        "ai-automation",
+        "python"
+      ]
+    },
+    {
+      "name": "fix-github-issue",
+      "source": {
+        "source": "github",
+        "repo": "AgnosticUI/agnosticui"
+      },
+      "description": "Fix a GitHub issue by number. Use when asked to fix GitHub issues.",
+      "version": "1.0.0",
+      "author": {
+        "name": "AgnosticUI"
+      },
+      "category": "Web & Frontend",
+      "tags": [
+        "featured",
+        "web-frontend",
+        "typescript"
+      ]
+    },
+    {
+      "name": "ios-simulator-skill",
+      "source": {
+        "source": "github",
+        "repo": "conorluddy/ios-simulator-skill"
+      },
+      "description": "21 production-ready scripts for iOS app testing, building, and automation. Provides semantic UI navigation, build automation, accessibility testing, and simulator lifecycle management. Optimized for A",
+      "version": "1.0.0",
+      "author": {
+        "name": "conorluddy"
+      },
+      "category": "AI & Automation",
+      "tags": [
+        "featured",
+        "ai-automation",
+        "python"
+      ]
+    },
+    {
+      "name": "serialization",
+      "source": {
+        "source": "github",
+        "repo": "Aaronontheweb/dotnet-skills"
+      },
+      "description": "Choose the right serialization format for .NET applications. Prefer schema-based formats (Protobuf, MessagePack) over reflection-based (Newtonsoft.Json). Use System.Text.Json with AOT source generator",
+      "version": "1.0.0",
+      "author": {
+        "name": "Aaronontheweb"
+      },
+      "category": "Data & Documents",
+      "tags": [
+        "featured",
+        "data-documents",
+        "shell"
+      ]
+    },
+    {
+      "name": "fxa-review-quick",
+      "source": {
+        "source": "github",
+        "repo": "mozilla/fxa"
+      },
+      "description": "Fast single-pass FXA-specific commit review covering security, conventions, logic/bugs, tests, and migrations. No subagents — runs directly in the main context.",
+      "version": "1.0.0",
+      "author": {
+        "name": "mozilla"
+      },
+      "category": "Code & Development",
+      "tags": [
+        "featured",
+        "code-development",
+        "typescript"
+      ]
+    },
+    {
+      "name": "blue-ocean-strategy",
+      "source": {
+        "source": "github",
+        "repo": "wondelai/skills"
+      },
+      "description": "Create uncontested market space using value innovation instead of competing head-to-head. Use when the user mentions \"blue ocean\", \"red ocean\", \"strategy canvas\", \"ERRC framework\", \"value innovation\",",
+      "version": "1.0.0",
+      "author": {
+        "name": "wondelai"
+      },
+      "category": "AI & Automation",
+      "tags": [
+        "featured",
+        "ai-automation",
+        "shell"
+      ]
+    },
+    {
+      "name": "dotlottie-web",
+      "source": {
+        "source": "github",
+        "repo": "LottieFiles/dotlottie-web"
+      },
+      "description": "Implement Lottie animations using dotLottie runtimes (@lottiefiles/dotlottie-web and @lottiefiles/dotlottie-react). Use when building, debugging, or optimizing dotLottie or Lottie animations in web pr",
+      "version": "1.0.0",
+      "author": {
+        "name": "LottieFiles"
+      },
+      "category": "Web & Frontend",
+      "tags": [
+        "featured",
+        "web-frontend",
+        "typescript"
+      ]
+    },
+    {
+      "name": "bio-pathway-kegg-pathways",
+      "source": {
+        "source": "github",
+        "repo": "GPTomics/bioSkills"
+      },
+      "description": "KEGG pathway and module enrichment analysis using clusterProfiler enrichKEGG and enrichMKEGG. Use when identifying metabolic and signaling pathways over-represented in a gene list. Supports 4000+ orga",
+      "version": "1.0.0",
+      "author": {
+        "name": "GPTomics"
+      },
+      "category": "Data & Documents",
+      "tags": [
+        "featured",
+        "data-documents",
+        "python"
+      ]
+    },
+    {
+      "name": "devtools-app-setup",
+      "source": {
+        "source": "github",
+        "repo": "TanStack/devtools"
+      },
+      "description": "Install TanStack Devtools, pick framework adapter (React/Vue/Solid/Preact), register plugins via plugins prop, configure shell (position, hotkeys, theme, hideUntilHover, requireUrlFlag, eventBusConfig",
+      "version": "1.0.0",
+      "author": {
+        "name": "TanStack"
+      },
+      "category": "Web & Frontend",
+      "tags": [
+        "featured",
+        "web-frontend",
+        "typescript"
+      ]
+    },
+    {
+      "name": "xhs-cli",
+      "source": {
+        "source": "github",
+        "repo": "jackwener/xhs-cli"
+      },
+      "description": "Headless-browser-based CLI skill for Xiaohongshu (小红书, RedNote, XHS) to search notes, read posts, browse profiles, like, favorite, comment, and publish from the terminal",
+      "version": "1.0.0",
+      "author": {
+        "name": "jackwener"
+      },
+      "category": "Data & Documents",
+      "tags": [
+        "featured",
+        "data-documents",
+        "python"
+      ]
+    },
+    {
+      "name": "031-architecture-adr-functional-requirements",
+      "source": {
+        "source": "github",
+        "repo": "jabrena/cursor-rules-java"
+      },
+      "description": "Facilitates conversational discovery to create Architectural Decision Records (ADRs) for functional requirements covering CLI, REST/HTTP APIs, or both. Use when the user wants to document command-line",
+      "version": "1.0.0",
+      "author": {
+        "name": "jabrena"
+      },
+      "category": "AI & Automation",
+      "tags": [
+        "featured",
+        "ai-automation",
+        "java"
+      ]
+    },
+    {
+      "name": "google-search-console",
+      "source": {
+        "source": "github",
+        "repo": "kostja94/marketing-skills"
+      },
+      "description": "When the user wants to analyze Google Search Console data, use the GSC API, or interpret search performance. Also use when the user mentions \"GSC,\" \"Search Console,\" \"indexing report,\" \"Core Web Vital",
+      "version": "1.0.0",
+      "author": {
+        "name": "kostja94"
+      },
+      "category": "Data & Documents",
+      "tags": [
+        "featured",
+        "data-documents"
+      ]
+    },
+    {
+      "name": "skill-composer",
+      "source": {
+        "source": "github",
+        "repo": "notque/claude-code-toolkit"
+      },
+      "description": "DAG-based multi-skill orchestration with dependency resolution.",
+      "version": "1.0.0",
+      "author": {
+        "name": "notque"
+      },
+      "category": "AI & Automation",
+      "tags": [
+        "featured",
+        "ai-automation",
+        "python"
+      ]
+    },
+    {
+      "name": "qe-consultancy-practices",
+      "source": {
+        "source": "github",
+        "repo": "proffesor-for-testing/agentic-qe"
+      },
+      "description": "Apply effective software quality consultancy practices. Use when consulting, advising clients, or establishing consultancy workflows.",
+      "version": "1.0.0",
+      "author": {
+        "name": "proffesor-for-testing"
+      },
+      "category": "AI & Automation",
+      "tags": [
+        "featured",
+        "ai-automation",
+        "typescript"
+      ]
+    },
+    {
+      "name": "tg-cli",
+      "source": {
+        "source": "github",
+        "repo": "public-clis/tg-cli"
+      },
+      "description": "CLI skill for Telegram to sync chats, search messages, filter keywords, and monitor groups from the terminal",
+      "version": "1.0.0",
+      "author": {
+        "name": "public-clis"
+      },
+      "category": "Data & Documents",
+      "tags": [
+        "featured",
+        "data-documents",
+        "python"
+      ]
+    },
+    {
+      "name": "blucli",
+      "source": {
+        "source": "github",
+        "repo": "elizaOS/eliza"
+      },
+      "description": "BluOS CLI (blu) for discovery, playback, grouping, and volume control of Bluesound and NAD speakers. Use when the user wants to play music, stream audio, control speakers, adjust volume, group or ungr",
+      "version": "1.0.0",
+      "author": {
+        "name": "elizaOS"
+      },
+      "category": "AI & Automation",
+      "tags": [
+        "featured",
+        "ai-automation",
+        "typescript"
+      ]
+    },
+    {
+      "name": "agent-reach",
+      "source": {
+        "source": "github",
+        "repo": "Panniantong/Agent-Reach"
+      },
+      "description": "Give your AI agent eyes to see the entire internet. 17 platforms via CLI, MCP, curl, and Python scripts. Zero config for 8 channels. 【路由方式】SKILL.md 包含路由表和常用命令，复杂场景需按需阅读对应分类的 references/*.md。 分类：search",
+      "version": "1.0.0",
+      "author": {
+        "name": "Panniantong"
+      },
+      "category": "AI & Automation",
+      "tags": [
+        "featured",
+        "ai-automation",
+        "python"
+      ]
+    },
+    {
+      "name": "keys-accounts",
+      "source": {
+        "source": "github",
+        "repo": "Nethereum/Nethereum"
+      },
+      "description": "Manage Ethereum keys, accounts, and keystores with Nethereum. Use when the user needs to generate keys, create accounts, encrypt/decrypt keystores, load wallets, or work with ViewOnlyAccount. Also tri",
+      "version": "1.0.0",
+      "author": {
+        "name": "Nethereum"
+      },
+      "category": "AI & Automation",
+      "tags": [
+        "featured",
+        "ai-automation",
+        "c#"
+      ]
+    },
+    {
+      "name": "pine-script",
+      "source": {
+        "source": "github",
+        "repo": "HKUDS/Vibe-Trading"
+      },
+      "description": "Convert Python backtest strategies to TradingView Pine Script v6, or generate Pine Script from natural language descriptions.",
+      "version": "1.0.0",
+      "author": {
+        "name": "HKUDS"
+      },
+      "category": "Data & Documents",
+      "tags": [
+        "featured",
+        "data-documents",
+        "python"
+      ]
+    },
+    {
+      "name": "jira-cli",
+      "source": {
+        "source": "github",
+        "repo": "Code-and-Sorts/awesome-copilot-agents"
+      },
+      "description": "Interact with Jira from the command line to create, list, view, edit, and transition issues, manage sprints and epics, and perform common Jira workflows. Use when the user asks about Jira tasks, ticke",
+      "version": "1.0.0",
+      "author": {
+        "name": "Code-and-Sorts"
+      },
+      "category": "AI & Automation",
+      "tags": [
+        "featured",
+        "ai-automation",
+        "typescript"
+      ]
+    },
+    {
+      "name": "new-cask",
+      "source": {
+        "source": "github",
+        "repo": "malob/nix-config"
+      },
+      "description": "This skill should be used when the user asks to \"add a cask to homebrew\", \"create a homebrew cask\", \"add an app to homebrew\", \"new cask for\", \"homebrew cask for\", \"package an app for homebrew\", \"submi",
+      "version": "1.0.0",
+      "author": {
+        "name": "malob"
+      },
+      "category": "Data & Documents",
+      "tags": [
+        "featured",
+        "data-documents",
+        "python"
+      ]
+    },
+    {
+      "name": "gum-layout",
+      "source": {
+        "source": "github",
+        "repo": "vchelaru/Gum"
+      },
+      "description": "Reference guide for Gum's layout system — dimension units, position units, children layout modes, layout calculation flow, and layout suspension. Load when working on Width/HeightUnits, XUnits/YUnits,",
+      "version": "1.0.0",
+      "author": {
+        "name": "vchelaru"
+      },
+      "category": "Web & Frontend",
+      "tags": [
+        "featured",
+        "web-frontend",
+        "c#"
+      ]
+    },
+    {
+      "name": "command-development",
+      "source": {
+        "source": "github",
+        "repo": "tzachbon/smart-ralph"
+      },
+      "description": "This skill should be used when the user asks to \"create a slash command\", \"add a command\", \"write a custom command\", \"define command arguments\", \"use command frontmatter\", \"organize commands\", \"create",
+      "version": "1.0.0",
+      "author": {
+        "name": "tzachbon"
+      },
+      "category": "AI & Automation",
+      "tags": [
+        "featured",
+        "ai-automation",
+        "shell"
+      ]
+    },
+    {
+      "name": "meta-remove",
+      "source": {
+        "source": "github",
+        "repo": "Nikolay-Shirokov/cc-1c-skills"
+      },
+      "description": "Удалить объект метаданных из конфигурации 1С. Используй когда пользователь просит удалить, убрать объект из конфигурации",
+      "version": "1.0.0",
+      "author": {
+        "name": "Nikolay-Shirokov"
+      },
+      "category": "AI & Automation",
+      "tags": [
+        "featured",
+        "ai-automation",
+        "python"
+      ]
+    },
+    {
+      "name": "reload",
+      "source": {
+        "source": "github",
+        "repo": "Ruya-AI/cozempic"
+      },
+      "description": "Treat the current session and auto-resume in a new terminal window.",
+      "version": "1.0.0",
+      "author": {
+        "name": "Ruya-AI"
+      },
+      "category": "AI & Automation",
+      "tags": [
+        "featured",
+        "ai-automation",
+        "python"
+      ]
+    },
+    {
+      "name": "configure-canvas-mcp",
+      "source": {
+        "source": "github",
+        "repo": "microsoft/power-platform-skills"
+      },
+      "description": "Configure the Canvas Authoring MCP server for Claude Code, VS Code Copilot, or GitHub Copilot CLI. USE WHEN \"configure MCP\", \"set up MCP server\", \"MCP not working\", \"connect Canvas Apps MCP\", \"canvas-",
+      "version": "1.0.0",
+      "author": {
+        "name": "microsoft"
+      },
+      "category": "AI & Automation",
+      "tags": [
+        "featured",
+        "ai-automation",
+        "javascript"
+      ]
+    },
+    {
+      "name": "stellar-ios-sdk",
+      "source": {
+        "source": "github",
+        "repo": "Soneso/stellar-ios-mac-sdk"
+      },
+      "description": "Build Stellar blockchain applications in Swift using stellar-ios-mac-sdk. Use when generating Swift code for transaction building, signing, Horizon API queries, Soroban RPC, smart contract deployment ",
+      "version": "1.0.0",
+      "author": {
+        "name": "Soneso"
+      },
+      "category": "API & Backend",
+      "tags": [
+        "featured",
+        "api-backend",
+        "swift"
+      ]
+    },
+    {
+      "name": "cloudflare-d1",
+      "source": {
+        "source": "github",
+        "repo": "secondsky/claude-skills"
+      },
+      "description": "Cloudflare D1 serverless SQLite on edge. Use for databases, migrations, bindings, or encountering D1_ERROR, statement too long, too many requests queued errors.",
+      "version": "1.0.0",
+      "author": {
+        "name": "secondsky"
+      },
+      "category": "DevOps & Infrastructure",
+      "tags": [
+        "featured",
+        "devops-infrastructure",
+        "typescript"
+      ]
+    },
+    {
+      "name": "resend-cli",
+      "source": {
+        "source": "github",
+        "repo": "resend/resend-skills"
+      },
+      "description": "Operate the Resend platform from the terminal — send emails (including React Email .tsx templates via --react-email), manage domains, contacts, broadcasts, templates, webhooks, API keys, and logs via ",
+      "version": "1.0.0",
+      "author": {
+        "name": "resend"
+      },
+      "category": "Web & Frontend",
+      "tags": [
+        "featured",
+        "web-frontend",
+        "javascript"
+      ]
+    },
+    {
+      "name": "resend-cli",
+      "source": {
+        "source": "github",
+        "repo": "resend/resend-cli"
+      },
+      "description": "Operate the Resend platform from the terminal — send emails (including React Email .tsx templates via --react-email), manage domains, contacts, broadcasts, templates, webhooks, API keys, and logs via ",
+      "version": "1.0.0",
+      "author": {
+        "name": "resend"
+      },
+      "category": "Web & Frontend",
+      "tags": [
+        "featured",
+        "web-frontend",
+        "typescript"
+      ]
+    },
+    {
+      "name": "ccpm",
+      "source": {
+        "source": "github",
+        "repo": "automazeio/ccpm"
+      },
+      "description": "CCPM - spec-driven project management: PRD → Epic → GitHub Issues → parallel agents → shipped code. Use this skill for anything in the software delivery lifecycle: writing a PRD ('write a PRD for X', ",
+      "version": "1.0.0",
+      "author": {
+        "name": "automazeio"
+      },
+      "category": "Code & Development",
+      "tags": [
+        "featured",
+        "code-development",
+        "shell"
+      ]
+    },
+    {
+      "name": "debugging-workflows",
+      "source": {
+        "source": "github",
+        "repo": "github/gh-aw"
+      },
+      "description": "Guide for debugging GitHub Agentic Workflows - analyzing logs, auditing runs, and troubleshooting issues",
+      "version": "1.0.0",
+      "author": {
+        "name": "github"
+      },
+      "category": "AI & Automation",
+      "tags": [
+        "featured",
+        "ai-automation",
+        "go"
+      ]
+    },
+    {
+      "name": "pensieve",
+      "source": {
+        "source": "github",
+        "repo": "kingkongshot/Pensieve"
+      },
+      "description": "Project knowledge base and workflow router. knowledge/ caches previously explored file locations, module boundaries, and call chains for direct reuse; decisions/maxims are established architectural de",
+      "version": "1.0.0",
+      "author": {
+        "name": "kingkongshot"
+      },
+      "category": "Data & Documents",
+      "tags": [
+        "featured",
+        "data-documents",
+        "shell"
+      ]
+    },
+    {
+      "name": "markstream-vue2-vite",
+      "source": {
+        "source": "github",
+        "repo": "Simon-He95/markstream-vue"
+      },
+      "description": "Integrate markstream-vue2 into a Vue 2 plus Vite app. Use when Codex needs Vite-friendly worker imports, `?worker` or `?worker&inline` setup for Mermaid or KaTeX, modern CSS ordering, or Vue 2 compati",
+      "version": "1.0.0",
+      "author": {
+        "name": "Simon-He95"
+      },
+      "category": "Web & Frontend",
+      "tags": [
+        "featured",
+        "web-frontend",
+        "vue"
+      ]
+    },
+    {
+      "name": "rerender-memo",
+      "source": {
+        "source": "github",
+        "repo": "TheOrcDev/8bitcn-ui"
+      },
+      "description": "Extract expensive work into memoized components with React.memo. Apply when components perform expensive computations that can be skipped when props haven't changed.",
+      "version": "1.0.0",
+      "author": {
+        "name": "TheOrcDev"
+      },
+      "category": "Web & Frontend",
+      "tags": [
+        "featured",
+        "web-frontend",
+        "typescript"
+      ]
+    },
+    {
+      "name": "agent-md-refactor",
+      "source": {
+        "source": "github",
+        "repo": "softaworks/agent-toolkit"
+      },
+      "description": "Refactor bloated AGENTS.md, CLAUDE.md, or similar agent instruction files to follow progressive disclosure principles. Splits monolithic files into organized, linked documentation.",
+      "version": "1.0.0",
+      "author": {
+        "name": "softaworks"
+      },
+      "category": "AI & Automation",
+      "tags": [
+        "featured",
+        "ai-automation",
+        "python"
+      ]
+    },
+    {
+      "name": "swift-concurrency",
+      "source": {
+        "source": "github",
+        "repo": "AvdLee/Swift-Concurrency-Agent-Skill"
+      },
+      "description": "Diagnose data races, convert callback-based code to async/await, implement actor isolation patterns, resolve Sendable conformance issues, and guide Swift 6 migration. Use when developers mention: (1) ",
+      "version": "1.0.0",
+      "author": {
+        "name": "AvdLee"
+      },
+      "category": "Code & Development",
+      "tags": [
+        "featured",
+        "code-development"
+      ]
+    },
+    {
+      "name": "neta-suggest",
+      "source": {
+        "source": "github",
+        "repo": "talesofai/neta-skills"
+      },
+      "description": "Neta API 内容调研与推荐技能——提供关键词/标签/分类建议、分类路径验证以及多模式内容推荐流，支持从宽泛到精确的渐进式探索。当用户没有明确目标、想找创作题材或热门方向，或需要按关键词/分类做系统性内容筛选时使用本技能；不直接生成图片/视频/歌曲（由 neta-creative 负责），社区互动由 neta-community 负责。",
+      "version": "1.0.0",
+      "author": {
+        "name": "talesofai"
+      },
+      "category": "Data & Documents",
+      "tags": [
+        "featured",
+        "data-documents",
+        "typescript"
+      ]
+    },
+    {
+      "name": "claude-reflect",
+      "source": {
+        "source": "github",
+        "repo": "BayramAnnakov/claude-reflect"
+      },
+      "description": "Self-learning system that captures corrections during sessions and reminds users to run /reflect to update CLAUDE.md. Use when discussing learnings, corrections, or when the user mentions remembering ",
+      "version": "1.0.0",
+      "author": {
+        "name": "BayramAnnakov"
+      },
+      "category": "AI & Automation",
+      "tags": [
+        "featured",
+        "ai-automation",
+        "python"
+      ]
+    },
+    {
+      "name": "oma-backend",
+      "source": {
+        "source": "github",
+        "repo": "first-fluke/oh-my-agent"
+      },
+      "description": "Backend specialist for APIs, databases, authentication with clean architecture (Repository/Service/Router pattern). Use for API, endpoint, REST, database, server, migration, and auth work.",
+      "version": "1.0.0",
+      "author": {
+        "name": "first-fluke"
+      },
+      "category": "API & Backend",
+      "tags": [
+        "featured",
+        "api-backend",
+        "typescript"
+      ]
+    },
+    {
+      "name": "skillforge",
+      "source": {
+        "source": "github",
+        "repo": "tripleyak/SkillForge"
+      },
+      "description": "Intelligent skill router and creator. Analyzes ANY input to recommend existing skills, improve them, or create new ones. Uses deep iterative analysis with 11 thinking models, regression questioning, e",
+      "version": "1.0.0",
+      "author": {
+        "name": "tripleyak"
+      },
+      "category": "AI & Automation",
+      "tags": [
+        "featured",
+        "ai-automation",
+        "python"
+      ]
+    },
+    {
+      "name": "auto-arena",
+      "source": {
+        "source": "github",
+        "repo": "agentscope-ai/OpenJudge"
+      },
+      "description": "Automatically evaluate and compare multiple AI models or agents without pre-existing test data. Generates test queries from a task description, collects responses from all target endpoints, auto-gener",
+      "version": "1.0.0",
+      "author": {
+        "name": "agentscope-ai"
+      },
+      "category": "AI & Automation",
+      "tags": [
+        "featured",
+        "ai-automation",
+        "python"
+      ]
+    },
+    {
+      "name": "node-minify",
+      "source": {
+        "source": "github",
+        "repo": "srod/node-minify"
+      },
+      "description": "Compress JavaScript, CSS, HTML, JSON, and image files using node-minify library. Use when: minifying/compressing assets, bundling JS/CSS files, optimizing images (WebP/AVIF), concatenating files, or w",
+      "version": "1.0.0",
+      "author": {
+        "name": "srod"
+      },
+      "category": "Web & Frontend",
+      "tags": [
+        "featured",
+        "web-frontend",
+        "typescript"
+      ]
+    },
+    {
+      "name": "microsoft-foundry-classic",
+      "source": {
+        "source": "github",
+        "repo": "MicrosoftDocs/Agent-Skills"
+      },
+      "description": "Expert knowledge for Microsoft Foundry Classic (aka Azure AI Foundry classic) development including troubleshooting, best practices, decision making, architecture & design patterns, limits & quotas, s",
+      "version": "1.0.0",
+      "author": {
+        "name": "MicrosoftDocs"
+      },
+      "category": "AI & Automation",
+      "tags": [
+        "featured",
+        "ai-automation"
+      ]
+    },
+    {
+      "name": "web-search",
+      "source": {
+        "source": "github",
+        "repo": "rcarmo/piclaw"
+      },
+      "description": "Search the web via SearXNG and optionally convert result pages to Markdown.",
+      "version": "1.0.0",
+      "author": {
+        "name": "rcarmo"
+      },
+      "category": "Web & Frontend",
+      "tags": [
+        "featured",
+        "web-frontend",
+        "typescript"
+      ]
+    },
+    {
+      "name": "bwfc-identity-migration",
+      "source": {
+        "source": "github",
+        "repo": "FritzAndFriends/BlazorWebFormsComponents"
+      },
+      "description": "Migrate ASP.NET Web Forms Identity and Membership authentication to Blazor Server Identity. Covers OWIN to ASP.NET Core middleware, login page migration, BWFC login controls, role-based authorization,",
+      "version": "1.0.0",
+      "author": {
+        "name": "FritzAndFriends"
+      },
+      "category": "API & Backend",
+      "tags": [
+        "featured",
+        "api-backend",
+        "html"
+      ]
+    },
+    {
+      "name": "api-doc-generator",
+      "source": {
+        "source": "github",
+        "repo": "JackyST0/awesome-agent-skills"
+      },
+      "description": "Generate API documentation from source code, supporting REST APIs, GraphQL, and various documentation formats.",
+      "version": "1.0.0",
+      "author": {
+        "name": "JackyST0"
+      },
+      "category": "API & Backend",
+      "tags": [
+        "featured",
+        "api-backend",
+        "shell"
+      ]
+    },
+    {
+      "name": "agr-release",
+      "source": {
+        "source": "github",
+        "repo": "computerlovetech/agr"
+      },
+      "description": "Release process for the agr package. Handles version bumping (major/minor/patch/beta), changelog updates, pre-release quality checks, git tagging, and monitoring the GitHub Actions publish pipeline. U",
+      "version": "1.0.0",
+      "author": {
+        "name": "computerlovetech"
+      },
+      "category": "Data & Documents",
+      "tags": [
+        "featured",
+        "data-documents",
+        "python"
+      ]
+    },
+    {
+      "name": "gns3-packet-capture",
+      "source": {
+        "source": "github",
+        "repo": "automateyournetwork/netclaw"
+      },
+      "description": "Capture network traffic on GNS3 links - start/stop captures, retrieve PCAP data",
+      "version": "1.0.0",
+      "author": {
+        "name": "automateyournetwork"
+      },
+      "category": "Data & Documents",
+      "tags": [
+        "featured",
+        "data-documents",
+        "javascript"
+      ]
+    },
+    {
+      "name": "convex-agents",
+      "source": {
+        "source": "github",
+        "repo": "waynesutton/convexskills"
+      },
+      "description": "Building AI agents with the Convex Agent component including thread management, tool integration, streaming responses, RAG patterns, and workflow orchestration",
+      "version": "1.0.0",
+      "author": {
+        "name": "waynesutton"
+      },
+      "category": "AI & Automation",
+      "tags": [
+        "featured",
+        "ai-automation",
+        "javascript"
+      ]
+    },
+    {
+      "name": "configure-nightwatch",
+      "source": {
+        "source": "github",
+        "repo": "laravel/nightwatch"
+      },
+      "description": "Configures Laravel Nightwatch data collection, sampling rates, filtering rules, and redaction policies. Use when setting up Nightwatch, managing data volume, protecting sensitive data (PII), or optimi",
+      "version": "1.0.0",
+      "author": {
+        "name": "laravel"
+      },
+      "category": "Data & Documents",
+      "tags": [
+        "featured",
+        "data-documents",
+        "php"
+      ]
+    },
+    {
+      "name": "investigate",
+      "source": {
+        "source": "github",
+        "repo": "tobihagemann/turbo"
+      },
+      "description": "Systematically investigate bugs, test failures, build errors, performance issues, or unexpected behavior by cycling through characterize-isolate-hypothesize-test steps. Use when the user asks to \"inve",
+      "version": "1.0.0",
+      "author": {
+        "name": "tobihagemann"
+      },
+      "category": "AI & Automation",
+      "tags": [
+        "featured",
+        "ai-automation",
+        "python"
+      ]
+    },
+    {
+      "name": "pr-create",
+      "source": {
+        "source": "github",
+        "repo": "posit-dev/skills"
+      },
+      "description": "Creates a pull request from current changes, monitors GitHub CI, and debugs any failures until CI passes. Use this when the user says \"create pr\", \"make a pr\", \"open pull request\", \"submit pr\", \"pr fo",
+      "version": "1.0.0",
+      "author": {
+        "name": "posit-dev"
+      },
+      "category": "Code & Development",
+      "tags": [
+        "featured",
+        "code-development",
+        "r"
+      ]
+    },
+    {
+      "name": "database-patterns",
+      "source": {
+        "source": "github",
+        "repo": "MadAppGang/claude-code"
+      },
+      "description": "Use when designing database schemas, implementing repository patterns, writing optimized queries, managing migrations, or working with indexes and transactions for SQL/NoSQL databases.",
+      "version": "1.0.0",
+      "author": {
+        "name": "MadAppGang"
+      },
+      "category": "API & Backend",
+      "tags": [
+        "featured",
+        "api-backend",
+        "typescript"
+      ]
+    },
+    {
+      "name": "minimax-docx",
+      "source": {
+        "source": "github",
+        "repo": "mxyhi/ok-skills"
+      },
+      "description": "Professional DOCX document creation, editing, and formatting using OpenXML SDK (.NET). Three pipelines: (A) create new documents from scratch, (B) fill/edit content in existing documents, (C) apply te",
+      "version": "1.0.0",
+      "author": {
+        "name": "mxyhi"
+      },
+      "category": "Data & Documents",
+      "tags": [
+        "featured",
+        "data-documents",
+        "c#"
+      ]
+    },
+    {
+      "name": "amazon-asin-lookup-api-skill",
+      "source": {
+        "source": "github",
+        "repo": "browser-act/skills"
+      },
+      "description": "This skill helps users extract structured product details from Amazon using a specific ASIN (Amazon Standard Identification Number). Use this skill when the user asks to get Amazon product details by ",
+      "version": "1.0.0",
+      "author": {
+        "name": "browser-act"
+      },
+      "category": "API & Backend",
+      "tags": [
+        "featured",
+        "api-backend",
+        "python"
+      ]
+    },
+    {
+      "name": "tlive",
+      "source": {
+        "source": "github",
+        "repo": "y49/tlive"
+      },
+      "description": "IM bridge for AI coding tools — chat with Claude Code / Codex from Telegram, Discord, or Feishu. Approve permissions, get streaming responses, manage sessions from your phone. Use for: starting IM bri",
+      "version": "1.0.0",
+      "author": {
+        "name": "y49"
+      },
+      "category": "AI & Automation",
+      "tags": [
+        "featured",
+        "ai-automation",
+        "typescript"
+      ]
+    },
+    {
+      "name": "brand-monitoring",
+      "source": {
+        "source": "github",
+        "repo": "nexscope-ai/eCommerce-Skills"
+      },
+      "description": "Brand monitoring tool for tracking mentions across social media platforms. Monitor Reddit, Google News, YouTube, and DuckDuckGo for brand mentions. Includes sentiment analysis, trend tracking, crisis ",
+      "version": "1.0.0",
+      "author": {
+        "name": "nexscope-ai"
+      },
+      "category": "DevOps & Infrastructure",
+      "tags": [
+        "featured",
+        "devops-infrastructure",
+        "python"
+      ]
+    },
+    {
+      "name": "openviking-memory",
+      "source": {
+        "source": "github",
+        "repo": "volcengine/OpenViking"
+      },
+      "description": "OpenViking long-term memory plugin guide. Once installed, the plugin automatically remembers important facts from conversations and recalls relevant context before responding.",
+      "version": "1.0.0",
+      "author": {
+        "name": "volcengine"
+      },
+      "category": "AI & Automation",
+      "tags": [
+        "featured",
+        "ai-automation",
+        "python"
+      ]
+    },
+    {
+      "name": "browser-edge-cases",
+      "source": {
+        "source": "github",
+        "repo": "aden-hive/hive"
+      },
+      "description": "SOP for debugging browser automation failures on complex websites. Use when browser tools fail on specific sites like LinkedIn, Twitter/X, SPAs, or sites with Shadow DOM.",
+      "version": "1.0.0",
+      "author": {
+        "name": "aden-hive"
+      },
+      "category": "AI & Automation",
+      "tags": [
+        "featured",
+        "ai-automation",
+        "python"
+      ]
+    },
+    {
+      "name": "upgrade-otel",
+      "source": {
+        "source": "github",
+        "repo": "getsentry/sentry-javascript"
+      },
+      "description": "Upgrade OpenTelemetry instrumentations across the Sentry JavaScript SDK. Use when bumping OTel instrumentation packages to their latest versions.",
+      "version": "1.0.0",
+      "author": {
+        "name": "getsentry"
+      },
+      "category": "Web & Frontend",
+      "tags": [
+        "featured",
+        "web-frontend",
+        "typescript"
+      ]
+    },
+    {
+      "name": "dstack",
+      "source": {
+        "source": "github",
+        "repo": "dstackai/dstack"
+      },
+      "description": "dstack is an open-source control plane for GPU provisioning and orchestration across GPU clouds, Kubernetes, and on-prem clusters.",
+      "version": "1.0.0",
+      "author": {
+        "name": "dstackai"
+      },
+      "category": "DevOps & Infrastructure",
+      "tags": [
+        "featured",
+        "devops-infrastructure",
+        "python"
+      ]
+    },
+    {
+      "name": "md2wechat",
+      "source": {
+        "source": "github",
+        "repo": "geekjourneyx/md2wechat-skill"
+      },
+      "description": "Convert Markdown to WeChat Official Account HTML. Use this whenever the user wants WeChat article conversion, draft upload, image generation for articles, cover or infographic generation, image-post c",
+      "version": "1.0.0",
+      "author": {
+        "name": "geekjourneyx"
+      },
+      "category": "AI & Automation",
+      "tags": [
+        "featured",
+        "ai-automation",
+        "go"
+      ]
+    },
+    {
+      "name": "image-crop-rotate",
+      "source": {
+        "source": "github",
+        "repo": "instavm/coderunner"
+      },
+      "description": "Image processing skill for cropping images to 50% from center and rotating them 90 degrees clockwise. This skill should be used when users request image cropping to center, image rotation, or both ope",
+      "version": "1.0.0",
+      "author": {
+        "name": "instavm"
+      },
+      "category": "AI & Automation",
+      "tags": [
+        "featured",
+        "ai-automation",
+        "python"
+      ]
+    },
+    {
+      "name": "brainstorming",
+      "source": {
+        "source": "github",
+        "repo": "jnMetaCode/superpowers-zh"
+      },
+      "description": "在任何创造性工作之前必须使用此技能——创建功能、构建组件、添加功能或修改行为。在实现之前先探索用户意图、需求和设计。",
+      "version": "1.0.0",
+      "author": {
+        "name": "jnMetaCode"
+      },
+      "category": "AI & Automation",
+      "tags": [
+        "featured",
+        "ai-automation",
+        "shell"
+      ]
+    },
+    {
+      "name": "seo-geo",
+      "source": {
+        "source": "github",
+        "repo": "ReScienceLab/opc-skills"
+      },
+      "description": "SEO & GEO (Generative Engine Optimization) for websites. Analyze keywords, generate schema markup, optimize for AI search engines (ChatGPT, Perplexity, Gemini, Copilot, Claude) and traditional search ",
+      "version": "1.0.0",
+      "author": {
+        "name": "ReScienceLab"
+      },
+      "category": "AI & Automation",
+      "tags": [
+        "featured",
+        "ai-automation",
+        "python"
+      ]
+    },
+    {
+      "name": "tutor-setup",
+      "source": {
+        "source": "github",
+        "repo": "RoundTable02/tutor-skills"
+      },
+      "description": "Transforms knowledge sources into an Obsidian StudyVault. Two modes: (1) Document Mode — PDF/text/web sources → study notes with practice questions. (2) Codebase Mode — source code project → onboardin",
+      "version": "1.0.0",
+      "author": {
+        "name": "RoundTable02"
+      },
+      "category": "Data & Documents",
+      "tags": [
+        "featured",
+        "data-documents",
+        "shell"
+      ]
+    },
+    {
+      "name": "ifly-translate",
+      "source": {
+        "source": "github",
+        "repo": "iflytek/iFly-Skills"
+      },
+      "description": "iFlytek Machine Translation (机器翻译) — translate text between Chinese, English, Japanese, Korean, French, Spanish, German, Russian, Arabic, Thai, Vietnamese, and many more languages. Use when the user w",
+      "version": "1.0.0",
+      "author": {
+        "name": "iflytek"
+      },
+      "category": "AI & Automation",
+      "tags": [
+        "featured",
+        "ai-automation",
+        "python"
+      ]
+    },
+    {
+      "name": "taskmaster",
+      "source": {
+        "source": "github",
+        "repo": "blader/taskmaster"
+      },
+      "description": "Codex wrapper plus same-process expect PTY injector that keeps work moving until an explicit parseable done signal is emitted.",
+      "version": "1.0.0",
+      "author": {
+        "name": "blader"
+      },
+      "category": "Data & Documents",
+      "tags": [
+        "featured",
+        "data-documents",
+        "shell"
+      ]
+    },
+    {
+      "name": "editorial-card-screenshot",
+      "source": {
+        "source": "github",
+        "repo": "shaom/infocard-skills"
+      },
+      "description": "Generate high-density editorial HTML info cards in a modern magazine and Swiss-international style, then capture them as ratio-specific screenshots. Use when the user provides text or core information",
+      "version": "1.0.0",
+      "author": {
+        "name": "shaom"
+      },
+      "category": "Code & Development",
+      "tags": [
+        "featured",
+        "code-development",
+        "html"
+      ]
+    },
+    {
+      "name": "swift-testing-expert",
+      "source": {
+        "source": "github",
+        "repo": "AvdLee/Swift-Testing-Agent-Skill"
+      },
+      "description": "Expert guidance for Swift Testing: test structure, #expect/#require macros, traits and tags, parameterized tests, test plans, parallel execution, async waiting patterns, and XCTest migration. Use when",
+      "version": "1.0.0",
+      "author": {
+        "name": "AvdLee"
+      },
+      "category": "Testing & QA",
+      "tags": [
+        "featured",
+        "testing-qa"
+      ]
+    },
+    {
+      "name": "specify",
+      "source": {
+        "source": "github",
+        "repo": "rsmdt/the-startup"
+      },
+      "description": "Create a comprehensive specification from a brief description. Manages specification workflow including directory creation, README tracking, and phase transitions.",
+      "version": "1.0.0",
+      "author": {
+        "name": "rsmdt"
+      },
+      "category": "Testing & QA",
+      "tags": [
+        "featured",
+        "testing-qa",
+        "shell"
+      ]
+    },
+    {
+      "name": "organize",
+      "source": {
+        "source": "github",
+        "repo": "mcpware/claude-code-organizer"
+      },
+      "description": "Open the Claude Code Organizer dashboard — view and manage all memories, skills, MCP servers, hooks, and configs across scopes",
+      "version": "1.0.0",
+      "author": {
+        "name": "mcpware"
+      },
+      "category": "AI & Automation",
+      "tags": [
+        "featured",
+        "ai-automation",
+        "javascript"
+      ]
+    },
+    {
+      "name": "dream-to-video",
+      "source": {
+        "source": "github",
+        "repo": "mediastormDev/dream-to-video-skill"
+      },
+      "description": "当用户提供一段梦境文字素材、日记片段、或口述梦境内容，并希望生成视频时触发。触发词包括：\"梦到\"、\"梦见\"、\"做了个梦\"、\"梦境素材\"、\"帮我生成视频\"、\"转成视频\"、\"dream to video\"。也适用于用户直接粘贴一段梦境描述并期望获得视频文件的场景。此技能会将文字转化为视频提示词，自动提交到即梦平台生成，并下载视频文件。",
+      "version": "1.0.0",
+      "author": {
+        "name": "mediastormDev"
+      },
+      "category": "Code & Development",
+      "tags": [
+        "featured",
+        "code-development",
+        "python"
+      ]
+    },
+    {
+      "name": "build-agent",
+      "source": {
+        "source": "github",
+        "repo": "LukeRenton/explore-claude-code"
+      },
+      "description": "Builds new Claude Code agents with consistent structure, enforced standards, and project-aware configuration. Use when creating a new agent, when the user describes a specialised role they want delega",
+      "version": "1.0.0",
+      "author": {
+        "name": "LukeRenton"
+      },
+      "category": "AI & Automation",
+      "tags": [
+        "featured",
+        "ai-automation",
+        "javascript"
+      ]
+    },
+    {
+      "name": "chunking-strategy",
+      "source": {
+        "source": "github",
+        "repo": "giuseppe-trisciuoglio/developer-kit"
+      },
+      "description": "Provides chunking strategies for RAG systems. Generates chunk size recommendations (256-1024 tokens), overlap percentages (10-20%), and semantic boundary detection methods. Validates semantic coherenc",
+      "version": "1.0.0",
+      "author": {
+        "name": "giuseppe-trisciuoglio"
+      },
+      "category": "AI & Automation",
+      "tags": [
+        "featured",
+        "ai-automation",
+        "python"
+      ]
+    },
+    {
+      "name": "create-item",
+      "source": {
+        "source": "github",
+        "repo": "jpicklyk/task-orchestrator"
+      },
+      "description": "Create an MCP work item from conversation context. Scans existing containers to anchor the item in the right place (Bugs, Features, Tech Debt, Observations, etc.), infers type and priority, creates si",
+      "version": "1.0.0",
+      "author": {
+        "name": "jpicklyk"
+      },
+      "category": "AI & Automation",
+      "tags": [
+        "featured",
+        "ai-automation",
+        "kotlin"
+      ]
+    },
+    {
+      "name": "product-architect",
+      "source": {
+        "source": "github",
+        "repo": "ankitjha67/product-architect"
+      },
+      "description": "Complete product development system with 31 specialized agents and 23 frameworks. Use when user asks to build a product, write a PRD, create a roadmap, plan an MVP, design an app, do a security audit,",
+      "version": "1.0.0",
+      "author": {
+        "name": "ankitjha67"
+      },
+      "category": "AI & Automation",
+      "tags": [
+        "featured",
+        "ai-automation",
+        "javascript"
+      ]
+    },
+    {
+      "name": "seo-backlinks",
+      "source": {
+        "source": "github",
+        "repo": "hashgraph-online/awesome-codex-plugins"
+      },
+      "description": "Backlink profile analysis: referring domains, anchor text distribution, toxic link detection, competitor gap analysis. Works with free APIs (Moz, Bing Webmaster, Common Crawl) and DataForSEO extension",
+      "version": "1.0.0",
+      "author": {
+        "name": "hashgraph-online"
+      },
+      "category": "Web & Frontend",
+      "tags": [
+        "featured",
+        "web-frontend",
+        "python"
+      ]
+    }
+  ]
+}

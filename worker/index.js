@@ -118,10 +118,36 @@ const SEARCH_MAX_K = 50;
 const EMBEDDING_MODEL = 'text-embedding-3-small';
 const EMBEDDING_DIMENSIONS = 1536;
 
+// KV cache key for query embeddings. Normalized to lowercase+trimmed so
+// "Testing Frameworks" and "testing frameworks" share a cache entry.
+// TTL = 24 hours (queries embedding the same text always produce the same
+// vector, so staleness isn't really a concern — we expire just to cap
+// storage growth on the free tier).
+const QUERY_CACHE_TTL_SECONDS = 86400;
+
+function queryCacheKey(query) {
+  return 'qe:' + query.toLowerCase().trim();
+}
+
 async function embedQuery(query, env) {
   if (!env || !env.OPENAI_API_KEY) {
     throw new Error('OPENAI_API_KEY secret not configured on worker');
   }
+
+  // Try KV cache first — if bound, a cache hit skips the ~1.1s OpenAI round trip
+  const cacheKey = queryCacheKey(query);
+  if (env.QUERY_CACHE) {
+    try {
+      const cached = await env.QUERY_CACHE.get(cacheKey, { type: 'json' });
+      if (cached && Array.isArray(cached) && cached.length === EMBEDDING_DIMENSIONS) {
+        return { vector: cached, cached: true };
+      }
+    } catch (err) {
+      // KV read failed — fall through to OpenAI
+      console.error('KV cache read error:', err && err.message);
+    }
+  }
+
   const res = await fetch('https://api.openai.com/v1/embeddings', {
     method: 'POST',
     headers: {
@@ -142,7 +168,21 @@ async function embedQuery(query, env) {
   if (!json.data || !json.data[0] || !Array.isArray(json.data[0].embedding)) {
     throw new Error('OpenAI embed response missing data[0].embedding');
   }
-  return json.data[0].embedding;
+  const vector = json.data[0].embedding;
+
+  // Write to KV cache (fire-and-forget, don't block response)
+  if (env.QUERY_CACHE) {
+    try {
+      // KV put is async but we don't await — the response goes out immediately
+      env.QUERY_CACHE.put(cacheKey, JSON.stringify(vector), {
+        expirationTtl: QUERY_CACHE_TTL_SECONDS,
+      }).catch(() => {}); // swallow errors silently
+    } catch {
+      // noop
+    }
+  }
+
+  return { vector, cached: false };
 }
 
 export async function semanticSearch(request, env) {
@@ -187,11 +227,14 @@ export async function semanticSearch(request, env) {
     return jsonResponse({ error: 'VECTORIZE binding not configured on worker' }, 503);
   }
 
-  // Embed the query
+  // Embed the query (may be served from KV cache)
   let queryVector;
+  let embedCached = false;
   const embedStart = Date.now();
   try {
-    queryVector = await embedQuery(query, env);
+    const result = await embedQuery(query, env);
+    queryVector = result.vector;
+    embedCached = result.cached;
   } catch (err) {
     console.error('Query embed failed:', err && err.message);
     return jsonResponse({ error: 'embed_failed', detail: String(err && err.message).slice(0, 200) }, 502);
@@ -267,6 +310,7 @@ export async function semanticSearch(request, env) {
     query,
     count: results.length,
     timings_ms: { embed: embedMs, vector: vecMs, total: embedMs + vecMs },
+    embed_cached: embedCached,
     results,
   });
 }

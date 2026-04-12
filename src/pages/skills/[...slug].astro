@@ -4,7 +4,7 @@ import QualityBadge from '../../components/QualityBadge.astro';
 import CopyButton from '../../components/CopyButton.astro';
 import SkillCard from '../../components/SkillCard.astro';
 import ScoreBar from '../../components/ScoreBar.astro';
-import { allSkills, getRelatedSkills, timeAgo, categoryColor, getCategorySlug } from '../../lib/skills.js';
+import { allSkills, getRelatedSkills, getSimilarSkills, timeAgo, categoryColor, getCategorySlug } from '../../lib/skills.js';
 
 function daysToRecency(dateStr) {
   if (!dateStr) return 0;
@@ -25,7 +25,8 @@ export function getStaticPaths() {
 }
 
 const { skill } = Astro.props;
-const related = getRelatedSkills(skill, 3);
+const similar = getSimilarSkills(skill, 5);
+const related = similar.length > 0 ? [] : getRelatedSkills(skill, 3); // fall back to category-related if no similar data
 const cc = categoryColor(skill.category);
 const updated = timeAgo(skill.repo_pushed_at);
 const created = timeAgo(skill.repo_created_at);
@@ -166,7 +167,21 @@ const jsonLd = {
       </dl>
     </div>
 
-    <!-- Related Skills -->
+    <!-- Similar Skills (semantic, from vector embeddings) -->
+    {similar.length > 0 && (
+      <section class="mb-8">
+        <h2 class="text-lg font-semibold text-white mb-2 flex items-center gap-2">
+          <span class="w-2 h-2 rounded-full bg-atlas-500"></span>
+          Similar Skills
+        </h2>
+        <p class="text-xs text-gray-500 mb-4">Semantically similar based on skill content — not just same category</p>
+        <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
+          {similar.map((r: any) => <SkillCard skill={r} />)}
+        </div>
+      </section>
+    )}
+
+    <!-- Related Skills (fallback: same category, shown if no similar data) -->
     {related.length > 0 && (
       <section>
         <h2 class="text-lg font-semibold text-white mb-4">Related Skills</h2>

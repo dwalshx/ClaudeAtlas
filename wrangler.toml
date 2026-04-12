@@ -27,3 +27,20 @@ database_id = "d4e341fa-17d6-4069-8a00-3b6a8d698ab9"
 [[vectorize]]
 binding = "VECTORIZE"
 index_name = "claudeatlas-skills"
+
+# --- KV: query embedding cache (Phase 2.2) ---
+# Caches OpenAI query embeddings to skip the ~1.1s round trip on repeat
+# queries. TTL = 24 hours. Free KV tier: 100k reads/day, 1k writes/day.
+#
+# To activate:
+#   1. Create the namespace in CF dashboard → Workers & Pages → KV →
+#      "Create a namespace" → name: "claudeatlas-query-cache"
+#   2. Copy the namespace ID and paste it below, then uncomment
+#   3. Push to deploy (or wrangler deploy in CI)
+#
+# Without this binding, the Worker falls back to calling OpenAI for every
+# query (~1.5s total). With it, repeat queries drop to ~500ms.
+#
+# [[kv_namespaces]]
+# binding = "QUERY_CACHE"
+# id = "REPLACE_WITH_NAMESPACE_ID"
