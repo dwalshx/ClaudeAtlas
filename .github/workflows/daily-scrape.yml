@@ -51,6 +51,21 @@ jobs:
         if: github.event_name != 'push'
         run: npm run filter
 
+      # --- Semantic search: embed new/changed skills, upload to Vectorize ---
+      # Embed step is resumable and idempotent: reads prior ndjson, only embeds
+      # deltas. Safe to run on every workflow event. Upload step upserts into
+      # the Vectorize index; matching ids are replaced.
+      - name: Embed skills (OpenAI)
+        run: npm run embed
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+
+      - name: Upload vectors to Vectorize
+        run: npm run upload-vectors
+        env:
+          CF_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
+          CF_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
+
       # Regression guard
       - name: Check skills count
         run: |

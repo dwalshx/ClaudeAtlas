@@ -9,6 +9,8 @@
     "pipeline": "node scripts/scrape.js && node scripts/filter.js",
     "badges": "node scripts/generate-badges.js",
     "registry": "node scripts/generate-registry.js",
+    "embed": "node scripts/embed-skills.js",
+    "upload-vectors": "node scripts/upload-vectors.js",
     "prebuild": "node scripts/generate-badges.js && node scripts/generate-registry.js",
     "dev": "astro dev",
     "build": "astro build",

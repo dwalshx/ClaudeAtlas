@@ -138,12 +138,12 @@ const updatedLabel = `Updated ${updatedDate.toISOString().slice(0, 10)}`;
       </div>
       <div id="skills-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {topSkills.map(skill => (
-          <div class="skill-item" data-default-visible="true" data-name={skill.name.toLowerCase()} data-desc={(skill.description || '').toLowerCase()} data-cat={skill.category.toLowerCase()} data-tier={skill.quality_tier}>
+          <div class="skill-item" data-default-visible="true" data-slug={skill.slug} data-name={skill.name.toLowerCase()} data-desc={(skill.description || '').toLowerCase()} data-cat={skill.category.toLowerCase()} data-tier={skill.quality_tier}>
             <SkillCard skill={skill} />
           </div>
         ))}
         {extraSkills.map(skill => (
-          <div class="skill-item" data-default-visible="false" style="display: none;" data-name={skill.name.toLowerCase()} data-desc={(skill.description || '').toLowerCase()} data-cat={skill.category.toLowerCase()} data-tier={skill.quality_tier}>
+          <div class="skill-item" data-default-visible="false" style="display: none;" data-slug={skill.slug} data-name={skill.name.toLowerCase()} data-desc={(skill.description || '').toLowerCase()} data-cat={skill.category.toLowerCase()} data-tier={skill.quality_tier}>
             <SkillCard skill={skill} />
           </div>
         ))}
@@ -172,88 +172,173 @@ const updatedLabel = `Updated ${updatedDate.toISOString().slice(0, 10)}`;
   const skillsHeadingText = document.getElementById('skills-heading-text');
   const skillsCount = document.getElementById('skills-count');
   const noResults = document.getElementById('no-results');
-  const skillItems = document.querySelectorAll<HTMLElement>('.skill-item');
+  const skillsGrid = document.getElementById('skills-grid');
+  const skillItems = Array.from(document.querySelectorAll<HTMLElement>('.skill-item'));
 
   const totalIndexed = skillItems.length;
   const initialCountText = skillsCount?.textContent || '';
 
-  function applyFilter(rawQuery: string) {
-    const query = rawQuery.toLowerCase().trim();
-    const isSearching = query.length > 0;
+  // Build slug → element map for fast lookup when semantic results come back.
+  const itemsBySlug = new Map<string, HTMLElement>();
+  for (const el of skillItems) {
+    const slug = el.dataset.slug;
+    if (slug) itemsBySlug.set(slug, el);
+  }
 
-    // Toggle clear button
-    if (searchClear) {
-      searchClear.classList.toggle('hidden', !isSearching);
+  // --- Empty-state view (default on load or when query is cleared) ---
+  function showEmptyState() {
+    if (searchClear) searchClear.classList.add('hidden');
+    if (featuredSection) (featuredSection as HTMLElement).style.display = '';
+    if (ecosystemSection) (ecosystemSection as HTMLElement).style.display = '';
+    if (browseMore) (browseMore as HTMLElement).style.display = '';
+    if (skillsHeadingText) skillsHeadingText.textContent = 'Top Skills';
+    if (skillsCount) skillsCount.textContent = initialCountText;
+    if (noResults) noResults.classList.add('hidden');
+
+    for (const el of skillItems) {
+      el.style.display = el.dataset.defaultVisible === 'true' ? '' : 'none';
     }
 
-    // Toggle Featured section (hide when searching)
-    if (featuredSection) {
-      (featuredSection as HTMLElement).style.display = isSearching ? 'none' : '';
-    }
-
-    // Toggle Ecosystem Pulse section (hide when searching)
-    if (ecosystemSection) {
-      (ecosystemSection as HTMLElement).style.display = isSearching ? 'none' : '';
-    }
-
-    // Toggle browse-more footer (hide when searching)
-    if (browseMore) {
-      (browseMore as HTMLElement).style.display = isSearching ? 'none' : '';
-    }
-
-    // Update heading text
-    if (skillsHeadingText) {
-      skillsHeadingText.textContent = isSearching ? 'Search Results' : 'Top Skills';
-    }
-
-    let visible = 0;
-    skillItems.forEach(el => {
-      const name = el.dataset.name || '';
-      const desc = el.dataset.desc || '';
-      const cat = el.dataset.cat || '';
-
-      if (!isSearching) {
-        // Empty-state: show only the default top-60
-        const shouldShow = el.dataset.defaultVisible === 'true';
-        el.style.display = shouldShow ? '' : 'none';
-        if (shouldShow) visible++;
-        return;
-      }
-
-      const matches = name.includes(query) || desc.includes(query) || cat.includes(query);
-      el.style.display = matches ? '' : 'none';
-      if (matches) visible++;
-    });
-
-    // Update count label
-    if (skillsCount) {
-      if (!isSearching) {
-        skillsCount.textContent = initialCountText;
-      } else {
-        skillsCount.textContent = `${visible} result${visible === 1 ? '' : 's'} of ${totalIndexed.toLocaleString()}`;
-      }
-    }
-
-    // No-results message
-    if (noResults) {
-      noResults.classList.toggle('hidden', visible > 0 || !isSearching);
+    // Restore the default order (top-60 quality-sorted first, then extras)
+    // by re-sorting by the implicit DOM document order. Since we may have
+    // reordered via appendChild during semantic search, sort by a cached
+    // original-index data attribute if needed.
+    //
+    // Simpler: on first load, remember the original order, then restore it
+    // when switching back to empty state. We cache the order in originalOrder.
+    if (skillsGrid && originalOrder.length > 0) {
+      for (const el of originalOrder) skillsGrid.appendChild(el);
     }
   }
 
+  // --- Searching view (semantic results) ---
+  function showSearchingState() {
+    if (searchClear) searchClear.classList.remove('hidden');
+    if (featuredSection) (featuredSection as HTMLElement).style.display = 'none';
+    if (ecosystemSection) (ecosystemSection as HTMLElement).style.display = 'none';
+    if (browseMore) (browseMore as HTMLElement).style.display = 'none';
+    if (skillsHeadingText) skillsHeadingText.textContent = 'Search Results';
+  }
+
+  // Cache original DOM order once so we can restore it on clear
+  const originalOrder: HTMLElement[] = skillsGrid
+    ? Array.from(skillsGrid.querySelectorAll<HTMLElement>('.skill-item'))
+    : [];
+
+  // --- Semantic search via /api/v1/search ---
+  let currentQuery = '';
+  let searchToken = 0;
+
+  async function runSemanticSearch(query: string) {
+    const thisToken = ++searchToken;
+    currentQuery = query;
+    showSearchingState();
+
+    if (skillsCount) skillsCount.textContent = 'Searching…';
+    if (noResults) noResults.classList.add('hidden');
+
+    let results: Array<{ slug: string; score: number; name: string }> = [];
+    try {
+      const url = `/api/v1/search?q=${encodeURIComponent(query)}&k=30`;
+      const res = await fetch(url, { headers: { 'accept': 'application/json' } });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+      if (!Array.isArray(data.results)) throw new Error('malformed response');
+      results = data.results;
+    } catch (err) {
+      console.error('Semantic search failed:', err);
+      // Fall back to substring filter so the search box still does something
+      return runKeywordFallback(query, thisToken);
+    }
+
+    // If another query came in while this one was in-flight, drop our results.
+    if (thisToken !== searchToken) return;
+
+    // Reorder matching items to the top of the grid, hide the rest.
+    const matchedSet = new Set(results.map(r => r.slug));
+    let visible = 0;
+
+    // First pass: hide everything that didn't match
+    for (const el of skillItems) {
+      const slug = el.dataset.slug || '';
+      if (!matchedSet.has(slug)) {
+        el.style.display = 'none';
+      }
+    }
+
+    // Second pass: show matched items in API response order
+    if (skillsGrid) {
+      for (const result of results) {
+        const el = itemsBySlug.get(result.slug);
+        if (el) {
+          el.style.display = '';
+          skillsGrid.appendChild(el); // reattach at end, establishing order
+          visible++;
+        }
+      }
+    }
+
+    if (skillsCount) {
+      skillsCount.textContent = visible > 0
+        ? `${visible} relevant result${visible === 1 ? '' : 's'} · semantic match`
+        : `No semantic matches`;
+    }
+    if (noResults) noResults.classList.toggle('hidden', visible > 0);
+  }
+
+  // Substring fallback if the API call fails (e.g. Vectorize binding missing
+  // on first deploy, or network error)
+  function runKeywordFallback(query: string, thisToken: number) {
+    if (thisToken !== searchToken) return;
+    const q = query.toLowerCase();
+    let visible = 0;
+    for (const el of skillItems) {
+      const name = el.dataset.name || '';
+      const desc = el.dataset.desc || '';
+      const cat = el.dataset.cat || '';
+      const matches = name.includes(q) || desc.includes(q) || cat.includes(q);
+      el.style.display = matches ? '' : 'none';
+      if (matches) visible++;
+    }
+    if (skillsCount) {
+      skillsCount.textContent = `${visible} keyword match${visible === 1 ? '' : 'es'} · semantic unavailable`;
+    }
+    if (noResults) noResults.classList.toggle('hidden', visible > 0);
+  }
+
+  // --- Debounced input handler ---
+  let debounceTimer: number | null = null;
   searchInput?.addEventListener('input', (e) => {
-    applyFilter((e.target as HTMLInputElement).value);
+    const val = (e.target as HTMLInputElement).value.trim();
+    if (debounceTimer) window.clearTimeout(debounceTimer);
+
+    if (val.length === 0) {
+      currentQuery = '';
+      searchToken++; // cancel any in-flight search
+      showEmptyState();
+      return;
+    }
+
+    // Typing — show optimistic UI and kick off debounced search
+    showSearchingState();
+    if (skillsCount) skillsCount.textContent = 'Searching…';
+    debounceTimer = window.setTimeout(() => {
+      runSemanticSearch(val);
+    }, 400);
   });
 
   searchClear?.addEventListener('click', () => {
     if (searchInput) {
       searchInput.value = '';
-      applyFilter('');
+      currentQuery = '';
+      searchToken++;
+      showEmptyState();
       searchInput.focus();
     }
   });
 
   // Initialize state on page load
-  applyFilter('');
+  showEmptyState();
 
   // --- Ecosystem Pulse chart tooltips ---
   const tooltipEl = document.getElementById('chart-tooltip');

@@ -41,3 +41,6 @@ scripts/backfill-skill-birth-dates.log
 public/badge/
 # Generated registry (rebuilt each build via scripts/generate-registry.js)
 public/skills-registry.json
+
+# Embed script log (not the ndjson itself — that's committed as a cache)
+scripts/embed-skills.log

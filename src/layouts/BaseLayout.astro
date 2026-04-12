@@ -74,8 +74,11 @@ const updatedIso = updatedDate.toISOString().slice(0, 10);
           if (p) p.capture(event, props || {});
         } catch (e) { /* noop */ }
 
-        // Also POST search queries to the D1 log endpoint (best-effort)
-        if (event === 'search_query' && props && props.query) {
+        // D1 logging: the homepage search now calls /api/v1/search which
+        // logs each query server-side. The /api/log-search fallback ping
+        // from here is only used on pages without the semantic search
+        // integration (e.g. category pages with client-side filters).
+        if (event === 'search_query_fallback' && props && props.query) {
           try {
             fetch('/api/log-search', {
               method: 'POST',

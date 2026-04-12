@@ -1,26 +1,29 @@
 name = "claudeatlas"
 compatibility_date = "2026-04-10"
 
-# Worker entry point — handles /api/log-search and falls through to ASSETS
-# for all other requests. The ASSETS binding is provided automatically by
-# the [assets] block below.
-main = "worker/log-search.js"
+# Worker entry point — handles /api/log-search, /api/v1/search, and falls
+# through to ASSETS for everything else. The ASSETS binding is provided
+# automatically by the [assets] block below.
+main = "worker/index.js"
 
 [assets]
 directory = "./dist"
 not_found_handling = "404-page"
 binding = "ASSETS"
 
-# --- Phase 5 Analytics: D1 search query log ---
-# Database provisioned via Cloudflare dashboard (Windows ARM64 can't run
-# wrangler locally because workerd has no win32-arm64 binary). The CI
-# deploy path via cloudflare/wrangler-action@v3 runs on linux-x64 where
-# this binding is wired up automatically on every deploy.
-#
-# SALT_SECRET is set directly on the Worker via the CF dashboard
-# (Workers & Pages → claudeatlas → Settings → Variables and Secrets).
-
+# --- D1: search query log ---
+# Provisioned via Cloudflare dashboard. SALT_SECRET set as a Worker secret.
 [[d1_databases]]
 binding = "DB"
 database_name = "claudeatlas-search-log"
 database_id = "d4e341fa-17d6-4069-8a00-3b6a8d698ab9"
+
+# --- Vectorize: semantic search over skill embeddings ---
+# Index provisioned via REST API call (Windows ARM64 can't run wrangler).
+# Dimensions: 1536 (text-embedding-3-small default).
+# Metric: cosine (best for text similarity).
+# Populated by scripts/embed-skills.js + scripts/upload-vectors.js in CI.
+# OPENAI_API_KEY set as a Worker secret for query-time embedding.
+[[vectorize]]
+binding = "VECTORIZE"
+index_name = "claudeatlas-skills"
