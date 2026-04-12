@@ -24,6 +24,19 @@ Phase 1 MVP shipped 2026-04-10 with 33,078 skills scraped, 1,078 curated, and 30
 - [x] **Phase 6: Infrastructure Groundwork** - Publish a machine-readable `/skills-registry.json` and document it for agents
 - [x] **Phase 1.5.1: Creators Browse Page** (INSERTED) - Full sortable/filterable table of every creator at `/creators/all/`
 
+---
+
+## Milestone v2.0 — Agent-Native Directory
+
+Theme: turn ClaudeAtlas from a browsable site into infrastructure that agents call.
+
+- [x] **Phase 2.1: Semantic Search** — OpenAI `text-embedding-3-small` + Cloudflare Vectorize + `/api/v1/search` public endpoint, homepage wired to semantic matching
+- [ ] **Phase 2.2: Query latency optimization** — Workers KV cache for common query embeddings (drops ~1.5s → ~500ms on hits)
+- [ ] **Phase 2.3: Similar-skills enrichment** — pre-compute top-5 similar skills per skill at build time, show on skill detail pages
+- [ ] **Phase 2.4: marketplace.json federation** — register ClaudeAtlas as a Claude-compatible plugin marketplace
+- [ ] **Phase 2.5: Clustering + emergent categories** — surface natural clusters in the vector space
+- [ ] **Phase 1.5.2: Slug collision fix** — make slug computation path-aware (deferred bug from Phase 2.1)
+
 ## Phase Details
 
 ### Phase 1: Content & UX Fixes
