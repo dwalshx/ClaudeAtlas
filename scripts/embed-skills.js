@@ -10,17 +10,25 @@
  * Each line of the NDJSON file is a Vectorize-ready vector record:
  *
  *   {
- *     "id": "affaan-m/videodb",            // slug, stable across runs
+ *     "id": "<vectorize_safe_id>",         // derived from skill.id, ≤64 chars
  *     "values": [0.01, -0.03, ...],        // 1536 floats
  *     "metadata": {
  *       "name": "videodb",
  *       "slug": "affaan-m/videodb",
+ *       "skill_id": "affaan-m/everything-claude-code/skills/videodb/SKILL.md",
  *       "category": "AI & Automation",
  *       "quality_tier": "featured",
  *       "quality_score": 99,
  *       "repo_stars": 148923
  *     }
  *   }
+ *
+ * Note: the Vectorize `id` is derived from skill.id (unique per catalog
+ * entry) because 6 skills in the current catalog share a slug (two
+ * different repos host skills with the same name). Using slug as the
+ * vector ID would cause 6 records to silently overwrite each other.
+ * Vectorize has a 64-char ID limit, so long skill.id values are hashed
+ * into a stable short form.
  *
  * Resumable: on startup, reads the existing NDJSON if present and builds a
  * map of {slug -> content_sha}. Only re-embeds skills whose content has
@@ -77,6 +85,21 @@ function computeContentSha(skill) {
   return createHash('sha256').update(payload).digest('hex');
 }
 
+// Vectorize accepts IDs up to 64 characters. Our skill.id values (full
+// path including the SKILL.md filename) can exceed this. We keep them
+// stable by using a SHA-256 prefix whenever the raw id is too long.
+function vectorizeId(skillId) {
+  if (!skillId) throw new Error('skill missing id');
+  if (skillId.length <= 64) {
+    // Vectorize also requires ids to match a restricted charset — replace
+    // path separators and other unsafe characters with underscores.
+    return skillId.replace(/[^A-Za-z0-9_-]/g, '_').slice(0, 64);
+  }
+  const hash = createHash('sha256').update(skillId).digest('hex');
+  // Prefix with 'sk_' so it's obviously a hashed skill id, then 40 hex chars
+  return 'sk_' + hash.slice(0, 40);
+}
+
 // Build the text we actually send to OpenAI. This is what gets embedded,
 // so the richer the better — but we cap at ~2000 chars to stay within
 // single-batch token budgets and avoid tail-content dominating.
@@ -92,6 +115,8 @@ function buildEmbeddingInput(skill) {
 
 // --- Prior-run resume ---
 
+// Load prior vectors keyed by metadata.skill_id (the source-of-truth unique
+// identifier). The record's vector `id` is a derived vectorize-safe form.
 function loadPriorVectors() {
   if (!existsSync(OUTPUT_PATH)) return new Map();
   try {
@@ -100,7 +125,9 @@ function loadPriorVectors() {
     for (const line of lines) {
       try {
         const rec = JSON.parse(line);
-        if (rec.id) map.set(rec.id, rec);
+        // Prefer metadata.skill_id (new format), fall back to rec.id (old format)
+        const key = rec.metadata?.skill_id || rec.id;
+        if (key) map.set(key, rec);
       } catch {
         // skip malformed lines
       }
@@ -171,9 +198,9 @@ async function main() {
   const todo = [];
 
   for (const skill of skills) {
-    if (!skill.slug) continue;
+    if (!skill.id) continue;
     const sha = computeContentSha(skill);
-    const priorRec = prior.get(skill.slug);
+    const priorRec = prior.get(skill.id);
 
     if (priorRec && priorRec.metadata && priorRec.metadata._content_sha === sha && Array.isArray(priorRec.values) && priorRec.values.length === DIMENSIONS) {
       kept.push(priorRec);
@@ -236,11 +263,12 @@ async function main() {
     for (let j = 0; j < batch.length; j++) {
       const { skill, sha } = batch[j];
       newRecords.push({
-        id: skill.slug,
+        id: vectorizeId(skill.id),
         values: vectors[j],
         metadata: {
           name: skill.name,
           slug: skill.slug,
+          skill_id: skill.id, // source-of-truth for re-embed delta detection
           category: skill.category || '',
           quality_tier: skill.quality_tier || 'listed',
           quality_score: skill.quality_score || 0,

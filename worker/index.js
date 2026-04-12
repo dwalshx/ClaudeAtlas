@@ -221,18 +221,31 @@ export async function semanticSearch(request, env) {
   const vecMs = Date.now() - vecStart;
 
   const matches = (vectorResults && vectorResults.matches) || [];
-  const results = matches.map(m => ({
-    slug: m.id,
-    score: Math.round(m.score * 10000) / 10000, // 4 decimals
-    name: m.metadata?.name || '',
-    category: m.metadata?.category || null,
-    quality_tier: m.metadata?.quality_tier || null,
-    quality_score: m.metadata?.quality_score || null,
-    repo_stars: m.metadata?.repo_stars || null,
-    repo_full_name: m.metadata?.repo_full_name || null,
-    description: m.metadata?.description || null,
-    detail_url: `/skills/${m.id}/`,
-  }));
+  // Dedupe: if two skills share a slug (6 known collisions in current catalog)
+  // both can match. Keep the highest-scoring one per slug.
+  const bySlug = new Map();
+  for (const m of matches) {
+    const slug = m.metadata?.slug;
+    if (!slug) continue;
+    const prior = bySlug.get(slug);
+    if (!prior || m.score > prior.score) {
+      bySlug.set(slug, m);
+    }
+  }
+  const results = [...bySlug.values()]
+    .sort((a, b) => b.score - a.score)
+    .map(m => ({
+      slug: m.metadata.slug,
+      score: Math.round(m.score * 10000) / 10000, // 4 decimals
+      name: m.metadata?.name || '',
+      category: m.metadata?.category || null,
+      quality_tier: m.metadata?.quality_tier || null,
+      quality_score: m.metadata?.quality_score || null,
+      repo_stars: m.metadata?.repo_stars || null,
+      repo_full_name: m.metadata?.repo_full_name || null,
+      description: m.metadata?.description || null,
+      detail_url: `/skills/${m.metadata.slug}/`,
+    }));
 
   // Fire-and-forget log to D1 if available. Don't block the response.
   if (env && env.DB) {
