@@ -10,10 +10,13 @@ on:
 jobs:
   scrape-build-deploy:
     runs-on: ubuntu-latest
-    # 6 hours for the rare cold scrape (no ETag cache). Warm runs finish
-    # in 2-3 minutes. Push-triggered runs skip scrape entirely so they're
-    # typically under 90 seconds.
-    timeout-minutes: 350
+    # 7 hours: the cold scrape (no ETag cache) is documented at ~7h in
+    # CLAUDE.md. Previous 350-min (5h50m) timeout was shorter than cold-
+    # scrape duration, so cold scrapes could never complete and seed
+    # the cache — trapping every run in a cold-scrape loop. Warm runs
+    # finish in 2-3 minutes. Push-triggered runs skip scrape entirely
+    # so they're typically under 90 seconds.
+    timeout-minutes: 420
     steps:
       - uses: actions/checkout@v4
 
@@ -30,10 +33,14 @@ jobs:
       # (~90 sec) and avoids the cold-scrape timeout problem on first
       # runs without an ETag cache.
 
-      # Restore ETag cache from previous run
+      # Restore ETag cache from previous run.
+      # Split from save step so that save can run with `if: always()`
+      # after the scrape — even if the scrape times out or is cancelled,
+      # the partially-built cache (scraper checkpoints every 1000 skills
+      # via saveETagCache()) gets persisted for the next run.
       - name: Restore ETag cache
         if: github.event_name != 'push'
-        uses: actions/cache@v4
+        uses: actions/cache/restore@v4
         with:
           path: data/etag-cache.json
           key: etag-cache-${{ github.run_number }}
@@ -45,6 +52,19 @@ jobs:
         run: npm run scrape
         env:
           GITHUB_TOKEN: ${{ secrets.SCRAPE_PAT }}
+
+      # Save ETag cache even on timeout/failure/cancel. This is the
+      # critical fix: actions/cache@v4's implicit post-job save is
+      # skipped when the job is cancelled (e.g. timeout), which caused
+      # every scheduled run to be a cold scrape. With `if: always()`
+      # and a bounded condition, the cache persists regardless of the
+      # scrape step's outcome so subsequent runs start warm.
+      - name: Save ETag cache
+        if: always() && github.event_name != 'push' && hashFiles('data/etag-cache.json') != ''
+        uses: actions/cache/save@v4
+        with:
+          path: data/etag-cache.json
+          key: etag-cache-${{ github.run_number }}
 
       # Apply filter (writes skills.json from skills-raw.json)
       - name: Filter and calibrate skills
