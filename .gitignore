@@ -45,6 +45,10 @@ public/skills-registry.json
 # Embed script log (not the ndjson itself — that's committed as a cache)
 scripts/embed-skills.log
 
-# Plugin scraper intermediate files
+# Plugin scraper intermediate + raw output files
+# Raw output is ~34 MB and gets rebuilt on each scrape. Filtered/scored
+# data/plugins.json will be committed once Phase 3.0 filter-plugins.js ships.
+data/plugins-raw.json
 data/plugins-raw.json.partial
 scripts/scrape-plugins.log
+scripts/scrape-plugins-resume.log
