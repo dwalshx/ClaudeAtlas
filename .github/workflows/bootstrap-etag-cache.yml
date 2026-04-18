@@ -1,0 +1,61 @@
+name: Bootstrap ETag Cache (one-shot)
+
+# One-time workflow to seed the GitHub Actions cache with the local 499 MB
+# data/etag-cache.json file. The daily scrape cannot complete cold within
+# GitHub's hard 6-hour platform cap on hosted runners, so we need to start
+# warm. Without this seed, every scheduled run goes cold, hits the cap, and
+# loses its work.
+#
+# How it works:
+#   1. Downloads data/etag-cache.json from the etag-cache-bootstrap release
+#      asset.
+#   2. Saves it to GHA cache with the key the daily scrape's restore-keys
+#      prefix matches ("etag-cache-").
+#   3. Next scheduled daily-scrape run finds it via restore-keys and starts
+#      warm.
+#
+# Run it ONCE via workflow_dispatch from the Actions tab, then delete the
+# release asset (and optionally this workflow file) afterward.
+
+on:
+  workflow_dispatch: {}
+
+jobs:
+  bootstrap:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download etag cache from release asset
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          mkdir -p data
+          gh release download etag-cache-bootstrap \
+            --pattern 'etag-cache.json' \
+            --output data/etag-cache.json
+          ls -lh data/etag-cache.json
+          echo "SHA256:"
+          sha256sum data/etag-cache.json
+
+      - name: Save to GitHub Actions cache
+        uses: actions/cache/save@v4
+        with:
+          path: data/etag-cache.json
+          key: etag-cache-bootstrap-${{ github.run_number }}
+
+      - name: Confirm cache was saved
+        run: |
+          echo "Cache saved with key: etag-cache-bootstrap-${{ github.run_number }}"
+          echo ""
+          echo "Daily scrape uses restore-keys: 'etag-cache-' (prefix match),"
+          echo "so it will pick up this entry on the next scheduled run."
+          echo ""
+          echo "Next steps for Dan:"
+          echo "  1. Verify cache exists: 'gh cache list --limit 5'"
+          echo "  2. Trigger a manual daily-scrape run to confirm it goes warm:"
+          echo "     gh workflow run daily-scrape.yml"
+          echo "  3. After the warm scrape succeeds, delete the release asset:"
+          echo "     gh release delete etag-cache-bootstrap --yes"
+          echo "  4. Optionally delete this workflow file."
