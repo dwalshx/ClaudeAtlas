@@ -41,6 +41,10 @@ index_name = "claudeatlas-skills"
 # Without this binding, the Worker falls back to calling OpenAI for every
 # query (~1.5s total). With it, repeat queries drop to ~500ms.
 #
-# [[kv_namespaces]]
-# binding = "QUERY_CACHE"
-# id = "REPLACE_WITH_NAMESPACE_ID"
+# ⚠️ PARTIALLY ACTIVATED 2026-04-18 — binding uncommented but `id` is a
+# placeholder. Before `wrangler deploy`, run:
+#     wrangler kv:namespace create QUERY_CACHE
+# and paste the returned id into the line below. See MORNING-CHECKLIST.md.
+[[kv_namespaces]]
+binding = "QUERY_CACHE"
+id = "REPLACE_WITH_NAMESPACE_ID"
