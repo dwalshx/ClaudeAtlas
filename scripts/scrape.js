@@ -89,12 +89,13 @@ const SIZE_BUCKETS = [
   'size:>10000',
 ];
 
-async function searchCodeBySize() {
+async function searchCodeBySize(pushedFilter = '') {
   const allItems = [];
   const seenKeys = new Set();
 
   for (const sizeBucket of SIZE_BUCKETS) {
-    const query = encodeURIComponent(`filename:SKILL.md ${sizeBucket}`);
+    const queryParts = `filename:SKILL.md ${sizeBucket}${pushedFilter ? ' ' + pushedFilter : ''}`;
+    const query = encodeURIComponent(queryParts);
     let page = 1;
     let totalForBucket = 0;
 
@@ -139,13 +140,16 @@ async function searchCodeBySize() {
 
 // --- Topics search ---
 
-async function searchByTopics() {
+async function searchByTopics(pushedFilter = '') {
   const topics = ['claude-skills', 'agent-skills', 'anthropic-skills', 'claude-code-skills', 'claude-code'];
   const repos = [];
   const seenRepos = new Set();
 
   for (const topic of topics) {
-    const url = `https://api.github.com/search/repositories?q=topic:${topic}&per_page=100&sort=stars&order=desc`;
+    // Note: applying pushed:> here filters topic-tagged repos by recent push activity —
+    // semantically valid for the incremental intent (we only care about recently active repos).
+    const q = encodeURIComponent(`topic:${topic}${pushedFilter ? ' ' + pushedFilter : ''}`);
+    const url = `https://api.github.com/search/repositories?q=${q}&per_page=100&sort=stars&order=desc`;
     console.log(`  [topics] Searching topic: ${topic}...`);
 
     const res = await rateLimitedFetch(url, true);
@@ -304,6 +308,28 @@ async function main() {
   console.log('=== ClaudeAtlas Scraper ===');
   console.log(`Started at ${new Date().toISOString()}\n`);
 
+  // --- Parse --mode={incremental,full} ---
+  let mode = 'full';
+  for (const arg of process.argv.slice(2)) {
+    if (arg.startsWith('--mode=')) {
+      mode = arg.slice('--mode='.length);
+    }
+  }
+  if (mode !== 'incremental' && mode !== 'full') {
+    console.error(`[discover] Invalid --mode=${mode}. Must be 'incremental' or 'full'.`);
+    process.exit(1);
+  }
+
+  // Compute pushed:> cutoff once at startup (3 days ago)
+  let pushedFilter = '';
+  if (mode === 'incremental') {
+    const cutoff = new Date(Date.now() - 3 * 86400 * 1000).toISOString().slice(0, 10);
+    pushedFilter = `pushed:>${cutoff}`;
+    console.log(`[discover] mode=incremental, ${pushedFilter}`);
+  } else {
+    console.log('[discover] mode=full, no pushed filter');
+  }
+
   if (!existsSync(DATA_DIR)) mkdirSync(DATA_DIR, { recursive: true });
 
   // --- Step 1: Discover SKILL.md files ---
@@ -311,11 +337,11 @@ async function main() {
 
   // 1a. Code search with size partitioning
   console.log('[1a] Code search (size-range partitioned)...');
-  const codeSearchItems = await searchCodeBySize();
+  const codeSearchItems = await searchCodeBySize(pushedFilter);
 
   // 1b. Topics-based repo search
   console.log('\n[1b] Topics-based repo search...');
-  const topicRepos = await searchByTopics();
+  const topicRepos = await searchByTopics(pushedFilter);
 
   // 1c. Discover SKILL.md in topic repos
   console.log('\n[1c] Scanning topic repos for SKILL.md files...');
@@ -495,7 +521,24 @@ async function main() {
     body_markdown: s.body_markdown.substring(0, 5000), // Truncate to 5KB max
   }));
 
-  writeFileSync(SKILLS_PATH, JSON.stringify(outputSkills, null, 2), 'utf-8');
+  // In incremental mode, MERGE with existing skills-raw.json by id.
+  // New entries from this run overwrite same-id entries; untouched entries are preserved.
+  // If skills-raw.json doesn't exist, fall back to write-from-scratch.
+  let writeSkills = outputSkills;
+  if (mode === 'incremental' && existsSync(SKILLS_PATH)) {
+    try {
+      const existing = JSON.parse(readFileSync(SKILLS_PATH, 'utf-8'));
+      const merged = new Map();
+      for (const s of existing) merged.set(s.id, s);
+      for (const s of outputSkills) merged.set(s.id, s);
+      writeSkills = [...merged.values()].sort((a, b) => b.quality_score - a.quality_score);
+      console.log(`[discover] incremental merge: ${existing.length} existing + ${outputSkills.length} new -> ${writeSkills.length} total`);
+    } catch (err) {
+      console.log(`[discover] incremental merge failed (${err.message}), writing from scratch`);
+    }
+  }
+
+  writeFileSync(SKILLS_PATH, JSON.stringify(writeSkills, null, 2), 'utf-8');
   saveETagCache(getETagCache());
 
   // --- Stats ---
@@ -537,8 +580,10 @@ async function main() {
   console.log(`Elapsed: ${elapsed}s`);
   console.log(`Output: ${SKILLS_PATH}`);
 
-  // --- Regression guard ---
-  if (existsSync(SKILLS_PATH)) {
+  // --- Regression guard (full mode only) ---
+  // Incremental days can legitimately return 0 valid skills on quiet days, so the
+  // "skills count too low" guard would false-positive there. Only enforce in full mode.
+  if (mode === 'full' && existsSync(SKILLS_PATH)) {
     // Check previous count if we had one
     const prevStats = existsSync(STATS_PATH) ? JSON.parse(readFileSync(STATS_PATH, 'utf-8')) : null;
     if (prevStats && prevStats.total_skills > 0) {

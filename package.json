@@ -5,6 +5,8 @@
   "description": "Curated discovery index of top Claude ecosystem skills",
   "scripts": {
     "scrape": "node scripts/scrape.js",
+    "scrape:discover:incremental": "node scripts/scrape.js --mode=incremental",
+    "scrape:discover:full": "node scripts/scrape.js --mode=full",
     "scrape:pulse": "node scripts/scrape-pulse.js",
     "filter": "node scripts/filter.js",
     "pipeline": "node scripts/scrape.js && node scripts/filter.js",
