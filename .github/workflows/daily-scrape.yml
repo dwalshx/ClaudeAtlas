@@ -10,13 +10,12 @@ on:
 jobs:
   scrape-build-deploy:
     runs-on: ubuntu-latest
-    # 7 hours: the cold scrape (no ETag cache) is documented at ~7h in
-    # CLAUDE.md. Previous 350-min (5h50m) timeout was shorter than cold-
-    # scrape duration, so cold scrapes could never complete and seed
-    # the cache — trapping every run in a cold-scrape loop. Warm runs
-    # finish in 2-3 minutes. Push-triggered runs skip scrape entirely
-    # so they're typically under 90 seconds.
-    timeout-minutes: 420
+    # Daily target: <30 min warm. 90-min cap is safety net; if hit,
+    # something is wrong. Pipeline is split into Track 1 (Star Pulse,
+    # cheap refresh of known repos) followed by Track 2 (Discovery,
+    # incremental — only new/changed skills). Push-triggered runs skip
+    # both scrape steps entirely so they're typically under 90 seconds.
+    timeout-minutes: 90
     steps:
       - uses: actions/checkout@v4
 
@@ -46,10 +45,21 @@ jobs:
           key: etag-cache-${{ github.run_number }}
           restore-keys: etag-cache-
 
-      # Run scraper (writes skills-raw.json)
-      - name: Scrape GitHub for skills
+      # Track 1: Star Pulse — cheap refresh of stars/forks/issues/pushed_at
+      # for already-known repos. Conditional GETs via ETag cache make this
+      # near-free for unchanged repos.
+      - name: Run Track 1 (Star Pulse)
         if: github.event_name != 'push'
-        run: npm run scrape
+        run: npm run scrape:pulse
+        env:
+          GITHUB_TOKEN: ${{ secrets.SCRAPE_PAT }}
+
+      # Track 2: Discovery (incremental) — find new/changed SKILL.md files
+      # since last run. Writes skills-raw.json. Full discovery is gated
+      # behind a separate workflow/script for periodic deep sweeps.
+      - name: Run Track 2 (Discovery, incremental)
+        if: github.event_name != 'push'
+        run: npm run scrape:discover:incremental
         env:
           GITHUB_TOKEN: ${{ secrets.SCRAPE_PAT }}
 
