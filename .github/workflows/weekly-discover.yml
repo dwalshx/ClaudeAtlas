@@ -1,0 +1,131 @@
+# Weekly full-sweep validator. Runs Track 2 full (no `pushed:>` filter),
+# then full pipeline. Track 1 deliberately skipped — Track 2 full refreshes
+# all metadata anyway. NEVER commits `data/skills-raw.json` (~295 MB; exceeds
+# GitHub's 100 MB single-file push limit). The 7h timeout will hit the 6h
+# platform cap; the saved cache lets next week's run resume warmer.
+name: Weekly Discovery & Deploy
+
+on:
+  schedule:
+    - cron: '0 3 * * 0' # 3:00 AM UTC Sundays
+  workflow_dispatch: {} # Manual trigger
+
+jobs:
+  discover-build-deploy:
+    runs-on: ubuntu-latest
+    # Weekly full sweep: Track 2 with no recency filter, scanning the entire
+    # GitHub corpus for SKILL.md files. The 7h timeout is aspirational —
+    # GitHub's hosted-runner cap is 6h, so cancellation is expected. The
+    # `if: always()` cache save below ensures partial progress (checkpointed
+    # every 1000 skills) is persisted so the next weekly run starts warmer.
+    timeout-minutes: 420
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - run: npm ci
+
+      # Restore ETag cache from previous run.
+      # Split from save step so that save can run with `if: always()`
+      # after the scrape — even if the scrape times out or is cancelled,
+      # the partially-built cache (scraper checkpoints every 1000 skills
+      # via saveETagCache()) gets persisted for the next run.
+      - name: Restore ETag cache
+        uses: actions/cache/restore@v4
+        with:
+          path: data/etag-cache.json
+          key: etag-cache-${{ github.run_number }}
+          restore-keys: etag-cache-
+
+      # Track 2: Discovery (full) — no `pushed:>` filter; scans the entire
+      # corpus to catch repos whose pushed_at didn't change but whose
+      # SKILL.md content drifted, plus any repos missed by incremental.
+      # Track 1 (Star Pulse) is intentionally skipped: a full Track 2
+      # refreshes all repo metadata along the way.
+      - name: Run Track 2 (Discovery, full)
+        run: npm run scrape:discover:full
+        env:
+          GITHUB_TOKEN: ${{ secrets.SCRAPE_PAT }}
+
+      # Save ETag cache even on timeout/failure/cancel. This is the
+      # critical fix: actions/cache@v4's implicit post-job save is
+      # skipped when the job is cancelled (e.g. timeout), which caused
+      # every scheduled run to be a cold scrape. With `if: always()`
+      # and a bounded condition, the cache persists regardless of the
+      # scrape step's outcome so subsequent runs start warm.
+      - name: Save ETag cache
+        if: always() && hashFiles('data/etag-cache.json') != ''
+        uses: actions/cache/save@v4
+        with:
+          path: data/etag-cache.json
+          key: etag-cache-${{ github.run_number }}
+
+      # Apply filter (writes skills.json from skills-raw.json)
+      - name: Filter and calibrate skills
+        run: npm run filter
+
+      # --- Semantic search: embed new/changed skills, upload to Vectorize ---
+      # Embed step is resumable and idempotent: reads prior ndjson, only embeds
+      # deltas. Safe to run on every workflow event. Upload step upserts into
+      # the Vectorize index; matching ids are replaced.
+      - name: Embed skills (OpenAI)
+        run: npm run embed
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+
+      - name: Upload vectors to Vectorize
+        run: npm run upload-vectors
+        env:
+          CF_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
+          CF_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
+
+      # Regression guard
+      - name: Check skills count
+        run: |
+          CURRENT=$(node -e "console.log(JSON.parse(require('fs').readFileSync('data/skills.json','utf8')).length)")
+          echo "Current skills count: $CURRENT"
+          if [ "$CURRENT" -lt 100 ]; then
+            echo "::error::Skills count too low: $CURRENT (minimum 100)"
+            exit 1
+          fi
+
+      # Build site (PostHog key baked into client bundle if configured)
+      - name: Build Astro site
+        run: npm run build
+        env:
+          PUBLIC_POSTHOG_KEY: ${{ secrets.PUBLIC_POSTHOG_KEY }}
+
+      # Deploy to Cloudflare Workers Static Assets
+      - name: Deploy to Cloudflare Workers
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CF_API_TOKEN }}
+          accountId: ${{ secrets.CF_ACCOUNT_ID }}
+          command: deploy
+
+      # Health check
+      - name: Health check
+        run: |
+          sleep 10
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" https://claudeatlas.com || echo "000")
+          echo "Site returned HTTP $STATUS"
+          if [ "$STATUS" != "200" ]; then
+            echo "::warning::Site health check returned HTTP $STATUS (may still be deploying)"
+          fi
+
+      # Commit updated curated data back to repo. NEVER commits
+      # data/skills-raw.json — Track 2 full produces a ~295 MB raw file
+      # which exceeds GitHub's 100 MB single-file push limit. Only the
+      # filtered skills.json, pipeline-stats.json, and daily history
+      # snapshot are committed.
+      - name: Commit skills data
+        run: |
+          git config user.name "ClaudeAtlas Bot"
+          git config user.email "bot@claudeatlas.com"
+          git add data/skills.json data/pipeline-stats.json data/history/ || true
+          git diff --cached --quiet || git commit -m "chore: weekly full-sweep skills data $(date -u +%Y-%m-%d)"
+          git push || true
