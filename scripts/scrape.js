@@ -17,186 +17,20 @@ import { fileURLToPath } from 'url';
 import { parseSkill } from './parse-skill.js';
 import { scoreSkill } from './score.js';
 import { categorizeSkill } from './categorize.js';
+import {
+  rateLimitedFetch,
+  fetchWithETag,
+  getETagCache,
+  saveETagCache,
+  sleep,
+} from './lib/github-fetch.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..');
 const DATA_DIR = join(ROOT, 'data');
 const HISTORY_DIR = join(DATA_DIR, 'history');
 const SKILLS_PATH = join(DATA_DIR, 'skills-raw.json');  // Scraper writes raw data; filter produces skills.json
-const ETAG_PATH = join(DATA_DIR, 'etag-cache.json');
 const STATS_PATH = join(DATA_DIR, 'pipeline-stats.json');
-
-const TOKEN = process.env.GITHUB_TOKEN;
-if (!TOKEN) {
-  console.error('ERROR: GITHUB_TOKEN environment variable required.');
-  console.error('Create a fine-grained PAT at https://github.com/settings/tokens?type=beta');
-  console.error('Required scope: Public Repositories (read-only)');
-  process.exit(1);
-}
-
-// --- Rate limiting ---
-
-const HEADERS = {
-  'Authorization': `Bearer ${TOKEN}`,
-  'Accept': 'application/vnd.github+json',
-  'X-GitHub-Api-Version': '2022-11-28',
-};
-
-let searchRequestsThisMinute = 0;
-let searchMinuteStart = Date.now();
-let generalRequestsThisHour = 0;
-let generalHourStart = Date.now();
-
-async function sleep(ms) {
-  return new Promise(resolve => setTimeout(resolve, ms));
-}
-
-async function rateLimitedFetch(url, isSearch = false, retries = 3) {
-  const now = Date.now();
-
-  if (isSearch) {
-    // Code search: 10 req/min
-    if (now - searchMinuteStart > 60000) {
-      searchRequestsThisMinute = 0;
-      searchMinuteStart = now;
-    }
-    if (searchRequestsThisMinute >= 9) {
-      const waitMs = 60000 - (now - searchMinuteStart) + 1000;
-      console.log(`  [rate-limit] Code search limit reached, waiting ${Math.ceil(waitMs / 1000)}s...`);
-      await sleep(waitMs);
-      searchRequestsThisMinute = 0;
-      searchMinuteStart = Date.now();
-    }
-    searchRequestsThisMinute++;
-  } else {
-    // General API: 5000 req/hr
-    if (now - generalHourStart > 3600000) {
-      generalRequestsThisHour = 0;
-      generalHourStart = now;
-    }
-    if (generalRequestsThisHour >= 4800) {
-      const waitMs = 3600000 - (now - generalHourStart) + 1000;
-      console.log(`  [rate-limit] General API limit approaching, waiting ${Math.ceil(waitMs / 1000)}s...`);
-      await sleep(waitMs);
-      generalRequestsThisHour = 0;
-      generalHourStart = Date.now();
-    }
-    generalRequestsThisHour++;
-  }
-
-  let res;
-  try {
-    res = await fetch(url, { headers: HEADERS });
-  } catch (err) {
-    if (retries > 0) {
-      console.log(`  [retry] Network error (${err.cause?.code || err.message}), retrying in 5s... (${retries} left)`);
-      await sleep(5000);
-      return rateLimitedFetch(url, isSearch, retries - 1);
-    }
-    throw err;
-  }
-
-  // Handle rate limit errors
-  if (res.status === 403 || res.status === 429) {
-    const resetHeader = res.headers.get('x-ratelimit-reset');
-    if (resetHeader) {
-      const resetTime = parseInt(resetHeader) * 1000;
-      const waitMs = Math.max(resetTime - Date.now() + 1000, 5000);
-      console.log(`  [rate-limit] 403/429 hit, waiting ${Math.ceil(waitMs / 1000)}s until reset...`);
-      await sleep(waitMs);
-      return rateLimitedFetch(url, isSearch, retries); // retry
-    }
-    // Fallback: wait 60s
-    console.log('  [rate-limit] 403/429 hit (no reset header), waiting 60s...');
-    await sleep(60000);
-    return rateLimitedFetch(url, isSearch, retries);
-  }
-
-  return res;
-}
-
-// --- ETag cache ---
-
-let etagCache = {};
-if (existsSync(ETAG_PATH)) {
-  try {
-    etagCache = JSON.parse(readFileSync(ETAG_PATH, 'utf-8'));
-  } catch {
-    etagCache = {};
-  }
-}
-
-async function fetchWithETag(url, retries = 3) {
-  const cached = etagCache[url];
-  const headers = { ...HEADERS };
-  if (cached?.etag) {
-    headers['If-None-Match'] = cached.etag;
-  }
-
-  const now = Date.now();
-  if (now - generalHourStart > 3600000) {
-    generalRequestsThisHour = 0;
-    generalHourStart = now;
-  }
-  if (generalRequestsThisHour >= 4800) {
-    const waitMs = 3600000 - (now - generalHourStart) + 1000;
-    await sleep(waitMs);
-    generalRequestsThisHour = 0;
-    generalHourStart = Date.now();
-  }
-  generalRequestsThisHour++;
-
-  let res;
-  try {
-    res = await fetch(url, { headers });
-  } catch (err) {
-    if (retries > 0) {
-      console.log(`  [retry] Network error (${err.cause?.code || err.message}), retrying in 5s... (${retries} left)`);
-      await sleep(5000);
-      return fetchWithETag(url, retries - 1);
-    }
-    return { data: null, cached: false, status: 0 };
-  }
-
-  if (res.status === 304 && cached?.data) {
-    return { data: cached.data, cached: true };
-  }
-
-  if (res.status === 403 || res.status === 429) {
-    const resetHeader = res.headers.get('x-ratelimit-reset');
-    if (resetHeader) {
-      const resetTime = parseInt(resetHeader) * 1000;
-      const waitMs = Math.max(resetTime - Date.now() + 1000, 5000);
-      console.log(`  [rate-limit] ETag fetch 403/429, waiting ${Math.ceil(waitMs / 1000)}s...`);
-      await sleep(waitMs);
-      return fetchWithETag(url, retries);
-    }
-    await sleep(60000);
-    return fetchWithETag(url, retries);
-  }
-
-  if (!res.ok) {
-    return { data: null, cached: false, status: res.status };
-  }
-
-  let data;
-  try {
-    data = await res.json();
-  } catch {
-    return { data: null, cached: false, status: res.status };
-  }
-  const etag = res.headers.get('etag');
-  if (etag) {
-    etagCache[url] = { etag, data };
-  }
-
-  return { data, cached: false };
-}
-
-function saveETagCache() {
-  if (!existsSync(DATA_DIR)) mkdirSync(DATA_DIR, { recursive: true });
-  writeFileSync(ETAG_PATH, JSON.stringify(etagCache), 'utf-8');
-}
 
 // --- Daily history snapshot ---
 //
@@ -624,7 +458,7 @@ async function main() {
     if (skills.length > 0 && skills.length % 1000 === 0) {
       console.log(`  [checkpoint] Saving progress: ${skills.length} skills...`);
       writeFileSync(SKILLS_PATH + '.partial', JSON.stringify(skills), 'utf-8');
-      saveETagCache();
+      saveETagCache(getETagCache());
     }
   }
 
@@ -662,7 +496,7 @@ async function main() {
   }));
 
   writeFileSync(SKILLS_PATH, JSON.stringify(outputSkills, null, 2), 'utf-8');
-  saveETagCache();
+  saveETagCache(getETagCache());
 
   // --- Stats ---
   const elapsed = ((Date.now() - startTime) / 1000).toFixed(0);
