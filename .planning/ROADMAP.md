@@ -35,7 +35,24 @@ Theme: turn ClaudeAtlas from a browsable site into infrastructure that agents ca
 - [x] **Phase 2.3: Similar-skills enrichment** — pre-computed top-5 per skill, rendering on all detail pages
 - [x] **Phase 2.4: marketplace.json federation** — .claude-plugin/marketplace.json with 193 Featured plugins
 - [x] **Phase 2.5: Clustering + emergent categories** — 16 clusters computed via k-means; visual page deferred
-- [ ] **Phase 1.5.2: Slug collision fix** — make slug computation path-aware (deferred bug from Phase 2.1)
+- [ ] **Phase 1.5.2: Slug collision fix** — make slug computation path-aware (deferred bug from Phase 2.1; rolls into Phase 3.1/3.2 filter overhaul)
+
+---
+
+## Milestone v3.0 — Comprehensive Agent Tooling Index
+
+Theme: from "curated skills directory" to "the Wirecutter of agent tooling." Index everything real (skills + plugins), score on transparent signals, surface novelty automatically. See `docs/PHASE-3.0-SPEC.md` for the full spec.
+
+- [ ] **Phase 3.0.0: Split-Track Scrape Architecture** (INSERTED, precursor) — split scrape into Track 1 (daily Star Pulse) + Track 2 (incremental + weekly full) so daily pipeline always fits inside GitHub Actions' 6h platform cap. Unblocks all of Phase 3.0.
+- [ ] **Phase 3.1: Filter overhaul** — drop MAX_PER_REPO + MIN_STARS gates, add embedding-based dedup, add novelty scoring, recalibrate against skills-raw.json
+- [ ] **Phase 3.2: Plugin scoring + filtering** — score-plugin.js, filter-plugins.js, calibrate against plugins-raw.json
+- [ ] **Phase 3.3: Plugin pages** — `/plugins/`, `/plugins/[slug]/`, marketplace landing pages
+- [ ] **Phase 3.4: New & Noteworthy** — novelty detection, homepage section, percentile-based threshold calibration
+- [ ] **Phase 3.5: Homepage + nav redesign** — separate Top Skills / Top Plugins, mixed search results with type chips
+- [ ] **Phase 3.6: Tier rename** — Featured→Top throughout; "Featured" reserved for editorial picks
+- [ ] **Phase 3.7: Pipeline integration** — daily cron handles both scrapes, embeds both types, generates both registries
+- [ ] **Phase 3.8: Cross-entity enrichment** — creator profiles show plugins, API graph includes plugins, search returns mixed results
+- [ ] **Phase 3.9: /trends page** — surface rising/trending/new arrivals from compounding daily snapshot data
 
 ## Phase Details
 
@@ -111,10 +128,27 @@ Theme: turn ClaudeAtlas from a browsable site into infrastructure that agents ca
 **Plans**: TBD
 **UI hint**: no
 
+### Phase 3.0.0: Split-Track Scrape Architecture (INSERTED 2026-04-25)
+**Goal**: Daily GHA scrape always completes in <30 min and produces a healthy `data/history/<today>.json` + updated `skills.json`, on free-tier GHA, without breaking existing schemas. Unblocks all Phase 3.0 sub-phases.
+**Depends on**: Hard — must ship before any Phase 3.x execution begins. Current single-pass scrape exceeds GitHub's 6h platform cap.
+**Requirements**: 3.0.0-DOD-1 through 3.0.0-DOD-7 (see `.planning/phases/3.0.0-split-track-scrape/3.0.0-PLAN.md`)
+**Success Criteria** (what must be TRUE):
+  1. `scripts/scrape-pulse.js` exists and refreshes 11 fields on every indexed repo daily, writing today's `data/history/<today>.json`.
+  2. `scripts/scrape.js` accepts `--mode={incremental,full}`; incremental adds `pushed:>3d` filter, full preserves current behavior.
+  3. `scripts/filter.js` preserves Track 1 freshness fields when merging skills-raw.json into skills.json, then re-scores so quality_score reflects fresh stars+recency.
+  4. `.github/workflows/daily-scrape.yml` runs Track 1 → Track 2 incremental → full pipeline, completes in <30 min warm.
+  5. `.github/workflows/weekly-discover.yml` runs Sundays 03:00 UTC, full Track 2 sweep + full pipeline, never commits raw skills-raw.json.
+  6. First post-deploy daily run completes <30 min with all green steps and `≥2` snapshots in `data/history/`.
+  7. `CLAUDE.md` and `.planning/codebase/ARCHITECTURE.md` corrected: skills-raw.json is ~295 MB, not ~8 MB.
+**Plans**: `3.0.0-PLAN.md` (8 tasks, 5 waves, ~3-3.5 hr execution + human-verify checkpoint)
+**UI hint**: no
+
+---
+
 ## Progress
 
 **Execution Order:**
-Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6. Phase 6 can optionally run in parallel with any earlier phase since it only reads `skills.json`. Phases 3 and 4 have hard dependencies on Phase 2 outputs.
+Phase 1.5 phases executed in numeric order: 1 → 2 → 3 → 4 → 5 → 6. v2.0 phases 2.1–2.5 executed sequentially. Phase 3.0.0 must complete before any Phase 3.x sub-phase. Phase 3.0 sub-phases (3.1–3.9) follow the session structure in `docs/PHASE-3.0-SPEC.md`.
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
@@ -124,3 +158,8 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6. Phase 6 can op
 | 4. Creator Pages | 1/1 | Complete | 2026-04-10 |
 | 5. Analytics | 1/1 | Code shipped; awaits morning external steps | 2026-04-10 |
 | 6. Infrastructure Groundwork | 1/1 | Complete | 2026-04-10 |
+| 1.5.1. Creators Browse Page | 1/1 | Complete | 2026-04-13 |
+| 2.1. Semantic Search | 1/1 | Complete | 2026-04-13 |
+| 2.2–2.5. v2.0 follow-ons | — | Complete with caveats (KV namespace pending; see STATE.md) | 2026-04-13 |
+| 3.0.0. Split-Track Scrape | 0/8 | Planned, ready to execute | — |
+| 3.1–3.9. Phase 3.0 sub-phases | 0/9 | Planned in spec, await 3.0.0 ship | — |
