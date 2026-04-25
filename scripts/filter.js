@@ -14,6 +14,8 @@
 import { readFileSync, writeFileSync, existsSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
+import { scoreSkill } from './score.js';
+import { TRACK1_FRESHNESS_FIELDS } from './lib/skill-fields.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..');
@@ -49,6 +51,75 @@ function loadPriorEnrichments() {
   } catch {
     return new Map();
   }
+}
+
+// R3 — Track 1 freshness merge.
+//
+// Track 1 (scripts/scrape-pulse.js) updates the engagement fields below in
+// skills.json IN PLACE every day. Track 2 (scrape.js) re-discovers skills
+// and writes skills-raw.json with whatever values GitHub returned at
+// discovery time — which may be hours stale relative to Track 1.
+// When the same skill (matched by slug) exists in BOTH, we prefer Track 1's
+// freshness fields. Then we re-score so quality_score reflects them.
+//
+// C1 (per 3.0.0-PLAN-CHECK): Why slug-keyed here, while loadPriorEnrichments
+// is id-keyed? Different field classes need different merge keys:
+//   - slug ("owner/skill-name") = stable repo identity. Track 1's daily
+//     refresh and the skill's repo membership are tied to slug. Engagement
+//     fields (stars, forks, etc.) belong to the REPO, so slug-keyed.
+//   - id ("owner/repo/path") = stable RECORD identity. Content enrichments
+//     like skill_first_commit_at are tied to the specific SKILL.md file at
+//     a path, so id-keyed (a repo can host multiple SKILL.md files; each
+//     gets its own enrichments).
+// The two merges run independently and never compete for the same fields.
+//
+// The TRACK1_FRESHNESS_FIELDS list is imported from scripts/lib/skill-fields.js
+// — single source of truth shared with scripts/scrape-pulse.js.
+
+function loadCurrentSkillsBySlug() {
+  if (!existsSync(OUTPUT_PATH)) return new Map();
+  try {
+    const current = JSON.parse(readFileSync(OUTPUT_PATH, 'utf-8'));
+    if (!Array.isArray(current)) return new Map();
+    const map = new Map();
+    for (const s of current) {
+      if (!s || !s.slug) continue;
+      map.set(s.slug, s);
+    }
+    return map;
+  } catch {
+    return new Map();
+  }
+}
+
+/**
+ * Apply Track 1 freshness from current skills.json onto raw discovered
+ * skills, then re-score affected records. Exported for unit testing.
+ *
+ * @param {Array<object>} raw - Skills from skills-raw.json
+ * @param {Map<string, object>} currentBySlug - slug -> current skill record
+ * @returns {{ mergedCount: number }}
+ */
+export function applyTrack1Freshness(raw, currentBySlug) {
+  let mergedCount = 0;
+  for (const skill of raw) {
+    const existing = currentBySlug.get(skill.slug);
+    if (!existing) continue;
+    let touched = false;
+    for (const field of TRACK1_FRESHNESS_FIELDS) {
+      if (existing[field] !== undefined && existing[field] !== null) {
+        skill[field] = existing[field];
+        touched = true;
+      }
+    }
+    if (touched) {
+      // Re-score with merged values. score.js depends on stars (log-scaled)
+      // and recency (days since pushed_at) — both updated above.
+      skill.quality_score = scoreSkill(skill);
+      mergedCount++;
+    }
+  }
+  return { mergedCount };
 }
 
 // --- Config ---
@@ -138,6 +209,18 @@ function main() {
   const priorEnrichments = loadPriorEnrichments();
   if (priorEnrichments.size > 0) {
     console.log(`Prior enrichments to preserve: ${priorEnrichments.size} records`);
+  }
+
+  // --- Step 0: Load Track 1 freshness map ---
+  const currentSkillsBySlug = loadCurrentSkillsBySlug();
+  if (currentSkillsBySlug.size > 0) {
+    console.log(`R3 merge: ${currentSkillsBySlug.size} prior skills available for freshness merge`);
+  }
+
+  // --- Step 0b: Apply Track 1 freshness BEFORE scoring/filtering ---
+  const { mergedCount } = applyTrack1Freshness(raw, currentSkillsBySlug);
+  if (mergedCount > 0) {
+    console.log(`R3 merge: applied Track 1 freshness + re-scored ${mergedCount} skills`);
   }
 
   // --- Step 1: Filter by repo stars and AI slop ---
@@ -251,4 +334,16 @@ function main() {
   writeFileSync(STATS_PATH, JSON.stringify(stats, null, 2), 'utf-8');
 }
 
-main();
+// Only run main() when invoked as a script, not when imported by tests.
+// import.meta.url is a file:// URL; process.argv[1] is a path. Normalize.
+const invokedAsScript = (() => {
+  try {
+    return import.meta.url === fileURLToPath(`file://${process.argv[1]}`).replace(/\\/g, '/')
+      || fileURLToPath(import.meta.url) === process.argv[1];
+  } catch {
+    return false;
+  }
+})();
+if (invokedAsScript) {
+  main();
+}
