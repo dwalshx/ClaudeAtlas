@@ -44,7 +44,7 @@ ClaudeAtlas/
 │   ├── pipeline-stats.json      # COMMITTED: pipeline metadata + stats
 │   ├── history/                 # COMMITTED: daily {stars, forks, issues, pushed_at} snapshots
 │   │   └── YYYY-MM-DD.json      # One file per day, ~225 KB each
-│   ├── skills-raw.json          # GITIGNORED: full raw scraper output (~8 MB, 33k skills)
+│   ├── skills-raw.json          # GITIGNORED: full raw scraper output (~295 MB, 33k skills) (grew when body_markdown truncation moved from filter to scraper at 5000 chars)
 │   ├── etag-cache.json          # GITIGNORED: GitHub API ETag cache (~500 MB, makes re-scrapes cheap)
 │   ├── scrape-log.txt           # GITIGNORED: scraper stdout/stderr
 │   └── skills.json.partial      # GITIGNORED: checkpoint saves from scraper

@@ -54,7 +54,7 @@ Order is defined in `.github/workflows/daily-scrape.yml` and differs from `npm r
 
 1. **Restore ETag cache** (`daily-scrape.yml:41-47`) — `actions/cache/restore@v4` rehydrates `data/etag-cache.json` from a previous run. Without this, a cold run is ~7h (CLAUDE.md); with it, ~2-3 min.
 2. **`npm run scrape`** (`daily-scrape.yml:50-54`; `scripts/scrape.js`) — GitHub code search + topics + seed list → fetch SKILL.md content → `parse-skill.js` → `score.js` → `categorize.js` → writes:
-   - `data/skills-raw.json` (~33k rows, gitignored)
+   - `data/skills-raw.json` (~295 MB, ~33k rows, gitignored; grew when body_markdown truncation moved from filter to scraper at 5000 chars)
    - `data/etag-cache.json` (gitignored, bounded ~500 MB)
    - `data/history/YYYY-MM-DD.json` (written inside `scrape.js:243`, committed)
    - `data/pipeline-stats.json` (committed)
