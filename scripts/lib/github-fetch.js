@@ -12,7 +12,7 @@
  *          getETagCache, sleep.
  */
 
-import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'fs';
+import { readFileSync, writeFileSync, existsSync, mkdirSync, openSync, writeSync, closeSync, renameSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 
@@ -132,7 +132,24 @@ export function getETagCache() {
 
 export function saveETagCache(cache) {
   if (!existsSync(DATA_DIR)) mkdirSync(DATA_DIR, { recursive: true });
-  writeFileSync(ETAG_PATH, JSON.stringify(cache), 'utf-8');
+  // Write chunked JSON to avoid V8's ~536 MB string limit on large caches.
+  // Synchronous fd writes mean each chunk is a small allocation; the file
+  // shape remains a flat JSON object that JSON.parse can read back.
+  const tmp = ETAG_PATH + '.tmp';
+  const fd = openSync(tmp, 'w');
+  try {
+    writeSync(fd, '{');
+    let first = true;
+    for (const [k, v] of Object.entries(cache)) {
+      const chunk = (first ? '' : ',') + JSON.stringify(k) + ':' + JSON.stringify(v);
+      writeSync(fd, chunk);
+      first = false;
+    }
+    writeSync(fd, '}');
+  } finally {
+    closeSync(fd);
+  }
+  renameSync(tmp, ETAG_PATH);
 }
 
 export async function fetchWithETag(url, retries = 3) {
