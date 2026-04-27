@@ -412,14 +412,39 @@ async function main() {
 
   // --- Step 3: Fetch and parse SKILL.md content ---
   console.log('\n[3/5] Fetching and parsing SKILL.md content...');
+
+  // Incremental optimization: skip parse for already-known IDs.
+  // Track 1 keeps engagement fields fresh on existing entries; the weekly
+  // full sweep refreshes content. We only need to discover genuinely NEW
+  // SKILL.md files in incremental mode.
+  let knownIds = null;
+  if (mode === 'incremental' && existsSync(SKILLS_PATH)) {
+    try {
+      const existingRaw = JSON.parse(readFileSync(SKILLS_PATH, 'utf-8'));
+      knownIds = new Set(existingRaw.map(s => s.id));
+      console.log(`[discover] incremental: ${knownIds.size} known IDs will be skipped in parse step`);
+    } catch (err) {
+      console.log(`[discover] incremental: could not load existing skills-raw.json (${err.message}); parsing all discoveries`);
+    }
+  }
+
   const skills = [];
   let fetchCount = 0;
   let parseErrors = 0;
+  let skippedKnown = 0;
 
   for (const [key, discovery] of allDiscoveries) {
     fetchCount++;
+
+    // id is set to `key` below (line ~450); allDiscoveries key format is
+    // `${repo}/${path}` (line ~358), so this matches exactly.
+    if (knownIds && knownIds.has(key)) {
+      skippedKnown++;
+      continue;
+    }
+
     if (fetchCount % 50 === 0) {
-      console.log(`  [parse] ${fetchCount}/${allDiscoveries.size} skills... (${skills.length} valid so far)`);
+      console.log(`  [parse] ${fetchCount}/${allDiscoveries.size} skills... (${skills.length} valid so far, ${skippedKnown} known skipped)`);
     }
 
     const repoMeta = repoMetadataCache.get(discovery.repo);
@@ -493,6 +518,9 @@ async function main() {
     : 0;
 
   console.log(`[parse] Parsed ${skills.length} skills (${parseErrors} errors, ${parseErrorRate}% error rate)`);
+  if (knownIds) {
+    console.log(`[discover] incremental: skipped ${skippedKnown} known IDs, parsed ${fetchCount - skippedKnown} new candidates`);
+  }
 
   // --- Step 4: Sort and deduplicate ---
   console.log('\n[4/5] Sorting and deduplicating...');
