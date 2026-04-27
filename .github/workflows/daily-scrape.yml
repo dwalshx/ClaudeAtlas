@@ -54,14 +54,27 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.SCRAPE_PAT }}
 
-      # Track 2: Discovery (incremental) — find new/changed SKILL.md files
-      # since last run. Writes skills-raw.json. Full discovery is gated
-      # behind a separate workflow/script for periodic deep sweeps.
-      - name: Run Track 2 (Discovery, incremental)
-        if: github.event_name != 'push'
-        run: npm run scrape:discover:incremental
-        env:
-          GITHUB_TOKEN: ${{ secrets.SCRAPE_PAT }}
+      # Track 2 — TEMPORARILY DISABLED pending Phase 3.0.1.
+      #
+      # Reason: skills-raw.json is gitignored (~295 MB; exceeds GitHub's
+      # 100 MB single-file push limit). On CI runners after checkout, the
+      # file does not exist, so the incremental skip-known-IDs logic has
+      # no input — every run re-parses the entire ~31k discovered corpus
+      # and rate-limits out before completion.
+      #
+      # Phase 3.0.1 (`/gsd:plan-phase 3.0.1 --research`) will design the
+      # state-persistence architecture properly: GHA cache for skills-raw.json
+      # plus a one-shot bootstrap workflow seeded from a release asset, mirror
+      # of the etag-cache pattern. Until that ships, daily pipeline runs
+      # Track 1 only — refreshes engagement signals on already-indexed repos
+      # and writes the daily history snapshot. New SKILL.md discovery pauses
+      # for ~1-2 days. The weekly Sunday workflow is also disabled.
+      #
+      # - name: Run Track 2 (Discovery, incremental)
+      #   if: github.event_name != 'push'
+      #   run: npm run scrape:discover:incremental
+      #   env:
+      #     GITHUB_TOKEN: ${{ secrets.SCRAPE_PAT }}
 
       # Save ETag cache even on timeout/failure/cancel. This is the
       # critical fix: actions/cache@v4's implicit post-job save is
@@ -76,10 +89,18 @@ jobs:
           path: data/etag-cache.json
           key: etag-cache-${{ github.run_number }}
 
-      # Apply filter (writes skills.json from skills-raw.json)
-      - name: Filter and calibrate skills
-        if: github.event_name != 'push'
-        run: npm run filter
+      # Filter — TEMPORARILY DISABLED pending Phase 3.0.1.
+      #
+      # Filter reads data/skills-raw.json (gitignored, not on CI runner).
+      # Without Track 2 producing it, filter has nothing to operate on.
+      # Track 1 already wrote skills.json in-place with fresh engagement
+      # signals; that's the daily input for build/deploy. Re-tiering and
+      # re-scoring will resume when Phase 3.0.1 ships skills-raw.json
+      # caching.
+      #
+      # - name: Filter and calibrate skills
+      #   if: github.event_name != 'push'
+      #   run: npm run filter
 
       # --- Semantic search: embed new/changed skills, upload to Vectorize ---
       # Embed step is resumable and idempotent: reads prior ndjson, only embeds

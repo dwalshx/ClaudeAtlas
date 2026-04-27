@@ -3,12 +3,20 @@
 # all metadata anyway. NEVER commits `data/skills-raw.json` (~295 MB; exceeds
 # GitHub's 100 MB single-file push limit). The 7h timeout will hit the 6h
 # platform cap; the saved cache lets next week's run resume warmer.
+#
+# CRON DISABLED PENDING PHASE 3.0.1. Same root issue as the daily Track 2:
+# skills-raw.json is gitignored and not present on CI runners, so the parse
+# loop has no skip baseline and re-parses ~31k candidates until it rate-limits.
+# 3.0.1 will design state persistence (GHA cache + bootstrap release asset)
+# so the weekly full sweep can complete usefully. Until then, manual
+# workflow_dispatch is preserved for testing only.
 name: Weekly Discovery & Deploy
 
 on:
-  schedule:
-    - cron: '0 3 * * 0' # 3:00 AM UTC Sundays
-  workflow_dispatch: {} # Manual trigger
+  # Cron disabled until Phase 3.0.1 ships state persistence.
+  # schedule:
+  #   - cron: '0 3 * * 0' # 3:00 AM UTC Sundays
+  workflow_dispatch: {} # Manual trigger only
 
 jobs:
   discover-build-deploy:
