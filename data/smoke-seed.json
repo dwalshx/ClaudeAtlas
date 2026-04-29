@@ -1,0 +1,16 @@
+{
+  "version": 1,
+  "comment": "Smoke seed for scrape:smoke harness. 10 repos, each exercising a distinct path. Update purposes if the seed evolves.",
+  "repos": [
+    { "full_name": "anthropics/skills",         "purpose": "valid SKILL.md, multi-skill repo, archived=false, fork=false (baseline)" },
+    { "full_name": "anthropics/claude-code",    "purpose": "topic:claude-code tagged, repo description present" },
+    { "full_name": "obra/superpowers",          "purpose": "single-skill repo, valid frontmatter, well-documented body" },
+    { "full_name": "wshobson/agents",           "purpose": "large multi-skill monorepo (tests tree truncation tolerance)" },
+    { "full_name": "vercel-labs/skills",        "purpose": "may not exist — tests fetchWithETag null-data branch (deleted/private/non-existent repo)" },
+    { "full_name": "anthropics/anthropic-cookbook", "purpose": "no SKILL.md present — tests empty-tree branch" },
+    { "full_name": "octocat/Hello-World",       "purpose": "tiny repo, no SKILL.md — tests fast-path skip" },
+    { "full_name": "github/docs",               "purpose": "huge non-skill repo — tests tree truncated:true handling" },
+    { "full_name": "anthropics/courses",        "purpose": "edge frontmatter (mixed YAML keys); tests parseSkill resilience" },
+    { "full_name": "anthropics/prompt-eng-interactive-tutorial", "purpose": "long body content — tests body_markdown 5000-char truncation" }
+  ]
+}

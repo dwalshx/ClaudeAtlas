@@ -6,6 +6,7 @@
   "scripts": {
     "scrape": "node scripts/scrape.js",
     "scrape:discover": "node scripts/scrape-discover-repos.js",
+    "scrape:smoke": "node scripts/scrape-smoke.js",
     "scrape:discover:full": "node scripts/scrape.js --mode=full",
     "scrape:pulse": "node scripts/scrape-pulse.js",
     "filter": "node scripts/filter.js",
