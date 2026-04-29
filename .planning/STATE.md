@@ -5,17 +5,17 @@
 See: .planning/PROJECT.md (updated 2026-04-10)
 
 **Core value:** Users can find the best Claude skill for a given task in under 30 seconds, with visible signals for why it's trustworthy.
-**Current focus:** Pre-Phase 3.0 housekeeping; then begin Phase 3.0 (Comprehensive Agent Tooling Index)
-**Milestone:** Phase 1.5 + v2.0 audited and closed YELLOW (2026-04-18); Phase 3.0 spec approved and ready to plan
+**Current focus:** Phase 3.0.1 (Daily Pipeline State-Persistence Architecture) ready for human-verify; then Phase 3.1
+**Milestone:** v3.0 — Comprehensive Agent Tooling Index (in progress)
 
 ## Current Position
 
-Phase: Pre-3.0 cleanup → Phase 3.1 (Filter overhaul, planned)
-Plan: Housekeeping PR in progress; 3.0 has 9 sub-phases (3.1–3.9) mapped in `docs/PHASE-3.0-SPEC.md`
-Status: Awaiting cron recovery verification + morning sign-offs before `/gsd:new-milestone` on 3.0
-Last activity: 2026-04-18 — codebase mapped, 1.5 + v2.0 audited YELLOW, overnight housekeeping PR
+Phase: 3.0.1 implementation complete — awaiting human-verify checkpoint (Task 9)
+Plan: 3.0.1 has 9 tasks across 4 waves; tasks 1-8 shipped autonomously overnight 2026-04-29
+Status: Code on main, release asset uploaded, awaiting morning bootstrap workflow + integration run
+Last activity: 2026-04-29 — Phase 3.0.1 Wave 1-3 executed; release asset created + 295 MB skills-raw.json uploaded; awaiting morning checkpoint
 
-Progress: Phase 1.5 [██████████] 100% (6/6 phases + 1.5.1), v2.0 [██████████] 100% (5/5 phases with caveats), 1.5.2 [░░░░░░░░░░] 0% (deferred to 3.2–3.3)
+Progress: Phase 1.5 [██████████] 100%, v2.0 [██████████] 100%, Phase 3.0.0 [██████████] 100% (with 3.0.1 follow-up), Phase 3.0.1 [█████████░] 89% (8/9 tasks; awaiting integration verify), Phase 3.1+ [░░░░░░░░░░] 0%
 
 ## Completed Milestones
 
@@ -39,17 +39,22 @@ Progress: Phase 1.5 [██████████] 100% (6/6 phases + 1.5.1), 
 
 ## Open Items
 
-### Pre-Phase-3.0 housekeeping (overnight PR — 2026-04-18)
+### Phase 3.0.1 — overnight execution (2026-04-29)
 
-- [x] Codebase map authored (.planning/codebase/*.md — 7 docs)
-- [x] 1.5 + v2.0 integration audit (.planning/VERIFICATION-1.5-v2.0.md — YELLOW verdict)
-- [x] STATE.md reconciled with roadmap
-- [x] data/plugins-raw.json added to .gitignore
-- [ ] **Morning sign-offs needed** — see `.planning/MORNING-CHECKLIST.md`
-  - [ ] Verify cron recovery (f7d293d fix awaited — no new history snapshots yet as of 2026-04-18)
-  - [ ] Activate KV namespace + uncomment wrangler.toml (edit staged locally, not pushed)
-  - [ ] Approve scrape-plugins.js uncommitted diff disposition
-  - [ ] Approve plugins-raw.json gitignore policy
+- [x] Research complete (1,154 lines, 10 questions, cited)
+- [x] CONTEXT.md with locked decisions A+E+G
+- [x] PLAN.md (Rev 2, 2,240 lines) PASS plan-check
+- [x] Wave 1: scrape-discover-repos.js + scrape.js deprecation + filter.js fallback
+- [x] Wave 2: smoke harness + bootstrap-skills-raw.yml workflow
+- [x] Wave 3: re-enable Track 2/Filter in daily, re-enable weekly cron, doc updates
+- [x] Release `skills-raw-bootstrap` created + 295 MB asset uploaded
+- [ ] **Morning checkpoint (Task 9) — see `.planning/MORNING-CHECKLIST.md`**
+
+### Carryover from earlier sessions
+
+- [ ] Activate KV namespace + uncomment wrangler.toml (still pending from 2026-04-18 checklist)
+- [ ] Approve scrape-plugins.js uncommitted diff disposition (still pending)
+- [ ] Phase 1.5.2: Slug collision fix (rolls into Phase 3.1/3.2)
 
 ### Deferred to Phase 3.0 scope
 
@@ -93,14 +98,15 @@ See `docs/PHASE-3.0-SPEC.md` for Phase 3.0 sub-phase map (3.1–3.9).
 
 ### Blockers/Concerns
 
-- **Daily cron feeder still untrusted.** f7d293d applied 2026-04-14 but no scheduled run has produced data/history/* since. Must verify in morning before 3.0 plan-milestone.
+- **Daily pipeline awaiting first 3.0.1 integration run.** Cron has not produced fresh data since 2026-04-11. Phase 3.0.1 expected to fix; first run is the verification.
 - Phase 3.0 3.1 depends on embedding infrastructure — ✅ shipped in 2.1, confirmed in codebase map
 - Phase 3.0 novelty thresholds (0.45 / 0.15 in spec) are placeholders — must plot actual distribution and pick percentile-based cutoffs during 3.4 planning
 - Phase 3.0 will move catalog from 1,078 → 20,000+ items; similarity matrix must use Vectorize ANN, not brute-force O(n²)
 - 6 live slug collisions in data/skills.json (confirmed during audit); Worker deduplicates but sends users to arbitrary twin. Roll into 3.1/3.2.
+- Topic-search recall is incomplete — Track 2 misses SKILL.md files in repos without recognized topics. Mitigated by weekly Sunday code-search full sweep.
 
 ## Session Continuity
 
-Last session: 2026-04-18
-Stopped at: Overnight housekeeping PR committed; awaiting user sign-offs in morning on KV activation, plugin scraper diff, and plugins-raw.json policy; Phase 3.0 plan-milestone ready to invoke once cron is verified green.
+Last session: 2026-04-29 (overnight autonomous execution of Phase 3.0.1)
+Stopped at: All 8 implementation tasks shipped; release asset created + uploaded; awaiting morning human-verify checkpoint (bootstrap workflow + integration run).
 Resume file: .planning/MORNING-CHECKLIST.md
