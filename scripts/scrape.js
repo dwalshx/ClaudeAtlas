@@ -319,6 +319,13 @@ async function main() {
     console.error(`[discover] Invalid --mode=${mode}. Must be 'incremental' or 'full'.`);
     process.exit(1);
   }
+  if (mode === 'incremental') {
+    console.error(`[discover] --mode=incremental is DEPRECATED as of Phase 3.0.1.`);
+    console.error(`[discover] Use scripts/scrape-discover-repos.js instead (npm run scrape:discover).`);
+    console.error(`[discover] Reason: code search does not support pushed:> filter; repo search does.`);
+    console.error(`[discover] See .planning/phases/3.0.1-pipeline-state-persistence/3.0.1-CONTEXT.md`);
+    process.exit(1);
+  }
 
   // Compute pushed:> cutoff once at startup (3 days ago)
   let pushedFilter = '';
