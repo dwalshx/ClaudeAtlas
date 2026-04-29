@@ -1,22 +1,16 @@
-# Weekly full-sweep validator. Runs Track 2 full (no `pushed:>` filter),
-# then full pipeline. Track 1 deliberately skipped — Track 2 full refreshes
+# Weekly full-sweep validator. Runs Track 2 in `--mode=full` (code search
+# safety net for SKILL.md files in repos without recognized topics). With
+# skills-raw.json cache, expects to converge across 1-2 weekends if it hits
+# the 6h platform cap. Track 1 deliberately skipped — Track 2 full refreshes
 # all metadata anyway. NEVER commits `data/skills-raw.json` (~295 MB; exceeds
 # GitHub's 100 MB single-file push limit). The 7h timeout will hit the 6h
 # platform cap; the saved cache lets next week's run resume warmer.
-#
-# CRON DISABLED PENDING PHASE 3.0.1. Same root issue as the daily Track 2:
-# skills-raw.json is gitignored and not present on CI runners, so the parse
-# loop has no skip baseline and re-parses ~31k candidates until it rate-limits.
-# 3.0.1 will design state persistence (GHA cache + bootstrap release asset)
-# so the weekly full sweep can complete usefully. Until then, manual
-# workflow_dispatch is preserved for testing only.
 name: Weekly Discovery & Deploy
 
 on:
-  # Cron disabled until Phase 3.0.1 ships state persistence.
-  # schedule:
-  #   - cron: '0 3 * * 0' # 3:00 AM UTC Sundays
-  workflow_dispatch: {} # Manual trigger only
+  schedule:
+    - cron: '0 3 * * 0' # 3:00 AM UTC Sundays
+  workflow_dispatch: {}
 
 jobs:
   discover-build-deploy:
@@ -49,6 +43,22 @@ jobs:
           key: etag-cache-${{ github.run_number }}
           restore-keys: etag-cache-
 
+      # Restore skills-raw cache from previous run (or bootstrap seed).
+      # Mirrors the ETag cache pattern (split restore/save so save can run
+      # with `if: always()`). skills-raw.json is gitignored (~295 MB) and
+      # cannot live in the repo, so the GHA cache is its only home between
+      # runs. Without it, Track 2's incremental skip-known-IDs logic has no
+      # input and re-parses the entire corpus each run. The 6h platform cap
+      # means a single weekly run may not finish; the saved cache (checkpointed
+      # every 1000 skills) lets the next run pick up from where this one
+      # stopped, converging across 1-2 weekends.
+      - name: Restore skills-raw cache
+        uses: actions/cache/restore@v4
+        with:
+          path: data/skills-raw.json
+          key: skills-raw-${{ github.run_number }}
+          restore-keys: skills-raw-
+
       # Track 2: Discovery (full) — no `pushed:>` filter; scans the entire
       # corpus to catch repos whose pushed_at didn't change but whose
       # SKILL.md content drifted, plus any repos missed by incremental.
@@ -71,6 +81,19 @@ jobs:
         with:
           path: data/etag-cache.json
           key: etag-cache-${{ github.run_number }}
+
+      # Save skills-raw cache even on timeout/failure/cancel. The 6h platform
+      # cap will likely cancel the scrape mid-run; without `if: always()`,
+      # the partially-built corpus (scraper checkpoints every 1000 skills via
+      # saveSkillsRaw()) would be lost and next week's run would start cold.
+      # Bounded by hashFiles to avoid saving an empty cache if the scrape
+      # never produced output.
+      - name: Save skills-raw cache
+        if: always() && hashFiles('data/skills-raw.json') != ''
+        uses: actions/cache/save@v4
+        with:
+          path: data/skills-raw.json
+          key: skills-raw-${{ github.run_number }}
 
       # Apply filter (writes skills.json from skills-raw.json)
       - name: Filter and calibrate skills

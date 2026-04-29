@@ -45,6 +45,9 @@ ClaudeAtlas/
 │   ├── history/                 # COMMITTED: daily {stars, forks, issues, pushed_at} snapshots
 │   │   └── YYYY-MM-DD.json      # One file per day, ~225 KB each
 │   ├── skills-raw.json          # GITIGNORED: full raw scraper output (~295 MB, 33k skills) (grew when body_markdown truncation moved from filter to scraper at 5000 chars)
+│   │                            # CI flow (Phase 3.0.1+): persisted across runs
+│   │                            # via GHA cache, seeded once from a release asset
+│   │                            # (skills-raw-bootstrap, permanent). NEVER committed.
 │   ├── etag-cache.json          # GITIGNORED: GitHub API ETag cache (~500 MB, makes re-scrapes cheap)
 │   ├── scrape-log.txt           # GITIGNORED: scraper stdout/stderr
 │   └── skills.json.partial      # GITIGNORED: checkpoint saves from scraper
@@ -120,7 +123,7 @@ interface SkillRecord {
   // Pipeline metadata
   scraped_at: string;
   content_sha: string;
-  source: 'code-search' | 'topics' | 'seed';
+  source: 'code-search' | 'topics' | 'seed' | 'discover';
 }
 ```
 
@@ -203,6 +206,61 @@ npm run preview
 3. **Scoring has been calibrated once** against real data (2026-04-10). First raw run had 18k skills hitting Featured tier; filter rules were tuned to get to 305 Featured. Don't drift from the current filter settings without re-validating.
 4. **Daily star snapshots started 2026-04-11.** Every day of the scraper running adds more history. Delay is genuinely lost data.
 5. **The homepage shows only the top 60 skills** for performance. Full catalog is browsable via categories.
+6. **Smoke seed needs annual review.** `data/smoke-seed.json` (Phase 3.0.1)
+   hand-picks 10 repos to exercise distinct discovery code paths. Some
+   intentionally don't exist (`vercel-labs/skills`) to test the 404 branch.
+   Verify annually that the seed still exercises the path coverage it
+   claims (purpose strings on each entry) — if too many seed entries 404,
+   the smoke harness's "≥5 of 10 responding" gate could fail spuriously.
+
+## GitHub API facts (verified Phase 3.0.1 research)
+
+Claude's training data is wrong on some specifics; trust these:
+
+1. **GHA cache 10 GB cap was REMOVED on Nov 20, 2025.** No per-repo
+   size ceiling; LRU + 7-day inactive eviction only. The 295 MB
+   skills-raw.json fits comfortably; future growth is unconstrained by
+   this. ([changelog](https://github.blog/changelog/2025-11-20-github-actions-cache-size-can-now-exceed-10-gb-per-repository/))
+
+2. **304 conditional responses do NOT count against the primary REST
+   rate limit.** ETag-cached calls are effectively free for budget
+   purposes. ([best-practices docs](https://docs.github.com/en/rest/using-the-rest-api/best-practices-for-using-the-rest-api))
+   This is why scripts/scrape-discover-repos.js's tree-fetch pass is
+   cheap on warm runs.
+
+3. **GitHub code search supports a LIMITED qualifier set:** `language`,
+   `repo`, `path`, `extension`, `filename`, `org`, `user`, `size`,
+   `in`, plus boolean operators. It does NOT support `pushed:`,
+   `created:`, `updated:`, or `sort:`. The 3.0.0 incremental path
+   silently broke because `filename:SKILL.md pushed:>2026-04-22` was
+   treated as a literal text search (or ignored). Use
+   `/search/repositories?q=topic:X+pushed:>` for recency-filtered
+   discovery — repository search supports the full qualifier set.
+   ([searching-code docs](https://github.com/github/docs/blob/main/content/search-github/searching-on-github/searching-code.md))
+
+4. **skills-raw.json grows ~5 MB/day.** Track 2 discovery accumulates
+   entries; with body_markdown truncated to 5000 chars per record,
+   steady-state growth is ~100–500 new records/day × ~9 KB ≈ 5 MB/day.
+   Phase 3.x can add 90-day-stale eviction if/when this matters. For now,
+   the GHA cache (no size cap) and the release-asset bootstrap fallback
+   handle any size.
+
+### Recovery: if GHA cache is evicted/corrupted (skills-raw.json)
+
+Symptom: daily-scrape.yml's filter step logs `Track-1-only day` (graceful
+fallback fired). Site keeps serving but Track 2 discovery has paused.
+
+Fix: re-run the bootstrap workflow.
+
+```bash
+gh workflow run bootstrap-skills-raw.yml
+gh run watch
+# Next scheduled daily-scrape will go warm.
+```
+
+The release asset `skills-raw-bootstrap` is permanent — do NOT delete it.
+If the asset itself is missing, re-upload from a local
+`data/skills-raw.json` (~295 MB) and re-run the bootstrap workflow.
 
 ## Methodology
 

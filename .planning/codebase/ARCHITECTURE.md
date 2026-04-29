@@ -98,6 +98,24 @@ Each reads `data/skills.json` (and `data/star-history.json` / `data/skill-vector
 - **Build-time only.** Every page is a pure function of the JSON files imported at build time.
 - Runtime state exists only in (a) Vectorize (queried from the Worker), (b) D1 (written by the Worker, never read by the site), and (c) KV (optional query-embedding cache).
 
+## Daily pipeline state persistence (Phase 3.0.1+)
+
+`data/skills-raw.json` (~295 MB, 33k+ records) cannot be committed to git
+(single-file push limit is 100 MB). It persists across CI runs via:
+
+1. **GHA cache** — keyed `skills-raw-${{ github.run_number }}`,
+   prefix-restore via `restore-keys: skills-raw-`. Saved on every daily
+   and weekly run with `if: always() && hashFiles(...) != ''`. No size
+   cap (cap removed Nov 20, 2025).
+2. **Release-asset bootstrap fallback** — `skills-raw-bootstrap` release
+   holds a permanent copy. `.github/workflows/bootstrap-skills-raw.yml`
+   (workflow_dispatch only) downloads it and seeds the GHA cache. Used
+   once on first deploy, again only if the cache is ever evicted (7-day
+   inactive policy) or corrupted.
+
+This mirrors the proven `data/etag-cache.json` pattern (~500 MB, same
+storage tier, same bootstrap workflow shape, separate cache key).
+
 ## Key Abstractions
 
 **Skill record:**
