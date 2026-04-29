@@ -199,6 +199,34 @@ function deduplicateLanguageVariants(skills) {
 }
 
 function main() {
+  // Phase 3.0.1: graceful fallback for missing skills-raw.json.
+  //
+  // skills-raw.json (~295 MB) is gitignored and lives only in (a) the
+  // developer's local data dir or (b) the GHA cache (restored at start of
+  // each daily/weekly workflow run, seeded once via bootstrap-skills-raw.yml).
+  //
+  // Cases this guard handles:
+  //   - First-ever CI run before bootstrap workflow ran: cache miss,
+  //     skills-raw.json absent. We still want the daily pipeline to deploy
+  //     Track 1's fresh skills.json — don't hard-fail.
+  //   - Cache eviction (GHA's 7-day inactive eviction policy): same recovery.
+  //
+  // The "raw missing AND skills.json missing" cold-start case IS fatal —
+  // we can't compute anything from nothing. Operator action: run the
+  // bootstrap-skills-raw.yml workflow once.
+  if (!existsSync(RAW_PATH)) {
+    if (existsSync(OUTPUT_PATH)) {
+      console.warn(`[filter] WARN: ${RAW_PATH} missing; preserving existing skills.json (Track-1-only day).`);
+      console.warn(`[filter]       Run .github/workflows/bootstrap-skills-raw.yml to seed the GHA cache.`);
+      console.warn(`[filter]       Or run \`node scripts/scrape-discover-repos.js\` locally to rebuild.`);
+      console.warn(`[filter] Exiting 0 to allow daily workflow to proceed with Track 1 output.`);
+      process.exit(0);
+    }
+    console.error(`[filter] FATAL: both ${RAW_PATH} and ${OUTPUT_PATH} are missing — cold start.`);
+    console.error(`[filter]        Run .github/workflows/bootstrap-skills-raw.yml first.`);
+    process.exit(1);
+  }
+
   console.log('=== ClaudeAtlas Filter ===');
   console.log(`Loading raw skills...`);
 
