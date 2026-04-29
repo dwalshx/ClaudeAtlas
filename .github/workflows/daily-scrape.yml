@@ -11,10 +11,12 @@ jobs:
   scrape-build-deploy:
     runs-on: ubuntu-latest
     # Daily target: <30 min warm. 90-min cap is safety net; if hit,
-    # something is wrong. Pipeline is split into Track 1 (Star Pulse,
-    # cheap refresh of known repos) followed by Track 2 (Discovery,
-    # incremental — only new/changed skills). Push-triggered runs skip
-    # both scrape steps entirely so they're typically under 90 seconds.
+    # something is wrong. Phase 3.0.1 architecture: Track 1 (Star Pulse,
+    # cheap refresh of known repos) → Track 2 (Discovery via repo search,
+    # incremental — only new/changed skills, fed by GHA-cached
+    # data/skills-raw.json) → Filter (re-score + re-tier from raw corpus).
+    # Push-triggered runs skip the scrape+filter steps entirely so they're
+    # typically under 90 seconds.
     timeout-minutes: 90
     steps:
       - uses: actions/checkout@v4
@@ -45,6 +47,20 @@ jobs:
           key: etag-cache-${{ github.run_number }}
           restore-keys: etag-cache-
 
+      # Restore skills-raw cache from previous run. Mirrors the ETag
+      # cache pattern (split restore/save so save can run with
+      # `if: always()`). skills-raw.json is gitignored (~295 MB) and
+      # cannot live in the repo, so the GHA cache is its only home
+      # between runs. Without it, Track 2's incremental skip-known-IDs
+      # logic has no input and re-parses the entire corpus each run.
+      - name: Restore skills-raw cache
+        if: github.event_name != 'push'
+        uses: actions/cache/restore@v4
+        with:
+          path: data/skills-raw.json
+          key: skills-raw-${{ github.run_number }}
+          restore-keys: skills-raw-
+
       # Track 1: Star Pulse — cheap refresh of stars/forks/issues/pushed_at
       # for already-known repos. Conditional GETs via ETag cache make this
       # near-free for unchanged repos.
@@ -54,27 +70,25 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.SCRAPE_PAT }}
 
-      # Track 2 — TEMPORARILY DISABLED pending Phase 3.0.1.
-      #
-      # Reason: skills-raw.json is gitignored (~295 MB; exceeds GitHub's
-      # 100 MB single-file push limit). On CI runners after checkout, the
-      # file does not exist, so the incremental skip-known-IDs logic has
-      # no input — every run re-parses the entire ~31k discovered corpus
-      # and rate-limits out before completion.
-      #
-      # Phase 3.0.1 (`/gsd:plan-phase 3.0.1 --research`) will design the
-      # state-persistence architecture properly: GHA cache for skills-raw.json
-      # plus a one-shot bootstrap workflow seeded from a release asset, mirror
-      # of the etag-cache pattern. Until that ships, daily pipeline runs
-      # Track 1 only — refreshes engagement signals on already-indexed repos
-      # and writes the daily history snapshot. New SKILL.md discovery pauses
-      # for ~1-2 days. The weekly Sunday workflow is also disabled.
-      #
-      # - name: Run Track 2 (Discovery, incremental)
-      #   if: github.event_name != 'push'
-      #   run: npm run scrape:discover:incremental
-      #   env:
-      #     GITHUB_TOKEN: ${{ secrets.SCRAPE_PAT }}
+      # Track 2: Discovery via repo search — incremental SKILL.md discovery.
+      # Reads cached data/skills-raw.json (restored above), skips known IDs,
+      # appends new/changed skills, writes back to data/skills-raw.json for
+      # the Save skills-raw cache step below.
+      - name: Run Track 2 (Discovery via repo search)
+        if: github.event_name != 'push'
+        run: npm run scrape:discover
+        env:
+          GITHUB_TOKEN: ${{ secrets.SCRAPE_PAT }}
+
+      # Save skills-raw cache even on timeout/failure/cancel, matching the
+      # ETag cache `if: always()` pattern. Track 2 checkpoints incrementally,
+      # so a partial corpus is still valuable for the next run.
+      - name: Save skills-raw cache
+        if: always() && github.event_name != 'push' && hashFiles('data/skills-raw.json') != ''
+        uses: actions/cache/save@v4
+        with:
+          path: data/skills-raw.json
+          key: skills-raw-${{ github.run_number }}
 
       # Save ETag cache even on timeout/failure/cancel. This is the
       # critical fix: actions/cache@v4's implicit post-job save is
@@ -89,18 +103,12 @@ jobs:
           path: data/etag-cache.json
           key: etag-cache-${{ github.run_number }}
 
-      # Filter — TEMPORARILY DISABLED pending Phase 3.0.1.
-      #
-      # Filter reads data/skills-raw.json (gitignored, not on CI runner).
-      # Without Track 2 producing it, filter has nothing to operate on.
-      # Track 1 already wrote skills.json in-place with fresh engagement
-      # signals; that's the daily input for build/deploy. Re-tiering and
-      # re-scoring will resume when Phase 3.0.1 ships skills-raw.json
-      # caching.
-      #
-      # - name: Filter and calibrate skills
-      #   if: github.event_name != 'push'
-      #   run: npm run filter
+      # Filter: reads data/skills-raw.json (now persisted via GHA cache),
+      # applies slop removal / dedup / per-repo cap / tier recalibration,
+      # writes data/skills.json for build/deploy.
+      - name: Filter and calibrate skills
+        if: github.event_name != 'push'
+        run: npm run filter
 
       # --- Semantic search: embed new/changed skills, upload to Vectorize ---
       # Embed step is resumable and idempotent: reads prior ndjson, only embeds
