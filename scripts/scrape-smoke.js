@@ -72,8 +72,8 @@ async function main() {
     const paths = await listSkillPaths(repo);
     if (paths.length === 0) { stats.no_skill++; continue; }
 
-    for (const p of paths) {
-      const record = await fetchAndBuildRecord(repo, p);
+    for (const entry of paths) {
+      const record = await fetchAndBuildRecord(repo, entry.path);
       if (record) { records.push(record); stats.skills++; }
     }
   }

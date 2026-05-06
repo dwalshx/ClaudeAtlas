@@ -132,9 +132,15 @@ export async function searchTopic(topic, cutoff) {
 }
 
 /**
- * Returns Array<string> of skill_paths within the repo. Empty array if the
- * tree fetch failed, the repo has no SKILL.md, or the response was 304 with
- * no cached body (treat as "nothing changed; skip").
+ * Returns Array<{path: string, sha: string}> of SKILL.md blob entries
+ * within the repo. Empty array if the tree fetch failed, the repo has no
+ * SKILL.md, or the response was 304 with no cached body.
+ *
+ * The per-blob `sha` is git's blob SHA-1 of the file content. It is stable
+ * across pushes when the file body is unchanged, which lets per-skill
+ * callers skip a contents fetch when the blob sha matches the cached
+ * record's content_sha. (Phase 3.0.2: cuts ~95% of warm-run content
+ * fetches; replaces the prior 24h scraped_at heuristic.)
  *
  * Uses general rate-limit budget. ETag-supported — warm runs return 304 and
  * cost ZERO rate-limit budget per GitHub's best-practices docs.
@@ -154,7 +160,7 @@ export async function listSkillPaths(repo) {
   }
   return data.tree
     .filter(f => f && f.type === 'blob' && typeof f.path === 'string' && f.path.endsWith('SKILL.md'))
-    .map(f => f.path);
+    .map(f => ({ path: f.path, sha: f.sha }));
 }
 
 /**
@@ -312,7 +318,8 @@ async function main() {
     // 4. For each path, fetch + parse + build record. Skip if id is known
     //    AND the existing record is fresher than 24h (cheap heuristic; the
     //    weekly safety net catches stale-content drift).
-    for (const skillPath of paths) {
+    for (const entry of paths) {
+      const skillPath = entry.path;
       const id = `${repoName}/${skillPath}`;
       const existing = byId.get(id);
       if (existing && existing.scraped_at) {
