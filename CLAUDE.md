@@ -212,6 +212,23 @@ npm run preview
    Verify annually that the seed still exercises the path coverage it
    claims (purpose strings on each entry) — if too many seed entries 404,
    the smoke harness's "≥5 of 10 responding" gate could fail spuriously.
+7. **Track 1 burns ~500-800 fresh GitHub API requests per day, by design.**
+   The per-repo `GET /repos/{owner}/{repo}` etags invalidate daily because
+   stars/forks/issues tick up on most repos, so the conditional GETs come
+   back as 200s rather than 304s. This is fine: with the Phase 3.0.2 Bug 1
+   fix (blob-sha-based skip in Track 2), Track 2's content-fetch volume
+   dropped by ~95%, leaving the 5000/hr budget comfortably for Track 1's
+   fresh fetches. Track 1 finishes in ~7 minutes; the daily run completes
+   end-to-end in <30 minutes. **Do not "optimize" Track 1 by gating its
+   per-repo refresh on time** — that breaks the daily history snapshot
+   contract (`data/history/<today>.json` needs same-day numbers). If
+   Track 1 ever becomes the binding constraint (e.g., the corpus grows
+   past ~3000 repos), the lever is migrating Track 1 from REST per-repo
+   GETs to a single GraphQL `repository(...) { stargazerCount, ... }` batch
+   query — research finding documented in
+   `.planning/phases/3.0.1-pipeline-state-persistence/RESEARCH.md`. Until
+   then, Track 1's daily fresh-request cost is a known and accepted line
+   item in the daily budget.
 
 ## GitHub API facts (verified Phase 3.0.1 research)
 
