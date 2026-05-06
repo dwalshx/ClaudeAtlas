@@ -301,6 +301,7 @@ async function main() {
   let newSkills = 0;
   let updatedSkills = 0;
   let treeMisses = 0;
+  let skippedUnchanged = 0;   // 3.0.2: blob-sha matched existing.content_sha; no contents fetch
 
   for (const [repoName, repo] of reposByName) {
     processedRepos++;
@@ -310,22 +311,32 @@ async function main() {
     if (paths.length === 0) {
       treeMisses++;
       if (processedRepos % CONFIG.LOG_EVERY_REPOS === 0) {
-        log(`progress: ${processedRepos}/${reposByName.size} repos (${newSkills} new, ${updatedSkills} updated, ${treeMisses} no-skill)`);
+        log(`progress: ${processedRepos}/${reposByName.size} repos (${newSkills} new, ${updatedSkills} updated, ${skippedUnchanged} skipped-unchanged, ${treeMisses} no-skill)`);
       }
       continue;
     }
 
-    // 4. For each path, fetch + parse + build record. Skip if id is known
-    //    AND the existing record is fresher than 24h (cheap heuristic; the
-    //    weekly safety net catches stale-content drift).
+    // 4. For each path, fetch + parse + build record. Skip via blob-sha
+    //    equality (3.0.2 Bug 1 fix): the trees endpoint blob sha is git's
+    //    blob SHA-1 of the file body — identical to the contents API sha
+    //    we stored as content_sha at initial fetch. If they match, the
+    //    file is byte-for-byte unchanged; no contents fetch needed.
+    //
+    //    Fall-through cases (existing absent, content_sha undefined on
+    //    legacy record, sha mismatch) all go to the contents fetch — same
+    //    path as the original logic. Net behavior: zero false skips,
+    //    ~95% fewer fetches on warm runs.
     for (const entry of paths) {
       const skillPath = entry.path;
+      const blobSha = entry.sha;
       const id = `${repoName}/${skillPath}`;
       const existing = byId.get(id);
-      if (existing && existing.scraped_at) {
-        const ageHr = (Date.now() - Date.parse(existing.scraped_at)) / 3600_000;
-        if (ageHr < 24) continue;
+
+      if (existing && existing.content_sha && existing.content_sha === blobSha) {
+        skippedUnchanged++;
+        continue;
       }
+
       const record = await fetchAndBuildRecord(repo, skillPath);
       if (!record) continue;
       if (existing) updatedSkills++; else newSkills++;
@@ -336,7 +347,7 @@ async function main() {
     if (processedRepos % CONFIG.CHECKPOINT_EVERY === 0) {
       writeMergedAtomic(byId);
       saveETagCache(getETagCache());
-      log(`checkpoint: ${processedRepos}/${reposByName.size} (${newSkills} new, ${updatedSkills} updated)`);
+      log(`checkpoint: ${processedRepos}/${reposByName.size} (${newSkills} new, ${updatedSkills} updated, ${skippedUnchanged} skipped-unchanged)`);
     }
   }
 
@@ -345,7 +356,7 @@ async function main() {
   saveETagCache(getETagCache());
 
   const elapsed = ((Date.now() - startTime) / 1000).toFixed(0);
-  log(`=== Track 2 complete in ${elapsed}s — ${newSkills} new, ${updatedSkills} updated, total ${byId.size} ===`);
+  log(`=== Track 2 complete in ${elapsed}s — ${newSkills} new, ${updatedSkills} updated, ${skippedUnchanged} skipped-unchanged, total ${byId.size} ===`);
 }
 
 // BLOCKER 1: isMain guard. Only run main() when invoked as a script
