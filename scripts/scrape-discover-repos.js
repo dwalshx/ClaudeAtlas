@@ -68,6 +68,7 @@ const CONFIG = {
   DEFAULT_SINCE_DAYS: 3,        // pushed:> cutoff if --since not provided
   MAX_PAGES_PER_TOPIC: 10,      // /search/repositories caps at 1000 results
   MAX_CANDIDATE_REPOS: 1500,    // FLAG #4 guardrail: cap deduped candidate set; weekly sweep catches the tail
+  MAX_FILES_PER_REPO: 50,       // 3.0.2 Bug 2: per-repo SKILL.md cap. Filter caps each repo to 2 skills (filter.js CONFIG.MAX_PER_REPO=2); fetching >50 is wasted budget.
   CHECKPOINT_EVERY: 50,         // partial-save cadence (repos)
   LOG_EVERY_REPOS: 25,          // progress log cadence
   MAX_BODY_KB: 1000,            // skip SKILL.md > 1 MB (matches scrape.js:296)
@@ -307,13 +308,26 @@ async function main() {
     processedRepos++;
     if (repo.archived || repo.fork) continue;   // matches scrape.js:454–455 policy
 
-    const paths = await listSkillPaths(repo);
+    let paths = await listSkillPaths(repo);
     if (paths.length === 0) {
       treeMisses++;
       if (processedRepos % CONFIG.LOG_EVERY_REPOS === 0) {
         log(`progress: ${processedRepos}/${reposByName.size} repos (${newSkills} new, ${updatedSkills} updated, ${skippedUnchanged} skipped-unchanged, ${treeMisses} no-skill)`);
       }
       continue;
+    }
+
+    // 3.0.2 Bug 2 fix: per-repo SKILL.md cap. Mega-repos with hundreds of
+    // SKILL.md files exhaust rate budget for skills the filter will cap to
+    // 2 anyway. Sort by path for determinism, slice to first 50. Applied
+    // AFTER listSkillPaths' data.truncated warning so the policy is
+    // "deterministic top 50 of whatever the tree returned" (R3).
+    if (paths.length > CONFIG.MAX_FILES_PER_REPO) {
+      warn(`repo ${repo.full_name} has ${paths.length} SKILL.md files; processing first ${CONFIG.MAX_FILES_PER_REPO} (filter caps at 2 per repo anyway)`);
+      paths = paths
+        .slice()
+        .sort((a, b) => a.path.localeCompare(b.path))
+        .slice(0, CONFIG.MAX_FILES_PER_REPO);
     }
 
     // 4. For each path, fetch + parse + build record. Skip via blob-sha
