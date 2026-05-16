@@ -47,4 +47,4 @@ index_name = "claudeatlas-skills"
 # and paste the returned id into the line below. See MORNING-CHECKLIST.md.
 [[kv_namespaces]]
 binding = "QUERY_CACHE"
-id = "REPLACE_WITH_NAMESPACE_ID"
+id = "bb975b4a7dcd4426bcead6579f636cc3"
