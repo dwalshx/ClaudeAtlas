@@ -88,7 +88,7 @@ function computeContentSha(skill) {
 // Vectorize accepts IDs up to 64 characters. Our skill.id values (full
 // path including the SKILL.md filename) can exceed this. We keep them
 // stable by using a SHA-256 prefix whenever the raw id is too long.
-function vectorizeId(skillId) {
+export function vectorizeId(skillId) {
   if (!skillId) throw new Error('skill missing id');
   if (skillId.length <= 64) {
     // Vectorize also requires ids to match a restricted charset — replace
@@ -302,7 +302,19 @@ async function main() {
   log('=== skill embedder complete ===');
 }
 
-main().catch(err => {
-  console.error(`FATAL: ${err.stack || err.message}`);
-  process.exit(1);
-});
+// Only run main() when invoked as a script, not when imported (e.g. by
+// scripts/enrich.js or test files importing vectorizeId).
+const invokedAsScript = (() => {
+  try {
+    return import.meta.url === fileURLToPath(`file://${process.argv[1]}`).replace(/\\/g, '/')
+      || fileURLToPath(import.meta.url) === process.argv[1];
+  } catch {
+    return false;
+  }
+})();
+if (invokedAsScript) {
+  main().catch(err => {
+    console.error(`FATAL: ${err.stack || err.message}`);
+    process.exit(1);
+  });
+}
