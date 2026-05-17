@@ -44,7 +44,7 @@
  * ~30 requests/minute to stay well under any tier limit.
  */
 
-import { readFileSync, writeFileSync, existsSync } from 'fs';
+import { readFileSync, writeFileSync, existsSync, openSync, readSync, writeSync, closeSync, renameSync, mkdirSync } from 'fs';
 import { createHash } from 'crypto';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
@@ -113,26 +113,75 @@ function buildEmbeddingInput(skill) {
   return parts.join('\n\n').slice(0, 6000);
 }
 
+// --- Streaming NDJSON I/O ---
+//
+// At catalog sizes >~50k vectors, the NDJSON file crosses V8's ~536 MB
+// single-string limit. Both readFileSync(...).split('\n') and
+// records.map(JSON.stringify).join('\n') materialize one giant string and
+// crash with `RangeError: Invalid string length`. Same shape as Bug 4 from
+// the 3.0.x infrastructure trilogy (etag-cache); fix mirrors 82cc7ab.
+
+const READ_CHUNK = 64 * 1024;
+
+function readNdjsonRecords(path) {
+  const map = new Map();
+  if (!existsSync(path)) return map;
+  const fd = openSync(path, 'r');
+  try {
+    const buf = Buffer.alloc(READ_CHUNK);
+    let leftover = '';
+    let pos = 0;
+    while (true) {
+      const n = readSync(fd, buf, 0, READ_CHUNK, pos);
+      if (n === 0) break;
+      pos += n;
+      const text = leftover + buf.slice(0, n).toString('utf-8');
+      const lines = text.split('\n');
+      leftover = lines.pop();
+      for (const line of lines) {
+        if (!line) continue;
+        try {
+          const rec = JSON.parse(line);
+          const key = rec.metadata?.skill_id || rec.id;
+          if (key) map.set(key, rec);
+        } catch { /* skip malformed lines */ }
+      }
+    }
+    if (leftover) {
+      try {
+        const rec = JSON.parse(leftover);
+        const key = rec.metadata?.skill_id || rec.id;
+        if (key) map.set(key, rec);
+      } catch { /* skip malformed trailing line */ }
+    }
+  } finally {
+    closeSync(fd);
+  }
+  return map;
+}
+
+function writeNdjsonStreaming(path, records) {
+  const dir = dirname(path);
+  if (!existsSync(dir)) mkdirSync(dir, { recursive: true });
+  const tmp = path + '.tmp';
+  const fd = openSync(tmp, 'w');
+  try {
+    for (const r of records) {
+      writeSync(fd, JSON.stringify(r) + '\n');
+    }
+  } finally {
+    closeSync(fd);
+  }
+  renameSync(tmp, path);
+}
+
 // --- Prior-run resume ---
 
 // Load prior vectors keyed by metadata.skill_id (the source-of-truth unique
 // identifier). The record's vector `id` is a derived vectorize-safe form.
 function loadPriorVectors() {
-  if (!existsSync(OUTPUT_PATH)) return new Map();
   try {
-    const lines = readFileSync(OUTPUT_PATH, 'utf-8').split('\n').filter(Boolean);
-    const map = new Map();
-    for (const line of lines) {
-      try {
-        const rec = JSON.parse(line);
-        // Prefer metadata.skill_id (new format), fall back to rec.id (old format)
-        const key = rec.metadata?.skill_id || rec.id;
-        if (key) map.set(key, rec);
-      } catch {
-        // skip malformed lines
-      }
-    }
-    return map;
+    return readNdjsonRecords(OUTPUT_PATH);
   } catch {
     return new Map();
   }
@@ -214,8 +263,7 @@ async function main() {
 
   if (todo.length === 0) {
     log('no changes — writing output unchanged and exiting');
-    const ndjson = kept.map(r => JSON.stringify(r)).join('\n') + '\n';
-    writeFileSync(OUTPUT_PATH, ndjson, 'utf-8');
+    writeNdjsonStreaming(OUTPUT_PATH, kept);
     log(`wrote ${OUTPUT_PATH} (${kept.length} vectors)`);
     log('=== skill embedder complete ===');
     return;
@@ -250,8 +298,7 @@ async function main() {
       log(`  [FATAL] batch ${Math.floor(i / BATCH_SIZE) + 1} failed: ${err.message}`);
       // Save progress before exiting so we can resume
       const partial = [...kept, ...newRecords];
-      const ndjson = partial.map(r => JSON.stringify(r)).join('\n') + '\n';
-      writeFileSync(OUTPUT_PATH, ndjson, 'utf-8');
+      writeNdjsonStreaming(OUTPUT_PATH, partial);
       log(`saved partial: ${partial.length} vectors written`);
       process.exit(1);
     }
@@ -284,10 +331,8 @@ async function main() {
     const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
     log(`  [${done}/${todo.length}] batch ${Math.floor(i / BATCH_SIZE) + 1} done (${elapsed}s elapsed)`);
 
-    // Checkpoint every batch
-    const all = [...kept, ...newRecords];
-    const ndjson = all.map(r => JSON.stringify(r)).join('\n') + '\n';
-    writeFileSync(OUTPUT_PATH, ndjson, 'utf-8');
+    // Checkpoint every batch — streaming write avoids V8 string limit
+    writeNdjsonStreaming(OUTPUT_PATH, [...kept, ...newRecords]);
 
     // Polite pause between batches
     if (i + BATCH_SIZE < todo.length) {
