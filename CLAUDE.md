@@ -120,6 +120,17 @@ interface SkillRecord {
   category: string;             // One of 8 categories
   tags: string[];
 
+  // Phase 3.1 — embedding-derived
+  is_duplicate: boolean | null; // true when cosine sim > 0.92 to another
+                                // record. null = not assessed yet (record
+                                // has no embedding). false = assessed clean.
+  canonical_slug: string | null;// when is_duplicate=true, the slug of the
+                                // older canonical skill in the dup cluster.
+  novelty_score: number | null; // 0-1; 1 - max cosine sim to any other
+                                // record. null for duplicates and
+                                // un-assessed records. Phase 3.4 UI will
+                                // surface skills in the top 5% percentile.
+
   // Pipeline metadata
   scraped_at: string;
   content_sha: string;
@@ -229,6 +240,27 @@ npm run preview
    `.planning/phases/03.0.1-pipeline-state-persistence/RESEARCH.md`. Until
    then, Track 1's daily fresh-request cost is a known and accepted line
    item in the daily budget.
+8. **Phase 3.1 added embedding-based dedup; if enrich.js fails,
+   skills.json may carry stale `is_duplicate` flags.** The daily
+   pipeline order is Filter → Embed → Enrich → Upload-vectors → Build.
+   If `npm run enrich` fails (most likely cause: skill-vectors.ndjson
+   missing because the embed step was skipped or evicted), the
+   downstream skills.json keeps yesterday's enrichment values for
+   records that survived (preserved via `PRESERVED_FIELDS` in
+   `scripts/filter.js`), and `is_duplicate=null` for any new records.
+   The site still renders correctly — the new fields are additive and
+   the rest of the rendering doesn't reference them. To force a clean
+   re-enrich: trigger `gh workflow run daily-scrape.yml`. If the
+   vectors NDJSON itself is corrupted or missing, run
+   `npm run embed` locally with a fresh `OPENAI_API_KEY` then push the
+   regenerated file.
+
+   Novelty is gated as a **percentile** (top 5% within the current
+   catalog), not an absolute threshold. The score lives on every
+   record; the gate lives in Phase 3.4 UI code (TBD). Don't reintroduce
+   the absolute `novelty > 0.45` gate from the early spec drafts —
+   research confirmed it's the noise floor for `text-embedding-3-small`
+   embeddings (`.planning/phases/03.1-filter-overhaul/RESEARCH.md` §Q2).
 
 ## GitHub API facts (verified Phase 3.0.1 research)
 
