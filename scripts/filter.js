@@ -16,6 +16,7 @@ import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { scoreSkill } from './score.js';
 import { TRACK1_FRESHNESS_FIELDS } from './lib/skill-fields.js';
+import { assignSlugs } from './lib/slug.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..');
@@ -27,7 +28,17 @@ const OUTPUT_PATH = join(ROOT, 'data', 'skills.json');
 // out-of-band and don't live in skills-raw.json. We load the current
 // skills.json if it exists and copy these enrichments forward so they
 // survive each filter run. Never overwrites a good value with null.
-const PRESERVED_FIELDS = ['skill_first_commit_at'];
+const PRESERVED_FIELDS = [
+  'skill_first_commit_at',
+  // Phase 3.1: enrichment fields from scripts/enrich.js. Preserved across
+  // filter runs so a one-day enrich failure (OpenAI quota, NDJSON corrupt,
+  // runner OOM) doesn't wipe yesterday's dedup state on records that
+  // survive into today's catalog. enrich.js still re-writes these for
+  // records whose embeddings changed.
+  'is_duplicate',
+  'canonical_slug',
+  'novelty_score',
+];
 
 function loadPriorEnrichments() {
   if (!existsSync(OUTPUT_PATH)) return new Map();
@@ -124,9 +135,10 @@ export function applyTrack1Freshness(raw, currentBySlug) {
 
 // --- Config ---
 const CONFIG = {
-  MAX_PER_REPO: 2,       // Max skills per repo (tighter — more diversity)
-  MIN_STARS: 10,         // Minimum repo stars
-  MIN_BODY_LENGTH: 500,  // Minimum SKILL.md body length (chars)
+  // Phase 3.1: MAX_PER_REPO and MIN_STARS dropped. Embedding dedup
+  // (scripts/enrich.js) is the new load-bearing gate against mega-repo
+  // domination — penalizes content duplication, not per-repo volume.
+  MIN_BODY_LENGTH: 200,  // Lowered from 500 (Phase 3.1)
   FEATURED_THRESHOLD: 90,
   SOLID_THRESHOLD: 70,
 };
@@ -198,6 +210,112 @@ function deduplicateLanguageVariants(skills) {
   return [...seen.values()];
 }
 
+/**
+ * Pure in-memory filter pipeline. Takes a raw skills array + prior state
+ * maps and returns the filtered/scored/slugged output plus the
+ * collision redirect map. Exported for testing. No I/O.
+ *
+ * @param {Array<object>} raw - skills from skills-raw.json
+ * @param {Map<string, object>} currentBySlug - prior slug -> record (R3)
+ * @param {Map<string, object>} priorEnrichments - prior id -> { enrichment fields }
+ * @returns {{ capped: Array<object>, redirects: Object<string,string>, collisionCount: number, recordsChanged: number, mergedCount: number, preservedCount: number, tiers: object, categories: object }}
+ */
+export function filterRaw(raw, currentBySlug = new Map(), priorEnrichments = new Map()) {
+  // --- Apply Track 1 freshness BEFORE scoring/filtering ---
+  const { mergedCount } = applyTrack1Freshness(raw, currentBySlug);
+
+  // --- Step 1: Filter slop only (Phase 3.1: MIN_STARS gate dropped) ---
+  let filtered = raw.filter(s => {
+    if (isSlop(s)) return false;
+    return true;
+  });
+
+  // --- Step 1b: Deduplicate language variants ---
+  filtered = deduplicateLanguageVariants(filtered);
+
+  // --- Step 2 (Phase 3.1): Path-aware slug pass. Replaces the old
+  //     MAX_PER_REPO cap. assignSlugs() resolves the (owner, name)
+  //     collisions to distinct owner/repo/name slugs and emits a
+  //     redirect map for the Worker to bake at deploy time. ---
+  const capped = filtered;
+  const { redirects, collisionCount, recordsChanged } = assignSlugs(capped);
+
+  // --- Step 3: Recalibrate tiers ---
+  for (const s of capped) {
+    if (s.quality_score >= CONFIG.FEATURED_THRESHOLD) s.quality_tier = 'featured';
+    else if (s.quality_score >= CONFIG.SOLID_THRESHOLD) s.quality_tier = 'solid';
+    else s.quality_tier = 'listed';
+  }
+
+  // --- Step 4: Sort by score, then stars, then recency ---
+  capped.sort((a, b) => {
+    if (b.quality_score !== a.quality_score) return b.quality_score - a.quality_score;
+    if (b.repo_stars !== a.repo_stars) return b.repo_stars - a.repo_stars;
+    return new Date(b.repo_pushed_at) - new Date(a.repo_pushed_at);
+  });
+
+  // --- Step 4c: Preserve enrichments from the previous skills.json ---
+  // Keeps skill_first_commit_at (DATA-01 backfill) AND Phase 3.1 enrichments
+  // (is_duplicate / canonical_slug / novelty_score) alive across cron runs.
+  // Only copies forward — never wipes a value already present in the raw pipeline.
+  let preservedCount = 0;
+  for (const s of capped) {
+    const prior = priorEnrichments.get(s.id);
+    if (!prior) continue;
+    for (const field of PRESERVED_FIELDS) {
+      if (s[field] == null && prior[field] != null) {
+        s[field] = prior[field];
+        preservedCount++;
+      }
+    }
+  }
+
+  // --- Step 4b: Trim body_markdown for committed output (keep 1500 chars preview)
+  //              + add Phase 3.1 placeholder enrichment fields ---
+  // Note: Step 4c above (the prior-enrichment merge driven by PRESERVED_FIELDS)
+  // has already restored is_duplicate / canonical_slug / novelty_score for any
+  // record that existed in yesterday's skills.json. This block ONLY sets null
+  // for records that have NEVER been enriched (brand-new skills in today's
+  // discovery). Existing dedup/novelty state survives one-day enrich failures.
+  for (const s of capped) {
+    if (s.body_markdown && s.body_markdown.length > 1500) {
+      s.body_markdown = s.body_markdown.substring(0, 1500) + '...';
+    }
+    // Drop ETag fields — not needed in output
+    delete s.etag_repo;
+    delete s.etag_content;
+    delete s.consecutive_404s;
+    // Phase 3.1: placeholder fields. enrich.js fills these post-filter.
+    // `undefined` here means "never enriched"; `null` means "assessed and
+    // empty"; a real value means "preserved from yesterday by Step 4c".
+    if (s.is_duplicate === undefined) s.is_duplicate = null;
+    if (s.canonical_slug === undefined) s.canonical_slug = null;
+    if (s.novelty_score === undefined) s.novelty_score = null;
+  }
+
+  // --- Stats ---
+  const tiers = {
+    featured: capped.filter(s => s.quality_tier === 'featured').length,
+    solid: capped.filter(s => s.quality_tier === 'solid').length,
+    listed: capped.filter(s => s.quality_tier === 'listed').length,
+  };
+  const categories = {};
+  for (const s of capped) {
+    categories[s.category] = (categories[s.category] || 0) + 1;
+  }
+
+  return {
+    capped,
+    redirects,
+    collisionCount,
+    recordsChanged,
+    mergedCount,
+    preservedCount,
+    tiers,
+    categories,
+  };
+}
+
 function main() {
   // Phase 3.0.1: graceful fallback for missing skills-raw.json.
   //
@@ -245,92 +363,39 @@ function main() {
     console.log(`R3 merge: ${currentSkillsBySlug.size} prior skills available for freshness merge`);
   }
 
-  // --- Step 0b: Apply Track 1 freshness BEFORE scoring/filtering ---
-  const { mergedCount } = applyTrack1Freshness(raw, currentSkillsBySlug);
+  // Run the in-memory pipeline
+  const {
+    capped,
+    redirects,
+    collisionCount,
+    recordsChanged,
+    mergedCount,
+    preservedCount,
+    tiers,
+    categories,
+  } = filterRaw(raw, currentSkillsBySlug, priorEnrichments);
+
   if (mergedCount > 0) {
     console.log(`R3 merge: applied Track 1 freshness + re-scored ${mergedCount} skills`);
   }
-
-  // --- Step 1: Filter by repo stars and AI slop ---
-  let filtered = raw.filter(s => {
-    if (s.repo_stars < CONFIG.MIN_STARS) return false;
-    if (isSlop(s)) return false;
-    return true;
-  });
-  console.log(`After stars (>=${CONFIG.MIN_STARS}) + slop filters: ${filtered.length}`);
-
-  // --- Step 1b: Deduplicate language variants ---
-  filtered = deduplicateLanguageVariants(filtered);
-  console.log(`After language variant dedup: ${filtered.length}`);
-
-  // --- Step 2: Cap per repo ---
-  const byRepo = {};
-  for (const s of filtered) {
-    if (!byRepo[s.repo_full_name]) byRepo[s.repo_full_name] = [];
-    byRepo[s.repo_full_name].push(s);
-  }
-
-  const capped = [];
-  for (const [repo, skills] of Object.entries(byRepo)) {
-    skills.sort((a, b) => b.quality_score - a.quality_score);
-    capped.push(...skills.slice(0, CONFIG.MAX_PER_REPO));
-  }
-  console.log(`After per-repo cap (max ${CONFIG.MAX_PER_REPO}): ${capped.length}`);
-
-  // --- Step 3: Recalibrate tiers ---
-  for (const s of capped) {
-    if (s.quality_score >= CONFIG.FEATURED_THRESHOLD) s.quality_tier = 'featured';
-    else if (s.quality_score >= CONFIG.SOLID_THRESHOLD) s.quality_tier = 'solid';
-    else s.quality_tier = 'listed';
-  }
-
-  // --- Step 4: Sort by score, then stars, then recency ---
-  capped.sort((a, b) => {
-    if (b.quality_score !== a.quality_score) return b.quality_score - a.quality_score;
-    if (b.repo_stars !== a.repo_stars) return b.repo_stars - a.repo_stars;
-    return new Date(b.repo_pushed_at) - new Date(a.repo_pushed_at);
-  });
-
-  // --- Step 4b: Trim body_markdown for committed output (keep 1500 chars preview) ---
-  for (const s of capped) {
-    if (s.body_markdown && s.body_markdown.length > 1500) {
-      s.body_markdown = s.body_markdown.substring(0, 1500) + '...';
-    }
-    // Drop ETag fields — not needed in output
-    delete s.etag_repo;
-    delete s.etag_content;
-    delete s.consecutive_404s;
-  }
-
-  // --- Step 4c: Preserve enrichments from the previous skills.json ---
-  // Keeps skill_first_commit_at (DATA-01 backfill) alive across cron runs.
-  // Only copies forward — never wipes a value already present in the raw pipeline.
-  let preservedCount = 0;
-  for (const s of capped) {
-    const prior = priorEnrichments.get(s.id);
-    if (!prior) continue;
-    for (const field of PRESERVED_FIELDS) {
-      if (s[field] == null && prior[field] != null) {
-        s[field] = prior[field];
-        preservedCount++;
-      }
-    }
-  }
+  console.log(`After slop filters (body>=${CONFIG.MIN_BODY_LENGTH}) + language dedup: ${capped.length}`);
+  console.log(`Slug pass: ${collisionCount} collisions resolved, ${recordsChanged} records got new slugs`);
   if (preservedCount > 0) {
     console.log(`Preserved ${preservedCount} enrichment values from prior skills.json`);
   }
 
-  // --- Stats ---
-  const tiers = {
-    featured: capped.filter(s => s.quality_tier === 'featured').length,
-    solid: capped.filter(s => s.quality_tier === 'solid').length,
-    listed: capped.filter(s => s.quality_tier === 'listed').length,
-  };
-
-  const categories = {};
-  for (const s of capped) {
-    categories[s.category] = (categories[s.category] || 0) + 1;
-  }
+  // Write slug redirects map for the Worker to bake at deploy time
+  const REDIRECTS_PATH = join(ROOT, 'data', 'slug-redirects.json');
+  writeFileSync(
+    REDIRECTS_PATH,
+    JSON.stringify({
+      generated_at: new Date().toISOString(),
+      note: 'Phase 3.1: old (owner/name) -> new (owner/repo/name) for collision-resolved records. Consumed by worker/index.js at build time.',
+      redirects,
+    }, null, 2),
+    'utf-8',
+  );
+  console.log(`Wrote ${Object.keys(redirects).length} redirect entries to ${REDIRECTS_PATH}`);
 
   const uniqueRepos = new Set(capped.map(s => s.repo_full_name)).size;
 

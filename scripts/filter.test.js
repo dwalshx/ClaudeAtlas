@@ -7,7 +7,7 @@
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { applyTrack1Freshness } from './filter.js';
+import { applyTrack1Freshness, filterRaw } from './filter.js';
 import { TRACK1_FRESHNESS_FIELDS } from './lib/skill-fields.js';
 
 function makeSkill(overrides = {}) {
@@ -99,4 +99,122 @@ test('Test 6: same slug, different id — slug merge applies', () => {
   assert.equal(mergedCount, 1);
   assert.equal(raw[0].repo_stars, 555);
   assert.equal(raw[0].id, 'owner/repo/path-v2'); // id stays from raw
+});
+
+// --- Phase 3.1 tests for filterRaw ---
+
+function makeRawSkill(overrides = {}) {
+  return {
+    id: `${overrides.repo_full_name || 'a/b'}/${overrides.name || 'good'}`,
+    repo_full_name: 'a/b',
+    name: 'good',
+    slug: 'a/good',
+    description: 'A genuine skill that does a useful thing',
+    category: 'general',
+    body_markdown: 'x'.repeat(300),
+    body_length: 300,
+    has_name: true,
+    has_description: true,
+    frontmatter: { name: 'good', description: 'genuine' },
+    repo_stars: 0,
+    repo_forks: 0,
+    repo_open_issues: 0,
+    repo_topics: [],
+    repo_license: 'MIT',
+    repo_language: 'JavaScript',
+    repo_created_at: '2024-01-01T00:00:00Z',
+    repo_updated_at: '2026-01-01T00:00:00Z',
+    repo_pushed_at: '2026-05-01T00:00:00Z',
+    repo_description: 'A test repo with meaningful description text',
+    quality_score: 50,
+    ...overrides,
+  };
+}
+
+test('Phase 3.1 filterRaw: 0-star record with good signals is admitted (no MIN_STARS gate)', () => {
+  const raw = [makeRawSkill({ repo_stars: 0, body_length: 300, body_markdown: 'x'.repeat(300) })];
+  const { capped } = filterRaw(raw, new Map(), new Map());
+  assert.equal(capped.length, 1);
+  assert.equal(capped[0].is_duplicate, null);
+  assert.equal(capped[0].canonical_slug, null);
+  assert.equal(capped[0].novelty_score, null);
+});
+
+test('Phase 3.1 filterRaw: body_length=199 rejected, body_length=200 admitted', () => {
+  const raw = [
+    makeRawSkill({
+      id: 'a/b/short', name: 'short', slug: 'a/short',
+      body_length: 199, body_markdown: 'x'.repeat(199),
+    }),
+    makeRawSkill({
+      id: 'a/b/edge', name: 'edge', slug: 'a/edge',
+      body_length: 200, body_markdown: 'x'.repeat(200),
+    }),
+  ];
+  const { capped } = filterRaw(raw, new Map(), new Map());
+  assert.equal(capped.length, 1);
+  assert.equal(capped[0].name, 'edge');
+});
+
+test('Phase 3.1 filterRaw: 100 records from one repo all survive (no MAX_PER_REPO cap)', () => {
+  const raw = Array.from({ length: 100 }, (_, i) => makeRawSkill({
+    id: `a/b/skill-${i}`,
+    name: `useful-skill-${i}`,
+    slug: `a/useful-skill-${i}`,
+    quality_score: 50 + (i % 30),
+  }));
+  const { capped } = filterRaw(raw, new Map(), new Map());
+  assert.equal(capped.length, 100);
+});
+
+test('Phase 3.1 filterRaw: (owner, name) collision -> distinct slugs + redirect emitted', () => {
+  const raw = [
+    makeRawSkill({
+      id: 'microsoft/skills/azure-aigateway',
+      repo_full_name: 'microsoft/skills',
+      name: 'azure-aigateway',
+      slug: 'microsoft/azure-aigateway',
+      quality_score: 70,
+    }),
+    makeRawSkill({
+      id: 'microsoft/azure-skills/azure-aigateway',
+      repo_full_name: 'microsoft/azure-skills',
+      name: 'azure-aigateway',
+      slug: 'microsoft/azure-aigateway',
+      quality_score: 85,
+    }),
+  ];
+  const { capped, redirects, collisionCount } = filterRaw(raw, new Map(), new Map());
+  const slugs = new Set(capped.map(s => s.slug));
+  assert.equal(slugs.size, 2);
+  assert.equal(collisionCount, 1);
+  assert.equal(redirects['microsoft/azure-aigateway'], 'microsoft/azure-skills/azure-aigateway');
+});
+
+test('Phase 3.1 filterRaw: every output record has placeholder enrichment fields', () => {
+  const raw = [
+    makeRawSkill({ id: 'a/b/one', name: 'one', slug: 'a/one' }),
+    makeRawSkill({ id: 'c/d/two', repo_full_name: 'c/d', name: 'two', slug: 'c/two' }),
+  ];
+  const { capped } = filterRaw(raw, new Map(), new Map());
+  for (const s of capped) {
+    assert.equal(s.is_duplicate, null);
+    assert.equal(s.canonical_slug, null);
+    assert.equal(s.novelty_score, null);
+  }
+});
+
+test('Phase 3.1 filterRaw: prior enrichments preserved across runs', () => {
+  const raw = [makeRawSkill({ id: 'a/b/preserved', name: 'preserved', slug: 'a/preserved' })];
+  const priorEnrichments = new Map([['a/b/preserved', {
+    skill_first_commit_at: '2025-06-01T00:00:00Z',
+    is_duplicate: false,
+    novelty_score: 0.42,
+  }]]);
+  const { capped, preservedCount } = filterRaw(raw, new Map(), priorEnrichments);
+  assert.equal(capped.length, 1);
+  assert.equal(capped[0].skill_first_commit_at, '2025-06-01T00:00:00Z');
+  assert.equal(capped[0].is_duplicate, false);
+  assert.equal(capped[0].novelty_score, 0.42);
+  assert.ok(preservedCount >= 3);
 });
