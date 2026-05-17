@@ -110,9 +110,7 @@ For every skill/plugin entering the filter pipeline:
 ```
 similarity = max(cosine_similarity(new_embedding, all_existing_embeddings))
 if similarity > 0.92:
-  check git fork relationship via GitHub API
-  compare skill_first_commit_at timestamps
-  canonical = the OLDER one (or the more active fork — see active-fork rules)
+  canonical = the OLDER one (semantic-clone rule — see below)
   duplicate gets flagged, not hard-deleted
 ```
 
@@ -122,14 +120,36 @@ The canonical listing stays. The duplicate gets:
 - A "also available as [original]" note on its detail page
 - NOT counted toward the creator's profile stats
 
-#### Active-fork detection
+#### Active-fork / semantic-clone detection (corrected from research findings 2026-05-17)
 
-When a duplicate is detected and one is a GitHub fork of the other:
+Earlier draft specified detecting "active forks" via GitHub's `/compare`
+API: 10+ unique commits AND embedding distance > 0.1 from the original
+parent. This is dead code in our pipeline — `scripts/scrape.js:462` and
+`scripts/scrape-discover-repos.js:309` skip `repo.fork === true` at
+discovery time, so `repo_is_fork` is `false` for 100% of records. The
+`/compare` endpoint would never see a comparable pair.
 
-1. Compare freshness: last commit, commit frequency (90 days), star velocity (30 days)
-2. If the fork has **meaningful divergence** (10+ unique commits not in the parent AND embedding distance has grown > 0.1 from the original), treat it as a **successor**, not a copy
-3. The successor becomes canonical. The original gets a "succeeded by [fork]" note.
-4. If the fork has **no meaningful divergence** (same content, just more marketing), the original stays canonical regardless of the fork's star count.
+The phenomenon the spec wants to detect — "the same skill content
+duplicated across repos; the actively-maintained one should be
+canonical" — is real, but the trigger is wrong. Reframe as
+semantic-clone detection:
+
+When `scripts/enrich.js` finds a duplicate pair (cosine sim > 0.92):
+
+1. Canonical = the older skill, by ladder:
+   `skill_first_commit_at` > `repo_created_at` > `repo_pushed_at` > lexically smaller slug (deterministic tie-break)
+2. The younger skill gets `is_duplicate = true` and
+   `canonical_slug = <older.slug>`
+3. No GitHub `/compare` call. Zero rate-limit budget cost.
+
+This sidesteps the dead-code path and uses data we already have
+(`skill_first_commit_at` from Phase 2 DATA-01 backfill;
+`repo_created_at` from every record's GitHub metadata).
+
+If we ever DO want git-fork detection back, the path is: remove the
+`repo.fork` skip in `scripts/scrape.js`, add fork filtering at the
+filter.js layer, then `/compare` becomes a useful enrichment endpoint.
+Deferred indefinitely.
 
 #### Novelty scoring
 
@@ -139,9 +159,35 @@ Every skill/plugin gets a novelty score:
 novelty_score = 1 - max_cosine_similarity_to_any_existing_indexed_item
 ```
 
-- High novelty (> 0.45) + high quality (> 80) = **"New & Noteworthy"** — genuinely novel, well-built, fills a gap
-- Low novelty (< 0.15) = likely a duplicate or near-clone
-- This signal is exposed in the UI and available via the API
+**Novelty threshold (corrected from research findings 2026-05-17):**
+
+A skill is "noteworthy" when its `novelty_score` falls in the **top 5%
+of the current catalog by novelty percentile**, NOT when it exceeds an
+absolute threshold of 0.45.
+
+Why: empirical analysis
+(`.planning/phases/03.1-filter-overhaul/RESEARCH.md` §Q2) showed that
+random skill pairs cluster at 0.20–0.40 cosine similarity
+(text-embedding-3-small encodes strong global priors). p95 of random
+pairs is 0.45 — exactly at the noise floor. With the original
+the original fixed-threshold gate (rejected: see RESEARCH.md Q2), the noteworthy slice would be either
+everything (early catalog) or nothing (mature catalog) — never stable.
+
+Percentile gating keeps the slice catalog-size-independent: as the
+catalog grows from 1,885 to 15k+ records, "noteworthy" remains a top
+~5% slice (~750 records at the upper bound), which is curation-feeling.
+
+Implementation: `scripts/enrich.js` writes the raw `novelty_score` to
+every record. The percentile gate lives in the consumer code — Phase
+3.4's "New & Noteworthy" UI will compute the catalog-wide p95 at build
+time and use it as the cutoff. Filter and enrich themselves do not
+apply the gate.
+
+Phase-3.4 candidate definition:
+- `noteworthy = quality_tier == "Top" AND novelty_score in top 5% of catalog`
+
+Low novelty (< 0.15) = likely a duplicate or near-clone (the dedup
+pass at sim > 0.92 will already have caught the worst offenders).
 
 **This is a moat.** No other directory in this space has embedding-based novelty detection. It surfaces quality newcomers on day one, with 0 stars, purely based on "is this well-made AND does it fill a gap?"
 
