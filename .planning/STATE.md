@@ -2,20 +2,20 @@
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-04-10)
+See: `.planning/PROJECT.md` (last updated 2026-04-10)
 
 **Core value:** Users can find the best Claude skill for a given task in under 30 seconds, with visible signals for why it's trustworthy.
-**Current focus:** Phase 3.0.1 (Daily Pipeline State-Persistence Architecture) ready for human-verify; then Phase 3.1
+**Current focus:** Phase 3.1 (Filter overhaul) — planned and ready to execute
 **Milestone:** v3.0 — Comprehensive Agent Tooling Index (in progress)
 
 ## Current Position
 
-Phase: 3.0.1 implementation complete — awaiting human-verify checkpoint (Task 9)
-Plan: 3.0.1 has 9 tasks across 4 waves; tasks 1-8 shipped autonomously overnight 2026-04-29
-Status: Code on main, release asset uploaded, awaiting morning bootstrap workflow + integration run
-Last activity: 2026-04-29 — Phase 3.0.1 Wave 1-3 executed; release asset created + 295 MB skills-raw.json uploaded; awaiting morning checkpoint
+Phase: 3.0.0, 3.0.1, 3.0.2 all complete; **3.1 planned, ready to execute**
+Plan: 3.1 has 10 tasks across 5 waves (Rev 2 plan PASS, 2,463 lines)
+Status: Daily pipeline self-sustaining; site fresh at 1,885 indexed skills; bot commit-back verified working
+Last activity: 2026-05-17 — 3.1 plan finalized, planning artifacts pushed (commit `6c55715`)
 
-Progress: Phase 1.5 [██████████] 100%, v2.0 [██████████] 100%, Phase 3.0.0 [██████████] 100% (with 3.0.1 follow-up), Phase 3.0.1 [█████████░] 89% (8/9 tasks; awaiting integration verify), Phase 3.1+ [░░░░░░░░░░] 0%
+Progress: Phase 1.5 [██████████] 100% · v2.0 [██████████] 100% · 3.0.x trilogy [██████████] 100% · 3.1 [░░░░░░░░░░] 0% (planned) · 3.2–3.9 [░░░░░░░░░░] 0% (not yet planned)
 
 ## Completed Milestones
 
@@ -24,89 +24,122 @@ Progress: Phase 1.5 [██████████] 100%, v2.0 [█████
 - [x] Phase 1: Content & UX Fixes (hero stat, sticky search, expand-to-all)
 - [x] Phase 2: Data Moats (skill birth dates, star-history backfill, growth + maintenance charts)
 - [x] Phase 3: Distribution (tier-badge SVGs, star-history SVGs for external embed)
-- [x] Phase 4: Creator Pages (/creators/[username], leaderboards, computed badges)
+- [x] Phase 4: Creator Pages (`/creators/[username]`, leaderboards, computed badges)
 - [x] Phase 5: Analytics (Cloudflare Web Analytics, PostHog events, D1 search query log)
-- [x] Phase 6: Infrastructure Groundwork (/skills-registry.json, /llms.txt)
-- [x] Phase 1.5.1: Creators browse table at /creators/all/
+- [x] Phase 6: Infrastructure Groundwork (`/skills-registry.json`, `/llms.txt`)
+- [x] Phase 1.5.1: Creators browse table at `/creators/all/`
 
 ### Milestone v2.0 — Agent-Native Directory (shipped ~2026-04-13)
 
-- [x] Phase 2.1: Semantic search (OpenAI embeddings + Cloudflare Vectorize, `/api/v1/search` + homepage wired)
-- [x] Phase 2.2: KV query cache code (⚠️ binding still commented out in wrangler.toml — activation is morning TODO)
+- [x] Phase 2.1: Semantic search (OpenAI embeddings + Cloudflare Vectorize, `/api/v1/search` + homepage)
+- [x] Phase 2.2: KV query cache — code shipped 4/13, **namespace activated 2026-05-16**, deployed
 - [x] Phase 2.3: Similar-skills enrichment (top-5 precomputed, rendered on detail pages)
-- [x] Phase 2.4: marketplace.json federation (.claude-plugin/marketplace.json with 193 plugins)
-- [x] Phase 2.5: Clustering + emergent categories (⚠️ data/skill-clusters.json produced but no site consumer; script orphaned from prebuild)
+- [x] Phase 2.4: marketplace.json federation (`.claude-plugin/marketplace.json` with 193 plugins)
+- [x] Phase 2.5: Clustering + emergent categories (compute-clusters.js produces `data/skill-clusters.json`; visual page deferred to a future phase)
+
+### Milestone v3.0 — Infrastructure trilogy (shipped 2026-04-14 → 2026-05-17)
+
+These were INSERTED ahead of the Phase 3.0 spec's 3.1–3.9 lineup because the daily pipeline was broken and needed to be fixed first.
+
+- [x] **Phase 3.0.0: Split-track scrape architecture** (Track 1 daily Star Pulse + Track 2 daily discovery)
+- [x] **Phase 3.0.1: State persistence** (GHA cache + release-asset bootstrap for skills-raw.json; switched discovery from `/search/code` to `/search/repositories`)
+- [x] **Phase 3.0.2: Discovery cost reduction** (content_sha-based skip via tree blob shas; per-repo SKILL.md file cap)
+- [x] **Bonus fixes:** ETag cache bootstrap (4/26), V8 string-limit streaming write (4/26), saveETagCache regression fix, OPENAI_API_KEY secret name correction, KV namespace activation, bot push permission (`contents: write`), `|| true` removal on `git push`
+
+**Outcome:** daily-scrape.yml runs unattended at 06:30 UTC, finishes in ~15 min, commits fresh data back, deploys to Cloudflare. Verified working `2026-05-17` (commit `ebb5a80` was the first real bot commit since 2026-04-11).
 
 ## Open Items
 
-### Phase 3.0.1 — overnight execution (2026-04-29)
+### Ready to execute next session
 
-- [x] Research complete (1,154 lines, 10 questions, cited)
-- [x] CONTEXT.md with locked decisions A+E+G
-- [x] PLAN.md (Rev 2, 2,240 lines) PASS plan-check
-- [x] Wave 1: scrape-discover-repos.js + scrape.js deprecation + filter.js fallback
-- [x] Wave 2: smoke harness + bootstrap-skills-raw.yml workflow
-- [x] Wave 3: re-enable Track 2/Filter in daily, re-enable weekly cron, doc updates
-- [x] Release `skills-raw-bootstrap` created + 295 MB asset uploaded
-- [ ] **Morning checkpoint (Task 9) — see `.planning/MORNING-CHECKLIST.md`**
+- **Phase 3.1 (Filter overhaul)** — `/gsd:execute-phase 3.1`
+  - 10 tasks, 5 waves, ~4-6 hours
+  - Drops MAX_PER_REPO + MIN_STARS gates
+  - Adds embedding-based dedup (0.92 cosine, validated empirically)
+  - Adds novelty scoring (percentile-based, NOT spec's 0.45 absolute — research showed that's noise floor)
+  - Fixes 13 slug collisions (audit said 6; reality is 13)
+  - Catalog will grow from 1,885 → ~5-15k skills
+  - Spec corrections folded into `docs/PHASE-3.0-SPEC.md`
 
-### Carryover from earlier sessions
+### Carryover (still pending; not blocking)
 
-- [ ] Activate KV namespace + uncomment wrangler.toml (still pending from 2026-04-18 checklist)
-- [ ] Approve scrape-plugins.js uncommitted diff disposition (still pending)
-- [ ] Phase 1.5.2: Slug collision fix (rolls into Phase 3.1/3.2)
+- [ ] `scripts/scrape-plugins.js` uncommitted local diff (defensive null-safety). Memo at `.planning/MORNING-SCRAPE-PLUGINS-MEMO.md`. Recommended: commit. Pending sign-off.
+- [ ] `data/plugins-raw.json` (~34 MB, gitignored) sitting on disk from 4/13 plugin discovery scrape. Will be Phase 3.2 input.
+- [ ] Smoke seed annual review (`data/smoke-seed.json` — some entries deliberately don't exist, verify they still 404)
 
-### Deferred to Phase 3.0 scope
+### Phase v3.0 sub-phase queue (per `docs/PHASE-3.0-SPEC.md`)
 
-- [ ] Phase 1.5.2: Slug collision fix (6 live duplicates; rolls into Phase 3.1/3.2 filter overhaul)
-- [ ] compute-clusters.js wiring decision (wire to prebuild or delete — kickoff decision)
-- [ ] Star-history incremental refresh (any new Featured skill lacks star-history until re-run)
+- [ ] 3.1: Filter overhaul — **planned, ready**
+- [ ] 3.2: Plugin scoring + filtering — not yet planned (`data/plugins-raw.json` is the input)
+- [ ] 3.3: Plugin pages — not yet planned (depends on 3.2 output shape)
+- [ ] 3.4: New & Noteworthy section — not yet planned (consumes 3.1's `novelty_score`)
+- [ ] 3.5: Homepage + nav redesign — not yet planned (depends on 3.3 for plugin data)
+- [ ] 3.6: Tier rename Featured→Top — not yet planned (codebase-wide rename)
+- [ ] 3.7: Pipeline integration — daily cron handles both skills + plugins
+- [ ] 3.8: Cross-entity enrichment — creator profiles + API graph include plugins
+- [ ] 3.9: /trends page — needs ~30 days of daily snapshot data (started compounding 2026-05-16)
 
 ### Deferred to backlog
 
+- HNSW / k-d tree migration for novelty when corpus grows past ~20k (O(n²) becomes expensive)
+- compute-clusters.js wiring decision (orphaned from prebuild; wire in or delete)
+- Star-history incremental refresh (any new Featured skill lacks star-history.json until re-run)
 - Embed star-history SVG on own detail pages (currently external-embed-only)
 - Cron-failure external webhook alert
 - PHASE-1.5-SCOPE.md Pagefind reference cleanup
-- scripts/README.md annotating backfill scripts
 
 ## Performance Metrics
 
-**Velocity:**
-- Phase 1.5: 6 phases + 1 insertion shipped across ~3 days (≈30 hrs)
-- v2.0: 5 phases shipped across ~1 day (≈8 hrs)
-- Audit pass (2026-04-18): codebase map + verification + housekeeping in one session
+**Velocity (this session window 2026-04-13 → 2026-05-17):**
+- 3 infrastructure phases shipped (3.0.0, 3.0.1, 3.0.2)
+- ~15 distinct bug fixes / config corrections across the cascade (timeout, save-on-cancel, V8 limit, content_sha skip, mega-repo cap, OPENAI_API_KEY, KV namespace, bot permission, etc.)
+- Phase 3.1 fully planned (research → plan → check → revision → re-check PASS)
+
+**Pipeline observability:**
+- Daily run: ~15 min (target was <30; achieved)
+- Daily request budget: comfortable (~500-800 fresh GitHub API requests; <20% of 5000/hr limit)
+- Cache hit rates: high after first warm day; etag cache + skills-raw cache both bootstrapped from release assets
 
 ## Accumulated Context
 
-### Decisions
+### Decisions log (cumulative; see `.planning/SESSION-MEMO-2026-04-to-05.md` for full reasoning)
 
-Decisions are logged in PROJECT.md Key Decisions table.
-Recent decisions affecting current work:
+- 0.92 cosine threshold validated empirically for duplicate detection
+- Novelty is percentile-based (top 5%), NOT absolute 0.45 (spec corrected)
+- Active-fork detection is dead code (scrape skips git forks); replaced with semantic-clone via skill_first_commit_at
+- Discovery uses `/search/repositories` not `/search/code` (latter doesn't support `pushed:>`)
+- `skills-raw.json` persists via GHA cache + release-asset bootstrap (gitignored on disk; ~295 MB)
+- `etag-cache.json` same pattern (gitignored; ~500 MB)
+- Novelty computed locally from `data/skill-vectors.ndjson` (NOT Vectorize ANN — would break $12/yr budget)
+- Pipeline is multi-pass: Filter → Embed → Enrich → ... — dedup needs vectors so can't happen in single pass
+- `is_duplicate` filtered site-side in `src/lib/skills.js` default-browse helpers (direct URLs unaffected)
+- `PRESERVED_FIELDS` extended so one-day enrich failures don't wipe dedup state
+- Plugin work explicitly deferred to Phase 3.2 + 3.3; Phase 3.1 is skills-only
 
-- Phase 1.5 milestone scope locked to the six sections of `docs/PHASE-1.5-SCOPE.md`. ✅ delivered
-- One GSD phase per scope-doc section — do not restructure. ✅ held
-- Use substring keyword search (not Pagefind) for Phase 1 UX rebuild. ✅ in production
-- Cloudflare D1 is the store for the search query log (ANALYTICS-03). ✅ live
-- Do not drift from the calibrated filter rules in `scripts/filter.js` without re-validating. (3.0 will re-calibrate intentionally)
-- Phase 3.0 separates algorithmic tiers (Top/Solid/Indexed) from editorial "Featured" — rename across codebase per spec
-- "Featured" reserved for future human-curated content; not algorithmic
+### Spec corrections (rolled into 3.1 Task 8)
 
-### Pending Todos
+- `docs/PHASE-3.0-SPEC.md` will be updated to:
+  - Replace "0.45 novelty" with "top 5% by novelty percentile"
+  - Replace "active-fork detection (10+ unique commits AND embedding distance > 0.1)" with "semantic-clone via skill_first_commit_at"
+- This prevents 3.2-3.9 planning from inheriting the wrong constants.
 
-See `.planning/MORNING-CHECKLIST.md` for user-in-the-loop items.
-See `docs/PHASE-3.0-SPEC.md` for Phase 3.0 sub-phase map (3.1–3.9).
+### Blockers / Concerns
 
-### Blockers/Concerns
-
-- **Daily pipeline awaiting first 3.0.1 integration run.** Cron has not produced fresh data since 2026-04-11. Phase 3.0.1 expected to fix; first run is the verification.
-- Phase 3.0 3.1 depends on embedding infrastructure — ✅ shipped in 2.1, confirmed in codebase map
-- Phase 3.0 novelty thresholds (0.45 / 0.15 in spec) are placeholders — must plot actual distribution and pick percentile-based cutoffs during 3.4 planning
-- Phase 3.0 will move catalog from 1,078 → 20,000+ items; similarity matrix must use Vectorize ANN, not brute-force O(n²)
-- 6 live slug collisions in data/skills.json (confirmed during audit); Worker deduplicates but sends users to arbitrary twin. Roll into 3.1/3.2.
-- Topic-search recall is incomplete — Track 2 misses SKILL.md files in repos without recognized topics. Mitigated by weekly Sunday code-search full sweep.
+- **Phase 3.1 enrich.js O(n²) cliff** — fine at 1,885; ~13 min at 20k. Hard-warn baked in. May need HNSW migration in 3.x.
+- **Plugin scraper has uncommitted local diff** — disposition recommended (commit) but awaiting sign-off.
+- **No automated alerting on cron failures** — currently relies on user noticing the site is stale. Worth adding a Discord/webhook alert in a future ops phase.
 
 ## Session Continuity
 
-Last session: 2026-04-29 (overnight autonomous execution of Phase 3.0.1)
-Stopped at: All 8 implementation tasks shipped; release asset created + uploaded; awaiting morning human-verify checkpoint (bootstrap workflow + integration run).
-Resume file: .planning/MORNING-CHECKLIST.md
+Last session: 2026-05-17 (Phase 3.1 planning + final infrastructure fixes)
+Stopped at: All 3.0.x infrastructure shipped; daily pipeline verified end-to-end on commit `ebb5a80`; Phase 3.1 plan PASS plan-check on Rev 2; planning artifacts committed at `6c55715`. Phase 3.1 ready to execute.
+
+**Resume:** read `.planning/SESSION-MEMO-2026-04-to-05.md` for full context, then `/gsd:execute-phase 3.1`.
+
+**Verification commands** to confirm state on resume:
+```
+gh run list --workflow=daily-scrape.yml --limit=3 --repo dwalshx/ClaudeAtlas
+git log origin/main --oneline -5
+ls data/history/
+```
+Expect: recent runs green, fresh bot commits, growing snapshot count.

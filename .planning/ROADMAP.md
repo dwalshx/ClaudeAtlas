@@ -31,7 +31,7 @@ Phase 1 MVP shipped 2026-04-10 with 33,078 skills scraped, 1,078 curated, and 30
 Theme: turn ClaudeAtlas from a browsable site into infrastructure that agents call.
 
 - [x] **Phase 2.1: Semantic Search** — OpenAI `text-embedding-3-small` + Cloudflare Vectorize + `/api/v1/search` public endpoint, homepage wired to semantic matching
-- [x] **Phase 2.2: Query latency optimization** — Workers KV cache code shipped; needs KV namespace activation (morning task)
+- [x] **Phase 2.2: Query latency optimization** — Workers KV cache shipped; **namespace activated 2026-05-16 and deployed**
 - [x] **Phase 2.3: Similar-skills enrichment** — pre-computed top-5 per skill, rendering on all detail pages
 - [x] **Phase 2.4: marketplace.json federation** — .claude-plugin/marketplace.json with 193 Featured plugins
 - [x] **Phase 2.5: Clustering + emergent categories** — 16 clusters computed via k-means; visual page deferred
@@ -43,8 +43,10 @@ Theme: turn ClaudeAtlas from a browsable site into infrastructure that agents ca
 
 Theme: from "curated skills directory" to "the Wirecutter of agent tooling." Index everything real (skills + plugins), score on transparent signals, surface novelty automatically. See `docs/PHASE-3.0-SPEC.md` for the full spec.
 
-- [ ] **Phase 3.0.0: Split-Track Scrape Architecture** (INSERTED, precursor) — split scrape into Track 1 (daily Star Pulse) + Track 2 (incremental + weekly full) so daily pipeline always fits inside GitHub Actions' 6h platform cap. Unblocks all of Phase 3.0.
-- [ ] **Phase 3.1: Filter overhaul** — drop MAX_PER_REPO + MIN_STARS gates, add embedding-based dedup, add novelty scoring, recalibrate against skills-raw.json
+- [x] **Phase 3.0.0: Split-Track Scrape Architecture** (INSERTED, precursor) — split scrape into Track 1 (daily Star Pulse) + Track 2 (discovery via repo search) so daily pipeline fits inside GitHub Actions' 6h platform cap. Shipped 2026-04-26.
+- [x] **Phase 3.0.1: State persistence** (INSERTED) — GHA cache + release-asset bootstrap for skills-raw.json; switched discovery from `/search/code` to `/search/repositories` (latter is the only one that supports `pushed:>`). Shipped 2026-04-29.
+- [x] **Phase 3.0.2: Discovery cost reduction** (INSERTED) — content_sha-based skip via tree blob shas (Bug 1) + per-repo SKILL.md file cap at 50 (Bug 2). Daily run dropped from 90-min cancellations to ~15 min reliable completion. Shipped 2026-05-05.
+- [ ] **Phase 3.1: Filter overhaul** — drop MAX_PER_REPO + MIN_STARS gates, add embedding-based dedup (0.92 cosine validated), add novelty scoring (percentile-based per research correction), fix 13 slug collisions, recalibrate against skills-raw.json. **Planned and ready to execute 2026-05-17.**
 - [ ] **Phase 3.2: Plugin scoring + filtering** — score-plugin.js, filter-plugins.js, calibrate against plugins-raw.json
 - [ ] **Phase 3.3: Plugin pages** — `/plugins/`, `/plugins/[slug]/`, marketplace landing pages
 - [ ] **Phase 3.4: New & Noteworthy** — novelty detection, homepage section, percentile-based threshold calibration
