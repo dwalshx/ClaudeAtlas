@@ -22,7 +22,7 @@ jobs:
     # data/skills-raw.json) → Filter (re-score + re-tier from raw corpus).
     # Push-triggered runs skip the scrape+filter steps entirely so they're
     # typically under 90 seconds.
-    timeout-minutes: 90
+    timeout-minutes: 300
     steps:
       - uses: actions/checkout@v4
 
@@ -119,10 +119,31 @@ jobs:
       # Embed step is resumable and idempotent: reads prior ndjson, only embeds
       # deltas. Safe to run on every workflow event. Upload step upserts into
       # the Vectorize index; matching ids are replaced.
+      #
+      # Phase 3.1: with MAX_PER_REPO + MIN_STARS gates removed, the corpus
+      # jumped from ~2k to ~52k records. A full cold embed pass takes ~2h,
+      # well over the 90 min that worked pre-3.1. The cache restore/save
+      # pair below makes partial progress persist across runs so a timeout
+      # or rate-limit retry doesn't re-burn OpenAI credits on records we
+      # already embedded. Mirrors the etag-cache + skills-raw pattern.
+      - name: Restore skill-vectors cache
+        uses: actions/cache/restore@v4
+        with:
+          path: data/skill-vectors.ndjson
+          key: skill-vectors-${{ github.run_number }}
+          restore-keys: skill-vectors-
+
       - name: Embed skills (OpenAI)
         run: npm run embed
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+
+      - name: Save skill-vectors cache
+        if: always() && hashFiles('data/skill-vectors.ndjson') != ''
+        uses: actions/cache/save@v4
+        with:
+          path: data/skill-vectors.ndjson
+          key: skill-vectors-${{ github.run_number }}
 
       # Phase 3.1: post-embed enrichment. Reads skills.json + the freshly
       # updated skill-vectors.ndjson, computes pairwise cosine to set
