@@ -15,6 +15,10 @@ on:
 jobs:
   discover-build-deploy:
     runs-on: ubuntu-latest
+    # Required for the commit-back step to push to main. See daily-scrape.yml
+    # for the full rationale; GitHub's default GITHUB_TOKEN is read-only.
+    permissions:
+      contents: write
     # Weekly full sweep: Track 2 with no recency filter, scanning the entire
     # GitHub corpus for SKILL.md files. The 7h timeout is aspirational —
     # GitHub's hosted-runner cap is 6h, so cancellation is expected. The
@@ -159,4 +163,7 @@ jobs:
           git config user.email "bot@claudeatlas.com"
           git add data/skills.json data/pipeline-stats.json data/history/ || true
           git diff --cached --quiet || git commit -m "chore: weekly full-sweep skills data $(date -u +%Y-%m-%d)"
-          git push || true
+          # Fail loud on push errors (was `|| true`, which silently masked
+          # permission failures for 5+ weeks). Combined with the job's
+          # `permissions: contents: write` above, push should succeed.
+          git push

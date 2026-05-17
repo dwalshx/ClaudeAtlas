@@ -10,6 +10,11 @@ on:
 jobs:
   scrape-build-deploy:
     runs-on: ubuntu-latest
+    # Required for the "Commit skills data" step to push back to main.
+    # GitHub's default GITHUB_TOKEN scope is read-only since ~2023; the bot
+    # needs explicit `contents: write` to push the daily data snapshot.
+    permissions:
+      contents: write
     # Daily target: <30 min warm. 90-min cap is safety net; if hit,
     # something is wrong. Phase 3.0.1 architecture: Track 1 (Star Pulse,
     # cheap refresh of known repos) → Track 2 (Discovery via repo search,
@@ -168,4 +173,6 @@ jobs:
           git config user.email "bot@claudeatlas.com"
           git add data/skills.json data/pipeline-stats.json data/history/ || true
           git diff --cached --quiet || git commit -m "chore: update skills data $(date -u +%Y-%m-%d)"
-          git push || true
+          # Fail loud on push errors. The prior `|| true` silently masked
+          # permission failures for 5+ weeks — never again.
+          git push
