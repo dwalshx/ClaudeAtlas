@@ -27,7 +27,7 @@
  * Phase 3.x if/when n grows past O(n²) practicality).
  */
 
-import { readFileSync, writeFileSync, renameSync, existsSync } from 'fs';
+import { readFileSync, writeFileSync, renameSync, existsSync, openSync, readSync, closeSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 
@@ -231,19 +231,48 @@ export function enrichSkills(skills, vectorRecords) {
   };
 }
 
+// At 50k+ records the vectors NDJSON crosses V8's ~536 MB single-string
+// limit, so readFileSync('utf-8') crashes with ERR_STRING_TOO_LONG.
+// Stream in 64 KB byte chunks and parse complete lines as they arrive.
+// Same shape as the embed-skills.js fix and Bug 4 from the 3.0.x trilogy.
+const READ_CHUNK = 64 * 1024;
+
 function loadVectors(path) {
   if (!existsSync(path)) {
     warn(`${path} missing — skipping enrichment (Track-1-only day or pre-embed cold start).`);
     return null;
   }
-  const lines = readFileSync(path, 'utf-8').split('\n').filter(Boolean);
   const recs = [];
-  for (const line of lines) {
-    try {
-      recs.push(JSON.parse(line));
-    } catch (e) {
-      warn(`bad NDJSON line skipped: ${e.message}`);
+  const fd = openSync(path, 'r');
+  try {
+    const buf = Buffer.alloc(READ_CHUNK);
+    let leftover = '';
+    let pos = 0;
+    while (true) {
+      const n = readSync(fd, buf, 0, READ_CHUNK, pos);
+      if (n === 0) break;
+      pos += n;
+      const text = leftover + buf.slice(0, n).toString('utf-8');
+      const lines = text.split('\n');
+      leftover = lines.pop();
+      for (const line of lines) {
+        if (!line) continue;
+        try {
+          recs.push(JSON.parse(line));
+        } catch (e) {
+          warn(`bad NDJSON line skipped: ${e.message}`);
+        }
+      }
     }
+    if (leftover) {
+      try {
+        recs.push(JSON.parse(leftover));
+      } catch (e) {
+        warn(`bad NDJSON trailing line skipped: ${e.message}`);
+      }
+    }
+  } finally {
+    closeSync(fd);
   }
   return recs;
 }
