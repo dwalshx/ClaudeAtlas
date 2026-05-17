@@ -21,11 +21,19 @@
  *   OPENAI_API_KEY   — for embedding query strings at the edge for /api/v1/search
  */
 
+import slugRedirectsData from '../data/slug-redirects.json';
+
 // ---------------------------------------------------------------------------
 // Shared helpers
 // ---------------------------------------------------------------------------
 
 const MAX_QUERY_LEN = 200;
+
+// Phase 3.1: slug collision redirects baked at build time.
+// data/slug-redirects.json is rewritten by scripts/filter.js on every
+// daily run. The map is small (26 entries today; grows as new
+// collisions appear) so we hold it in memory unconditionally.
+const SLUG_REDIRECTS = slugRedirectsData?.redirects || {};
 
 async function sha256Hex(input) {
   const enc = new TextEncoder();
@@ -334,6 +342,17 @@ export default {
     }
     if (url.pathname === '/api/v1/search') {
       return semanticSearch(request, env);
+    }
+
+    // Phase 3.1: 301 redirect for pre-fix colliding slug URLs.
+    // /skills/{old-collide}/ → /skills/{new-collide}/
+    if (url.pathname.startsWith('/skills/')) {
+      const candidate = url.pathname.replace(/^\/skills\//, '').replace(/\/$/, '');
+      const redirected = SLUG_REDIRECTS[candidate];
+      if (redirected && redirected !== candidate) {
+        const target = `${url.origin}/skills/${redirected}/`;
+        return Response.redirect(target, 301);
+      }
     }
 
     // Fallthrough to static assets
