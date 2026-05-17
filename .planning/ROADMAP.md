@@ -133,7 +133,7 @@ Theme: from "curated skills directory" to "the Wirecutter of agent tooling." Ind
 ### Phase 3.0.0: Split-Track Scrape Architecture (INSERTED 2026-04-25)
 **Goal**: Daily GHA scrape always completes in <30 min and produces a healthy `data/history/<today>.json` + updated `skills.json`, on free-tier GHA, without breaking existing schemas. Unblocks all Phase 3.0 sub-phases.
 **Depends on**: Hard — must ship before any Phase 3.x execution begins. Current single-pass scrape exceeds GitHub's 6h platform cap.
-**Requirements**: 3.0.0-DOD-1 through 3.0.0-DOD-7 (see `.planning/phases/3.0.0-split-track-scrape/3.0.0-PLAN.md`)
+**Requirements**: 3.0.0-DOD-1 through 3.0.0-DOD-7 (see `.planning/phases/03.0.0-split-track-scrape/3.0.0-PLAN.md`)
 **Success Criteria** (what must be TRUE):
   1. `scripts/scrape-pulse.js` exists and refreshes 11 fields on every indexed repo daily, writing today's `data/history/<today>.json`.
   2. `scripts/scrape.js` accepts `--mode={incremental,full}`; incremental adds `pushed:>3d` filter, full preserves current behavior.

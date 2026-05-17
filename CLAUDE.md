@@ -226,7 +226,7 @@ npm run preview
    past ~3000 repos), the lever is migrating Track 1 from REST per-repo
    GETs to a single GraphQL `repository(...) { stargazerCount, ... }` batch
    query — research finding documented in
-   `.planning/phases/3.0.1-pipeline-state-persistence/RESEARCH.md`. Until
+   `.planning/phases/03.0.1-pipeline-state-persistence/RESEARCH.md`. Until
    then, Track 1's daily fresh-request cost is a known and accepted line
    item in the daily budget.
 

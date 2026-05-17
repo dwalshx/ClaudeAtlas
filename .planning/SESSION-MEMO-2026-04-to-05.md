@@ -250,10 +250,10 @@ Verified 2026-05-17:
 |---|---|
 | Project mission, core value, constraints | `CLAUDE.md` (project section at bottom) |
 | Phase 3.0 spec (v3.0 milestone scope) | `docs/PHASE-3.0-SPEC.md` |
-| 3.0.0 plan + check | `.planning/phases/3.0.0-split-track-scrape/` |
-| 3.0.1 plan + research + check | `.planning/phases/3.0.1-pipeline-state-persistence/` |
-| 3.0.2 plan + check | `.planning/phases/3.0.2-discovery-cost-reduction/` |
-| 3.1 plan + research + check | `.planning/phases/3.1-filter-overhaul/` |
+| 3.0.0 plan + check | `.planning/phases/03.0.0-split-track-scrape/` |
+| 3.0.1 plan + research + check | `.planning/phases/03.0.1-pipeline-state-persistence/` |
+| 3.0.2 plan + check | `.planning/phases/03.0.2-discovery-cost-reduction/` |
+| 3.1 plan + research + check | `.planning/phases/03.1-filter-overhaul/` |
 | Codebase map (4/14 snapshot) | `.planning/codebase/*.md` |
 | 1.5 + v2.0 audit | `.planning/VERIFICATION-1.5-v2.0.md` |
 | Roadmap | `.planning/ROADMAP.md` |
@@ -272,7 +272,7 @@ Verified 2026-05-17:
    ls data/history/ | wc -l
    ```
    Expect: recent runs green, fresh bot commits, growing snapshot count.
-3. Read `.planning/phases/3.1-filter-overhaul/3.1-PLAN.md` (Rev 2, 2,463 lines).
+3. Read `.planning/phases/03.1-filter-overhaul/3.1-PLAN.md` (Rev 2, 2,463 lines).
 4. Invoke `/gsd:execute-phase 3.1`.
 5. The plan is executor-ready — embedded code, tagged tasks, atomic commits, verification protocol.
 
