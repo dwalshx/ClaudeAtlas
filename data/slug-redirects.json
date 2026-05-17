@@ -1,0 +1,5 @@
+{
+  "generated_at": "2026-05-17T00:00:00.000Z",
+  "note": "Phase 3.1 seed. Filter.js overwrites this on every run with the actual old->new collision-resolved slug map. Worker imports this at build time.",
+  "redirects": {}
+}
