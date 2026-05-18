@@ -56,3 +56,6 @@ scripts/scrape-plugins-resume.log
 # Phase 3.0.1 smoke harness output (regenerated each run)
 data/smoke-output.json
 last-run.log
+
+# Phase 03.1.1 T2 streaming-loader smoke fixtures (regenerated each run, ~450 MB)
+data/test-fixtures/
