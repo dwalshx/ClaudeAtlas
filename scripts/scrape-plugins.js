@@ -376,17 +376,20 @@ async function main() {
       discovery_sources: disc.sources,
       ...meta,
       plugin_manifest: pluginManifest,
-      marketplace_manifest: marketplaceManifest ? {
-        name: marketplaceManifest.name,
-        owner: marketplaceManifest.owner,
-        plugin_count: (marketplaceManifest.plugins || []).length,
-        plugins: (marketplaceManifest.plugins || []).map(p => ({
-          name: p.name,
-          description: p.description || null,
-          version: p.version || null,
-          source: typeof p.source === 'string' ? p.source : p.source?.repo || null,
-        })),
-      } : null,
+      marketplace_manifest: marketplaceManifest ? (() => {
+        const pluginsList = Array.isArray(marketplaceManifest.plugins) ? marketplaceManifest.plugins : [];
+        return {
+          name: marketplaceManifest.name,
+          owner: marketplaceManifest.owner,
+          plugin_count: pluginsList.length,
+          plugins: pluginsList.map(p => ({
+            name: p?.name || null,
+            description: p?.description || null,
+            version: p?.version || null,
+            source: typeof p?.source === 'string' ? p.source : p?.source?.repo || null,
+          })),
+        };
+      })() : null,
       components,
       component_summary: {
         skills: components.skills?.count || 0,
