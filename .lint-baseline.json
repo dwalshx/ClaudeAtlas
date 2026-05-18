@@ -1,0 +1,70 @@
+{
+  "generated_at": "2026-05-18T17:58:28.106Z",
+  "hits": [
+    {
+      "kind": "Banned B",
+      "file": "scripts/compute-clusters.js",
+      "line": 293
+    },
+    {
+      "kind": "Banned B",
+      "file": "scripts/filter.js",
+      "line": 348
+    },
+    {
+      "kind": "Banned B",
+      "file": "scripts/filter.js",
+      "line": 362
+    },
+    {
+      "kind": "Banned B",
+      "file": "scripts/generate-marketplace.js",
+      "line": 117
+    },
+    {
+      "kind": "Banned B",
+      "file": "scripts/mine-apis.js",
+      "line": 275
+    },
+    {
+      "kind": "Banned B",
+      "file": "scripts/scrape-discover-repos.js",
+      "line": 243
+    },
+    {
+      "kind": "Banned B",
+      "file": "scripts/scrape-plugins.js",
+      "line": 446
+    },
+    {
+      "kind": "Banned B",
+      "file": "scripts/scrape-pulse.js",
+      "line": 180
+    },
+    {
+      "kind": "Banned B",
+      "file": "scripts/scrape.js",
+      "line": 576
+    },
+    {
+      "kind": "Banned B",
+      "file": "scripts/scrape.js",
+      "line": 608
+    },
+    {
+      "kind": "Banned E",
+      "file": ".github/workflows/bootstrap-skills-raw.yml",
+      "line": 51
+    },
+    {
+      "kind": "Banned E",
+      "file": ".github/workflows/daily-scrape.yml",
+      "line": 136
+    },
+    {
+      "kind": "Banned E",
+      "file": ".github/workflows/weekly-discover.yml",
+      "line": 124
+    }
+  ]
+}

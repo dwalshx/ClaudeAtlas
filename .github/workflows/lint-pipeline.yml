@@ -1,0 +1,53 @@
+name: Lint pipeline
+
+# F1 streaming-foundation gate. Runs banned-pattern lint + data-file size
+# check + node --test for the scripts/lib helpers on every PR and main push.
+#
+# Required status checks (configure in branch protection):
+#   - lint
+#   - size
+#   - test
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install dependencies
+        run: npm ci --ignore-scripts
+      - name: Banned patterns (lint mode against baseline)
+        run: node scripts/check-banned-patterns.js --mode=lint
+
+  size:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Data file size guard
+        run: node scripts/check-skills-size.js
+
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install dependencies
+        run: npm ci --ignore-scripts
+      - name: Unit tests for scripts/lib helpers
+        run: npm run test:lib
