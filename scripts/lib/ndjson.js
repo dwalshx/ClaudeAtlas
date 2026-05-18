@@ -42,6 +42,7 @@ import {
   closeSync,
   renameSync,
   mkdirSync,
+  unlinkSync,
 } from 'node:fs';
 import { dirname } from 'node:path';
 
@@ -156,7 +157,40 @@ export function writeNdjsonStreaming(path, records, opts = {}) {
   } finally {
     closeSync(fd);
   }
-  renameSync(tmp, path);
+  // renameSync over an existing file is atomic on POSIX but occasionally
+  // races with antivirus / file-locking on Windows (EPERM, EACCES, EBUSY).
+  // Retry with short backoff; if still failing, fall back to delete-then-
+  // rename. This branch is a no-op on CI (ubuntu-latest) — pure local-dev
+  // defensiveness.
+  renameWithRetry(tmp, path);
+}
+
+function renameWithRetry(src, dst, maxAttempts = 5) {
+  let lastErr;
+  for (let attempt = 0; attempt < maxAttempts; attempt++) {
+    try {
+      renameSync(src, dst);
+      return;
+    } catch (err) {
+      lastErr = err;
+      if (err.code !== 'EPERM' && err.code !== 'EACCES' && err.code !== 'EBUSY') {
+        throw err;
+      }
+      // Brief sync sleep before retry — typically AV releases the file within ~50ms.
+      const wait = 50 * (attempt + 1);
+      const until = Date.now() + wait;
+      while (Date.now() < until) { /* spin */ }
+    }
+  }
+  // Last-resort fallback: delete destination first, then rename. Atomicity
+  // weaker but unblocks the write. Caller's previous file is gone for
+  // ~microseconds during this; acceptable for build/CI artifacts.
+  try {
+    if (existsSync(dst)) unlinkSync(dst);
+    renameSync(src, dst);
+  } catch {
+    throw lastErr;
+  }
 }
 
 /**

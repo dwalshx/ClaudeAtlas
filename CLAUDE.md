@@ -290,6 +290,35 @@ patterns are banned in `scripts/`, `worker/`, `src/`, `astro.config.mjs`,
 - Capture a pre-deploy sitemap snapshot before any F1 wave deploys —
   see `.planning/phases/03.1.1-streaming-foundation/pre-f1-sitemap-snapshot.xml`.
 
+### Embedding cost controls (F1 T3 / Decision B)
+
+`scripts/embed-skills.js` honors `EMBED_DRY_RUN=1` to short-circuit the
+OpenAI call and emit deterministic SHA-256-seeded fake vectors instead.
+Output NDJSON has identical shape to a live run (only the float values
+differ); downstream consumers (compute-similar, compute-clusters,
+upload-vectors) work transparently against the fake data.
+
+When to use it:
+
+- **CI fixture/smoke runs.** The 50k-record verification at F1 V3 would
+  burn ~$0.42 of OpenAI credit per attempt and hit the tier-1 rate
+  limit at >17 min. `EMBED_DRY_RUN=1` skips both.
+- **Plan-check rev cycles.** Each Rev runs CI; sharing one $0.42 across
+  many attempts isn't viable. Dry-run is the default; the live path is
+  verified separately on a small (100-record) push-event smoke.
+- **Local dev iterations.** `EMBED_DRY_RUN=1 npm run embed` lets you
+  exercise the pipeline without an OpenAI key.
+
+When NOT to use it:
+
+- **Daily production scrape.** Live cron MUST embed real vectors.
+- **Pre-deploy verification of a real release.** Always do at least one
+  live-OpenAI smoke before declaring a milestone complete.
+
+The fake vectors are produced by hashing `skill.id` (SHA-256) and
+mapping bytes to floats in [-1, 1]. Deterministic — same input
+produces same output, useful for snapshot diff tests.
+
 ## GitHub API facts (verified Phase 3.0.1 research)
 
 Claude's training data is wrong on some specifics; trust these:

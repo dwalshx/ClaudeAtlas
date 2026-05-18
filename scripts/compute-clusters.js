@@ -37,6 +37,7 @@
 import { readFileSync, writeFileSync, existsSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
+import { readNdjsonRecords } from './lib/ndjson.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..');
@@ -199,11 +200,15 @@ function main() {
     return;
   }
 
-  // Load vectors + metadata
-  const lines = readFileSync(VECTORS_PATH, 'utf-8').split('\n').filter(Boolean);
-  const records = lines.map(l => JSON.parse(l));
+  // Load vectors + metadata via chunked NDJSON reader (V8-string-limit safe)
+  const recordsMap = readNdjsonRecords(VECTORS_PATH, {
+    keyFn: (r) => r.metadata?.slug || r.id,
+  });
+  const records = [...recordsMap.values()];
 
-  // Load full skills for name/description
+  // Load full skills for name/description. T5 migrates skills.json → NDJSON;
+  // until then this readFileSync is allowlisted (skills.json is currently
+  // bounded under V8 limit at ~5 MB; T5 fix lands the streaming load).
   const allSkills = existsSync(SKILLS_PATH) ? JSON.parse(readFileSync(SKILLS_PATH, 'utf-8')) : [];
   const skillsBySlug = new Map();
   for (const s of allSkills) {

@@ -31,6 +31,7 @@
 import { readFileSync, writeFileSync, existsSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
+import { readNdjsonRecords } from './lib/ndjson.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..');
@@ -66,8 +67,11 @@ function main() {
     return;
   }
 
-  const lines = readFileSync(VECTORS_PATH, 'utf-8').split('\n').filter(Boolean);
-  const records = lines.map(l => JSON.parse(l));
+  // Chunked NDJSON read via scripts/lib/ndjson.js — V8-string-limit safe.
+  const recordsMap = readNdjsonRecords(VECTORS_PATH, {
+    keyFn: (r) => r.metadata?.slug || r.id,
+  });
+  const records = [...recordsMap.values()];
   log(`loaded ${records.length} vectors`);
 
   // Build slug → index map
