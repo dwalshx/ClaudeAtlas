@@ -25,12 +25,17 @@
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
+import { writeNdjsonStreaming } from './lib/ndjson.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..');
 const DATA_DIR = join(ROOT, 'data');
-const OUTPUT_PATH = join(DATA_DIR, 'plugins-raw.json');
-const PARTIAL_PATH = join(DATA_DIR, 'plugins-raw.json.partial');
+// T6: NDJSON format for the per-repo records. Metadata (scraped_at, stats)
+// lives in a separate small JSON sidecar — bounded by structure, fine to
+// keep as JSON.
+const OUTPUT_PATH = join(DATA_DIR, 'plugins-raw.ndjson');
+const META_PATH = join(DATA_DIR, 'plugins-meta.json');
+const PARTIAL_PATH = join(DATA_DIR, 'plugins-raw.ndjson.partial');
 
 const TOKEN = process.env.GITHUB_TOKEN;
 if (!TOKEN) {
@@ -299,12 +304,8 @@ function loadCheckpoint() {
 }
 
 function saveCheckpoint(repos) {
-  const output = {
-    scraped_at: new Date().toISOString(),
-    repo_count: repos.length,
-    repos,
-  };
-  writeFileSync(PARTIAL_PATH, JSON.stringify(output), 'utf-8');
+  // T6: streaming NDJSON checkpoint — V8-string-limit safe.
+  writeNdjsonStreaming(PARTIAL_PATH, repos);
 }
 
 // --- Main ---
@@ -424,8 +425,12 @@ async function main() {
     await sleep(200); // Polite pause
   }
 
-  // Final save
-  const output = {
+  // T6: split into NDJSON records file + small JSON metadata sidecar.
+  // The repos array can grow large (currently ~34 MB JSON-array; would
+  // crash at V8 string limit eventually). NDJSON streams writes per
+  // record. The stats summary is bounded by structure (~1 KB at any
+  // catalog size) — JSON is fine for it.
+  const meta = {
     scraped_at: new Date().toISOString(),
     total_discovered: discovered.length,
     total_processed: allRepos.length,
@@ -440,11 +445,12 @@ async function main() {
       avg_stars: Math.round(allRepos.reduce((s, r) => s + (r.stars || 0), 0) / Math.max(1, allRepos.length)),
       total_components: allRepos.reduce((s, r) => s + (r.component_summary.total || 0), 0),
     },
-    repos: allRepos,
   };
+  const output = { ...meta };  // legacy `output` reference preserved for log lines below
 
-  writeFileSync(OUTPUT_PATH, JSON.stringify(output, null, 2), 'utf-8');
-  log(`wrote ${OUTPUT_PATH}`);
+  writeNdjsonStreaming(OUTPUT_PATH, allRepos);
+  writeFileSync(META_PATH, JSON.stringify(meta, null, 2), 'utf-8');
+  log(`wrote ${OUTPUT_PATH} (${allRepos.length} records) + ${META_PATH} (metadata)`);
 
   log('');
   log('=== summary ===');

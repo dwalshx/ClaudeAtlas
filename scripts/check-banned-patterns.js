@@ -108,8 +108,8 @@ const LINT_ALLOWLIST = [
   },
   {
     file: 'scripts/scrape-plugins.js',
-    line: 446,
-    reason: 'plugins-raw.json write — T6 territory; ~34 MB today, scheduled for NDJSON migration in Phase 03.1.2 / 3.2',
+    line: 452,
+    reason: 'plugins-meta.json sidecar write (T6 migration done — bulk records went to plugins-raw.ndjson). Metadata is bounded ~1 KB at any catalog size.',
   },
   {
     file: 'scripts/scrape.js',

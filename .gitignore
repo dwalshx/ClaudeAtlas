@@ -59,6 +59,12 @@ scripts/embed-skills.log
 # Plugin scraper intermediate + raw output files
 # Raw output is ~34 MB and gets rebuilt on each scrape. Filtered/scored
 # data/plugins.json will be committed once Phase 3.0 filter-plugins.js ships.
+#
+# T6 (2026-05-25): plugins-raw migrated from JSON-array to NDJSON; metadata
+# split into plugins-meta.json sidecar. Legacy .json path stays gitignored.
+data/plugins-raw.ndjson
+data/plugins-raw.ndjson.partial
+data/plugins-meta.json
 data/plugins-raw.json
 data/plugins-raw.json.partial
 scripts/scrape-plugins.log
