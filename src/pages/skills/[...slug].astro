@@ -17,11 +17,28 @@ function daysToRecency(dateStr) {
   return 5;
 }
 
+// T5: tier-aware rendering. Only Top/Featured + Solid get static HTML files
+// at build time. Listed tier is served dynamically by worker/index.js via
+// env.SKILLS_KV.get(slug) — same URL surface, different mechanism. Without
+// this filter, Astro would emit 50k+ HTML files at full catalog scale,
+// blowing past Cloudflare Workers Static Assets' 20k Free / 100k Paid file
+// caps. The tier-budget gate (scripts/check-tier-budget.js, postbuild)
+// hard-fails the build if Top+Solid exceeds 18k.
+//
+// Accepts both `featured` (current name) and `top` (post-3.6 rename) so
+// the rename can ship later without touching this code.
+//
+// NOTE: Astro hoists getStaticPaths into a separate execution context;
+// module-level constants defined in the frontmatter aren't visible inside
+// it. The tier set is declared inline.
 export function getStaticPaths() {
-  return allSkills.map(skill => ({
-    params: { slug: skill.slug },
-    props: { skill },
-  }));
+  const STATIC_TIERS = new Set(['featured', 'top', 'solid']);
+  return allSkills
+    .filter(s => STATIC_TIERS.has(s.quality_tier))
+    .map(skill => ({
+      params: { slug: skill.slug },
+      props: { skill },
+    }));
 }
 
 const { skill } = Astro.props;
