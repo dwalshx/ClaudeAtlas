@@ -38,11 +38,13 @@ import { readFileSync, writeFileSync, existsSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { readNdjsonRecords } from './lib/ndjson.js';
+import { loadSkillsArray } from './lib/skills-stream.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..');
 const VECTORS_PATH = join(ROOT, 'data', 'skill-vectors.ndjson');
-const SKILLS_PATH = join(ROOT, 'data', 'skills.json');
+// T5: NDJSON. Reads use loadSkillsArray() (handles legacy fallback).
+const SKILLS_PATH = join(ROOT, 'data', 'skills.ndjson');
 const OUTPUT_PATH = join(ROOT, 'data', 'skill-clusters.json');
 
 const K = 16; // Number of clusters
@@ -206,10 +208,14 @@ function main() {
   });
   const records = [...recordsMap.values()];
 
-  // Load full skills for name/description. T5 migrates skills.json → NDJSON;
-  // until then this readFileSync is allowlisted (skills.json is currently
-  // bounded under V8 limit at ~5 MB; T5 fix lands the streaming load).
-  const allSkills = existsSync(SKILLS_PATH) ? JSON.parse(readFileSync(SKILLS_PATH, 'utf-8')) : [];
+  // T5: loadSkillsArray() handles NDJSON + legacy fallback (V8-string-limit safe).
+  let allSkills = [];
+  try {
+    allSkills = loadSkillsArray();
+  } catch {
+    // Missing skills file is non-fatal for clusters — names/descriptions are
+    // an enrichment overlay; clustering still works on vector metadata alone.
+  }
   const skillsBySlug = new Map();
   for (const s of allSkills) {
     if (s.slug) skillsBySlug.set(s.slug, s);

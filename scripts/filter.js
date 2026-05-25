@@ -16,14 +16,17 @@ import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { scoreSkill } from './score.js';
 import { TRACK1_FRESHNESS_FIELDS } from './lib/skill-fields.js';
-import { readNdjsonRecords } from './lib/ndjson.js';
+import { readNdjsonRecords, writeNdjsonStreaming } from './lib/ndjson.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..');
 // T4: NDJSON format (chunked I/O). Legacy .json path kept for graceful migration.
 const RAW_PATH = join(ROOT, 'data', 'skills-raw.ndjson');
 const LEGACY_RAW_PATH = join(ROOT, 'data', 'skills-raw.json');
-const OUTPUT_PATH = join(ROOT, 'data', 'skills.json');
+// T5: NDJSON format (chunked I/O via scripts/lib/ndjson.js).
+// Legacy .json path kept for one-week graceful migration window.
+const OUTPUT_PATH = join(ROOT, 'data', 'skills.ndjson');
+const LEGACY_OUTPUT_PATH = join(ROOT, 'data', 'skills.json');
 
 // --- Enrichment preservation ---
 // Some fields (skill_first_commit_at from Phase 2 DATA-01) are backfilled
@@ -33,10 +36,19 @@ const OUTPUT_PATH = join(ROOT, 'data', 'skills.json');
 const PRESERVED_FIELDS = ['skill_first_commit_at'];
 
 function loadPriorEnrichments() {
-  if (!existsSync(OUTPUT_PATH)) return new Map();
+  // T5: prefer NDJSON; legacy JSON fallback during migration window.
+  const source = existsSync(OUTPUT_PATH) ? OUTPUT_PATH
+    : existsSync(LEGACY_OUTPUT_PATH) ? LEGACY_OUTPUT_PATH
+    : null;
+  if (!source) return new Map();
   try {
-    const prior = JSON.parse(readFileSync(OUTPUT_PATH, 'utf-8'));
-    if (!Array.isArray(prior)) return new Map();
+    let prior;
+    if (source === OUTPUT_PATH) {
+      prior = [...readNdjsonRecords(OUTPUT_PATH, { keyFn: r => r.id }).values()];
+    } else {
+      prior = JSON.parse(readFileSync(LEGACY_OUTPUT_PATH, 'utf-8'));
+      if (!Array.isArray(prior)) return new Map();
+    }
     const map = new Map();
     for (const p of prior) {
       if (!p || !p.id) continue;
@@ -80,10 +92,19 @@ function loadPriorEnrichments() {
 // — single source of truth shared with scripts/scrape-pulse.js.
 
 function loadCurrentSkillsBySlug() {
-  if (!existsSync(OUTPUT_PATH)) return new Map();
+  // T5: prefer NDJSON; legacy JSON fallback during migration window.
+  const source = existsSync(OUTPUT_PATH) ? OUTPUT_PATH
+    : existsSync(LEGACY_OUTPUT_PATH) ? LEGACY_OUTPUT_PATH
+    : null;
+  if (!source) return new Map();
   try {
-    const current = JSON.parse(readFileSync(OUTPUT_PATH, 'utf-8'));
-    if (!Array.isArray(current)) return new Map();
+    let current;
+    if (source === OUTPUT_PATH) {
+      current = [...readNdjsonRecords(OUTPUT_PATH, { keyFn: r => r.id }).values()];
+    } else {
+      current = JSON.parse(readFileSync(LEGACY_OUTPUT_PATH, 'utf-8'));
+      if (!Array.isArray(current)) return new Map();
+    }
     const map = new Map();
     for (const s of current) {
       if (!s || !s.slug) continue;
@@ -363,8 +384,8 @@ function main() {
     console.log(`  ${cat}: ${count}`);
   }
 
-  // Write filtered output
-  writeFileSync(OUTPUT_PATH, JSON.stringify(capped, null, 2), 'utf-8');
+  // T5: streaming NDJSON write (V8-string-limit safe).
+  writeNdjsonStreaming(OUTPUT_PATH, capped);
   console.log(`\nWritten to ${OUTPUT_PATH}`);
 
   // Also update the stats file

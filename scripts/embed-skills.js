@@ -49,10 +49,12 @@ import { createHash } from 'crypto';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { readNdjsonRecords, writeNdjsonStreaming } from './lib/ndjson.js';
+import { loadSkillsArray } from './lib/skills-stream.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..');
-const SKILLS_PATH = join(ROOT, 'data', 'skills.json');
+// T5: NDJSON format. SKILLS_PATH retained for error messages; reads use loadSkillsArray().
+const SKILLS_PATH = join(ROOT, 'data', 'skills.ndjson');
 const OUTPUT_PATH = join(ROOT, 'data', 'skill-vectors.ndjson');
 
 const OPENAI_KEY = process.env.OPENAI_API_KEY;
@@ -196,12 +198,14 @@ async function embedBatch(inputs, attempt = 1) {
 async function main() {
   log('=== skill embedder start ===');
 
-  if (!existsSync(SKILLS_PATH)) {
-    console.error(`ERROR: ${SKILLS_PATH} not found.`);
+  // T5: loadSkillsArray() resolves NDJSON + legacy fallback; V8-string-limit safe.
+  let skills;
+  try {
+    skills = loadSkillsArray();
+  } catch (err) {
+    console.error(`ERROR: ${err.message}`);
     process.exit(1);
   }
-
-  const skills = JSON.parse(readFileSync(SKILLS_PATH, 'utf-8'));
   log(`loaded ${skills.length} skills`);
 
   const prior = loadPriorVectors();

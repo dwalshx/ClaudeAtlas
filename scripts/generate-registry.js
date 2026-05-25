@@ -15,11 +15,13 @@
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
+import { loadSkillsArray } from './lib/skills-stream.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..');
 const DATA_DIR = join(ROOT, 'data');
-const SKILLS_PATH = join(DATA_DIR, 'skills.json');
+// T5: NDJSON. Reads use loadSkillsArray() (handles legacy fallback).
+const SKILLS_PATH = join(DATA_DIR, 'skills.ndjson');
 const STATS_PATH = join(DATA_DIR, 'pipeline-stats.json');
 const PUBLIC_DIR = join(ROOT, 'public');
 const OUTPUT_PATH = join(PUBLIC_DIR, 'skills-registry.json');
@@ -34,12 +36,14 @@ function log(msg) {
 function main() {
   log('=== registry generator start ===');
 
-  if (!existsSync(SKILLS_PATH)) {
-    console.error(`[registry] ERROR: ${SKILLS_PATH} not found`);
+  // T5: loadSkillsArray() handles NDJSON + legacy fallback.
+  let skills;
+  try {
+    skills = loadSkillsArray();
+  } catch (err) {
+    console.error(`[registry] ERROR: ${err.message}`);
     process.exit(1);
   }
-
-  const skills = JSON.parse(readFileSync(SKILLS_PATH, 'utf-8'));
 
   // Load API graph for integrations enrichment
   let apiGraph = { skill_integrations: {} };

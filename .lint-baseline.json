@@ -1,40 +1,30 @@
 {
-  "generated_at": "2026-05-25T20:40:06.953Z",
+  "generated_at": "2026-05-25T22:56:44.031Z",
   "hits": [
     {
       "kind": "Banned B",
       "file": "scripts/compute-clusters.js",
-      "line": 298
+      "line": 304
     },
     {
       "kind": "Banned B",
       "file": "scripts/filter.js",
-      "line": 367
-    },
-    {
-      "kind": "Banned B",
-      "file": "scripts/filter.js",
-      "line": 381
+      "line": 402
     },
     {
       "kind": "Banned B",
       "file": "scripts/generate-marketplace.js",
-      "line": 117
+      "line": 121
     },
     {
       "kind": "Banned B",
       "file": "scripts/mine-apis.js",
-      "line": 275
+      "line": 279
     },
     {
       "kind": "Banned B",
       "file": "scripts/scrape-plugins.js",
       "line": 446
-    },
-    {
-      "kind": "Banned B",
-      "file": "scripts/scrape-pulse.js",
-      "line": 180
     },
     {
       "kind": "Banned B",

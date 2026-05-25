@@ -33,11 +33,13 @@
 import { readFileSync, writeFileSync, existsSync, mkdirSync, renameSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
+import { loadSkillsArray } from './lib/skills-stream.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..');
 const DATA_DIR = join(ROOT, 'data');
-const SKILLS_PATH = join(DATA_DIR, 'skills.json');
+// T5: NDJSON. Reads use loadSkillsArray() (handles legacy fallback).
+const SKILLS_PATH = join(DATA_DIR, 'skills.ndjson');
 const OUTPUT_PATH = join(DATA_DIR, 'star-history.json');
 const PARTIAL_PATH = join(DATA_DIR, 'star-history.json.partial');
 
@@ -186,12 +188,14 @@ function saveCheckpoint(data) {
 async function main() {
   log('=== star-history backfill start ===');
 
-  if (!existsSync(SKILLS_PATH)) {
-    console.error(`ERROR: ${SKILLS_PATH} not found. Run the pipeline first.`);
+  // T5: loadSkillsArray() handles NDJSON + legacy fallback.
+  let skills;
+  try {
+    skills = loadSkillsArray();
+  } catch (err) {
+    console.error(`ERROR: ${err.message}. Run the pipeline first.`);
     process.exit(1);
   }
-
-  const skills = JSON.parse(readFileSync(SKILLS_PATH, 'utf-8'));
   const featured = skills.filter(s => s.quality_tier === 'featured');
   const uniqueRepos = [...new Set(featured.map(s => s.repo_full_name))].sort();
 

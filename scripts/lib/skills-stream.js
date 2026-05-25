@@ -14,7 +14,9 @@
  * T5 makes this the default in src/lib/skills.js.
  */
 
+import { readFileSync, existsSync } from 'node:fs';
 import { readNdjsonRecords } from './ndjson.js';
+import { resolveSkillsNdjsonPath } from './build-input.js';
 
 const memo = new Map();
 
@@ -42,4 +44,30 @@ export function loadAllSkillsMemo(path) {
 // Test-only: clears the memo so test runs don't pollute each other.
 export function _resetMemo() {
   memo.clear();
+}
+
+/**
+ * Helper for pipeline scripts during the T5 transition window: resolves the
+ * skills path via resolveSkillsNdjsonPath() and loads the array. If the
+ * resolved path is the legacy JSON-array file (skills.json), falls back to
+ * JSON.parse — that branch logs a loud warning and will be dropped in a
+ * post-T5 cleanup commit (one week after main stabilizes on NDJSON).
+ *
+ * Use this in any pipeline script that reads `data/skills.json` today and
+ * will read `data/skills.ndjson` post-T5. Replaces the
+ * `JSON.parse(readFileSync(SKILLS_PATH, 'utf-8'))` pattern.
+ *
+ * @returns {object[]}
+ */
+export function loadSkillsArray() {
+  const path = resolveSkillsNdjsonPath();
+  if (path.endsWith('.ndjson')) {
+    return loadAllSkillsSync(path);
+  }
+  // Legacy JSON-array path — bounded by the V8 string limit (~536 MB).
+  // Logged by build-input.js with a loud warning when this branch fires.
+  if (!existsSync(path)) {
+    throw new Error(`[skills-stream] resolved path missing: ${path}`);
+  }
+  return JSON.parse(readFileSync(path, 'utf-8'));
 }

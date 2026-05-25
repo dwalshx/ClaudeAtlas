@@ -26,12 +26,17 @@
 import { readFileSync, writeFileSync, existsSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
+import { writeNdjsonStreaming, readNdjsonRecords } from './lib/ndjson.js';
+import { loadSkillsArray } from './lib/skills-stream.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..');
 const DATA_DIR = join(ROOT, 'data');
-const SKILLS_PATH = join(DATA_DIR, 'skills.json');
-const PARTIAL_PATH = join(DATA_DIR, 'skills.json.birth-partial');
+// T5: NDJSON format. Reader uses loadSkillsArray() (with legacy fallback);
+// writer targets NDJSON. Partial checkpoint also writes NDJSON.
+const SKILLS_PATH = join(DATA_DIR, 'skills.ndjson');
+const PARTIAL_PATH = join(DATA_DIR, 'skills.ndjson.birth-partial');
+const LEGACY_PARTIAL_PATH = join(DATA_DIR, 'skills.json.birth-partial');
 
 const TOKEN = process.env.GITHUB_TOKEN;
 if (!TOKEN) {
@@ -151,15 +156,24 @@ async function findFirstCommit(repoFullName, skillPath) {
 async function main() {
   log('=== skill birth date backfill start ===');
 
-  if (!existsSync(SKILLS_PATH)) {
-    console.error(`ERROR: ${SKILLS_PATH} not found.`);
-    process.exit(1);
+  // T5: Prefer resuming from NDJSON partial if available, else NDJSON canonical,
+  // else fall back through legacy paths via loadSkillsArray.
+  let skills;
+  if (existsSync(PARTIAL_PATH)) {
+    log(`resuming from ${PARTIAL_PATH}`);
+    skills = [...readNdjsonRecords(PARTIAL_PATH, { keyFn: r => r.id }).values()];
+  } else if (existsSync(LEGACY_PARTIAL_PATH)) {
+    log(`resuming from LEGACY ${LEGACY_PARTIAL_PATH}`);
+    skills = JSON.parse(readFileSync(LEGACY_PARTIAL_PATH, 'utf-8'));
+  } else {
+    log(`loading skills via loadSkillsArray (handles NDJSON + legacy fallback)`);
+    try {
+      skills = loadSkillsArray();
+    } catch (err) {
+      console.error(`ERROR: ${err.message}`);
+      process.exit(1);
+    }
   }
-
-  // Prefer resuming from partial if available
-  const sourcePath = existsSync(PARTIAL_PATH) ? PARTIAL_PATH : SKILLS_PATH;
-  log(`loading skills from ${sourcePath}`);
-  const skills = JSON.parse(readFileSync(sourcePath, 'utf-8'));
   log(`${skills.length} total skills`);
 
   const stats = { ok: 0, fallback: 0, error: 0, skipped: 0 };
@@ -198,14 +212,15 @@ async function main() {
     }
 
     if (processed % CHECKPOINT_EVERY === 0 || i === skills.length - 1) {
-      writeFileSync(PARTIAL_PATH, JSON.stringify(skills), 'utf-8');
+      // T5: streaming NDJSON partial write — V8-string-limit safe.
+      writeNdjsonStreaming(PARTIAL_PATH, skills);
     }
 
     await sleep(POLITE_DELAY_MS);
   }
 
-  // Final save — promote partial to canonical
-  writeFileSync(SKILLS_PATH, JSON.stringify(skills), 'utf-8');
+  // T5: final save promotes partial to canonical via streaming NDJSON write.
+  writeNdjsonStreaming(SKILLS_PATH, skills);
   log(`wrote ${SKILLS_PATH} with skill_first_commit_at populated on ${skills.length} skills`);
 
   log('=== summary ===');
