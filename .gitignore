@@ -39,6 +39,7 @@ data/skills-raw.json
 data/skills.ndjson
 data/skills.ndjson.partial
 data/skills.ndjson.birth-partial
+data/skills.json
 data/skills.json.partial
 data/etag-cache.json
 data/scrape-log.txt
