@@ -27,7 +27,12 @@ jobs:
     # Push-triggered runs skip scrape/filter/embed/upload/publish entirely
     # and just fetch `skills-latest` from the release asset, then build
     # and deploy.
-    timeout-minutes: 90
+    # T7 (2026-05-25): timeout bumped 90 → 300 to give post-T5 first-run
+    # headroom. Steady-state runs still complete in ~15-30 min; the
+    # 300-min cap is a safety net for the initial KV bootstrap (~10k
+    # records on first publish) + any cold-cache scenarios. Cherry-picked
+    # from archive commit 5b04b87. Still under GitHub's 6h platform cap.
+    timeout-minutes: 300
     steps:
       - uses: actions/checkout@v4
 
