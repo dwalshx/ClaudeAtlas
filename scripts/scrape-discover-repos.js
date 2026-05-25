@@ -45,12 +45,15 @@ import {
   saveETagCache,
   sleep,
 } from './lib/github-fetch.js';
+import { readNdjsonRecords, writeNdjsonStreaming } from './lib/ndjson.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..');
 const DATA_DIR = join(ROOT, 'data');
-const RAW_PATH = join(DATA_DIR, 'skills-raw.json');
-const RAW_PARTIAL_PATH = join(DATA_DIR, 'skills-raw.json.partial');
+// T4: NDJSON format (chunked I/O). Legacy .json path kept for graceful migration.
+const RAW_PATH = join(DATA_DIR, 'skills-raw.ndjson');
+const RAW_PARTIAL_PATH = join(DATA_DIR, 'skills-raw.ndjson.partial');
+const LEGACY_RAW_PATH = join(DATA_DIR, 'skills-raw.json');
 
 const TOPICS = [
   // Ordered by signal strength (highest community-usage first). Order
@@ -240,21 +243,35 @@ export function extractSkillName(p) {
 function writeMergedAtomic(byId) {
   if (!existsSync(DATA_DIR)) mkdirSync(DATA_DIR, { recursive: true });
   const merged = [...byId.values()].sort((a, b) => (b.quality_score || 0) - (a.quality_score || 0));
-  writeFileSync(RAW_PARTIAL_PATH, JSON.stringify(merged, null, 2), 'utf-8');
-  renameSync(RAW_PARTIAL_PATH, RAW_PATH);
+  // T4: streaming write — V8-string-limit safe. writeNdjsonStreaming handles
+  // tmp+rename internally.
+  writeNdjsonStreaming(RAW_PATH, merged);
 }
 
 function loadExistingById() {
-  if (!existsSync(RAW_PATH)) {
-    warn(`${RAW_PATH} not found — first run? Starting from empty.`);
-    return new Map();
+  // T4: prefer NDJSON; fall back to legacy JSON-array path during migration window.
+  if (existsSync(RAW_PATH)) {
+    return readNdjsonRecords(RAW_PATH, { keyFn: r => r.id });
   }
-  const arr = JSON.parse(readFileSync(RAW_PATH, 'utf-8'));
-  if (!Array.isArray(arr)) {
-    warn(`${RAW_PATH} is not an array; starting empty`);
-    return new Map();
+  if (existsSync(LEGACY_RAW_PATH)) {
+    warn(`${RAW_PATH} not found; reading LEGACY ${LEGACY_RAW_PATH}.`);
+    warn(`Run \`node scripts/migrate-raw-to-ndjson.js\` to convert.`);
+    try {
+      const arr = JSON.parse(readFileSync(LEGACY_RAW_PATH, 'utf-8'));
+      if (!Array.isArray(arr)) {
+        warn(`${LEGACY_RAW_PATH} is not an array; starting empty`);
+        return new Map();
+      }
+      return new Map(arr.map(s => [s.id, s]));
+    } catch (err) {
+      // V8 string limit on the legacy file — exactly the bug T4 fixes.
+      warn(`Failed to parse legacy ${LEGACY_RAW_PATH}: ${err.message}`);
+      warn(`This is the V8 ~536 MB string-limit failure. Run scripts/migrate-raw-to-ndjson.js to convert.`);
+      return new Map();
+    }
   }
-  return new Map(arr.map(s => [s.id, s]));
+  warn(`${RAW_PATH} not found — first run? Starting from empty.`);
+  return new Map();
 }
 
 async function main() {

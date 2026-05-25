@@ -1,27 +1,31 @@
 name: Bootstrap skills-raw cache (one-shot)
 
 # One-time (and disaster-recovery) workflow to seed the GitHub Actions cache
-# with the local ~295 MB data/skills-raw.json file. Phase 3.0.1 splits the
-# scrape into Track 1 (history) and Track 2 (discover). Track 2's discover
-# step needs skills-raw.json present at the start of every CI run to merge
-# new SKILL.md hits into. Without this seed, every scheduled run starts
-# cold with no corpus to merge into and the daily pipeline can't follow R3
+# with the local data/skills-raw.ndjson file (T4 NDJSON format — was
+# skills-raw.json before T4 ~2026-05-25). Phase 3.0.1 splits the scrape into
+# Track 1 (history) and Track 2 (discover). Track 2's discover step needs
+# skills-raw.ndjson present at the start of every CI run to merge new
+# SKILL.md hits into. Without this seed, every scheduled run starts cold
+# with no corpus to merge into and the daily pipeline can't follow R3
 # merge semantics.
 #
-# Mirrors bootstrap-etag-cache.yml (the proven Phase 3.0.0 bootstrap
-# pattern).
+# Mirrors bootstrap-etag-cache.yml (the proven Phase 3.0.0 bootstrap pattern).
 #
 # How it works:
-#   1. Downloads data/skills-raw.json from the `skills-raw-bootstrap`
+#   1. Downloads data/skills-raw.ndjson from the `skills-raw-ndjson-bootstrap`
 #      release asset.
 #   2. Saves it to GHA cache with a key that the daily/weekly workflows'
-#      restore-keys: "skills-raw-" prefix-match will pick up.
+#      restore-keys: "skills-raw-ndjson-" prefix-match will pick up.
 #   3. Next scheduled daily-scrape run finds the cache and starts warm.
 #
 # Operator action: Run ONCE via workflow_dispatch from the Actions tab
-# after creating the `skills-raw-bootstrap` release with skills-raw.json
-# as an asset. KEEP THE RELEASE — do NOT delete it (R5 mitigation; serves
-# as permanent disaster-recovery fallback).
+# after creating the `skills-raw-ndjson-bootstrap` release with
+# skills-raw.ndjson as an asset. KEEP THE RELEASE — do NOT delete it
+# (R5 mitigation; serves as permanent disaster-recovery fallback).
+#
+# The pre-T4 legacy release (`skills-raw-bootstrap` with skills-raw.json
+# inside) is renamed to `skills-raw-bootstrap-jsonarray-legacy` and kept
+# permanently for audit / disaster-recovery against an old branch.
 #
 # If the GHA cache ever evicts (7-day inactivity) or corrupts, re-trigger
 # this workflow via workflow_dispatch to re-seed.
@@ -36,41 +40,42 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Download skills-raw from release asset
+      - name: Download skills-raw.ndjson from release asset
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           mkdir -p data
-          gh release download skills-raw-bootstrap \
-            --pattern 'skills-raw.json' \
-            --output data/skills-raw.json
-          ls -lh data/skills-raw.json
+          gh release download skills-raw-ndjson-bootstrap \
+            --pattern 'skills-raw.ndjson' \
+            --output data/skills-raw.ndjson
+          ls -lh data/skills-raw.ndjson
           echo "SHA256:"
-          sha256sum data/skills-raw.json
+          sha256sum data/skills-raw.ndjson
           echo "Skill count:"
-          node -e "const a=JSON.parse(require('fs').readFileSync('data/skills-raw.json','utf8')); console.log('records:',a.length)"
+          wc -l < data/skills-raw.ndjson
 
-      # FLAG #2: cache-key prefix discipline. Key prefix MUST stay `skills-raw-`
+      # Cache-key prefix discipline. Key prefix MUST stay `skills-raw-ndjson-`
       # to match daily/weekly restore-keys. daily-scrape.yml and
-      # weekly-discover.yml use `restore-keys: skills-raw-` (prefix-match), so
-      # they will pick this entry up on next run. Do NOT change the prefix
-      # without updating BOTH consumer workflows in lockstep (Tasks 6 + 7).
+      # weekly-discover.yml use `restore-keys: skills-raw-ndjson-`
+      # (prefix-match), so they will pick this entry up on next run. Do NOT
+      # change the prefix without updating BOTH consumer workflows in lockstep.
       - name: Save to GitHub Actions cache
         uses: actions/cache/save@v4
         with:
-          path: data/skills-raw.json
-          key: skills-raw-bootstrap-${{ github.run_number }}
+          path: data/skills-raw.ndjson
+          key: skills-raw-ndjson-bootstrap-${{ github.run_number }}
 
       - name: Confirm cache was saved
         run: |
-          echo "Cache saved with key: skills-raw-bootstrap-${{ github.run_number }}"
+          echo "Cache saved with key: skills-raw-ndjson-bootstrap-${{ github.run_number }}"
           echo ""
-          echo "daily-scrape.yml and weekly-discover.yml use restore-keys: 'skills-raw-'"
-          echo "(prefix match), so they will pick up this entry on next run."
+          echo "daily-scrape.yml and weekly-discover.yml use"
+          echo "restore-keys: 'skills-raw-ndjson-' (prefix match),"
+          echo "so they will pick up this entry on next run."
           echo ""
-          echo "Next steps for Dan:"
+          echo "Next steps:"
           echo "  1. Verify cache exists: 'gh cache list --limit 5'"
           echo "  2. Trigger a manual daily-scrape run to confirm it goes warm:"
           echo "     gh workflow run daily-scrape.yml"
-          echo "  3. KEEP the release 'skills-raw-bootstrap' in place (R5 — do not delete)."
+          echo "  3. KEEP the release 'skills-raw-ndjson-bootstrap' in place."
           echo "     If GHA cache ever evicts/corrupts, re-run THIS workflow to re-seed."

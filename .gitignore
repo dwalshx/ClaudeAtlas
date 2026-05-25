@@ -28,6 +28,10 @@ Thumbs.db
 .claude/
 
 # Large scraper artifacts (rebuilt each run)
+# T4 (2026-05-25): skills-raw migrated from JSON-array to NDJSON. Legacy
+# path kept gitignored too in case of accidental local re-creation.
+data/skills-raw.ndjson
+data/skills-raw.ndjson.partial
 data/skills-raw.json
 data/skills.json.partial
 data/etag-cache.json
@@ -56,3 +60,6 @@ scripts/scrape-plugins-resume.log
 # Phase 3.0.1 smoke harness output (regenerated each run)
 data/smoke-output.json
 last-run.log
+
+# Phase 03.1.1 T2 streaming-loader smoke fixtures (regenerated each run, ~450 MB)
+data/test-fixtures/

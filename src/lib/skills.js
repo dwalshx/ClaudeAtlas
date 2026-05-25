@@ -1,13 +1,29 @@
 /**
- * Skills data loader and helpers
+ * Skills data loader and helpers.
+ *
+ * F1 transition (Phase 03.1.1): when env F1_STREAMING_LOADER=1, this module
+ * sources skills via the chunked NDJSON loader (data/skills.ndjson) instead
+ * of the legacy JSON import. The flag is OFF by default until T5 ships the
+ * full migration. T2 uses the flag to prove the production code path works
+ * against a 50k-record fixture in Astro builds.
  */
 
 import { readFileSync, existsSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 
-import skillsData from '../../data/skills.json';
+import legacySkillsData from '../../data/skills.json';
 import pipelineStats from '../../data/pipeline-stats.json';
+import { loadAllSkillsMemo } from '../../scripts/lib/skills-stream.js';
+import { resolveSkillsNdjsonPath } from '../../scripts/lib/build-input.js';
+
+// F1_STREAMING_LOADER=1 sources skills from NDJSON via the production
+// loader. Otherwise, preserve current JSON-import behavior so the live site
+// build continues to work unchanged until T5 flips this on by default.
+const skillsData =
+  process.env.F1_STREAMING_LOADER === '1'
+    ? loadAllSkillsMemo(resolveSkillsNdjsonPath())
+    : legacySkillsData;
 
 // Similar skills are pre-computed at build time by scripts/compute-similar.js.
 // We use readFileSync instead of import because the file may not exist on the

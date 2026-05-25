@@ -1,3 +1,19 @@
+---
+gsd_state_version: 1.0
+milestone: v2.0
+milestone_name: — Agent-Native Directory
+status: executing
+stopped_at: All 3.0.x infrastructure shipped; daily pipeline verified end-to-end on commit `ebb5a80`; Phase 3.1 plan PASS plan-check on Rev 2; planning artifacts committed at `6c55715`. Phase 3.1 ready to execute.
+last_updated: "2026-05-18T16:49:44.881Z"
+last_activity: 2026-05-18 -- Phase 03.1.1 execution started
+progress:
+  total_phases: 7
+  completed_phases: 0
+  total_plans: 3
+  completed_plans: 6
+  percent: 100
+---
+
 # Project State
 
 ## Project Reference
@@ -5,15 +21,15 @@
 See: `.planning/PROJECT.md` (last updated 2026-04-10)
 
 **Core value:** Users can find the best Claude skill for a given task in under 30 seconds, with visible signals for why it's trustworthy.
-**Current focus:** Phase 3.1 (Filter overhaul) — planned and ready to execute
+**Current focus:** Phase 03.1.1 — streaming-foundation
 **Milestone:** v3.0 — Comprehensive Agent Tooling Index (in progress)
 
 ## Current Position
 
-Phase: 3.0.0, 3.0.1, 3.0.2 all complete; **3.1 planned, ready to execute**
-Plan: 3.1 has 10 tasks across 5 waves (Rev 2 plan PASS, 2,463 lines)
-Status: Daily pipeline self-sustaining; site fresh at 1,885 indexed skills; bot commit-back verified working
-Last activity: 2026-05-17 — 3.1 plan finalized, planning artifacts pushed (commit `6c55715`)
+Phase: 03.1.1 (streaming-foundation) — EXECUTING
+Plan: 1 of 1
+Status: Executing Phase 03.1.1
+Last activity: 2026-05-18 -- Phase 03.1.1 execution started
 
 Progress: Phase 1.5 [██████████] 100% · v2.0 [██████████] 100% · 3.0.x trilogy [██████████] 100% · 3.1 [░░░░░░░░░░] 0% (planned) · 3.2–3.9 [░░░░░░░░░░] 0% (not yet planned)
 
@@ -91,11 +107,13 @@ These were INSERTED ahead of the Phase 3.0 spec's 3.1–3.9 lineup because the d
 ## Performance Metrics
 
 **Velocity (this session window 2026-04-13 → 2026-05-17):**
+
 - 3 infrastructure phases shipped (3.0.0, 3.0.1, 3.0.2)
 - ~15 distinct bug fixes / config corrections across the cascade (timeout, save-on-cancel, V8 limit, content_sha skip, mega-repo cap, OPENAI_API_KEY, KV namespace, bot permission, etc.)
 - Phase 3.1 fully planned (research → plan → check → revision → re-check PASS)
 
 **Pipeline observability:**
+
 - Daily run: ~15 min (target was <30; achieved)
 - Daily request budget: comfortable (~500-800 fresh GitHub API requests; <20% of 5000/hr limit)
 - Cache hit rates: high after first warm day; etag cache + skills-raw cache both bootstrapped from release assets
@@ -137,9 +155,11 @@ Stopped at: All 3.0.x infrastructure shipped; daily pipeline verified end-to-end
 **Resume:** read `.planning/SESSION-MEMO-2026-04-to-05.md` for full context, then `/gsd:execute-phase 3.1`.
 
 **Verification commands** to confirm state on resume:
+
 ```
 gh run list --workflow=daily-scrape.yml --limit=3 --repo dwalshx/ClaudeAtlas
 git log origin/main --oneline -5
 ls data/history/
 ```
+
 Expect: recent runs green, fresh bot commits, growing snapshot count.

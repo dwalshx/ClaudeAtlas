@@ -25,6 +25,7 @@
 import { readFileSync, existsSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
+import { readNdjsonRecords } from './lib/ndjson.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..');
@@ -58,8 +59,11 @@ function sleep(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-async function upsertBatch(ndjsonLines, attempt = 1) {
-  const body = ndjsonLines.join('\n') + '\n';
+async function upsertBatch(records, attempt = 1) {
+  // Re-stringify per record on the way to the wire. Each line is a small
+  // allocation; total batch body is well under the V8 string ceiling at
+  // batch sizes the script uses (~100 records per batch).
+  const body = records.map((r) => JSON.stringify(r)).join('\n') + '\n';
   const url = `https://api.cloudflare.com/client/v4/accounts/${ACCOUNT_ID}/vectorize/v2/indexes/${INDEX_NAME}/upsert`;
 
   const res = await fetch(url, {
@@ -79,7 +83,7 @@ async function upsertBatch(ndjsonLines, attempt = 1) {
     const waitMs = 2000 * Math.pow(2, attempt);
     log(`  [retry] Vectorize ${res.status} (attempt ${attempt}/${MAX_RETRIES}), waiting ${waitMs}ms`);
     await sleep(waitMs);
-    return upsertBatch(ndjsonLines, attempt + 1);
+    return upsertBatch(records, attempt + 1);
   }
 
   if (!res.ok) {
@@ -98,31 +102,33 @@ async function main() {
   log('=== vector upload start ===');
   log(`index: ${INDEX_NAME}`);
 
-  const lines = readFileSync(NDJSON_PATH, 'utf-8').split('\n').filter(Boolean);
-  log(`loaded ${lines.length} vector records`);
+  // Chunked NDJSON read via scripts/lib/ndjson.js — V8-string-limit safe.
+  const recordsMap = readNdjsonRecords(NDJSON_PATH, { keyFn: (r) => r.id });
+  const records = [...recordsMap.values()];
+  log(`loaded ${records.length} vector records`);
 
-  // Quick sanity: parse first line to confirm shape
-  try {
-    const first = JSON.parse(lines[0]);
-    if (!first.id || !Array.isArray(first.values)) {
-      throw new Error('first line missing id or values');
-    }
-    log(`first vector: id=${first.id} dims=${first.values.length}`);
-  } catch (err) {
-    console.error(`ERROR: invalid NDJSON in first line: ${err.message}`);
+  // Quick sanity: confirm first record's shape
+  if (!records.length) {
+    console.error(`ERROR: no records loaded from ${NDJSON_PATH}`);
     process.exit(1);
   }
+  const first = records[0];
+  if (!first.id || !Array.isArray(first.values)) {
+    console.error('ERROR: first record missing id or values');
+    process.exit(1);
+  }
+  log(`first vector: id=${first.id} dims=${first.values.length}`);
 
   let uploaded = 0;
   const startTime = Date.now();
 
-  for (let i = 0; i < lines.length; i += BATCH_SIZE) {
-    const batch = lines.slice(i, i + BATCH_SIZE);
+  for (let i = 0; i < records.length; i += BATCH_SIZE) {
+    const batch = records.slice(i, i + BATCH_SIZE);
     try {
       const result = await upsertBatch(batch);
       uploaded += batch.length;
       const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
-      log(`  [${uploaded}/${lines.length}] batch ${Math.floor(i / BATCH_SIZE) + 1} upserted (${elapsed}s)`);
+      log(`  [${uploaded}/${records.length}] batch ${Math.floor(i / BATCH_SIZE) + 1} upserted (${elapsed}s)`);
       if (result && result.mutationId) {
         log(`    mutationId: ${result.mutationId}`);
       }
@@ -133,7 +139,7 @@ async function main() {
   }
 
   const totalElapsed = ((Date.now() - startTime) / 1000).toFixed(1);
-  log(`upserted ${uploaded} vectors in ${totalElapsed}s`);
+  log(`upserted ${uploaded} of ${records.length} vectors in ${totalElapsed}s`);
   log('');
   log('NOTE: Vectorize mutations are async. Vectors are searchable within');
   log('a few seconds after the final mutationId is committed. If you query');

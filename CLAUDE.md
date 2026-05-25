@@ -230,6 +230,95 @@ npm run preview
    then, Track 1's daily fresh-request cost is a known and accepted line
    item in the daily budget.
 
+## Pipeline footguns (F1 streaming foundation, Phase 3.1.1)
+
+V8 has a ~536 MB single-string ceiling. The entire pipeline used to assume
+JSON files fit comfortably below that — F1 removed the assumption. These
+patterns are banned in `scripts/`, `worker/`, `src/`, `astro.config.mjs`,
+`wrangler.toml`, and `.github/workflows/*.yml`. Lint script:
+`npm run check:patterns`. CI status check: `lint` job in
+`.github/workflows/lint-pipeline.yml`.
+
+**Banned:**
+
+- `readFileSync(<path>, 'utf-8')` on anything under `data/`. Use
+  `scripts/lib/ndjson.js` (`readNdjsonRecords`) instead. Materializing a
+  >500 MB file as a single string crashes with
+  `RangeError: Invalid string length`. Cited cases: Research §A, three
+  CI crashes on 2026-05-17, three more latent sites on main pre-F1.
+- `JSON.stringify(<arr>, null, 2)` on records arrays (in `scripts/`). The
+  pretty-print indent inflates a 295 MB raw write past the V8 ceiling.
+  Use chunked `writeSync` via `writeNdjsonStreaming`.
+- `array.map(JSON.stringify).join('\n')`. Same V8 crash class — the
+  `.join` materializes one giant string.
+- `array.push(JSON.stringify(...))` followed by `array.join('')` within
+  ~40 lines. Same V8 crash class; common refactor of the `.map().join()`
+  pattern.
+- Inline `node -e` blocks in `.github/workflows/*.yml` that do
+  `JSON.parse(readFileSync(...))` against `data/` files. Replace with
+  `wc -l data/foo.ndjson` for record-count guards (Rev 2 B4).
+
+**Reserved keys in NDJSON records:**
+
+- `_header: true` — sentinel for the file's first-line header (used by
+  F2 to carry `schema_version` alongside the data, no sidecar). The
+  `_header` key MUST NOT appear on real records. `scripts/lib/ndjson.js`
+  filters records with `_header: true` from reads (defensive — any
+  position, not just line 1) and prepends them via the writer's
+  `opts.header`. F2 owns the header schema; F1 owns the mechanism. See
+  `scripts/lib/__tests__/ndjson.test.js` Tests 12 + 13.
+
+**Allowed (explicit allowlist in `scripts/check-banned-patterns.js`):**
+
+- `src/lib/skills.js:21` — `similar-skills.json` read. Bounded sidecar
+  per Research §A; safe through 200k records.
+- `src/lib/skills.js:30` — `api-graph.json` read. Bounded sidecar per
+  Research §A; safe at projected catalog sizes.
+- `scripts/lib/ndjson.js` — the helper itself contains the primitives.
+- `__tests__/` and `*.test.js` — fixtures intentionally contain banned
+  strings.
+- `pipeline-stats.json`, `kv-published.json` — bounded sidecars
+  (added when their producers land in later F1 tasks).
+
+**Required:**
+
+- Streaming `openSync` / `writeSync` / `closeSync` / `renameSync` for
+  any growing data file. Always tmp+rename for atomicity.
+- `npm run check:patterns` runs on every PR via the `lint` job. Use
+  baseline mode (`--mode=baseline`) when intentionally adding a new
+  allowlisted hit; switch to strict mode (`--mode=lint`) at the gate.
+- Capture a pre-deploy sitemap snapshot before any F1 wave deploys —
+  see `.planning/phases/03.1.1-streaming-foundation/pre-f1-sitemap-snapshot.xml`.
+
+### Embedding cost controls (F1 T3 / Decision B)
+
+`scripts/embed-skills.js` honors `EMBED_DRY_RUN=1` to short-circuit the
+OpenAI call and emit deterministic SHA-256-seeded fake vectors instead.
+Output NDJSON has identical shape to a live run (only the float values
+differ); downstream consumers (compute-similar, compute-clusters,
+upload-vectors) work transparently against the fake data.
+
+When to use it:
+
+- **CI fixture/smoke runs.** The 50k-record verification at F1 V3 would
+  burn ~$0.42 of OpenAI credit per attempt and hit the tier-1 rate
+  limit at >17 min. `EMBED_DRY_RUN=1` skips both.
+- **Plan-check rev cycles.** Each Rev runs CI; sharing one $0.42 across
+  many attempts isn't viable. Dry-run is the default; the live path is
+  verified separately on a small (100-record) push-event smoke.
+- **Local dev iterations.** `EMBED_DRY_RUN=1 npm run embed` lets you
+  exercise the pipeline without an OpenAI key.
+
+When NOT to use it:
+
+- **Daily production scrape.** Live cron MUST embed real vectors.
+- **Pre-deploy verification of a real release.** Always do at least one
+  live-OpenAI smoke before declaring a milestone complete.
+
+The fake vectors are produced by hashing `skill.id` (SHA-256) and
+mapping bytes to floats in [-1, 1]. Deterministic — same input
+produces same output, useful for snapshot diff tests.
+
 ## GitHub API facts (verified Phase 3.0.1 research)
 
 Claude's training data is wrong on some specifics; trust these:

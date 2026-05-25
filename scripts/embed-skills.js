@@ -48,6 +48,7 @@ import { readFileSync, writeFileSync, existsSync } from 'fs';
 import { createHash } from 'crypto';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
+import { readNdjsonRecords, writeNdjsonStreaming } from './lib/ndjson.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..');
@@ -58,6 +59,27 @@ const OPENAI_KEY = process.env.OPENAI_API_KEY;
 // Note: we don't hard-fail on missing key here. If there are no deltas to
 // embed (all skills already vectorized and hashes match), we skip the
 // OpenAI call entirely. Only hard-fail if we have work to do and no key.
+
+// EMBED_DRY_RUN=1 short-circuits the OpenAI call and generates deterministic
+// SHA-256-seeded fake vectors instead. Used by:
+//   - T2's smoke fixture run (50k records, would otherwise burn ~$0.42 and hit
+//     OpenAI tier-1 rate limit at >17 min)
+//   - CI verification runs during F1/F2/F3 plan-check rev cycles
+//   - The 50k regression-set CI run (V3 in plan §verify)
+// Live OpenAI smoke verifies the real path separately on a small (100-record)
+// dataset via push-event workflow.
+const DRY_RUN = process.env.EMBED_DRY_RUN === '1';
+
+function fakeVectorFor(id) {
+  if (!id) throw new Error('fakeVectorFor: missing id');
+  const h = createHash('sha256').update(id).digest();
+  const vec = new Array(DIMENSIONS);
+  for (let i = 0; i < DIMENSIONS; i++) {
+    const b = h[i % h.length];
+    vec[i] = ((b / 255) * 2) - 1; // map [0,255] → [-1,1]
+  }
+  return vec;
+}
 
 const MODEL = 'text-embedding-3-small';
 const DIMENSIONS = 1536;
@@ -118,21 +140,13 @@ function buildEmbeddingInput(skill) {
 // Load prior vectors keyed by metadata.skill_id (the source-of-truth unique
 // identifier). The record's vector `id` is a derived vectorize-safe form.
 function loadPriorVectors() {
-  if (!existsSync(OUTPUT_PATH)) return new Map();
+  // Uses the shared streaming reader from scripts/lib/ndjson.js (chunked
+  // readSync — avoids V8 ~536 MB string limit). Header records (_header:
+  // true) are filtered defensively.
   try {
-    const lines = readFileSync(OUTPUT_PATH, 'utf-8').split('\n').filter(Boolean);
-    const map = new Map();
-    for (const line of lines) {
-      try {
-        const rec = JSON.parse(line);
-        // Prefer metadata.skill_id (new format), fall back to rec.id (old format)
-        const key = rec.metadata?.skill_id || rec.id;
-        if (key) map.set(key, rec);
-      } catch {
-        // skip malformed lines
-      }
-    }
-    return map;
+    return readNdjsonRecords(OUTPUT_PATH, {
+      keyFn: (r) => r.metadata?.skill_id || r.id,
+    });
   } catch {
     return new Map();
   }
@@ -214,25 +228,29 @@ async function main() {
 
   if (todo.length === 0) {
     log('no changes — writing output unchanged and exiting');
-    const ndjson = kept.map(r => JSON.stringify(r)).join('\n') + '\n';
-    writeFileSync(OUTPUT_PATH, ndjson, 'utf-8');
+    writeNdjsonStreaming(OUTPUT_PATH, kept);
     log(`wrote ${OUTPUT_PATH} (${kept.length} vectors)`);
     log('=== skill embedder complete ===');
     return;
   }
 
-  // We have work to do — now the OpenAI key is required
-  if (!OPENAI_KEY) {
+  // We have work to do — OpenAI key is required UNLESS in DRY_RUN mode
+  if (!OPENAI_KEY && !DRY_RUN) {
     console.error('ERROR: OPENAI_API_KEY required to embed new/changed skills.');
     console.error(`Found ${todo.length} skills needing embedding.`);
     console.error('Set OPENAI_API_KEY in .env (local) or as a GitHub Actions repo secret (CI).');
+    console.error('To run without OpenAI (CI fixtures, plan-check rev cycles), set EMBED_DRY_RUN=1.');
     process.exit(1);
   }
 
-  // Cost estimate
-  const estTokens = todo.length * 400;
-  const estCost = (estTokens / 1_000_000) * 0.02;
-  log(`estimated cost: ~$${estCost.toFixed(4)} (${estTokens.toLocaleString()} tokens)`);
+  if (DRY_RUN) {
+    log(`EMBED_DRY_RUN=1 — generating deterministic seeded fake vectors for ${todo.length} records (zero OpenAI calls)`);
+  } else {
+    // Cost estimate
+    const estTokens = todo.length * 400;
+    const estCost = (estTokens / 1_000_000) * 0.02;
+    log(`estimated cost: ~$${estCost.toFixed(4)} (${estTokens.toLocaleString()} tokens)`);
+  }
 
   // Process in batches
   const newRecords = [];
@@ -244,16 +262,19 @@ async function main() {
     const inputs = batch.map(({ skill }) => buildEmbeddingInput(skill));
 
     let vectors;
-    try {
-      vectors = await embedBatch(inputs);
-    } catch (err) {
-      log(`  [FATAL] batch ${Math.floor(i / BATCH_SIZE) + 1} failed: ${err.message}`);
-      // Save progress before exiting so we can resume
-      const partial = [...kept, ...newRecords];
-      const ndjson = partial.map(r => JSON.stringify(r)).join('\n') + '\n';
-      writeFileSync(OUTPUT_PATH, ndjson, 'utf-8');
-      log(`saved partial: ${partial.length} vectors written`);
-      process.exit(1);
+    if (DRY_RUN) {
+      vectors = batch.map(({ skill }) => fakeVectorFor(skill.id));
+    } else {
+      try {
+        vectors = await embedBatch(inputs);
+      } catch (err) {
+        log(`  [FATAL] batch ${Math.floor(i / BATCH_SIZE) + 1} failed: ${err.message}`);
+        // Save progress before exiting so we can resume
+        const partial = [...kept, ...newRecords];
+        writeNdjsonStreaming(OUTPUT_PATH, partial);
+        log(`saved partial: ${partial.length} vectors written`);
+        process.exit(1);
+      }
     }
 
     if (vectors.length !== batch.length) {
@@ -284,13 +305,11 @@ async function main() {
     const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
     log(`  [${done}/${todo.length}] batch ${Math.floor(i / BATCH_SIZE) + 1} done (${elapsed}s elapsed)`);
 
-    // Checkpoint every batch
-    const all = [...kept, ...newRecords];
-    const ndjson = all.map(r => JSON.stringify(r)).join('\n') + '\n';
-    writeFileSync(OUTPUT_PATH, ndjson, 'utf-8');
+    // Checkpoint every batch (streaming write — V8-safe)
+    writeNdjsonStreaming(OUTPUT_PATH, [...kept, ...newRecords]);
 
-    // Polite pause between batches
-    if (i + BATCH_SIZE < todo.length) {
+    // Polite pause between batches (skipped in DRY_RUN — no rate limit)
+    if (i + BATCH_SIZE < todo.length && !DRY_RUN) {
       await sleep(DELAY_BETWEEN_BATCHES_MS);
     }
   }

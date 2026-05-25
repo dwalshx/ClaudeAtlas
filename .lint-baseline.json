@@ -1,0 +1,55 @@
+{
+  "generated_at": "2026-05-25T20:40:06.953Z",
+  "hits": [
+    {
+      "kind": "Banned B",
+      "file": "scripts/compute-clusters.js",
+      "line": 298
+    },
+    {
+      "kind": "Banned B",
+      "file": "scripts/filter.js",
+      "line": 367
+    },
+    {
+      "kind": "Banned B",
+      "file": "scripts/filter.js",
+      "line": 381
+    },
+    {
+      "kind": "Banned B",
+      "file": "scripts/generate-marketplace.js",
+      "line": 117
+    },
+    {
+      "kind": "Banned B",
+      "file": "scripts/mine-apis.js",
+      "line": 275
+    },
+    {
+      "kind": "Banned B",
+      "file": "scripts/scrape-plugins.js",
+      "line": 446
+    },
+    {
+      "kind": "Banned B",
+      "file": "scripts/scrape-pulse.js",
+      "line": 180
+    },
+    {
+      "kind": "Banned B",
+      "file": "scripts/scrape.js",
+      "line": 624
+    },
+    {
+      "kind": "Banned E",
+      "file": ".github/workflows/daily-scrape.yml",
+      "line": 143
+    },
+    {
+      "kind": "Banned E",
+      "file": ".github/workflows/weekly-discover.yml",
+      "line": 126
+    }
+  ]
+}

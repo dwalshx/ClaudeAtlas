@@ -24,12 +24,17 @@ import {
   saveETagCache,
   sleep,
 } from './lib/github-fetch.js';
+import { readNdjsonRecords, writeNdjsonStreaming } from './lib/ndjson.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..');
 const DATA_DIR = join(ROOT, 'data');
 const HISTORY_DIR = join(DATA_DIR, 'history');
-const SKILLS_PATH = join(DATA_DIR, 'skills-raw.json');  // Scraper writes raw data; filter produces skills.json
+// T4: NDJSON format (chunked I/O via scripts/lib/ndjson.js). Legacy .json path
+// kept temporarily for graceful migration; drop in T5 cleanup once daily-scrape
+// runs cleanly on the new format for one week.
+const SKILLS_PATH = join(DATA_DIR, 'skills-raw.ndjson');
+const LEGACY_SKILLS_PATH = join(DATA_DIR, 'skills-raw.json');
 const STATS_PATH = join(DATA_DIR, 'pipeline-stats.json');
 
 // --- Daily history snapshot ---
@@ -425,13 +430,25 @@ async function main() {
   // full sweep refreshes content. We only need to discover genuinely NEW
   // SKILL.md files in incremental mode.
   let knownIds = null;
-  if (mode === 'incremental' && existsSync(SKILLS_PATH)) {
+  // T4: read NDJSON via chunked reader (V8-string-limit safe). Falls back to
+  // legacy JSON-array path for the migration window.
+  const incrementalSource = existsSync(SKILLS_PATH)
+    ? SKILLS_PATH
+    : existsSync(LEGACY_SKILLS_PATH) ? LEGACY_SKILLS_PATH : null;
+  if (mode === 'incremental' && incrementalSource) {
     try {
-      const existingRaw = JSON.parse(readFileSync(SKILLS_PATH, 'utf-8'));
-      knownIds = new Set(existingRaw.map(s => s.id));
+      if (incrementalSource === SKILLS_PATH) {
+        const map = readNdjsonRecords(SKILLS_PATH, { keyFn: r => r.id });
+        knownIds = new Set(map.keys());
+      } else {
+        // Legacy-format read — keep the old path alive briefly during migration.
+        const existingRaw = JSON.parse(readFileSync(LEGACY_SKILLS_PATH, 'utf-8'));
+        knownIds = new Set(existingRaw.map(s => s.id));
+        console.log(`[discover] incremental: reading LEGACY ${LEGACY_SKILLS_PATH} — run scripts/migrate-raw-to-ndjson.js`);
+      }
       console.log(`[discover] incremental: ${knownIds.size} known IDs will be skipped in parse step`);
     } catch (err) {
-      console.log(`[discover] incremental: could not load existing skills-raw.json (${err.message}); parsing all discoveries`);
+      console.log(`[discover] incremental: could not load existing skills-raw (${err.message}); parsing all discoveries`);
     }
   }
 
@@ -512,10 +529,10 @@ async function main() {
     // Pace ourselves
     if (fetchCount % 100 === 0) await sleep(500);
 
-    // Save progress every 1000 skills
+    // Save progress every 1000 skills (T4: streaming write — V8-string-limit safe)
     if (skills.length > 0 && skills.length % 1000 === 0) {
       console.log(`  [checkpoint] Saving progress: ${skills.length} skills...`);
-      writeFileSync(SKILLS_PATH + '.partial', JSON.stringify(skills), 'utf-8');
+      writeNdjsonStreaming(SKILLS_PATH + '.partial', skills);
       saveETagCache(getETagCache());
     }
   }
@@ -556,24 +573,23 @@ async function main() {
     body_markdown: s.body_markdown.substring(0, 5000), // Truncate to 5KB max
   }));
 
-  // In incremental mode, MERGE with existing skills-raw.json by id.
+  // In incremental mode, MERGE with existing skills-raw.ndjson by id.
   // New entries from this run overwrite same-id entries; untouched entries are preserved.
-  // If skills-raw.json doesn't exist, fall back to write-from-scratch.
+  // T4: chunked NDJSON read+write — V8-string-limit safe.
   let writeSkills = outputSkills;
   if (mode === 'incremental' && existsSync(SKILLS_PATH)) {
     try {
-      const existing = JSON.parse(readFileSync(SKILLS_PATH, 'utf-8'));
-      const merged = new Map();
-      for (const s of existing) merged.set(s.id, s);
+      const existingMap = readNdjsonRecords(SKILLS_PATH, { keyFn: r => r.id });
+      const merged = new Map(existingMap);
       for (const s of outputSkills) merged.set(s.id, s);
       writeSkills = [...merged.values()].sort((a, b) => b.quality_score - a.quality_score);
-      console.log(`[discover] incremental merge: ${existing.length} existing + ${outputSkills.length} new -> ${writeSkills.length} total`);
+      console.log(`[discover] incremental merge: ${existingMap.size} existing + ${outputSkills.length} new -> ${writeSkills.length} total`);
     } catch (err) {
       console.log(`[discover] incremental merge failed (${err.message}), writing from scratch`);
     }
   }
 
-  writeFileSync(SKILLS_PATH, JSON.stringify(writeSkills, null, 2), 'utf-8');
+  writeNdjsonStreaming(SKILLS_PATH, writeSkills);
   saveETagCache(getETagCache());
 
   // --- Stats ---
