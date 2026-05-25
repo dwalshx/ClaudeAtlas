@@ -16,10 +16,13 @@ import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { scoreSkill } from './score.js';
 import { TRACK1_FRESHNESS_FIELDS } from './lib/skill-fields.js';
+import { readNdjsonRecords } from './lib/ndjson.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..');
-const RAW_PATH = join(ROOT, 'data', 'skills-raw.json');  // Always read from raw
+// T4: NDJSON format (chunked I/O). Legacy .json path kept for graceful migration.
+const RAW_PATH = join(ROOT, 'data', 'skills-raw.ndjson');
+const LEGACY_RAW_PATH = join(ROOT, 'data', 'skills-raw.json');
 const OUTPUT_PATH = join(ROOT, 'data', 'skills.json');
 
 // --- Enrichment preservation ---
@@ -214,7 +217,12 @@ function main() {
   // The "raw missing AND skills.json missing" cold-start case IS fatal —
   // we can't compute anything from nothing. Operator action: run the
   // bootstrap-skills-raw.yml workflow once.
-  if (!existsSync(RAW_PATH)) {
+  // T4: prefer NDJSON path; fall back to legacy JSON-array during migration window.
+  const rawSource = existsSync(RAW_PATH) ? RAW_PATH
+    : existsSync(LEGACY_RAW_PATH) ? LEGACY_RAW_PATH
+    : null;
+
+  if (!rawSource) {
     if (existsSync(OUTPUT_PATH)) {
       console.warn(`[filter] WARN: ${RAW_PATH} missing; preserving existing skills.json (Track-1-only day).`);
       console.warn(`[filter]       Run .github/workflows/bootstrap-skills-raw.yml to seed the GHA cache.`);
@@ -222,15 +230,26 @@ function main() {
       console.warn(`[filter] Exiting 0 to allow daily workflow to proceed with Track 1 output.`);
       process.exit(0);
     }
-    console.error(`[filter] FATAL: both ${RAW_PATH} and ${OUTPUT_PATH} are missing — cold start.`);
+    console.error(`[filter] FATAL: ${RAW_PATH}, ${LEGACY_RAW_PATH}, and ${OUTPUT_PATH} all missing — cold start.`);
     console.error(`[filter]        Run .github/workflows/bootstrap-skills-raw.yml first.`);
     process.exit(1);
   }
 
   console.log('=== ClaudeAtlas Filter ===');
-  console.log(`Loading raw skills...`);
+  console.log(`Loading raw skills from ${rawSource}...`);
 
-  const raw = JSON.parse(readFileSync(RAW_PATH, 'utf-8'));
+  let raw;
+  if (rawSource === RAW_PATH) {
+    // T4: chunked NDJSON read — V8-string-limit safe regardless of file size.
+    const map = readNdjsonRecords(RAW_PATH, { keyFn: r => r.id });
+    raw = [...map.values()];
+  } else {
+    // Legacy JSON-array path. Will FAIL with ERR_STRING_TOO_LONG on files
+    // past ~500 MB; that's the bug T4 fixes. Loud warning so this branch
+    // doesn't silently linger.
+    console.warn(`[filter] WARN: reading LEGACY ${LEGACY_RAW_PATH} — run \`node scripts/migrate-raw-to-ndjson.js\` to convert.`);
+    raw = JSON.parse(readFileSync(LEGACY_RAW_PATH, 'utf-8'));
+  }
   console.log(`Raw skills: ${raw.length}`);
 
   // Load prior enrichments (skill_first_commit_at, etc.) from existing skills.json

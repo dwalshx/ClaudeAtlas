@@ -56,12 +56,14 @@ jobs:
       # means a single weekly run may not finish; the saved cache (checkpointed
       # every 1000 skills) lets the next run pick up from where this one
       # stopped, converging across 1-2 weekends.
+      # T4 (2026-05-25): file format migrated JSON-array → NDJSON.
+      # Cache key prefix changed from `skills-raw-` to `skills-raw-ndjson-`.
       - name: Restore skills-raw cache
         uses: actions/cache/restore@v4
         with:
-          path: data/skills-raw.json
-          key: skills-raw-${{ github.run_number }}
-          restore-keys: skills-raw-
+          path: data/skills-raw.ndjson
+          key: skills-raw-ndjson-${{ github.run_number }}
+          restore-keys: skills-raw-ndjson-
 
       # Track 2: Discovery (full) — no `pushed:>` filter; scans the entire
       # corpus to catch repos whose pushed_at didn't change but whose
@@ -93,11 +95,11 @@ jobs:
       # Bounded by hashFiles to avoid saving an empty cache if the scrape
       # never produced output.
       - name: Save skills-raw cache
-        if: always() && hashFiles('data/skills-raw.json') != ''
+        if: always() && hashFiles('data/skills-raw.ndjson') != ''
         uses: actions/cache/save@v4
         with:
-          path: data/skills-raw.json
-          key: skills-raw-${{ github.run_number }}
+          path: data/skills-raw.ndjson
+          key: skills-raw-ndjson-${{ github.run_number }}
 
       # Apply filter (writes skills.json from skills-raw.json)
       - name: Filter and calibrate skills

@@ -1,20 +1,20 @@
 {
-  "generated_at": "2026-05-18T17:58:28.106Z",
+  "generated_at": "2026-05-25T20:40:06.953Z",
   "hits": [
     {
       "kind": "Banned B",
       "file": "scripts/compute-clusters.js",
-      "line": 293
+      "line": 298
     },
     {
       "kind": "Banned B",
       "file": "scripts/filter.js",
-      "line": 348
+      "line": 367
     },
     {
       "kind": "Banned B",
       "file": "scripts/filter.js",
-      "line": 362
+      "line": 381
     },
     {
       "kind": "Banned B",
@@ -25,11 +25,6 @@
       "kind": "Banned B",
       "file": "scripts/mine-apis.js",
       "line": 275
-    },
-    {
-      "kind": "Banned B",
-      "file": "scripts/scrape-discover-repos.js",
-      "line": 243
     },
     {
       "kind": "Banned B",
@@ -44,27 +39,17 @@
     {
       "kind": "Banned B",
       "file": "scripts/scrape.js",
-      "line": 576
-    },
-    {
-      "kind": "Banned B",
-      "file": "scripts/scrape.js",
-      "line": 608
-    },
-    {
-      "kind": "Banned E",
-      "file": ".github/workflows/bootstrap-skills-raw.yml",
-      "line": 51
+      "line": 624
     },
     {
       "kind": "Banned E",
       "file": ".github/workflows/daily-scrape.yml",
-      "line": 136
+      "line": 143
     },
     {
       "kind": "Banned E",
       "file": ".github/workflows/weekly-discover.yml",
-      "line": 124
+      "line": 126
     }
   ]
 }
