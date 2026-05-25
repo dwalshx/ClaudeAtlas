@@ -26,8 +26,11 @@
     "smoke:astro": "node scripts/smoke-astro-loader.mjs",
     "dev": "astro dev",
     "build": "astro build",
+    "postbuild": "node scripts/check-sitemap-completeness.js",
     "preview": "astro preview",
-    "astro": "astro"
+    "astro": "astro",
+    "check:sitemap": "node scripts/check-sitemap-completeness.js",
+    "check:tier-budget": "node scripts/check-tier-budget.js"
   },
   "keywords": [
     "claude",
