@@ -24,6 +24,7 @@
     "test:lib": "node --test scripts/lib/__tests__/ndjson.test.js",
     "fixture:gen": "node scripts/lib/__tests__/fixture-skills-50k.js",
     "smoke:astro": "node scripts/smoke-astro-loader.mjs",
+    "publish:kv": "node scripts/lib/publish-kv.js",
     "dev": "astro dev",
     "build": "astro build",
     "postbuild": "node scripts/check-sitemap-completeness.js",
