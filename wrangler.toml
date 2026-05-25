@@ -48,3 +48,22 @@ index_name = "claudeatlas-skills"
 [[kv_namespaces]]
 binding = "QUERY_CACHE"
 id = "bb975b4a7dcd4426bcead6579f636cc3"
+
+# --- KV: per-slug skill records (Phase 03.1.1 T5d / Decision A) ---
+# After T5's tier-aware rendering, only Top/Featured + Solid slugs get a
+# static HTML file in dist/. Listed slugs are served at request time by
+# worker/index.js via env.SKILLS_KV.get(slug). The worker reads ONE record
+# per request (O(1) per-request memory in catalog size) — no NDJSON
+# materialization in the Worker.
+#
+# Free KV tier: 100k reads/day, 1k writes/day. The KV_PUBLISH_BUDGET env
+# var on the daily-scrape publish:kv step caps writes per run; first-
+# bootstrap publish shards across ~5 days at 10k writes/run. See
+# scripts/lib/publish-kv.js and CLAUDE.md "Embedding cost controls"
+# for cost analysis.
+#
+# Namespace created 2026-05-18 via Cloudflare dashboard. GitHub Actions
+# secret SKILLS_KV_NAMESPACE_ID points at the same ID for publish:kv.
+[[kv_namespaces]]
+binding = "SKILLS_KV"
+id = "a27c6e00fc65418a9bb6a1fcb9c0d2eb"

@@ -9,12 +9,18 @@
  *   POST /api/log-search      — debounced search query logger → Cloudflare D1
  *   POST /api/v1/search       — semantic search over skill embeddings (Vectorize)
  *   GET  /api/v1/search       — same, via query-string `?q=...` (for easy curl/links)
+ *   GET  /skills/{slug}/      — static assets if pre-rendered (Top/Solid tier),
+ *                               else SKILLS_KV.get(slug) → dynamic render (Listed)
  *   *                         — static assets from env.ASSETS.fetch (dist/)
  *
  * Bindings required (in wrangler.toml):
  *   ASSETS      — automatic static assets binding (from [assets] block)
  *   DB          — D1 database for search query log
  *   VECTORIZE   — Vectorize index for skill embeddings
+ *   QUERY_CACHE — KV namespace: caches OpenAI query embeddings
+ *   SKILLS_KV   — KV namespace: per-slug skill records for Listed-tier
+ *                 dynamic rendering. Populated by scripts/lib/publish-kv.js
+ *                 during the daily-scrape workflow.
  *
  * Secrets required (set via `wrangler secret put` or the CF dashboard):
  *   SALT_SECRET      — daily-rotating IP hash salt for /api/log-search
@@ -316,6 +322,130 @@ export async function semanticSearch(request, env) {
 }
 
 // ---------------------------------------------------------------------------
+// GET /skills/{slug}/ — Listed-tier dynamic render (Phase 03.1.1 T5d)
+// ---------------------------------------------------------------------------
+//
+// After T5's tier-aware rendering, only Top/Featured + Solid slugs get a
+// static HTML file in dist/. For any GET request to `/skills/<slug>/`, the
+// fetch handler first asks env.ASSETS — if it returns a 200, we have a
+// pre-rendered page (Top/Solid tier; serve it). If it returns 404, we fall
+// here and render from SKILLS_KV.
+//
+// O(1) per-request memory: ONE record fetched from KV, parsed, rendered.
+// No NDJSON materialization. No `await res.text()` on a multi-MB file.
+// Per-request memory is bounded by record size (~10 KB) regardless of
+// total catalog size. This is what makes Listed-tier dynamic rendering
+// scale to 200k+ records.
+//
+// Caching: 5-minute edge cache via Cache-Control headers. Subsequent
+// requests for the same slug serve from Cloudflare's edge cache without
+// invoking the worker.
+
+function escapeHtml(s) {
+  if (typeof s !== 'string') return '';
+  return s
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+function renderListedSkillHtml(skill) {
+  const name = escapeHtml(skill.name || skill.slug || 'Skill');
+  const slug = escapeHtml(skill.slug || '');
+  const description = escapeHtml(skill.description || '');
+  const repoFullName = escapeHtml(skill.repo_full_name || '');
+  const repoUrl = escapeHtml(skill.repo_url || `https://github.com/${skill.repo_full_name || ''}`);
+  const category = escapeHtml(skill.category || '');
+  const stars = Number(skill.repo_stars || 0);
+  const tier = escapeHtml(skill.quality_tier || 'listed');
+  const score = Number(skill.quality_score || 0);
+  const installCmd = escapeHtml(`claude install-skill ${skill.repo_full_name || ''}`);
+  const bodyExcerpt = escapeHtml((skill.body_markdown || '').slice(0, 1500));
+
+  // Minimal but functional template. Visual chrome (nav/footer matching
+  // BaseLayout.astro) is intentionally light here — a future polish task
+  // can extract a `dist/_partial/listed-shell.html` partial and merge.
+  // The /assets/* CSS bundle is loaded by URL so the page picks up the
+  // production Tailwind styles even though it's rendered dynamically.
+  return `<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>${name} — ClaudeAtlas</title>
+<meta name="description" content="${description}">
+<link rel="canonical" href="https://claudeatlas.com/skills/${slug}/">
+<link rel="stylesheet" href="/_astro/index.css">
+<style>
+:root{color-scheme:dark}
+body{margin:0;padding:0;background:#0a0a0b;color:#e5e7eb;font-family:ui-sans-serif,system-ui,sans-serif;line-height:1.6}
+.shell{max-width:768px;margin:0 auto;padding:2rem 1.25rem}
+header{padding:1rem 0;border-bottom:1px solid #1f2937;margin-bottom:2rem}
+header a{color:#e5e7eb;text-decoration:none;font-weight:600}
+h1{font-size:1.75rem;margin:0 0 .5rem}
+.tier{display:inline-block;padding:.125rem .5rem;border-radius:.25rem;background:#1e293b;color:#94a3b8;font-size:.75rem;font-weight:600;text-transform:uppercase;margin-left:.5rem}
+.meta{color:#94a3b8;font-size:.875rem;margin-bottom:1.5rem}
+.meta a{color:#7dd3fc}
+.install{background:#111827;border:1px solid #1f2937;border-radius:.375rem;padding:1rem;margin:1.5rem 0;font-family:ui-monospace,monospace;font-size:.875rem;overflow-x:auto}
+.body{white-space:pre-wrap;font-size:.9375rem;color:#cbd5e1;margin-top:2rem}
+footer{margin-top:4rem;padding-top:1rem;border-top:1px solid #1f2937;color:#64748b;font-size:.875rem}
+footer a{color:#94a3b8}
+</style>
+</head>
+<body>
+<div class="shell">
+  <header><a href="/">← ClaudeAtlas</a></header>
+  <h1>${name}<span class="tier">${tier}</span></h1>
+  <div class="meta">
+    ${description}<br>
+    <a href="${repoUrl}">${repoFullName}</a> · ★ ${stars.toLocaleString()} · ${category} · score ${score}
+  </div>
+  <div class="install"><strong>Install:</strong> <code>${installCmd}</code></div>
+  ${bodyExcerpt ? `<div class="body">${bodyExcerpt}</div>` : ''}
+  <footer>
+    Served dynamically by ClaudeAtlas. <a href="${repoUrl}">View source on GitHub</a>.
+  </footer>
+</div>
+</body>
+</html>`;
+}
+
+async function renderListedSkillPage(slug, env) {
+  if (!env || !env.SKILLS_KV) {
+    return new Response('SKILLS_KV not configured', { status: 503 });
+  }
+  let raw;
+  try {
+    raw = await env.SKILLS_KV.get(slug);
+  } catch (err) {
+    console.error('SKILLS_KV.get failed:', err && err.message);
+    return new Response('KV read failed', { status: 502 });
+  }
+  if (!raw) {
+    return new Response('Not Found', {
+      status: 404,
+      headers: { 'content-type': 'text/plain; charset=utf-8' },
+    });
+  }
+  let skill;
+  try {
+    skill = JSON.parse(raw);
+  } catch {
+    return new Response('Corrupt KV entry', { status: 500 });
+  }
+  return new Response(renderListedSkillHtml(skill), {
+    headers: {
+      'content-type': 'text/html; charset=utf-8',
+      // Edge-cache for 5 minutes. Subsequent requests for the same slug
+      // serve from Cloudflare's edge without invoking the worker.
+      'cache-control': 'public, max-age=300, s-maxage=300',
+    },
+  });
+}
+
+// ---------------------------------------------------------------------------
 // Worker entry point
 // ---------------------------------------------------------------------------
 
@@ -336,7 +466,29 @@ export default {
       return semanticSearch(request, env);
     }
 
-    // Fallthrough to static assets
+    // T5: Listed-tier dynamic render fallback. For GET /skills/<slug>/
+    // requests, try static assets first (Top/Solid pre-rendered); on
+    // 404, render from SKILLS_KV.
+    if (
+      request.method === 'GET' &&
+      url.pathname.startsWith('/skills/') &&
+      url.pathname.endsWith('/') &&
+      env && env.ASSETS
+    ) {
+      const assetRes = await env.ASSETS.fetch(request);
+      if (assetRes.status === 200) {
+        return assetRes;
+      }
+      // Static fall-through: try KV for Listed tier. Slug is the path
+      // between `/skills/` and the trailing `/`.
+      const slug = url.pathname.slice('/skills/'.length, -1);
+      if (slug) {
+        return renderListedSkillPage(slug, env);
+      }
+      return assetRes; // hand back the 404 if slug parse fails
+    }
+
+    // Fallthrough to static assets for everything else
     if (env && env.ASSETS) {
       return env.ASSETS.fetch(request);
     }
