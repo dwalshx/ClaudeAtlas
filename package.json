@@ -30,6 +30,7 @@
     "preview": "astro preview",
     "astro": "astro",
     "check:sitemap": "node scripts/check-sitemap-completeness.js",
+    "check:sitemap-stability": "node scripts/check-sitemap-stability.js",
     "check:tier-budget": "node scripts/check-tier-budget.js"
   },
   "keywords": [
