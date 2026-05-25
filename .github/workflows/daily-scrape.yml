@@ -84,11 +84,35 @@ jobs:
           key: skills-raw-ndjson-${{ github.run_number }}
           restore-keys: skills-raw-ndjson-
 
+      # T5 5e follow-up: Track 1 reads data/skills.ndjson to know which
+      # repos to refresh. Post-T5, skills.ndjson is gitignored and
+      # distributed via the skills-latest release asset, so the runner
+      # needs to fetch it before Track 1 runs. On the FIRST post-T5 run
+      # the asset doesn't exist yet — that's OK; Track 1 skips (its
+      # output is an enrichment overlay, not a hard dependency). Filter
+      # then bootstraps a fresh skills.ndjson from Track 2's output.
+      - name: Fetch prior skills-latest release asset (for Track 1 input)
+        if: github.event_name != 'push'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if gh release download skills-latest --pattern 'skills.ndjson' --output data/skills.ndjson 2>/dev/null; then
+            echo "Fetched prior skills-latest for Track 1 freshness merge ($(wc -l < data/skills.ndjson) records)"
+          else
+            echo "No prior skills-latest release asset (first post-T5 run?). Track 1 will skip; filter bootstraps from Track 2 output."
+          fi
+
       # Track 1: Star Pulse — cheap refresh of stars/forks/issues/pushed_at
       # for already-known repos. Conditional GETs via ETag cache make this
       # near-free for unchanged repos.
+      #
+      # `if: hashFiles(...)` skips Track 1 cleanly on the first-ever post-T5
+      # run when skills.ndjson hasn't been bootstrapped yet. Track 1's job
+      # is to refresh existing records, not produce new ones; missing it
+      # for one day is acceptable (next run picks up where this left off
+      # with the new skills-latest).
       - name: Run Track 1 (Star Pulse)
-        if: github.event_name != 'push'
+        if: github.event_name != 'push' && hashFiles('data/skills.ndjson') != ''
         run: npm run scrape:pulse
         env:
           GITHUB_TOKEN: ${{ secrets.SCRAPE_PAT }}
