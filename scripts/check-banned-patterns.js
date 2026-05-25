@@ -15,8 +15,10 @@
  *   E: .github/workflows/*.yml inline `node -e "...JSON.parse(readFileSync(...))..."` — Rev 2 B4
  *
  * Modes:
- *   --mode=baseline  (default)  Snapshot existing hits to .lint-baseline.json; exit 0.
- *   --mode=lint                  Fail on any non-allowlisted, non-baseline hit.
+ *   --mode=lint      (default)  Fail on any non-allowlisted hit.
+ *   --mode=baseline              Snapshot existing hits to .lint-baseline.json; exit 0.
+ *                                Use for migration windows where some intentional
+ *                                hits exist before allowlist entries are written.
  *
  * Allowlist (LINT_ALLOWLIST below) documents the bounded-file reads that
  * stay sync per Research §A.
@@ -71,6 +73,49 @@ const LINT_ALLOWLIST = [
     file: 'scripts/check-banned-patterns.js',
     reason: 'the lint script itself contains the banned-pattern regexes as string literals',
   },
+  // ---------------------------------------------------------------------------
+  // T5 5h: bounded-sidecar writers. Each entry is a JSON.stringify(x, null, 2)
+  // write to a sidecar file that's structurally bounded — total size grows
+  // sub-linearly with catalog size, and stays well under V8's ~536 MB string
+  // limit at projected scales. Documenting here lets us flip the lint to
+  // strict mode without losing the ability to keep these sidecars human-
+  // readable in git.
+  // ---------------------------------------------------------------------------
+  {
+    file: 'scripts/compute-clusters.js',
+    line: 304,
+    reason: 'skill-clusters.json write — bounded ~100 KB (k=16 clusters × cluster metadata)',
+  },
+  {
+    file: 'scripts/filter.js',
+    line: 402,
+    reason: 'pipeline-stats.json write — bounded (~5 KB; tier counts + categories summary)',
+  },
+  {
+    file: 'scripts/generate-marketplace.js',
+    line: 121,
+    reason: 'marketplace.json write — bounded by Featured-tier count (~100 entries at projected scales)',
+  },
+  {
+    file: 'scripts/lib/publish-kv.js',
+    line: 80,
+    reason: 'kv-published.json slug→sha sidecar write — bounded ~4 MB at 50k slugs (catalog-size linear, ~80 B/entry)',
+  },
+  {
+    file: 'scripts/mine-apis.js',
+    line: 279,
+    reason: 'api-graph.json write — bounded by services × skill integrations (Research §A: safe at projected scales)',
+  },
+  {
+    file: 'scripts/scrape-plugins.js',
+    line: 446,
+    reason: 'plugins-raw.json write — T6 territory; ~34 MB today, scheduled for NDJSON migration in Phase 03.1.2 / 3.2',
+  },
+  {
+    file: 'scripts/scrape.js',
+    line: 624,
+    reason: 'pipeline-stats.json write (Track 2) — bounded (~5 KB; same shape as filter.js stats write)',
+  },
 ];
 
 // ---------------------------------------------------------------------------
@@ -109,7 +154,11 @@ const BANNED_D_WINDOW = 40;
 // Arg parsing.
 // ---------------------------------------------------------------------------
 function parseArgs(argv) {
-  const args = { mode: 'baseline', scanPath: null, baselineFile: join(REPO_ROOT, '.lint-baseline.json') };
+  // T5 5h: default flipped from 'baseline' to 'lint' (strict). All
+  // expected hits are now documented in LINT_ALLOWLIST with rationale.
+  // Any new readFileSync/JSON.stringify pattern in scripts/ or workflows
+  // fails CI loudly unless explicitly allowlisted.
+  const args = { mode: 'lint', scanPath: null, baselineFile: join(REPO_ROOT, '.lint-baseline.json') };
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i];
     if (a.startsWith('--mode=')) args.mode = a.slice('--mode='.length);
