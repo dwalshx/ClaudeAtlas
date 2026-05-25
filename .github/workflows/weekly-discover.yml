@@ -120,10 +120,12 @@ jobs:
           CF_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
           CF_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
 
-      # Regression guard
+      # Regression guard. T5 5e: skills.json migrated to skills.ndjson;
+      # JSON.parse over a >500 MB file crashes at the V8 string limit.
+      # wc -l streams.
       - name: Check skills count
         run: |
-          CURRENT=$(node -e "console.log(JSON.parse(require('fs').readFileSync('data/skills.json','utf8')).length)")
+          CURRENT=$(wc -l < data/skills.ndjson)
           echo "Current skills count: $CURRENT"
           if [ "$CURRENT" -lt 100 ]; then
             echo "::error::Skills count too low: $CURRENT (minimum 100)"
@@ -155,15 +157,14 @@ jobs:
           fi
 
       # Commit updated curated data back to repo. NEVER commits
-      # data/skills-raw.json — Track 2 full produces a ~295 MB raw file
-      # which exceeds GitHub's 100 MB single-file push limit. Only the
-      # filtered skills.json, pipeline-stats.json, and daily history
-      # snapshot are committed.
+      # data/skills-raw.ndjson (gitignored, ~295 MB) nor data/skills.ndjson
+      # (T5: distributed via daily-scrape's skills-latest release asset
+      # instead). Only pipeline-stats and daily history snapshot here.
       - name: Commit skills data
         run: |
           git config user.name "ClaudeAtlas Bot"
           git config user.email "bot@claudeatlas.com"
-          git add data/skills.json data/pipeline-stats.json data/history/ || true
+          git add data/pipeline-stats.json data/history/ data/kv-published.json || true
           git diff --cached --quiet || git commit -m "chore: weekly full-sweep skills data $(date -u +%Y-%m-%d)"
           # Fail loud on push errors (was `|| true`, which silently masked
           # permission failures for 5+ weeks). Combined with the job's

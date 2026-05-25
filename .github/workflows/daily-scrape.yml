@@ -19,9 +19,14 @@ jobs:
     # something is wrong. Phase 3.0.1 architecture: Track 1 (Star Pulse,
     # cheap refresh of known repos) → Track 2 (Discovery via repo search,
     # incremental — only new/changed skills, fed by GHA-cached
-    # data/skills-raw.json) → Filter (re-score + re-tier from raw corpus).
-    # Push-triggered runs skip the scrape+filter steps entirely so they're
-    # typically under 90 seconds.
+    # data/skills-raw.ndjson) → Filter (writes data/skills.ndjson). T5
+    # (2026-05-25): skills.ndjson is distributed via the `skills-latest`
+    # GitHub release asset, NOT committed to main; per-slug records also
+    # publish to Workers KV (SKILLS_KV) for the Listed-tier dynamic render
+    # path in worker/index.js.
+    # Push-triggered runs skip scrape/filter/embed/upload/publish entirely
+    # and just fetch `skills-latest` from the release asset, then build
+    # and deploy.
     timeout-minutes: 90
     steps:
       - uses: actions/checkout@v4
@@ -34,10 +39,11 @@ jobs:
       - run: npm ci
 
       # --- Data pipeline (scheduled + manual runs only) ---
-      # Push events skip the scrape+filter+cache steps and deploy the
-      # committed data/skills.json as-is. This makes code deploys fast
-      # (~90 sec) and avoids the cold-scrape timeout problem on first
-      # runs without an ETag cache.
+      # Push events skip the scrape+filter+cache+publish steps and just
+      # fetch skills.ndjson from the `skills-latest` release asset
+      # (Rev 2 F1 fallback to `skills-latest-prev` if missing). This makes
+      # code deploys fast (~2 min including the asset download) and avoids
+      # the cold-scrape timeout problem on first runs without an ETag cache.
 
       # Restore ETag cache from previous run.
       # Split from save step so that save can run with `if: always()`
@@ -127,20 +133,95 @@ jobs:
       # deltas. Safe to run on every workflow event. Upload step upserts into
       # the Vectorize index; matching ids are replaced.
       - name: Embed skills (OpenAI)
+        if: github.event_name != 'push'
         run: npm run embed
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
 
       - name: Upload vectors to Vectorize
+        if: github.event_name != 'push'
         run: npm run upload-vectors
         env:
           CF_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
           CF_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
 
-      # Regression guard
+      # T5 5e (Rev 2 F1): Tag previous skills-latest as skills-latest-prev
+      # BEFORE clobbering. Preserves a one-day rollback target for
+      # data-shape divergence cases. The push-event branch (below) falls
+      # back to this prev tag if the current `skills-latest` is unreadable.
+      - name: Tag previous skills-latest as skills-latest-prev
+        if: github.event_name != 'push'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if gh release view skills-latest >/dev/null 2>&1; then
+            mkdir -p /tmp/prev-release
+            gh release download skills-latest --pattern 'skills.ndjson' --output /tmp/prev-release/skills.ndjson
+            gh release delete skills-latest-prev --yes 2>/dev/null || true
+            gh release create skills-latest-prev /tmp/prev-release/skills.ndjson \
+              --notes "Previous skills-latest, kept for F1 rollback. Auto-tagged $(date -u +%Y-%m-%dT%H:%M:%SZ)." \
+              --prerelease
+            echo "Tagged previous skills-latest as skills-latest-prev"
+          else
+            echo "First publish — no prior skills-latest to tag as prev"
+          fi
+
+      # T5 5e: Publish current skills.ndjson as `skills-latest` release asset.
+      # Replaces the legacy "git add data/skills.json" commit-back path —
+      # the file is too large to keep growing daily in the repo.
+      - name: Publish skills-latest release asset
+        if: github.event_name != 'push'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if gh release view skills-latest >/dev/null 2>&1; then
+            gh release upload --clobber skills-latest data/skills.ndjson
+          else
+            gh release create skills-latest data/skills.ndjson \
+              --notes "Daily skills NDJSON snapshot $(date -u +%Y-%m-%d)"
+          fi
+          echo "Published $(wc -l < data/skills.ndjson) records to skills-latest"
+
+      # T5 5e (Decision A): Publish per-slug records to Workers KV for
+      # the Listed-tier dynamic render path in worker/index.js. Streams
+      # data/skills.ndjson, computes content_sha per record, upserts only
+      # changed records via the bulk API. KV_PUBLISH_BUDGET caps writes
+      # per run — free-tier safe at 1k/day.
+      - name: Publish per-slug records to Workers KV
+        if: github.event_name != 'push'
+        env:
+          CF_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
+          CF_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
+          SKILLS_KV_NAMESPACE_ID: ${{ secrets.SKILLS_KV_NAMESPACE_ID }}
+          KV_PUBLISH_BUDGET: '10000'
+        run: npm run publish:kv
+
+      # T5 5e: Push-event branch fetches skills.ndjson from the
+      # `skills-latest` release asset (Rev 2 F1 fallback to
+      # skills-latest-prev for data-shape divergence rollback).
+      - name: Fetch skills-latest release asset (push-event path)
+        if: github.event_name == 'push'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          mkdir -p data
+          if gh release download skills-latest --pattern 'skills.ndjson' --output data/skills.ndjson 2>/dev/null; then
+            echo "Fetched skills.ndjson from skills-latest ($(wc -l < data/skills.ndjson) records)"
+          elif gh release download skills-latest-prev --pattern 'skills.ndjson' --output data/skills.ndjson 2>/dev/null; then
+            echo "::warning::Fetched from skills-latest-prev (skills-latest unavailable). Investigate."
+          else
+            echo "::error::Neither skills-latest nor skills-latest-prev release asset is available."
+            echo "::error::Run daily-scrape.yml manually to produce one, or restore via scripts/migrate-raw-to-ndjson.js."
+            exit 1
+          fi
+
+      # T5 5e (Rev 2 B4): Regression guard. Rewritten from `JSON.parse(
+      # readFileSync('data/skills.json'))` to `wc -l < data/skills.ndjson`.
+      # The old form crashed at V8's 0x1fffffe8 string limit once
+      # skills.ndjson grew past 537 MB (~50k records); wc -l streams.
       - name: Check skills count
         run: |
-          CURRENT=$(node -e "console.log(JSON.parse(require('fs').readFileSync('data/skills.json','utf8')).length)")
+          CURRENT=$(wc -l < data/skills.ndjson)
           echo "Current skills count: $CURRENT"
           if [ "$CURRENT" -lt 100 ]; then
             echo "::error::Skills count too low: $CURRENT (minimum 100)"
@@ -173,12 +254,22 @@ jobs:
 
       # Commit updated data back to repo (scheduled + manual runs only).
       # Push-triggered runs have nothing to commit since scrape/filter were skipped.
+      #
+      # T5 5e: skills.ndjson is NOT committed (distributed via skills-latest
+      # release asset instead — see "Publish skills-latest release asset"
+      # above). The committed set narrowed to:
+      #   - data/pipeline-stats.json: bounded summary; useful in git diff.
+      #   - data/history/: daily snapshots, ~225 KB/day; compound time series.
+      #   - data/kv-published.json: slug→sha sidecar (~4 MB at 50k slugs;
+      #     bounded by catalog size). publish-kv.js skips records whose
+      #     sidecar entry matches — committing this lets cron resume
+      #     incrementally across runs without re-uploading every record.
       - name: Commit skills data
         if: github.event_name != 'push'
         run: |
           git config user.name "ClaudeAtlas Bot"
           git config user.email "bot@claudeatlas.com"
-          git add data/skills.json data/pipeline-stats.json data/history/ || true
+          git add data/pipeline-stats.json data/history/ data/kv-published.json || true
           git diff --cached --quiet || git commit -m "chore: update skills data $(date -u +%Y-%m-%d)"
           # Fail loud on push errors. The prior `|| true` silently masked
           # permission failures for 5+ weeks — never again.

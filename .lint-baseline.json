@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-05-25T22:56:44.031Z",
+  "generated_at": "2026-05-25T23:13:38.719Z",
   "hits": [
     {
       "kind": "Banned B",
@@ -18,6 +18,11 @@
     },
     {
       "kind": "Banned B",
+      "file": "scripts/lib/publish-kv.js",
+      "line": 80
+    },
+    {
+      "kind": "Banned B",
       "file": "scripts/mine-apis.js",
       "line": 279
     },
@@ -30,16 +35,6 @@
       "kind": "Banned B",
       "file": "scripts/scrape.js",
       "line": 624
-    },
-    {
-      "kind": "Banned E",
-      "file": ".github/workflows/daily-scrape.yml",
-      "line": 143
-    },
-    {
-      "kind": "Banned E",
-      "file": ".github/workflows/weekly-discover.yml",
-      "line": 126
     }
   ]
 }
