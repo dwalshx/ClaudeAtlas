@@ -24,12 +24,14 @@
 import { readFileSync, writeFileSync, existsSync, mkdirSync, readdirSync, rmSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
+import { loadSkillsArray } from './lib/skills-stream.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..');
 const DATA_DIR = join(ROOT, 'data');
 const HISTORY_DIR = join(DATA_DIR, 'history');
-const SKILLS_PATH = join(DATA_DIR, 'skills.json');
+// T5: NDJSON. Reads use loadSkillsArray() (handles legacy fallback).
+const SKILLS_PATH = join(DATA_DIR, 'skills.ndjson');
 const STAR_HISTORY_PATH = join(DATA_DIR, 'star-history.json');
 const OUTPUT_DIR = join(ROOT, 'public', 'badge');
 
@@ -229,12 +231,14 @@ function loadHistorySnapshotsForRepo(repoFullName) {
 function main() {
   log('=== badge generator start ===');
 
-  if (!existsSync(SKILLS_PATH)) {
-    console.error(`[badges] ERROR: ${SKILLS_PATH} not found`);
+  // T5: loadSkillsArray() handles NDJSON + legacy fallback.
+  let skills;
+  try {
+    skills = loadSkillsArray();
+  } catch (err) {
+    console.error(`[badges] ERROR: ${err.message}`);
     process.exit(1);
   }
-
-  const skills = JSON.parse(readFileSync(SKILLS_PATH, 'utf-8'));
   log(`loaded ${skills.length} skills`);
 
   // Load star history if available

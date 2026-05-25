@@ -23,12 +23,16 @@ import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { fetchWithETag, getETagCache, saveETagCache, sleep } from './lib/github-fetch.js';
 import { TRACK1_FRESHNESS_FIELDS } from './lib/skill-fields.js';
+import { writeNdjsonStreaming } from './lib/ndjson.js';
+import { loadSkillsArray } from './lib/skills-stream.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..');
 const DATA_DIR = join(ROOT, 'data');
 const HISTORY_DIR = join(DATA_DIR, 'history');
-const SKILLS_PATH = join(DATA_DIR, 'skills.json');
+// T5: NDJSON format. Reader uses loadSkillsArray() which resolves the path
+// and handles the legacy JSON fallback; writer targets the NDJSON path.
+const SKILLS_PATH = join(DATA_DIR, 'skills.ndjson');
 
 const CONFIG = {
   MAX_FAIL_RATIO: 0.10,   // workflow-fatal threshold
@@ -113,13 +117,15 @@ async function main() {
   log('=== ClaudeAtlas Track 1 (Star Pulse) ===');
   log(`Started ${new Date().toISOString()}`);
 
-  if (!existsSync(SKILLS_PATH)) {
-    console.error(`[pulse] FATAL: ${SKILLS_PATH} not found. Run filter or scrape first.`);
+  // T5: loadSkillsArray() resolves the NDJSON path (with legacy .json fallback)
+  // and reads via chunked I/O — V8-string-limit safe.
+  let skills;
+  try {
+    skills = loadSkillsArray();
+  } catch (err) {
+    console.error(`[pulse] FATAL: could not load skills: ${err.message}`);
     process.exit(1);
   }
-
-  // Load current corpus
-  const skills = JSON.parse(readFileSync(SKILLS_PATH, 'utf-8'));
   log(`Loaded ${skills.length} skills`);
 
   // Dedup by repo_full_name
@@ -177,7 +183,8 @@ async function main() {
   log(`updated ${updated} skill records in memory (${TRACK1_FRESHNESS_FIELDS.length} fields each)`);
 
   // Write skills.json BEFORE history (so a history-write failure doesn't lose the freshness)
-  writeFileSync(SKILLS_PATH, JSON.stringify(skills, null, 2), 'utf-8');
+  // T5: streaming NDJSON write — V8-string-limit safe.
+  writeNdjsonStreaming(SKILLS_PATH, skills);
   log(`wrote ${SKILLS_PATH}`);
 
   // Build snapshot map (use fresh fields where available, fall back to existing for is_fork)

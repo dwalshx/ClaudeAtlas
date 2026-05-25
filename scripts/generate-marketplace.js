@@ -25,10 +25,12 @@
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
+import { loadSkillsArray } from './lib/skills-stream.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..');
-const SKILLS_PATH = join(ROOT, 'data', 'skills.json');
+// T5: NDJSON. Reads use loadSkillsArray() (handles legacy fallback).
+const SKILLS_PATH = join(ROOT, 'data', 'skills.ndjson');
 const OUTPUT_DIR = join(ROOT, '.claude-plugin');
 const OUTPUT_PATH = join(OUTPUT_DIR, 'marketplace.json');
 
@@ -39,12 +41,14 @@ function log(msg) {
 function main() {
   log('=== marketplace generator start ===');
 
-  if (!existsSync(SKILLS_PATH)) {
-    console.error(`ERROR: ${SKILLS_PATH} not found`);
+  // T5: loadSkillsArray() handles NDJSON + legacy fallback.
+  let skills;
+  try {
+    skills = loadSkillsArray();
+  } catch (err) {
+    console.error(`ERROR: ${err.message}`);
     process.exit(1);
   }
-
-  const skills = JSON.parse(readFileSync(SKILLS_PATH, 'utf-8'));
 
   // Only include Featured skills — curated, high-signal marketplace
   const featured = skills.filter(s => s.quality_tier === 'featured');
