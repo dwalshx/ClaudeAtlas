@@ -368,6 +368,78 @@ The release asset `skills-raw-bootstrap` is permanent — do NOT delete it.
 If the asset itself is missing, re-upload from a local
 `data/skills-raw.json` (~295 MB) and re-run the bootstrap workflow.
 
+> T4 (2026-05-25) renamed the legacy release to
+> `skills-raw-bootstrap-jsonarray-legacy` and added a new
+> `skills-raw-ndjson-bootstrap` release with the migrated NDJSON
+> format. The bootstrap workflow now pulls from the NDJSON release.
+
+### Recovery: F1 deploy broken (Phase 03.1.1 / T8)
+
+Three rollback paths exist for F1 issues. All target <5 min recovery.
+Full procedure walkthrough in
+`.planning/phases/03.1.1-streaming-foundation/3.1.1-ROLLBACK-REHEARSAL.md`.
+
+**Scenario A — Worker bug** (Listed pages 5xx or static deploy broken):
+
+```bash
+git revert <BAD_SHA>
+git push origin main
+# Push-event fires daily-scrape.yml → fetches skills-latest →
+# rebuilds + deploys reverted code. ~3 min to live.
+curl -sI https://claudeatlas.com/skills/<known-slug>/ | head -1   # expect 200
+```
+
+**Scenario B — Data-shape divergence** (filter changed shape, then was
+reverted; skills-latest still has the new shape):
+
+```bash
+git revert <BAD_SHA>
+git push origin main
+# If push-event build fails (shape mismatch):
+gh release download skills-latest-prev --pattern skills.ndjson \
+  --output data/skills.ndjson
+gh release upload --clobber skills-latest data/skills.ndjson
+git commit --allow-empty -m "deploy: refetch via skills-latest-prev"
+git push origin main
+# ~5 min to live.
+```
+
+The `skills-latest-prev` release is tagged automatically by daily-scrape's
+"Tag previous skills-latest as skills-latest-prev" step before each new
+publish. Carries the prior day's data shape.
+
+**Scenario C — Astro build broken**:
+
+```bash
+git revert <BAD_SHA>
+git push origin main
+# Push-event rebuilds and redeploys cleanly. ~3 min to live.
+# Edge cache continues serving the prior deploy during this window.
+```
+
+### Recovery: KV corruption / SKILLS_KV reset
+
+If SKILLS_KV namespace becomes corrupted (wrong shape, partial writes
+from a failed publish-kv run, or simply needs a clean rebuild):
+
+```bash
+# Option 1 — full namespace reset (preferred when corruption is broad):
+wrangler kv namespace delete SKILLS_KV --force
+wrangler kv namespace create SKILLS_KV
+# Copy new namespace ID into wrangler.toml + GH secret SKILLS_KV_NAMESPACE_ID.
+
+# Option 2 — force re-upload of every record by clearing the sidecar:
+rm data/kv-published.json
+gh workflow run daily-scrape.yml
+# Bump KV_PUBLISH_BUDGET in the workflow YAML temporarily if catalog
+# exceeds the 1k-writes/day free-tier cap (or shard across 5 days at
+# default budget).
+```
+
+The `data/kv-published.json` sidecar is the slug→content_sha map that
+publish-kv.js uses to skip unchanged records. Deleting it forces a full
+re-publish on the next run.
+
 ## Methodology
 
 - **Planning methodology:** Org OS (see `.objective/` locally — not committed to repo)
