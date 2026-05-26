@@ -7,7 +7,7 @@
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { applyTrack1Freshness } from './filter.js';
+import { applyTrack1Freshness, filterRaw } from './filter.js';
 import { TRACK1_FRESHNESS_FIELDS } from './lib/skill-fields.js';
 
 function makeSkill(overrides = {}) {
@@ -99,4 +99,113 @@ test('Test 6: same slug, different id — slug merge applies', () => {
   assert.equal(mergedCount, 1);
   assert.equal(raw[0].repo_stars, 555);
   assert.equal(raw[0].id, 'owner/repo/path-v2'); // id stays from raw
+});
+
+// ---------------------------------------------------------------------------
+// Phase 3.1 filter behavior — tests for MIN_STARS drop, MIN_BODY_LENGTH=200,
+// MAX_PER_REPO drop, slug pass, placeholder enrichment fields.
+// ---------------------------------------------------------------------------
+
+function makeAdmissible(overrides = {}) {
+  return {
+    id: `${overrides.repo_full_name || 'a/b'}/${overrides.name || 'good'}/SKILL.md`,
+    repo_full_name: 'a/b',
+    name: 'good',
+    slug: 'a/good',
+    description: 'A genuine skill description that is substantive.',
+    category: 'general',
+    body_length: 300,
+    body_markdown: 'x'.repeat(300),
+    has_name: true,
+    has_description: true,
+    frontmatter: { name: 'good', description: 'desc' },
+    repo_stars: 0,
+    repo_forks: 0,
+    repo_open_issues: 0,
+    repo_topics: [],
+    repo_license: 'MIT',
+    repo_language: 'JavaScript',
+    repo_created_at: '2024-01-01T00:00:00Z',
+    repo_updated_at: '2026-01-01T00:00:00Z',
+    repo_pushed_at: '2026-05-01T00:00:00Z',
+    repo_description: 'A test repo',
+    quality_score: 50,
+    ...overrides,
+  };
+}
+
+test('Phase 3.1: no MIN_STARS gate — 0-star record with good signals is admitted', () => {
+  const raw = [makeAdmissible({ repo_stars: 0 })];
+  const { capped } = filterRaw(raw);
+  assert.equal(capped.length, 1);
+  assert.equal(capped[0].is_duplicate, null);
+  assert.equal(capped[0].canonical_slug, null);
+  assert.equal(capped[0].novelty_score, null);
+});
+
+test('Phase 3.1: body_length=199 rejected, body_length=200 admitted', () => {
+  const raw = [
+    makeAdmissible({ id: 'a/b/short/SKILL.md', name: 'short', slug: 'a/short',
+      body_length: 199, body_markdown: 'x'.repeat(199) }),
+    makeAdmissible({ id: 'a/b/edge/SKILL.md', name: 'edge', slug: 'a/edge',
+      body_length: 200, body_markdown: 'x'.repeat(200) }),
+  ];
+  const { capped } = filterRaw(raw);
+  assert.equal(capped.length, 1);
+  assert.equal(capped[0].name, 'edge');
+});
+
+test('Phase 3.1: 100 records from one repo all survive (no MAX_PER_REPO)', () => {
+  const raw = Array.from({ length: 100 }, (_, i) => makeAdmissible({
+    id: `a/b/skill-${i}/SKILL.md`,
+    name: `skill-${i}`,
+    slug: `a/skill-${i}`,
+    body_length: 300,
+    body_markdown: 'x'.repeat(300),
+  }));
+  const { capped } = filterRaw(raw);
+  assert.equal(capped.length, 100);
+});
+
+test('Phase 3.1: (owner, name) collision yields distinct slugs and a redirect entry to the winner', () => {
+  const raw = [
+    makeAdmissible({
+      id: 'microsoft/skills/azure-aigateway/SKILL.md',
+      repo_full_name: 'microsoft/skills',
+      name: 'azure-aigateway',
+      slug: 'microsoft/azure-aigateway',
+      quality_score: 70,
+    }),
+    makeAdmissible({
+      id: 'microsoft/azure-skills/azure-aigateway/SKILL.md',
+      repo_full_name: 'microsoft/azure-skills',
+      name: 'azure-aigateway',
+      slug: 'microsoft/azure-aigateway',
+      quality_score: 85,
+    }),
+  ];
+  const { capped, redirects, collisionCount } = filterRaw(raw);
+  assert.equal(capped.length, 2);
+  const slugs = new Set(capped.map(s => s.slug));
+  assert.equal(slugs.size, 2);
+  assert.equal(collisionCount, 1);
+  // Higher quality_score wins (85 > 70) → microsoft/azure-skills is canonical.
+  assert.equal(redirects['microsoft/azure-aigateway'], 'microsoft/azure-skills/azure-aigateway');
+});
+
+test('Phase 3.1: PRESERVED_FIELDS carries is_duplicate / canonical_slug / novelty_score from prior', () => {
+  const raw = [makeAdmissible({ id: 'p/q/foo/SKILL.md', repo_full_name: 'p/q',
+    name: 'foo', slug: 'p/foo' })];
+  const priorEnrichments = new Map([['p/q/foo/SKILL.md', {
+    is_duplicate: true,
+    canonical_slug: 'older/foo',
+    novelty_score: 0.42,
+  }]]);
+  const { capped } = filterRaw(raw, new Map(), priorEnrichments);
+  assert.equal(capped.length, 1);
+  // Step 4b sets placeholders to null; Step 4c restores from prior because
+  // `s[field] == null && prior[field] != null` holds.
+  assert.equal(capped[0].is_duplicate, true);
+  assert.equal(capped[0].canonical_slug, 'older/foo');
+  assert.equal(capped[0].novelty_score, 0.42);
 });

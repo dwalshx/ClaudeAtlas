@@ -88,8 +88,13 @@ const LINT_ALLOWLIST = [
   },
   {
     file: 'scripts/filter.js',
-    line: 402,
+    line: 448,
     reason: 'pipeline-stats.json write — bounded (~5 KB; tier counts + categories summary)',
+  },
+  {
+    file: 'scripts/filter.js',
+    line: 410,
+    reason: 'slug-redirects.json write — bounded (~26 entries today; <50 long-term per RESEARCH.md §Q4)',
   },
   {
     file: 'scripts/generate-marketplace.js',
