@@ -28,6 +28,16 @@
  */
 
 // ---------------------------------------------------------------------------
+// Phase 3.1: slug collision redirects baked at build time.
+// data/slug-redirects.json is rewritten by scripts/filter.js on every
+// daily run. The map is small (26 entries today; grows as new collisions
+// appear) so we hold it in memory unconditionally. Wrangler/esbuild
+// handles native JSON imports.
+// ---------------------------------------------------------------------------
+import slugRedirectsData from '../data/slug-redirects.json';
+const SLUG_REDIRECTS = slugRedirectsData?.redirects || {};
+
+// ---------------------------------------------------------------------------
 // Shared helpers
 // ---------------------------------------------------------------------------
 
@@ -464,6 +474,18 @@ export default {
     }
     if (url.pathname === '/api/v1/search') {
       return semanticSearch(request, env);
+    }
+
+    // Phase 3.1: 301 redirect for pre-fix colliding slug URLs.
+    // /skills/{old-collide}/ → /skills/{new-collide}/. Runs BEFORE the
+    // tier-aware static/KV branch below so a user with a stale URL
+    // gets the canonical destination directly.
+    if (url.pathname.startsWith('/skills/')) {
+      const candidate = url.pathname.replace(/^\/skills\//, '').replace(/\/$/, '');
+      const redirected = SLUG_REDIRECTS[candidate];
+      if (redirected && redirected !== candidate) {
+        return Response.redirect(`${url.origin}/skills/${redirected}/`, 301);
+      }
     }
 
     // T5: Listed-tier dynamic render fallback. For GET /skills/<slug>/
