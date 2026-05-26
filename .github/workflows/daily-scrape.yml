@@ -167,6 +167,17 @@ jobs:
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
 
+      # Phase 3.1: post-embed enrichment. Reads skills.ndjson + the freshly
+      # updated skill-vectors.ndjson via the chunked NDJSON helper, computes
+      # pairwise cosine to set is_duplicate / canonical_slug / novelty_score,
+      # rewrites skills.ndjson atomically. Runs locally — does NOT call
+      # Vectorize (the local NDJSON is the source of truth for build-time
+      # computations; the $12/yr cost ceiling means we don't pay Vectorize
+      # per-query for novelty).
+      - name: Enrich skills (dedup + novelty)
+        if: github.event_name != 'push'
+        run: npm run enrich
+
       - name: Upload vectors to Vectorize
         if: github.event_name != 'push'
         run: npm run upload-vectors
