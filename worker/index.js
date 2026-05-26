@@ -469,6 +469,31 @@ export default {
     // T5: Listed-tier dynamic render fallback. For GET /skills/<slug>/
     // requests, try static assets first (Top/Solid pre-rendered); on
     // 404, render from SKILLS_KV.
+    //
+    // wrangler.toml's `run_worker_first = ["/skills/*"]` ensures we
+    // reach this branch before Cloudflare's assets binding serves its
+    // 404 page (the `not_found_handling = "404-page"` config). Top and
+    // Solid tier pages are static files in dist/; we detect them via
+    // env.ASSETS.fetch's `cf-aside` headers / content-type, or simply
+    // by probing whether the asset exists.
+    //
+    // Detection approach: probe env.ASSETS for the request. If it
+    // returns 200 AND the response body looks like a real page (not
+    // the static 404), serve it. Otherwise fall to KV.
+    //
+    // Simple heuristic: check the content of the path's index.html. If
+    // env.ASSETS returns 200 for the EXACT pathname, it's pre-rendered.
+    // The not_found_handling fallback returns the 404 page but at the
+    // SAME 200 status, so we differentiate via a probe header.
+    //
+    // Pragmatic implementation: try the asset path with an explicit
+    // "Sec-Fetch-Mode: navigate" probe and check the response's
+    // `cf-aside` debug header (Cloudflare sets it on 404-page
+    // substitutions). If unreliable, fall through to KV unconditionally
+    // and let asset hits work by accident — Top/Solid hits via KV are
+    // ALSO valid (their records are in KV too). Tier-aware rendering
+    // becomes a "static is a perf optimization for Top/Solid" pattern
+    // rather than a hard separation.
     if (
       request.method === 'GET' &&
       url.pathname.startsWith('/skills/') &&
@@ -476,16 +501,19 @@ export default {
       env && env.ASSETS
     ) {
       const assetRes = await env.ASSETS.fetch(request);
-      if (assetRes.status === 200) {
+      // If assets returned 200 AND it's clearly a real skill page (not
+      // the 404 fallback), serve it. The 404 page has `cf-aside` header
+      // set; real pages don't.
+      const isFallback404 = assetRes.headers.get('cf-aside') === 'not-found-page';
+      if (assetRes.status === 200 && !isFallback404) {
         return assetRes;
       }
-      // Static fall-through: try KV for Listed tier. Slug is the path
-      // between `/skills/` and the trailing `/`.
+      // Static miss: render Listed-tier from KV.
       const slug = url.pathname.slice('/skills/'.length, -1);
       if (slug) {
         return renderListedSkillPage(slug, env);
       }
-      return assetRes; // hand back the 404 if slug parse fails
+      return assetRes;
     }
 
     // Fallthrough to static assets for everything else

@@ -10,6 +10,15 @@ main = "worker/index.js"
 directory = "./dist"
 not_found_handling = "404-page"
 binding = "ASSETS"
+# T5 5d follow-up: for /skills/* requests the worker MUST run before the
+# assets binding can serve a 404 page. Without this, `not_found_handling
+# = "404-page"` causes env.ASSETS.fetch() to return Astro's 404.html
+# with status 200, which the worker's "serve static if 200" check
+# matches — Listed-tier slugs never reach the KV fallback. With
+# `run_worker_first` matching /skills/*, the worker is invoked
+# unconditionally for those paths and delegates to assets via
+# env.ASSETS.fetch() only when appropriate (Top/Solid tier).
+run_worker_first = ["/skills/*"]
 
 # --- D1: search query log ---
 # Provisioned via Cloudflare dashboard. SALT_SECRET set as a Worker secret.
