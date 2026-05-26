@@ -168,18 +168,22 @@ Daily history snapshots in `data/history/YYYY-MM-DD.json` use short keys:
 | License         | 10%    | Permissive open-source license present              |
 | Description     | 5%     | Repo has a meaningful description                   |
 
-Tiers:
-- **Featured** ≥ 90
-- **Solid** 70–89
-- **Listed** < 70
+Tiers (Phase 3.1+: percentile-based, NOT absolute thresholds):
+- **Featured** — top 10% of catalog by `quality_score` (ranked desc, ties broken by stars then id)
+- **Solid** — next 30% (ranks 10–40%)
+- **Listed** — remainder (ranks 40–100%)
 
-Post-filter gates (in `filter.js`):
-- Minimum 10 repo stars
-- Minimum 500-char body length
+The legacy ≥90/70–89/<70 absolute thresholds were calibrated against the pre-3.1 1,885-record catalog. At post-3.1 catalog sizes (~33k+), absolute thresholds put 84% of records in renderable tiers and blew the Cloudflare Workers Static Assets 20k free-tier file cap. Percentile-based tiering auto-scales with catalog growth.
+
+Defense in depth: `RENDERABLE_CAP=18000` in `filter.js` trims the Solid tier (preserving the Featured top-10% signal) if the percentile targets would otherwise exceed Cloudflare's static-asset budget. Activates once catalog grows past ~45k records.
+
+Post-filter gates (in `filter.js`, Phase 3.1+):
+- MAX_PER_REPO and MIN_STARS REMOVED (embedding dedup is the new gate)
+- Minimum 200-char body length (lowered from 500)
 - No template/placeholder names (e.g. `agent-name`, `example`)
 - No biz-slop names (e.g. `carrier-relationship-management`)
 - Language variant dedup (`-de`, `-fr`, `-zht`, etc.)
-- Max 2 skills per repo (prevents mega-repo dominance)
+- (Phase 3.1 dropped MAX_PER_REPO; mega-repo dominance handled by embedding dedup in `scripts/enrich.js`)
 
 ## Key commands
 

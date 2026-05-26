@@ -163,6 +163,25 @@ const CONFIG = {
   // (scripts/enrich.js) is the new load-bearing gate against mega-repo
   // domination — penalizes content duplication, not per-repo volume.
   MIN_BODY_LENGTH: 200,  // Lowered from 500 (Phase 3.1)
+
+  // Phase 3.1 ship-gate fix: tier assignment moved from absolute score
+  // thresholds (90/70) to percentile rank. At post-3.1 catalog sizes
+  // (~33k+), absolute thresholds put 84% in renderable tiers (Featured
+  // 38% + Solid 46%) which blew Cloudflare Workers Static Assets'
+  // 20,000-file free-tier cap (check-tier-budget.js gate fired in CI
+  // run 26451472370). Percentile-based tiering auto-scales as the
+  // catalog grows and restores meaning to the "Featured" label
+  // (top 10% of catalog = real signal). RENDERABLE_CAP is defense in
+  // depth — once catalog exceeds ~45k, even the percentiles overflow
+  // the 18k budget and we trim the Solid tier to fit.
+  FEATURED_PERCENTILE: 0.10,   // top 10% by quality_score → 'featured'
+  SOLID_PERCENTILE: 0.30,      // next 30% → 'solid'; remainder → 'listed'
+  RENDERABLE_CAP: 18000,       // safety net = Cloudflare 20k free cap - 2k margin
+
+  // Legacy absolute thresholds — RETAINED for reference only. No longer
+  // used in tier assignment. Kept here so analytics/dashboards that
+  // reference these numbers don't silently drift; remove in Phase 3.6's
+  // "Featured → Top" rename cleanup.
   FEATURED_THRESHOLD: 90,
   SOLID_THRESHOLD: 70,
 };
@@ -265,10 +284,36 @@ export function filterRaw(raw, currentBySlug = new Map(), priorEnrichments = new
   const capped = filtered;
   const { redirects, collisionCount } = assignSlugs(capped);
 
-  // Step 3: tier recalibration
-  for (const s of capped) {
-    if (s.quality_score >= CONFIG.FEATURED_THRESHOLD) s.quality_tier = 'featured';
-    else if (s.quality_score >= CONFIG.SOLID_THRESHOLD) s.quality_tier = 'solid';
+  // Step 3: tier assignment (percentile rank + safety cap).
+  //
+  // Sort indices by (quality_score desc, repo_stars desc, id asc) for
+  // deterministic boundary behavior; assign tiers by rank position.
+  // Don't mutate `capped` order yet — Step 4 does the final sort.
+  const tierOrder = capped
+    .map((s, i) => ({ i, score: s.quality_score, stars: s.repo_stars, id: s.id }))
+    .sort((a, b) => {
+      if (b.score !== a.score) return b.score - a.score;
+      if (b.stars !== a.stars) return b.stars - a.stars;
+      return (a.id || '').localeCompare(b.id || '');
+    });
+
+  const total = tierOrder.length;
+  const featuredTarget = Math.floor(total * CONFIG.FEATURED_PERCENTILE);
+  const solidTarget = Math.floor(total * CONFIG.SOLID_PERCENTILE);
+
+  // Defense in depth: if percentiles would exceed the renderable cap,
+  // trim Solid first (preserve the top-10% Featured signal).
+  const effectiveFeatured = Math.min(featuredTarget, CONFIG.RENDERABLE_CAP);
+  const effectiveSolid = Math.min(
+    solidTarget,
+    Math.max(0, CONFIG.RENDERABLE_CAP - effectiveFeatured)
+  );
+  const renderableCount = effectiveFeatured + effectiveSolid;
+
+  for (let rank = 0; rank < total; rank++) {
+    const s = capped[tierOrder[rank].i];
+    if (rank < effectiveFeatured) s.quality_tier = 'featured';
+    else if (rank < renderableCount) s.quality_tier = 'solid';
     else s.quality_tier = 'listed';
   }
 
