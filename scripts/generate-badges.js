@@ -279,12 +279,17 @@ function main() {
       continue;
     }
 
-    const authorDir = join(OUTPUT_DIR, author);
-    ensureDir(authorDir);
+    // Phase 3.1: skillName may contain '/' for path-aware slugs
+    // (e.g. "microsoft/skills/azure-aigateway" → owner=microsoft,
+    // skillName="skills/azure-aigateway"). ensureDir the *dirname of the
+    // target file* so all intermediate dirs exist. The legacy
+    // ensureDir(authorDir) was sufficient when every slug was 2 segments.
+    const tierTarget = join(OUTPUT_DIR, author, `${skillName}.svg`);
+    ensureDir(dirname(tierTarget));
 
     // Tier badge
     const tierSvg = buildTierBadgeSvg(skill);
-    writeFileSync(join(authorDir, `${skillName}.svg`), tierSvg, 'utf-8');
+    writeFileSync(tierTarget, tierSvg, 'utf-8');
     tierWritten++;
 
     // Star history chart
@@ -303,7 +308,9 @@ function main() {
     }
 
     const historySvg = buildStarHistoryChartSvg(events, skill);
-    writeFileSync(join(authorDir, `${skillName}-history.svg`), historySvg, 'utf-8');
+    const historyTarget = join(OUTPUT_DIR, author, `${skillName}-history.svg`);
+    ensureDir(dirname(historyTarget));
+    writeFileSync(historyTarget, historySvg, 'utf-8');
     historyWritten++;
   }
 
