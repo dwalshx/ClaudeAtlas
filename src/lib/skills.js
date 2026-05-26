@@ -57,25 +57,47 @@ if (existsSync(__api_graph_path)) {
 /** @type {import('./types').Skill[]} */
 export const allSkills = skillsData;
 
+/**
+ * Phase 3.1: filter out records flagged as duplicates by scripts/enrich.js.
+ * Used by default browse helpers below. Direct-URL access
+ * (getSkillBySlug) intentionally does NOT call this — a user landing on
+ * a duplicate's permalink still sees the page (with a "copy of X" banner
+ * rendered by the detail template, when 3.4 adds it).
+ *
+ * is_duplicate has three states:
+ *   - true:  hide from default browse
+ *   - false: assessed and clean → show
+ *   - null:  not yet assessed (no vector) → show (default-permissive)
+ */
+function notDuplicate(s) {
+  return s.is_duplicate !== true;
+}
+
 export function getFeaturedSkills(limit = 6) {
   return allSkills
+    .filter(notDuplicate)
     .filter(s => s.quality_tier === 'featured')
     .slice(0, limit);
 }
 
 export function getSkillsByCategory(category) {
   return allSkills
+    .filter(notDuplicate)
     .filter(s => s.category === category)
     .sort((a, b) => b.quality_score - a.quality_score);
 }
 
 export function getSkillBySlug(slug) {
+  // Phase 3.1: NO notDuplicate filter here — direct-URL access must still
+  // resolve to a duplicate's page (detail template can render a "copy of X"
+  // banner). Only default browse hides duplicates.
   return allSkills.find(s => s.slug === slug) || null;
 }
 
 export function getAllCategories() {
   const cats = {};
   for (const skill of allSkills) {
+    if (!notDuplicate(skill)) continue;
     cats[skill.category] = (cats[skill.category] || 0) + 1;
   }
   return Object.entries(cats)
@@ -296,6 +318,7 @@ export function getCreatorsForBrowse() {
 
 export function getRelatedSkills(skill, limit = 4) {
   return allSkills
+    .filter(notDuplicate)
     .filter(s => s.category === skill.category && s.id !== skill.id)
     .sort((a, b) => b.quality_score - a.quality_score)
     .slice(0, limit);
