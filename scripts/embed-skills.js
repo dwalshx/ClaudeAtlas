@@ -112,7 +112,12 @@ function computeContentSha(skill) {
 // Vectorize accepts IDs up to 64 characters. Our skill.id values (full
 // path including the SKILL.md filename) can exceed this. We keep them
 // stable by using a SHA-256 prefix whenever the raw id is too long.
-function vectorizeId(skillId) {
+//
+// Phase 3.1 Rev 2 BLOCKER 1: exported so scripts/enrich.js consumes the
+// SAME implementation (including the >64-char SHA branch). A local
+// re-implementation in enrich.js silently failed to join most production
+// IDs (which exceed 64 chars) — fixed by sharing the canonical helper.
+export function vectorizeId(skillId) {
   if (!skillId) throw new Error('skill missing id');
   if (skillId.length <= 64) {
     // Vectorize also requires ids to match a restricted charset — replace
@@ -325,7 +330,19 @@ async function main() {
   log('=== skill embedder complete ===');
 }
 
-main().catch(err => {
-  console.error(`FATAL: ${err.stack || err.message}`);
-  process.exit(1);
-});
+// Phase 3.1 Task 4: gate main() so importing vectorizeId from this module
+// (e.g. from scripts/enrich.js or its tests) doesn't trigger the embedder.
+const invokedAsScript = (() => {
+  try {
+    return import.meta.url === fileURLToPath(`file://${process.argv[1]}`).replace(/\\/g, '/')
+      || fileURLToPath(import.meta.url) === process.argv[1];
+  } catch {
+    return false;
+  }
+})();
+if (invokedAsScript) {
+  main().catch(err => {
+    console.error(`FATAL: ${err.stack || err.message}`);
+    process.exit(1);
+  });
+}
