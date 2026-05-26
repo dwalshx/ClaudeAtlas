@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: — Agent-Native Directory
 status: executing
-stopped_at: All 3.0.x infrastructure shipped; daily pipeline verified end-to-end on commit `ebb5a80`; Phase 3.1 plan PASS plan-check on Rev 2; planning artifacts committed at `6c55715`. Phase 3.1 ready to execute.
-last_updated: "2026-05-18T16:49:44.881Z"
-last_activity: 2026-05-18 -- Phase 03.1.1 execution started
+stopped_at: "Phase 03.1.1 (F1 streaming foundation) SHIPPED to main 2026-05-25. All 8 tasks (T1-T8) merged via gsd/phase-03.1.1-streaming-foundation. Two follow-up fixes landed post-merge: Track 1 bootstrap path (82de7c8) + run_worker_first for /skills/* routing (ee03215). Production verified: Featured/Solid serve static (~29 KB), Listed serve via SKILLS_KV dynamic render (~3-6 KB). skills-latest release asset published, KV populated with ~1k records, sitemap customPages includes every slug regardless of tier. Next phase: 3.1-new (filter overhaul on the new F1 foundation; most of the work is on phase-3.1-archive branch ready to cherry-pick)."
+last_updated: "2026-05-26T00:35:00.000Z"
+last_activity: 2026-05-25 -- Phase 03.1.1 F1 streaming foundation SHIPPED
 progress:
   total_phases: 7
-  completed_phases: 0
+  completed_phases: 1
   total_plans: 3
-  completed_plans: 6
+  completed_plans: 7
   percent: 100
 ---
 
@@ -21,17 +21,17 @@ progress:
 See: `.planning/PROJECT.md` (last updated 2026-04-10)
 
 **Core value:** Users can find the best Claude skill for a given task in under 30 seconds, with visible signals for why it's trustworthy.
-**Current focus:** Phase 03.1.1 — streaming-foundation
+**Current focus:** F1 streaming foundation SHIPPED; next is 3.1-new (filter overhaul) on the new foundation
 **Milestone:** v3.0 — Comprehensive Agent Tooling Index (in progress)
 
 ## Current Position
 
-Phase: 03.1.1 (streaming-foundation) — EXECUTING
-Plan: 1 of 1
-Status: Executing Phase 03.1.1
-Last activity: 2026-05-18 -- Phase 03.1.1 execution started
+Phase: 03.1.1 (streaming-foundation) — **COMPLETE 2026-05-25**
+Plan: 1 of 1 (8 tasks T1-T8 all shipped to main + 2 post-merge fixes)
+Status: F1 foundation operational; production verified across all three tiers
+Last activity: 2026-05-25 -- F1 merged, two post-merge bug fixes landed, tier-aware rendering verified live
 
-Progress: Phase 1.5 [██████████] 100% · v2.0 [██████████] 100% · 3.0.x trilogy [██████████] 100% · 3.1 [░░░░░░░░░░] 0% (planned) · 3.2–3.9 [░░░░░░░░░░] 0% (not yet planned)
+Progress: Phase 1.5 [██████████] 100% · v2.0 [██████████] 100% · 3.0.x trilogy [██████████] 100% · 3.1.1 F1 [██████████] 100% · 3.1-new (filter overhaul) [░░░░░░░░░░] 0% (planning on phase-3.1-archive branch) · 3.1.2 (polymorphic envelope) [░░░░░░░░░░] 0% (plan-check PASS) · 3.2–3.9 [░░░░░░░░░░] 0%
 
 ## Completed Milestones
 
