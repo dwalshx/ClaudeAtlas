@@ -179,7 +179,10 @@ jobs:
         run: npm run enrich
 
       - name: Upload vectors to Vectorize
-        if: github.event_name != 'push'
+        # Branch dispatch safety (Phase 3.1): writes to production Vectorize
+        # index. Gated to main so branch dry-runs exercise embed locally
+        # without touching prod search.
+        if: github.event_name != 'push' && github.ref == 'refs/heads/main'
         run: npm run upload-vectors
         env:
           CF_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
@@ -190,7 +193,9 @@ jobs:
       # data-shape divergence cases. The push-event branch (below) falls
       # back to this prev tag if the current `skills-latest` is unreadable.
       - name: Tag previous skills-latest as skills-latest-prev
-        if: github.event_name != 'push'
+        # Branch dispatch safety (Phase 3.1): would consume the rollback
+        # safety net by rotating prev. Main-only.
+        if: github.event_name != 'push' && github.ref == 'refs/heads/main'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
@@ -210,7 +215,9 @@ jobs:
       # Replaces the legacy "git add data/skills.json" commit-back path —
       # the file is too large to keep growing daily in the repo.
       - name: Publish skills-latest release asset
-        if: github.event_name != 'push'
+        # Branch dispatch safety (Phase 3.1): would clobber prod data shape.
+        # Main-only.
+        if: github.event_name != 'push' && github.ref == 'refs/heads/main'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
@@ -228,7 +235,9 @@ jobs:
       # changed records via the bulk API. KV_PUBLISH_BUDGET caps writes
       # per run — free-tier safe at 1k/day.
       - name: Publish per-slug records to Workers KV
-        if: github.event_name != 'push'
+        # Branch dispatch safety (Phase 3.1): writes to production KV.
+        # Main-only.
+        if: github.event_name != 'push' && github.ref == 'refs/heads/main'
         env:
           CF_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
           CF_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
@@ -275,7 +284,10 @@ jobs:
           PUBLIC_POSTHOG_KEY: ${{ secrets.PUBLIC_POSTHOG_KEY }}
 
       # Deploy to Cloudflare Workers Static Assets
+      # Branch dispatch safety (Phase 3.1): deploys to claudeatlas.com.
+      # Main-only — branch runs build but stop before deploy.
       - name: Deploy to Cloudflare Workers
+        if: github.ref == 'refs/heads/main'
         uses: cloudflare/wrangler-action@v3
         with:
           apiToken: ${{ secrets.CF_API_TOKEN }}
@@ -284,6 +296,7 @@ jobs:
 
       # Health check
       - name: Health check
+        if: github.ref == 'refs/heads/main'
         run: |
           sleep 10
           STATUS=$(curl -s -o /dev/null -w "%{http_code}" https://claudeatlas.com || echo "000")
@@ -305,7 +318,9 @@ jobs:
       #     sidecar entry matches — committing this lets cron resume
       #     incrementally across runs without re-uploading every record.
       - name: Commit skills data
-        if: github.event_name != 'push'
+        # Branch dispatch safety (Phase 3.1): would push data files to
+        # the dispatched branch. Harmless but noisy; main-only.
+        if: github.event_name != 'push' && github.ref == 'refs/heads/main'
         run: |
           git config user.name "ClaudeAtlas Bot"
           git config user.email "bot@claudeatlas.com"
