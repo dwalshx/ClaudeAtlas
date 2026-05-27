@@ -266,8 +266,25 @@ function main() {
   let historyWritten = 0;
   let skipped = 0;
 
+  // Phase 3.1.x: only emit badges for Featured + Solid tiers. Listed-tier
+  // skills are the long tail of the catalog; their creators are by
+  // definition less likely to want an embeddable badge in their README.
+  // At 35k catalog, generating tier+history SVGs for every Listed skill
+  // pushed total dist file count to 109,841 — over Cloudflare Workers
+  // Paid's 100k file-per-deployment cap, causing wrangler deploy to
+  // 504 timeout on the assets-upload-session API call (run 26537391916).
+  // Featured + Solid badges keep the embeddable-badge feature for creators
+  // who'd actually use it, and bound badge file count to ~28k (2 SVGs per
+  // ~14k renderable skill).
+  const BADGE_TIERS = new Set(['featured', 'top', 'solid']);
+
   for (const skill of skills) {
     if (!validateSlug(skill.slug)) {
+      skipped++;
+      continue;
+    }
+
+    if (!BADGE_TIERS.has(skill.quality_tier)) {
       skipped++;
       continue;
     }
