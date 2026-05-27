@@ -62,7 +62,8 @@ ClaudeAtlas/
 │   │   ├── CopyButton.astro     # One-click install command copy
 │   │   └── ScoreBar.astro       # Quality signal breakdown bar
 │   ├── pages/
-│   │   ├── index.astro          # Homepage (hero + search + categories + top 60)
+│   │   ├── index.astro          # Homepage (hero + search bar wired to /api/v1/search + top 60 skills + categories). Full catalog browseable at /browse.
+│   │   ├── browse.astro         # Flat A-Z anchor list of every skill (SEO link distribution, ~3MB HTML at 35k records)
 │   │   ├── methodology.astro    # Public quality scoring methodology
 │   │   ├── 404.astro            # Not found page
 │   │   ├── skills/[...slug].astro   # Individual skill detail pages
@@ -220,7 +221,7 @@ npm run preview
 2. **Scraper can hit socket errors** during very long runs. Retry logic + checkpoint saves at every 1,000 skills are in place.
 3. **Scoring has been calibrated once** against real data (2026-04-10). First raw run had 18k skills hitting Featured tier; filter rules were tuned to get to 305 Featured. Don't drift from the current filter settings without re-validating.
 4. **Daily star snapshots started 2026-04-11.** Every day of the scraper running adds more history. Delay is genuinely lost data.
-5. **The homepage shows only the top 60 skills** for performance. Full catalog is browsable via categories.
+5. **The homepage shows top 60 skills statically + a semantic search bar wired to `/api/v1/search`. Full catalog browseable at `/browse`** (flat-list of all skills as anchors, ~3MB HTML, SEO-friendly). The pre-3.1 pattern (hidden 35k SkillCards on homepage for instant client-side search) was abandoned in Phase 3.1.x because it produces a 74MB index.html at 35k catalog, exceeding Cloudflare's 25MB per-asset cap.
 6. **Smoke seed needs annual review.** `data/smoke-seed.json` (Phase 3.0.1)
    hand-picks 10 repos to exercise distinct discovery code paths. Some
    intentionally don't exist (`vercel-labs/skills`) to test the 404 branch.
