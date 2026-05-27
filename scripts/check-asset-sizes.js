@@ -38,23 +38,34 @@ const DIST_DIR = join(ROOT, 'dist');
 const CAP_BYTES = 25 * 1024 * 1024;
 const WARN_BYTES = 24 * 1024 * 1024;
 
+// File count caps — discovered the hard way (run 26537391916 504-timed-out
+// on assets-upload-session at 109,841 files, exceeding the Paid plan's
+// 100,000-file-per-deployment limit).
+//   Workers Free: 20,000 files/deployment
+//   Workers Paid: 100,000 files/deployment (requires wrangler 4.34.0+)
+// We're on Paid; cap fail at 95,000 (5k margin under 100k) and warn at
+// 80,000 so catalog growth surfaces well before deploy starts failing.
+const FILE_COUNT_CAP = 95000;
+const FILE_COUNT_WARN = 80000;
+
 function log(msg) {
   console.log(`[asset-sizes] ${msg}`);
 }
 
-function walk(dir, results = []) {
+function walk(dir, state = { oversized: [], totalCount: 0 }) {
   for (const entry of readdirSync(dir, { withFileTypes: true })) {
     const fullPath = join(dir, entry.name);
     if (entry.isDirectory()) {
-      walk(fullPath, results);
+      walk(fullPath, state);
     } else if (entry.isFile()) {
+      state.totalCount++;
       const size = statSync(fullPath).size;
       if (size >= WARN_BYTES) {
-        results.push({ path: fullPath, size });
+        state.oversized.push({ path: fullPath, size });
       }
     }
   }
-  return results;
+  return state;
 }
 
 function main() {
@@ -63,10 +74,30 @@ function main() {
     process.exit(2);
   }
 
-  const oversized = walk(DIST_DIR);
+  const { oversized, totalCount } = walk(DIST_DIR);
 
+  let hasFailure = false;
+
+  // ---- File count check ----------------------------------------------
+  log(`scanned ${totalCount} files in ${DIST_DIR}`);
+
+  if (totalCount >= FILE_COUNT_CAP) {
+    console.error(`[asset-sizes] FATAL: ${totalCount} files > ${FILE_COUNT_CAP} cap`);
+    console.error('[asset-sizes] Cloudflare Workers Paid file-per-deployment limit is 100,000.');
+    console.error('[asset-sizes] Common cause: per-skill file generation (badges, history charts).');
+    console.error('[asset-sizes] Fixes: tier-filter the generators OR move to a Worker route.');
+    hasFailure = true;
+  } else if (totalCount >= FILE_COUNT_WARN) {
+    log(`WARN: ${totalCount} files approaching 100k Cloudflare cap. Plan mitigation.`);
+  }
+
+  // ---- Per-asset size check ------------------------------------------
   if (oversized.length === 0) {
-    log('OK — all assets under 24 MiB');
+    if (!hasFailure) {
+      log(`OK — all ${totalCount} assets under 24 MiB, file count under 80k threshold`);
+    } else {
+      process.exit(1);
+    }
     return;
   }
 
@@ -102,6 +133,8 @@ function main() {
     log(`  ${(a.size / 1024 / 1024).toFixed(1)} MiB  ${rel}`);
   }
   log('Approaching cap — plan mitigation before next catalog growth.');
+
+  if (hasFailure) process.exit(1);
 }
 
 main();
