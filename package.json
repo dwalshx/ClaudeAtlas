@@ -28,12 +28,13 @@
     "publish:kv": "node scripts/lib/publish-kv.js",
     "dev": "astro dev",
     "build": "astro build",
-    "postbuild": "node scripts/check-sitemap-completeness.js",
+    "postbuild": "node scripts/check-sitemap-completeness.js && node scripts/check-asset-sizes.js",
     "preview": "astro preview",
     "astro": "astro",
     "check:sitemap": "node scripts/check-sitemap-completeness.js",
     "check:sitemap-stability": "node scripts/check-sitemap-stability.js",
-    "check:tier-budget": "node scripts/check-tier-budget.js"
+    "check:tier-budget": "node scripts/check-tier-budget.js",
+    "check:asset-sizes": "node scripts/check-asset-sizes.js"
   },
   "keywords": [
     "claude",

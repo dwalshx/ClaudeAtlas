@@ -13,9 +13,17 @@ export function getStaticPaths() {
 }
 
 const { categoryName, count } = Astro.props;
-const skills = allSkills
-  .filter(s => s.category === categoryName)
+// Phase 3.1.x: cap visible cards to top 100 by quality_score. At 35k
+// catalog, "AI and Automation" had ~18k skills → 35MB HTML which
+// exceeds Cloudflare's 25 MB per-asset cap. Full per-category catalog
+// is discoverable via /browse + (future) category filter, or via
+// /api/v1/search?category=X.
+const VISIBLE_LIMIT = 100;
+const allInCategory = allSkills
+  .filter(s => s.category === categoryName && !s.is_duplicate)
   .sort((a, b) => b.quality_score - a.quality_score);
+const skills = allInCategory.slice(0, VISIBLE_LIMIT);
+const hasMore = allInCategory.length > VISIBLE_LIMIT;
 const categories = getAllCategories();
 ---
 
@@ -51,5 +59,19 @@ const categories = getAllCategories();
         <SkillCard skill={skill} />
       ))}
     </div>
+
+    {hasMore && (
+      <div class="mt-10 text-center">
+        <p class="text-sm text-gray-500 mb-3">
+          Showing top {VISIBLE_LIMIT} of {allInCategory.length} skills in {categoryName} by quality score.
+        </p>
+        <a
+          href="/browse/"
+          class="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-gray-700 text-gray-300 hover:border-atlas-400 hover:text-atlas-400 transition-colors text-sm"
+        >
+          Browse all {allInCategory.length} {categoryName} skills →
+        </a>
+      </div>
+    )}
   </div>
 </BaseLayout>

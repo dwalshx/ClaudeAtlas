@@ -14,6 +14,17 @@ export async function getStaticPaths() {
 
 const { creator } = Astro.props;
 
+// Phase 3.1.x: cap visible cards to top 100 by quality_score. Most
+// creators have <100 skills, but megarepo authors (e.g. majiayu000)
+// at 35k catalog have 300+ skills, producing ~600KB+ HTML per page.
+// Cap defends against future drift and keeps creator pages bounded.
+const CREATOR_VISIBLE_LIMIT = 100;
+const visibleSkills = (creator.skills || [])
+  .slice()
+  .sort((a: any, b: any) => (b.quality_score || 0) - (a.quality_score || 0))
+  .slice(0, CREATOR_VISIBLE_LIMIT);
+const hasMoreCreatorSkills = (creator.skills || []).length > CREATOR_VISIBLE_LIMIT;
+
 const badges = [
   creator.isProlific && { label: 'Prolific', desc: '5+ indexed skills', bg: 'bg-indigo-500/20', text: 'text-indigo-300', border: 'border-indigo-500/40' },
   creator.isQuality && { label: 'Quality', desc: 'Every skill is Featured', bg: 'bg-amber-500/20', text: 'text-amber-300', border: 'border-amber-500/40' },
@@ -86,10 +97,16 @@ const description = creator.bio_fallback
         Indexed Skills ({creator.total_skills})
       </h2>
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {creator.skills.map((skill: any) => (
+        {visibleSkills.map((skill: any) => (
           <SkillCard skill={skill} />
         ))}
       </div>
+
+      {hasMoreCreatorSkills && (
+        <p class="text-sm text-gray-500 mt-6 text-center">
+          Showing top {CREATOR_VISIBLE_LIMIT} of {creator.total_skills} skills by quality score. Browse the full catalog at <a href="/browse/" class="text-atlas-400 hover:underline">/browse</a>.
+        </p>
+      )}
     </section>
 
     <p class="text-xs text-gray-600 mt-10 text-center">
