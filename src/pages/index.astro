@@ -10,12 +10,14 @@ const pstats = getPipelineStats();
 const featured = getFeaturedSkills(6);
 const categories = getAllCategories();
 
-// Render the full catalog but mark the default "top 60" set. The sticky
-// search expands visibility to the full list when a query is active.
+// Phase 3.1.x: the homepage no longer renders the full catalog as hidden
+// cards (that pattern produced a 74MB index.html at 35k records, blowing
+// Cloudflare's 25MB per-asset cap). Top-60 is rendered statically; search
+// is delegated to /api/v1/search (semantic, via Vectorize). Full catalog
+// is browseable at /browse.
 const HOMEPAGE_LIMIT = 60;
 const allSorted = [...allSkills].sort((a, b) => b.quality_score - a.quality_score);
 const topSkills = allSorted.slice(0, HOMEPAGE_LIMIT);
-const extraSkills = allSorted.slice(HOMEPAGE_LIMIT);
 
 // Build-time SVG charts (pure, cached across builds, no client JS)
 const newSkillsChartSvg = buildNewSkillsWeekChart(allSkills);
@@ -136,21 +138,40 @@ const updatedLabel = `Updated ${updatedDate.toISOString().slice(0, 10)}`;
         </h2>
         <span id="skills-count" class="text-sm text-gray-500">Showing top {HOMEPAGE_LIMIT} of {pstats.total_indexed.toLocaleString()}</span>
       </div>
+
+      <!-- Static top-60 grid (always present; hidden during active search) -->
       <div id="skills-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {topSkills.map(skill => (
-          <div class="skill-item" data-default-visible="true" data-slug={skill.slug} data-name={skill.name.toLowerCase()} data-desc={(skill.description || '').toLowerCase()} data-cat={skill.category.toLowerCase()} data-tier={skill.quality_tier}>
-            <SkillCard skill={skill} />
-          </div>
+          <SkillCard skill={skill} />
         ))}
-        {extraSkills.map(skill => (
-          <div class="skill-item" data-default-visible="false" style="display: none;" data-slug={skill.slug} data-name={skill.name.toLowerCase()} data-desc={(skill.description || '').toLowerCase()} data-cat={skill.category.toLowerCase()} data-tier={skill.quality_tier}>
-            <SkillCard skill={skill} />
-          </div>
-        ))}
+      </div>
+
+      <!-- Search results grid (populated by JS during active search) -->
+      <div id="search-results" class="hidden grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+
+      <!-- Empty / error states -->
+      <div id="search-loading" class="hidden text-center py-12 text-gray-500">
+        <svg class="animate-spin w-6 h-6 mx-auto mb-3 text-atlas-400" fill="none" viewBox="0 0 24 24">
+          <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3" class="opacity-25"></circle>
+          <path d="M4 12a8 8 0 018-8" stroke="currentColor" stroke-width="3" stroke-linecap="round"></path>
+        </svg>
+        Searching…
       </div>
       <div id="no-results" class="hidden text-center py-12 text-gray-500">
         No skills match your search. Try different keywords or <a href="/category/ai-and-automation/" class="text-atlas-400 hover:underline">browse by category</a>.
       </div>
+      <div id="search-error" class="hidden text-center py-12 text-gray-500">
+        Search temporarily unavailable. <button id="search-retry" class="text-atlas-400 hover:underline">Try again</button> or <a href="/browse/" class="text-atlas-400 hover:underline">browse all skills</a>.
+      </div>
+
+      <!-- "See all" link to /browse -->
+      <div id="see-all" class="text-center mt-10">
+        <a href="/browse/" class="inline-flex items-center gap-2 text-sm text-atlas-400 hover:text-atlas-300 hover:underline">
+          See all {pstats.total_indexed.toLocaleString()} skills
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
+        </a>
+      </div>
+
       <div id="browse-more" class="text-center mt-10">
         <p class="text-gray-500 text-sm mb-4">Want to explore more?</p>
         <div class="flex flex-wrap justify-center gap-2">
@@ -169,172 +190,219 @@ const updatedLabel = `Updated ${updatedDate.toISOString().slice(0, 10)}`;
   const featuredSection = document.getElementById('featured-section');
   const ecosystemSection = document.getElementById('ecosystem-section');
   const browseMore = document.getElementById('browse-more');
+  const seeAll = document.getElementById('see-all');
   const skillsHeadingText = document.getElementById('skills-heading-text');
   const skillsCount = document.getElementById('skills-count');
-  const noResults = document.getElementById('no-results');
   const skillsGrid = document.getElementById('skills-grid');
-  const skillItems = Array.from(document.querySelectorAll<HTMLElement>('.skill-item'));
+  const searchResults = document.getElementById('search-results');
+  const searchLoading = document.getElementById('search-loading');
+  const noResults = document.getElementById('no-results');
+  const searchError = document.getElementById('search-error');
+  const searchRetry = document.getElementById('search-retry');
 
-  const totalIndexed = skillItems.length;
   const initialCountText = skillsCount?.textContent || '';
 
-  // Build slug → element map for fast lookup when semantic results come back.
-  const itemsBySlug = new Map<string, HTMLElement>();
-  for (const el of skillItems) {
-    const slug = el.dataset.slug;
-    if (slug) itemsBySlug.set(slug, el);
+  // --- Color helpers (mirror src/lib/skills.js tierColor + categoryColor) ---
+  function tierLabel(tier: string): string {
+    if (tier === 'featured') return 'Featured';
+    if (tier === 'solid') return 'Solid';
+    return 'Listed';
+  }
+  function tierClasses(tier: string): { bg: string; text: string; dot: string } {
+    if (tier === 'featured') return { bg: 'bg-amber-100', text: 'text-amber-800', dot: 'bg-amber-500' };
+    if (tier === 'solid')    return { bg: 'bg-emerald-100', text: 'text-emerald-800', dot: 'bg-emerald-500' };
+    return { bg: 'bg-gray-100', text: 'text-gray-600', dot: 'bg-gray-400' };
+  }
+  function categoryClasses(category: string): string {
+    const colors: Record<string, string> = {
+      'Code & Development': 'bg-blue-100 text-blue-800',
+      'Web & Frontend': 'bg-purple-100 text-purple-800',
+      'Testing & QA': 'bg-green-100 text-green-800',
+      'Data & Documents': 'bg-orange-100 text-orange-800',
+      'DevOps & Infrastructure': 'bg-red-100 text-red-800',
+      'API & Backend': 'bg-indigo-100 text-indigo-800',
+      'AI & Automation': 'bg-pink-100 text-pink-800',
+      'Productivity & Other': 'bg-gray-100 text-gray-700',
+    };
+    return colors[category] || 'bg-gray-100 text-gray-700';
   }
 
-  // --- Empty-state view (default on load or when query is cleared) ---
+  function escapeHtml(s: string): string {
+    return String(s ?? '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  }
+
+  // Render one search-result card. Matches SkillCard.astro visual structure.
+  function renderResultCard(r: {
+    slug: string;
+    name: string;
+    category?: string;
+    quality_tier?: string;
+    repo_stars?: number;
+    repo_full_name?: string;
+    description?: string;
+    detail_url?: string;
+  }): string {
+    const tier = r.quality_tier || 'listed';
+    const tc = tierClasses(tier);
+    const cc = categoryClasses(r.category || '');
+    const stars = (r.repo_stars || 0).toLocaleString();
+    const owner = (r.repo_full_name || '').split('/')[0] || '';
+    const href = r.detail_url || `/skills/${r.slug}/`;
+    const desc = r.description || 'No description available.';
+    const cat = r.category || 'Productivity & Other';
+
+    return `
+      <a href="${escapeHtml(href)}" class="group block bg-gray-900 border border-gray-800 rounded-xl p-5 hover:border-atlas-600 hover:bg-gray-900/80 transition-all duration-200">
+        <div class="flex items-start justify-between gap-3 mb-3">
+          <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${cc}">
+            ${escapeHtml(cat)}
+          </span>
+          <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-medium ${tc.bg} ${tc.text}">
+            <span class="w-1.5 h-1.5 rounded-full ${tc.dot}"></span>
+            ${escapeHtml(tierLabel(tier))}
+          </span>
+        </div>
+        <h3 class="text-white font-semibold text-lg mb-1 group-hover:text-atlas-400 transition-colors font-mono">
+          ${escapeHtml(r.name || r.slug)}
+        </h3>
+        <p class="text-gray-400 text-sm mb-4 line-clamp-2 leading-relaxed">
+          ${escapeHtml(desc)}
+        </p>
+        <div class="flex items-center justify-between text-xs text-gray-500">
+          <div class="flex items-center gap-3">
+            <span class="flex items-center gap-1">
+              <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 16 16"><path d="M8 .25a.75.75 0 01.673.418l1.882 3.815 4.21.612a.75.75 0 01.416 1.279l-3.046 2.97.719 4.192a.75.75 0 01-1.088.791L8 12.347l-3.766 1.98a.75.75 0 01-1.088-.79l.72-4.194L.818 6.374a.75.75 0 01.416-1.28l4.21-.611L7.327.668A.75.75 0 018 .25z"/></svg>
+              ${escapeHtml(stars)}
+            </span>
+          </div>
+          <span class="text-gray-600 font-mono text-[11px]">
+            ${escapeHtml(owner)}
+          </span>
+        </div>
+      </a>
+    `;
+  }
+
+  // --- View state helpers ---
   function showEmptyState() {
     if (searchClear) searchClear.classList.add('hidden');
     if (featuredSection) (featuredSection as HTMLElement).style.display = '';
     if (ecosystemSection) (ecosystemSection as HTMLElement).style.display = '';
     if (browseMore) (browseMore as HTMLElement).style.display = '';
+    if (seeAll) (seeAll as HTMLElement).style.display = '';
     if (skillsHeadingText) skillsHeadingText.textContent = 'Top Skills';
     if (skillsCount) skillsCount.textContent = initialCountText;
+
+    if (skillsGrid) skillsGrid.classList.remove('hidden');
+    if (searchResults) {
+      searchResults.classList.add('hidden');
+      searchResults.innerHTML = '';
+    }
+    if (searchLoading) searchLoading.classList.add('hidden');
     if (noResults) noResults.classList.add('hidden');
-
-    for (const el of skillItems) {
-      el.style.display = el.dataset.defaultVisible === 'true' ? '' : 'none';
-    }
-
-    // Restore the default order (top-60 quality-sorted first, then extras)
-    // by re-sorting by the implicit DOM document order. Since we may have
-    // reordered via appendChild during semantic search, sort by a cached
-    // original-index data attribute if needed.
-    //
-    // Simpler: on first load, remember the original order, then restore it
-    // when switching back to empty state. We cache the order in originalOrder.
-    if (skillsGrid && originalOrder.length > 0) {
-      for (const el of originalOrder) skillsGrid.appendChild(el);
-    }
+    if (searchError) searchError.classList.add('hidden');
   }
 
-  // --- Searching view (semantic results) ---
   function showSearchingState() {
     if (searchClear) searchClear.classList.remove('hidden');
     if (featuredSection) (featuredSection as HTMLElement).style.display = 'none';
     if (ecosystemSection) (ecosystemSection as HTMLElement).style.display = 'none';
     if (browseMore) (browseMore as HTMLElement).style.display = 'none';
+    if (seeAll) (seeAll as HTMLElement).style.display = 'none';
     if (skillsHeadingText) skillsHeadingText.textContent = 'Search Results';
+
+    if (skillsGrid) skillsGrid.classList.add('hidden');
+    if (searchResults) searchResults.classList.add('hidden');
+    if (noResults) noResults.classList.add('hidden');
+    if (searchError) searchError.classList.add('hidden');
+    if (searchLoading) searchLoading.classList.remove('hidden');
+    if (skillsCount) skillsCount.textContent = 'Searching…';
   }
 
-  // Cache original DOM order once so we can restore it on clear
-  const originalOrder: HTMLElement[] = skillsGrid
-    ? Array.from(skillsGrid.querySelectorAll<HTMLElement>('.skill-item'))
-    : [];
-
   // --- Semantic search via /api/v1/search ---
-  let currentQuery = '';
   let searchToken = 0;
+  let lastQuery = '';
 
   async function runSemanticSearch(query: string) {
     const thisToken = ++searchToken;
-    currentQuery = query;
+    lastQuery = query;
     showSearchingState();
 
-    if (skillsCount) skillsCount.textContent = 'Searching…';
-    if (noResults) noResults.classList.add('hidden');
-
-    let results: Array<{ slug: string; score: number; name: string }> = [];
+    let payload: { results: Array<Record<string, any>> } | null = null;
     try {
       const url = `/api/v1/search?q=${encodeURIComponent(query)}&k=30`;
-      const res = await fetch(url, { headers: { 'accept': 'application/json' } });
+      const res = await fetch(url, { headers: { accept: 'application/json' } });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const data = await res.json();
-      if (!Array.isArray(data.results)) throw new Error('malformed response');
-      results = data.results;
+      payload = await res.json();
+      if (!payload || !Array.isArray(payload.results)) throw new Error('malformed response');
     } catch (err) {
       console.error('Semantic search failed:', err);
-      // Fall back to substring filter so the search box still does something
-      return runKeywordFallback(query, thisToken);
+      if (thisToken !== searchToken) return;
+      if (searchLoading) searchLoading.classList.add('hidden');
+      if (searchError) searchError.classList.remove('hidden');
+      if (skillsCount) skillsCount.textContent = '';
+      return;
     }
 
-    // If another query came in while this one was in-flight, drop our results.
+    // Dropped if a newer query came in mid-flight.
     if (thisToken !== searchToken) return;
 
-    // Reorder matching items to the top of the grid, hide the rest.
-    const matchedSet = new Set(results.map(r => r.slug));
-    let visible = 0;
+    const results = payload.results;
+    if (searchLoading) searchLoading.classList.add('hidden');
 
-    // First pass: hide everything that didn't match
-    for (const el of skillItems) {
-      const slug = el.dataset.slug || '';
-      if (!matchedSet.has(slug)) {
-        el.style.display = 'none';
+    if (results.length === 0) {
+      if (searchResults) {
+        searchResults.classList.add('hidden');
+        searchResults.innerHTML = '';
       }
+      if (noResults) noResults.classList.remove('hidden');
+      if (skillsCount) skillsCount.textContent = 'No semantic matches';
+      return;
     }
 
-    // Second pass: show matched items in API response order
-    if (skillsGrid) {
-      for (const result of results) {
-        const el = itemsBySlug.get(result.slug);
-        if (el) {
-          el.style.display = '';
-          skillsGrid.appendChild(el); // reattach at end, establishing order
-          visible++;
-        }
-      }
-    }
-
-    if (skillsCount) {
-      skillsCount.textContent = visible > 0
-        ? `${visible} relevant result${visible === 1 ? '' : 's'} · semantic match`
-        : `No semantic matches`;
-    }
-    if (noResults) noResults.classList.toggle('hidden', visible > 0);
-  }
-
-  // Substring fallback if the API call fails (e.g. Vectorize binding missing
-  // on first deploy, or network error)
-  function runKeywordFallback(query: string, thisToken: number) {
-    if (thisToken !== searchToken) return;
-    const q = query.toLowerCase();
-    let visible = 0;
-    for (const el of skillItems) {
-      const name = el.dataset.name || '';
-      const desc = el.dataset.desc || '';
-      const cat = el.dataset.cat || '';
-      const matches = name.includes(q) || desc.includes(q) || cat.includes(q);
-      el.style.display = matches ? '' : 'none';
-      if (matches) visible++;
+    if (searchResults) {
+      searchResults.innerHTML = results.map(renderResultCard).join('');
+      searchResults.classList.remove('hidden');
     }
     if (skillsCount) {
-      skillsCount.textContent = `${visible} keyword match${visible === 1 ? '' : 'es'} · semantic unavailable`;
+      skillsCount.textContent = `${results.length} relevant result${results.length === 1 ? '' : 's'} · semantic match`;
     }
-    if (noResults) noResults.classList.toggle('hidden', visible > 0);
   }
 
-  // --- Debounced input handler ---
+  // --- Debounced input handler (250ms) ---
   let debounceTimer: number | null = null;
   searchInput?.addEventListener('input', (e) => {
     const val = (e.target as HTMLInputElement).value.trim();
     if (debounceTimer) window.clearTimeout(debounceTimer);
 
     if (val.length === 0) {
-      currentQuery = '';
       searchToken++; // cancel any in-flight search
       showEmptyState();
       return;
     }
 
-    // Typing — show optimistic UI and kick off debounced search
-    showSearchingState();
-    if (skillsCount) skillsCount.textContent = 'Searching…';
+    if (searchClear) searchClear.classList.remove('hidden');
     debounceTimer = window.setTimeout(() => {
       runSemanticSearch(val);
-    }, 400);
+    }, 250);
   });
 
   searchClear?.addEventListener('click', () => {
     if (searchInput) {
       searchInput.value = '';
-      currentQuery = '';
       searchToken++;
       showEmptyState();
       searchInput.focus();
     }
+  });
+
+  searchRetry?.addEventListener('click', () => {
+    if (lastQuery) runSemanticSearch(lastQuery);
   });
 
   // Initialize state on page load
