@@ -300,6 +300,15 @@ jobs:
           apiToken: ${{ secrets.CF_API_TOKEN }}
           accountId: ${{ secrets.CF_ACCOUNT_ID }}
           command: deploy
+          # Phase 3.1.x: explicitly request wrangler 4.x. The action's
+          # default is 3.90.0, which (a) silently ignores `run_worker_first`
+          # in wrangler.toml's [assets] block (F1 added that field for
+          # tier-aware Listed-tier KV rendering), and (b) overrides the
+          # package.json devDependency pin via its own `npm i wrangler@<v>`
+          # step. Without this override, run_worker_first is a no-op and
+          # Listed-tier slugs serve the 404 page instead of routing
+          # through the worker.
+          wranglerVersion: '4'
 
       # Health check
       - name: Health check
