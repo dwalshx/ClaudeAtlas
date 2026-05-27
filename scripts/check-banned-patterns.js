@@ -88,13 +88,13 @@ const LINT_ALLOWLIST = [
   },
   {
     file: 'scripts/filter.js',
-    line: 512,
-    reason: 'pipeline-stats.json write — bounded (~5 KB; tier counts + categories summary). Line shifted by F2 T6 (body_length invariant + tag derivation).',
+    line: 523,
+    reason: 'pipeline-stats.json write — bounded (~5 KB; tier counts + categories summary). Line shifted by F2 T6 (body_length invariant + tag derivation) + 3.1.2 hotfix (drift tolerance).',
   },
   {
     file: 'scripts/filter.js',
-    line: 472,
-    reason: 'slug-redirects.json write — bounded by collision count (~402 entries at 33k catalog; <2000 long-term per RECALIBRATION.md Deviation 4). Line shifted by F2 T6.',
+    line: 483,
+    reason: 'slug-redirects.json write — bounded by collision count (~402 entries at 33k catalog; <2000 long-term per RECALIBRATION.md Deviation 4). Line shifted by F2 T6 + 3.1.2 hotfix.',
   },
   {
     file: 'scripts/generate-marketplace.js',

@@ -323,19 +323,30 @@ export function filterRaw(raw, currentBySlug = new Map(), priorEnrichments = new
     if (s.novelty_score === undefined) s.novelty_score = null;
 
     // F2 — body_length invariant assert. If the field already existed
-    // (raw scraper records carry body_length pre-trim), it MUST equal the
-    // pre-trim length we just captured. Drift = bug in upstream writer.
+    // (raw scraper records carry body_length pre-trim), it should equal the
+    // pre-trim length we just captured. Drift bounded by SMALL_DRIFT_TOL
+    // is auto-corrected (pre-F2 scraper computed body_length via
+    // body_markdown.trim().length while storing untrimmed body_markdown,
+    // producing 1-5 char drift from whitespace/newlines). Larger drift
+    // indicates a real F2 logic bug in upstream writers and throws.
+    const SMALL_DRIFT_TOL = 10;
     if (typeof s.body_length === 'number' && s.body_length !== originalBodyLengthBeforeTrim) {
-      // Tolerate scraper-side truncation (5000-char cap in scrape.js):
-      // body_markdown may already be shorter than body_length on disk.
-      // The invariant only fails when filter MUTATES body_length itself.
       if (s.body_length < originalBodyLengthBeforeTrim) {
-        throw new Error(
-          `[filter] body_length invariant violated for ${s.id}: ` +
-          `body_length=${s.body_length} < pre-trim body_markdown.length=${originalBodyLengthBeforeTrim}. ` +
-          `body_length must be the ORIGINAL body length per EntityRecord.body_length JSDoc.`,
-        );
+        const drift = originalBodyLengthBeforeTrim - s.body_length;
+        if (drift > SMALL_DRIFT_TOL) {
+          throw new Error(
+            `[filter] body_length invariant violated for ${s.id}: ` +
+            `body_length=${s.body_length} < pre-trim body_markdown.length=${originalBodyLengthBeforeTrim} ` +
+            `(drift=${drift} > tolerance=${SMALL_DRIFT_TOL}). ` +
+            `body_length must be the ORIGINAL body length per EntityRecord.body_length JSDoc.`,
+          );
+        }
+        // Auto-correct small drift (pre-F2 raw scraper quirk).
+        s.body_length = originalBodyLengthBeforeTrim;
       }
+      // s.body_length > originalBodyLengthBeforeTrim is FINE — body_markdown
+      // got trimmed by scrape.js's 5000-char cap; body_length retains
+      // the original pre-trim length as designed.
     } else if (typeof s.body_length !== 'number') {
       // Missing body_length — populate it once from the pre-trim length.
       s.body_length = originalBodyLengthBeforeTrim;
