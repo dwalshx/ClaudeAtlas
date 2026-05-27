@@ -1,0 +1,88 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { allSkills } from '../lib/skills.js';
+
+// Phase 3.1.x: /browse is a flat anchor list of every (non-duplicate) skill.
+// Goal: minimal HTML weight, maximum bot crawlability, full SEO link
+// distribution. No SkillCards, no inline CSS beyond Tailwind utilities.
+// At 35k records the rendered HTML is ~3MB — well under Cloudflare's
+// 25MB per-asset cap.
+//
+// Duplicates (is_duplicate=true) are filtered OUT — they're hidden from
+// default browse per Phase 3.1 Task 7.5. Direct-URL access still resolves.
+
+const browseSkills = allSkills
+  .filter(s => s.is_duplicate !== true)
+  .sort((a, b) => (a.slug || '').localeCompare(b.slug || ''));
+
+// Group by first character of slug (alphabetical sections).
+const groups = new Map<string, typeof browseSkills>();
+for (const skill of browseSkills) {
+  const first = (skill.slug || '').charAt(0).toUpperCase();
+  const key = /[A-Z]/.test(first) ? first : '#';
+  if (!groups.has(key)) groups.set(key, []);
+  groups.get(key)!.push(skill);
+}
+
+// Stable ordering: '#' last, A–Z first.
+const sectionKeys = [...groups.keys()].sort((a, b) => {
+  if (a === '#') return 1;
+  if (b === '#') return -1;
+  return a.localeCompare(b);
+});
+
+const total = browseSkills.length;
+const pageDescription = `Flat list of all ${total.toLocaleString()} indexed Claude skills, alphabetical by slug.`;
+---
+
+<BaseLayout title="Browse all skills" description={pageDescription}>
+  <section class="px-4 py-12">
+    <div class="max-w-5xl mx-auto">
+      <header class="mb-8">
+        <h1 class="text-3xl sm:text-4xl font-bold text-white mb-3 tracking-tight">
+          Browse all skills
+        </h1>
+        <p class="text-gray-400 text-base">
+          Flat list of all {total.toLocaleString()} indexed skills, organized alphabetically by slug for easy discovery.
+        </p>
+        <p class="text-sm text-gray-500 mt-2">
+          Looking for something specific? <a href="/" class="text-atlas-400 hover:underline">Use the search on the home page</a> for semantic matches.
+        </p>
+      </header>
+
+      <!-- A–Z jump nav -->
+      <nav class="flex flex-wrap gap-2 mb-10 pb-6 border-b border-gray-800" aria-label="Jump to section">
+        {sectionKeys.map(key => (
+          <a
+            href={`#sec-${key === '#' ? 'hash' : key}`}
+            class="inline-flex items-center justify-center w-8 h-8 rounded bg-gray-900 border border-gray-800 text-sm text-gray-300 hover:border-atlas-600 hover:text-atlas-400 font-mono"
+          >
+            {key}
+          </a>
+        ))}
+      </nav>
+
+      <div class="space-y-10">
+        {sectionKeys.map(key => (
+          <section id={`sec-${key === '#' ? 'hash' : key}`}>
+            <h2 class="text-2xl font-bold text-white mb-4 font-mono">{key}</h2>
+            <ul class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-1.5 text-sm">
+              {groups.get(key)!.map(skill => (
+                <li>
+                  <a
+                    href={`/skills/${skill.slug}/`}
+                    class="text-gray-300 hover:text-atlas-400 hover:underline"
+                  >{skill.name || skill.slug}</a>
+                </li>
+              ))}
+            </ul>
+          </section>
+        ))}
+      </div>
+
+      <footer class="mt-16 pt-8 border-t border-gray-800 text-center">
+        <a href="/" class="text-atlas-400 hover:underline">← Back to home</a>
+      </footer>
+    </div>
+  </section>
+</BaseLayout>
