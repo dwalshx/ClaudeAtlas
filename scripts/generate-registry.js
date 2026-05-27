@@ -91,7 +91,8 @@ function main() {
     repo_stars: s.repo_stars || 0,
     repo_license: s.repo_license || null,
     repo_pushed_at: s.repo_pushed_at || null,
-    skill_first_commit_at: s.skill_first_commit_at || null,
+    // F2: prefer entity.extra.skill_first_commit_at (v2); fall back to legacy.
+    skill_first_commit_at: (s.extra && s.extra.skill_first_commit_at) || s.skill_first_commit_at || null,
     integrations: apiGraph.skill_integrations?.[s.slug] || [],
     detail_url: `${SITE_URL}/skills/${s.slug}/`,
     badge_url: `${SITE_URL}/badge/${s.slug}.svg`,

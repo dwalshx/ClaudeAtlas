@@ -103,8 +103,8 @@ const LINT_ALLOWLIST = [
   },
   {
     file: 'scripts/lib/publish-kv.js',
-    line: 80,
-    reason: 'kv-published.json slug→sha sidecar write — bounded ~4 MB at 50k slugs (catalog-size linear, ~80 B/entry)',
+    line: 84,
+    reason: 'kv-published.json slug→sha sidecar write — bounded ~4 MB at 50k slugs (catalog-size linear, ~80 B/entry). Line shifted by F2 T10 (extra.body_markdown fallback in content_sha helper).',
   },
   {
     file: 'scripts/mine-apis.js',

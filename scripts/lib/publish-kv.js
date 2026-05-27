@@ -61,7 +61,11 @@ function computeContentSha(record) {
     quality_tier: record.quality_tier,
     quality_score: record.quality_score,
     category: record.category,
-    body_markdown: record.body_markdown || '',
+    // F2: prefer entity.extra.body_markdown (v2 EntityRecord<SkillExtra>);
+    // fall back to legacy top-level for v1 records. The hash key is used to
+    // detect "content changed since last publish" — must read whichever
+    // field actually carries the body for the record on disk.
+    body_markdown: (record.extra && record.extra.body_markdown) || record.body_markdown || '',
   });
   return createHash('sha256').update(payload).digest('hex');
 }

@@ -29,6 +29,11 @@ jobs:
         run: npm ci --ignore-scripts
       - name: Banned patterns (lint mode against baseline)
         run: node scripts/check-banned-patterns.js --mode=lint
+      # F2 (T10): legacy v1 skill-shape lint. Runs in WARNING mode during the
+      # cutover window (D+0 through D+6). Flips to --mode=error in the D+7
+      # cutover PR per .planning/phases/03.1.2-polymorphic-envelope/3.1.2-CUTOVER.md.
+      - name: Legacy v1 skill-shape guard (warning mode during F2 cutover)
+        run: node scripts/lint-no-legacy-skill-shape.js --mode=warning
 
   size:
     runs-on: ubuntu-latest
