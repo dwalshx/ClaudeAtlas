@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: — Agent-Native Directory
-status: executing
-stopped_at: All 3.0.x infrastructure shipped; daily pipeline verified end-to-end on commit `ebb5a80`; Phase 3.1 plan PASS plan-check on Rev 2; planning artifacts committed at `6c55715`. Phase 3.1 ready to execute.
-last_updated: "2026-05-26T01:57:21.605Z"
-last_activity: 2026-05-26 -- Phase 3.1 Tasks 1-9 committed; awaiting Task 10 CI checkpoint
+status: phase-complete
+stopped_at: "Phase 3.1 (filter-overhaul) SHIPPED 2026-05-27. Catalog 1,286 → 35,341 records, percentile-based tier assignment landed clean (3,534 Featured = 10%), /api/v1/search serves live semantic results, /browse provides SEO link distribution, /skills-registry.json carries the renderable subset + bulk_download_url for full-catalog consumers. Ship cascade required 6 PRs total: PR #1 (11 plan tasks), PRs #2-#6 fixed deploy blockers as they surfaced (homepage 74MB, registry 35MB, category 36MB, badge file count 109k, /api/* routing). Two postbuild guards (check-asset-sizes.js for size + count) protect against future drift. Verified 15/15 must_haves via gsd-verifier 2026-05-27. Cloudflare upgraded to Workers Paid ($60/yr) plus Vectorize storage overage (~$30/yr) — total project cost ~$102/yr. Next: Phase 3.1.2 (polymorphic envelope, already plan-checked Rev 2 PASS) OR Phase 3.2 (plugin scoring) — both viable starting points."
+last_updated: "2026-05-27T21:31:58.978Z"
+last_activity: 2026-05-27 -- Phase 3.1 SHIPPED to production; site serves 35k catalog
 progress:
   total_phases: 14
-  completed_phases: 1
+  completed_phases: 2
   total_plans: 9
-  completed_plans: 8
+  completed_plans: 9
   percent: 100
 ---
 
@@ -26,12 +26,13 @@ See: `.planning/PROJECT.md` (last updated 2026-04-10)
 
 ## Current Position
 
-Phase: 3.1 (filter-overhaul) — EXECUTING
-Plan: 1 of 1
-Status: Tasks 1-9 done (9 atomic commits 25f6f3b..5736b7c). Task 10 (CI checkpoint) PAUSED awaiting user verification.
-Last activity: 2026-05-26 -- Phase 3.1 Tasks 1-9 committed; awaiting Task 10 CI checkpoint
+Phase: **3.1 (filter-overhaul) — SHIPPED 2026-05-27**
+Plan: 1 of 1 (plus 5 follow-up PRs for the deploy cascade)
+Status: Live at claudeatlas.com; verified 15/15 must_haves via gsd-verifier
+Next phase: 3.1.2 (polymorphic envelope, plan-checked Rev 2 PASS) OR 3.2 (plugin scoring)
+Last activity: 2026-05-27 -- Phase 3.1 SHIPPED to production
 
-Progress: Phase 1.5 [██████████] 100% · v2.0 [██████████] 100% · 3.0.x trilogy [██████████] 100% · 3.1.1 F1 [██████████] 100% · 3.1-new (filter overhaul) [░░░░░░░░░░] 0% (planning on phase-3.1-archive branch) · 3.1.2 (polymorphic envelope) [░░░░░░░░░░] 0% (plan-check PASS) · 3.2–3.9 [░░░░░░░░░░] 0%
+Progress: Phase 1.5 [██████████] 100% · v2.0 [██████████] 100% · 3.0.x trilogy [██████████] 100% · 3.1.1 F1 [██████████] 100% · **3.1 filter overhaul [██████████] 100% (shipped 2026-05-27)** · 3.1.2 polymorphic envelope [░░░░░░░░░░] 0% (plan-check PASS) · 3.2–3.9 [░░░░░░░░░░] 0%
 
 ## Completed Milestones
 
