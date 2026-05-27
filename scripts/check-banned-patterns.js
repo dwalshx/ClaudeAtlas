@@ -108,8 +108,8 @@ const LINT_ALLOWLIST = [
   },
   {
     file: 'scripts/mine-apis.js',
-    line: 279,
-    reason: 'api-graph.json write — bounded by services × skill integrations (Research §A: safe at projected scales)',
+    line: 281,
+    reason: 'api-graph.json write — bounded by services × skill integrations (Research §A: safe at projected scales). Line shifted by F2 T8 (extra.body_markdown read).',
   },
   {
     file: 'scripts/scrape-plugins.js',
