@@ -242,18 +242,14 @@ jobs:
           CF_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
           CF_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
           SKILLS_KV_NAMESPACE_ID: ${{ secrets.SKILLS_KV_NAMESPACE_ID }}
-          # Phase 3.1: aligned with Cloudflare KV free-tier daily write cap.
-          # The legacy 10000 value was calibrated against F1's 1,078-record
-          # catalog (entire Listed tier fit in one run). After Phase 3.1's
-          # 28x catalog growth, Listed tier = ~21k records; without this
-          # cap publish-kv.js's bulkUpsert hits CF's 1k/day wall, returns
-          # 429, the script process.exit(1)'s, and the whole daily-scrape
-          # job fails. Cap=1000 lets the script's own budget guard
-          # (publish-kv.js:145) gracefully defer remaining records to
-          # the next run. Full Listed-tier publish takes ~22 days at
-          # steady state. Bump back to 10000 if/when Cloudflare KV is
-          # upgraded to Workers Paid (100k writes/day cap).
-          KV_PUBLISH_BUDGET: '1000'
+          # Phase 3.1: 25000 covers the full Listed tier (~21k records) plus
+          # ~3.5k headroom for future catalog growth. Requires Cloudflare
+          # Workers Paid plan ($5/mo; 1M KV writes/day vs free-tier 1k/day).
+          # Upgraded 2026-05-26 alongside Phase 3.1 ship — see PROJECT.md
+          # "Constraints" + CLAUDE.md cost ceiling. If the upgrade is ever
+          # rolled back, drop this to 1000 (publish-kv.js's internal cap
+          # gracefully defers excess records to subsequent runs).
+          KV_PUBLISH_BUDGET: '25000'
         run: npm run publish:kv
 
       # T5 5e: Push-event branch fetches skills.ndjson from the

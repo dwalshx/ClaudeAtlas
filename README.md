@@ -19,10 +19,10 @@ ClaudeAtlas automatically discovers, scores, and indexes SKILL.md files across G
 
 - **Scraper:** Node.js + GitHub API
 - **Site:** Astro 5 + Tailwind CSS
-- **Hosting:** Cloudflare Pages (free tier)
+- **Hosting:** Cloudflare Workers Static Assets (paid tier as of Phase 3.1)
 - **CI/CD:** GitHub Actions (daily cron)
-- **Search:** Client-side filtering (zero JS frameworks)
-- **Cost:** ~$12/year (domain only)
+- **Search:** Semantic (OpenAI embeddings + Cloudflare Vectorize) + client-side filtering
+- **Cost:** ~$102/year (domain $12 + Workers Paid $60 + Vectorize storage $30)
 
 ## Development
 

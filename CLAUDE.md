@@ -9,7 +9,7 @@ Orientation for Claude Code sessions working on ClaudeAtlas.
 - **Live site:** https://claudeatlas.com
 - **GitHub repo:** https://github.com/dwalshx/ClaudeAtlas
 - **Hosted on:** Cloudflare Workers (Static Assets) — `claudeatlas.danthedub.workers.dev` with custom domain
-- **Cost:** ~$12/year (domain only; everything else free tier)
+- **Cost:** ~$102/year as of Phase 3.1 (~$12 domain + ~$60 Cloudflare Workers Paid + ~$30 Vectorize stored-dim overage). Upgraded from $12/yr free-tier in Phase 3.1 ship (2026-05-26) to support the 35k-record catalog: free-tier KV is capped at 1k writes/day, well below the 21k Listed-tier records that need KV publishing. See "Constraints" in PROJECT.md for the change rationale.
 
 ## Current status
 
@@ -496,7 +496,7 @@ If everything else fails, this must work — the single browse-and-discover loop
 ### Constraints
 
 - **Tech stack:** Astro 5 + Cloudflare Workers Static Assets — locked. Do not swap renderers or hosts.
-- **Cost:** Free tier for everything except the domain (~$12/year). Any Phase 1.5 addition that breaks this (paid analytics, paid D1 capacity, paid Workers) requires explicit approval.
+- **Cost ceiling (Phase 3.1+):** ~$102/year — $12 domain + ~$60 Cloudflare Workers Paid (1M KV writes/day, 1M reads/day, 50ms CPU/req) + ~$30 Vectorize stored-dim overage (55M dims at 35k catalog × $0.05/M after the 5M included). Free tier was sufficient through Phase 2.x (catalog 1k–2k records) but Phase 3.1's 28× catalog growth made it untenable: free KV cap is 1k writes/day, blocking the ~21k Listed-tier publish. Any future addition that breaks ~$102/yr (Vectorize query overage from >50M dims/mo, paid analytics, paid D1 capacity) requires explicit approval.
 - **Scraper footprint:** GitHub API rate limit is 5,000 requests/hour with a PAT. Any Phase 1.5 feature that needs backfill (skill birth dates, star history) must fit inside the rate limit with room for the daily cron.
 - **Data integrity:** Do not drift from the calibrated filter rules in `scripts/filter.js` without re-running against `skills-raw.json` and comparing the before/after distributions.
 - **Deployment:** Zero-downtime rollout is mandatory. The live site must keep serving through every Phase 1.5 deploy.
