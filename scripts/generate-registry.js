@@ -66,7 +66,19 @@ function main() {
   const totalSolid = skills.filter(s => s.quality_tier === 'solid').length;
   const totalListed = skills.filter(s => s.quality_tier === 'listed').length;
 
-  const entries = skills.map(s => ({
+  // Phase 3.1.x: registry is filtered to renderable tiers (Featured + Solid)
+  // because the full ~35k+ catalog produces a ~35MB JSON file that exceeds
+  // Cloudflare Workers Static Assets' 25 MB per-asset cap. Listed-tier records
+  // are discoverable via /api/v1/search (semantic search), via /browse (flat
+  // anchor list), or by downloading the full skills.ndjson from the
+  // skills-latest GitHub release asset (`bulk_download_url` below). The
+  // registry remains the canonical "agents fetch one file, parse, done"
+  // surface for the curated subset; full-catalog consumers have a clear path.
+  // Future: Phase 3.x sharding (/skills-registry/{a,b,c}.json) once catalog
+  // grows past ~14k renderable.
+  const renderableEntries = skills.filter(s => s.quality_tier === 'featured' || s.quality_tier === 'solid');
+
+  const entries = renderableEntries.map(s => ({
     name: s.name,
     slug: s.slug,
     description: s.description || null,
@@ -93,13 +105,21 @@ function main() {
     methodology_url: `${SITE_URL}/methodology/`,
     generated_at: new Date().toISOString(),
     count: entries.length,
-    total_discovered: stats.total_discovered || entries.length,
+    // Phase 3.1.x: catalog totals reflect FULL catalog; `count` reflects
+    // the renderable subset actually included in `skills` below.
+    catalog_total: skills.length,
+    subset: 'renderable',
+    subset_note: 'This file contains only Featured + Solid tier skills (~14k records). The full catalog (~35k including Listed tier) is available via /api/v1/search (semantic) or the GitHub release at `bulk_download_url` (NDJSON, one record per line).',
+    bulk_download_url: 'https://github.com/dwalshx/ClaudeAtlas/releases/download/skills-latest/skills.ndjson',
+    search_api_url: `${SITE_URL}/api/v1/search`,
+    browse_url: `${SITE_URL}/browse/`,
+    total_discovered: stats.total_discovered || skills.length,
     total_featured: totalFeatured,
     total_solid: totalSolid,
     total_listed: totalListed,
     categories: [...new Set(entries.map(e => e.category))].sort(),
-    schema_version: '1',
-    schema_notes: 'Phase 1.5 bulk catalog. A query API lives at /api/v1/search in a future release.',
+    schema_version: '2',
+    schema_notes: 'Phase 3.1.x — filtered to renderable tiers due to 25MB asset cap. Full catalog via /api/v1/search or bulk_download_url.',
     skills: entries,
   };
 
@@ -107,7 +127,18 @@ function main() {
   writeFileSync(OUTPUT_PATH, JSON.stringify(registry), 'utf-8');
 
   const size = JSON.stringify(registry).length;
-  log(`wrote ${OUTPUT_PATH} (${entries.length} skills, ${(size / 1024).toFixed(1)} KB)`);
+  log(`wrote ${OUTPUT_PATH} (${entries.length} of ${skills.length} skills, ${(size / 1024).toFixed(1)} KB)`);
+  // Defense in depth: hard-fail if we trip the 25MB Cloudflare cap. The
+  // tier filter above SHOULD keep us under, but if catalog growth or a
+  // tier-distribution shift pushes us over, fail fast at build time
+  // rather than at wrangler deploy time (which produced two failed
+  // production runs on 2026-05-27 before this guard was added).
+  const CF_ASSET_CAP_BYTES = 25 * 1024 * 1024;
+  if (size >= CF_ASSET_CAP_BYTES) {
+    console.error(`[registry] FATAL: ${OUTPUT_PATH} is ${(size / 1024 / 1024).toFixed(1)} MB; Cloudflare Static Assets cap is 25 MB.`);
+    console.error('[registry] Tighten the tier filter, shard the registry, or move to a Worker route.');
+    process.exit(1);
+  }
   log('=== registry generator complete ===');
 }
 
