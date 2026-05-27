@@ -76,7 +76,9 @@ If everything else fails, this must work — the single browse-and-discover loop
 
 ## Context
 
-**Phase 1 shipped on 2026-04-10** with 33,078 skills scraped, 1,078 curated and indexed (305 Featured, the rest Solid/Listed). Live at claudeatlas.com on Cloudflare Workers Static Assets with the custom domain and SSL configured. Total ongoing cost is roughly $12/year for the domain; everything else is free tier.
+**Phase 1 shipped on 2026-04-10** with 33,078 skills scraped, 1,078 curated and indexed (305 Featured, the rest Solid/Listed). Live at claudeatlas.com on Cloudflare Workers Static Assets with the custom domain and SSL configured.
+
+**Cost ceiling updated in Phase 3.1 (2026-05-26):** ~$102/year (was $12/yr through Phase 2.x). Phase 3.1's 28× catalog growth (1,286 → 35,830 records) blew past the Cloudflare KV free-tier daily write cap (1k writes/day vs ~21k needed for Listed-tier publish). Upgraded to Workers Paid ($5/mo = $60/yr) for 1M KV writes/day; Vectorize stored-dim overage adds ~$30/yr at 55M dims for the 35k catalog. Speed-to-comprehensive-index was the explicit trade-off — see commit log on 2026-05-26.
 
 **Stack (locked from Phase 1):**
 - Scraper: Node.js (`scripts/scrape.js`) + GitHub REST API, ETag-cached, resilient checkpoint saves
@@ -102,7 +104,7 @@ If everything else fails, this must work — the single browse-and-discover loop
 ## Constraints
 
 - **Tech stack:** Astro 5 + Cloudflare Workers Static Assets — locked. Do not swap renderers or hosts.
-- **Cost:** Free tier for everything except the domain (~$12/year). Any Phase 1.5 addition that breaks this (paid analytics, paid D1 capacity, paid Workers) requires explicit approval.
+- **Cost ceiling (Phase 3.1+):** ~$102/year — $12 domain + ~$60 Cloudflare Workers Paid + ~$30 Vectorize stored-dim overage. Increased from $12/yr in Phase 3.1 ship (2026-05-26) to support the 35k+ canonical-skill catalog. Any future cost increase beyond ~$102/yr (Vectorize query overage from >50M dims/mo, paid analytics, paid D1 capacity, GitHub Actions paid minutes) requires explicit approval. Optimization opportunity tracked in backlog: drop OpenAI `dimensions` to 512 (truncated embeddings, ~95% retrieval quality) to bring Vectorize storage under the 5M included → saves ~$30/yr.
 - **Scraper footprint:** GitHub API rate limit is 5,000 requests/hour with a PAT. Any Phase 1.5 feature that needs backfill (skill birth dates, star history) must fit inside the rate limit with room for the daily cron.
 - **Data integrity:** Do not drift from the calibrated filter rules in `scripts/filter.js` without re-running against `skills-raw.json` and comparing the before/after distributions.
 - **Deployment:** Zero-downtime rollout is mandatory. The live site must keep serving through every Phase 1.5 deploy.

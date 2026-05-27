@@ -9,7 +9,7 @@ Orientation for Claude Code sessions working on ClaudeAtlas.
 - **Live site:** https://claudeatlas.com
 - **GitHub repo:** https://github.com/dwalshx/ClaudeAtlas
 - **Hosted on:** Cloudflare Workers (Static Assets) — `claudeatlas.danthedub.workers.dev` with custom domain
-- **Cost:** ~$12/year (domain only; everything else free tier)
+- **Cost:** ~$102/year as of Phase 3.1 (~$12 domain + ~$60 Cloudflare Workers Paid + ~$30 Vectorize stored-dim overage). Upgraded from $12/yr free-tier in Phase 3.1 ship (2026-05-26) to support the 35k-record catalog: free-tier KV is capped at 1k writes/day, well below the 21k Listed-tier records that need KV publishing. See "Constraints" in PROJECT.md for the change rationale.
 
 ## Current status
 
@@ -120,6 +120,17 @@ interface SkillRecord {
   category: string;             // One of 8 categories
   tags: string[];
 
+  // Phase 3.1 — embedding-derived
+  is_duplicate: boolean | null; // true when cosine sim > 0.92 to another
+                                // record. null = not assessed yet (record
+                                // has no embedding). false = assessed clean.
+  canonical_slug: string | null;// when is_duplicate=true, the slug of the
+                                // older canonical skill in the dup cluster.
+  novelty_score: number | null; // 0-1; 1 - max cosine sim to any other
+                                // record. null for duplicates and
+                                // un-assessed records. Phase 3.4 UI will
+                                // surface skills in the top 5% percentile.
+
   // Pipeline metadata
   scraped_at: string;
   content_sha: string;
@@ -157,18 +168,22 @@ Daily history snapshots in `data/history/YYYY-MM-DD.json` use short keys:
 | License         | 10%    | Permissive open-source license present              |
 | Description     | 5%     | Repo has a meaningful description                   |
 
-Tiers:
-- **Featured** ≥ 90
-- **Solid** 70–89
-- **Listed** < 70
+Tiers (Phase 3.1+: percentile-based, NOT absolute thresholds):
+- **Featured** — top 10% of catalog by `quality_score` (ranked desc, ties broken by stars then id)
+- **Solid** — next 30% (ranks 10–40%)
+- **Listed** — remainder (ranks 40–100%)
 
-Post-filter gates (in `filter.js`):
-- Minimum 10 repo stars
-- Minimum 500-char body length
+The legacy ≥90/70–89/<70 absolute thresholds were calibrated against the pre-3.1 1,885-record catalog. At post-3.1 catalog sizes (~33k+), absolute thresholds put 84% of records in renderable tiers and blew the Cloudflare Workers Static Assets 20k free-tier file cap. Percentile-based tiering auto-scales with catalog growth.
+
+Defense in depth: `RENDERABLE_CAP=18000` in `filter.js` trims the Solid tier (preserving the Featured top-10% signal) if the percentile targets would otherwise exceed Cloudflare's static-asset budget. Activates once catalog grows past ~45k records.
+
+Post-filter gates (in `filter.js`, Phase 3.1+):
+- MAX_PER_REPO and MIN_STARS REMOVED (embedding dedup is the new gate)
+- Minimum 200-char body length (lowered from 500)
 - No template/placeholder names (e.g. `agent-name`, `example`)
 - No biz-slop names (e.g. `carrier-relationship-management`)
 - Language variant dedup (`-de`, `-fr`, `-zht`, etc.)
-- Max 2 skills per repo (prevents mega-repo dominance)
+- (Phase 3.1 dropped MAX_PER_REPO; mega-repo dominance handled by embedding dedup in `scripts/enrich.js`)
 
 ## Key commands
 
@@ -229,6 +244,27 @@ npm run preview
    `.planning/phases/3.0.1-pipeline-state-persistence/RESEARCH.md`. Until
    then, Track 1's daily fresh-request cost is a known and accepted line
    item in the daily budget.
+8. **Phase 3.1 added embedding-based dedup; if enrich.js fails,
+   skills.ndjson may carry stale `is_duplicate` flags.** The daily
+   pipeline order is Filter → Embed → Enrich → Upload-vectors → Build.
+   If `npm run enrich` fails (most likely cause: skill-vectors.ndjson
+   missing because the embed step was skipped or evicted), the
+   downstream skills.ndjson keeps yesterday's enrichment values for
+   records that survived (preserved via `PRESERVED_FIELDS` in filter.js),
+   and `is_duplicate=null` for any new records. The site still renders
+   correctly — the new fields are additive and the rendering layer
+   degrades to "show everything" when values are null. To force a clean
+   re-enrich: `gh workflow run daily-scrape.yml`. If the vectors NDJSON
+   itself is corrupted or missing, run `npm run embed` locally with a
+   fresh `OPENAI_API_KEY` then push the regenerated file (or re-run
+   the workflow once OpenAI is available again).
+
+   Novelty is gated as a **percentile** (top 5% within the current
+   catalog), not an absolute threshold. The score lives on every
+   record; the gate lives in Phase 3.4 UI code (TBD). **Don't reintroduce
+   the absolute `novelty > 0.45` gate** from the early spec drafts —
+   research confirmed it's the noise floor for `text-embedding-3-small`
+   embeddings (`.planning/phases/3.1-filter-overhaul/RESEARCH.md` §Q2).
 
 ## Pipeline footguns (F1 streaming foundation, Phase 3.1.1)
 
@@ -460,7 +496,7 @@ If everything else fails, this must work — the single browse-and-discover loop
 ### Constraints
 
 - **Tech stack:** Astro 5 + Cloudflare Workers Static Assets — locked. Do not swap renderers or hosts.
-- **Cost:** Free tier for everything except the domain (~$12/year). Any Phase 1.5 addition that breaks this (paid analytics, paid D1 capacity, paid Workers) requires explicit approval.
+- **Cost ceiling (Phase 3.1+):** ~$102/year — $12 domain + ~$60 Cloudflare Workers Paid (1M KV writes/day, 1M reads/day, 50ms CPU/req) + ~$30 Vectorize stored-dim overage (55M dims at 35k catalog × $0.05/M after the 5M included). Free tier was sufficient through Phase 2.x (catalog 1k–2k records) but Phase 3.1's 28× catalog growth made it untenable: free KV cap is 1k writes/day, blocking the ~21k Listed-tier publish. Any future addition that breaks ~$102/yr (Vectorize query overage from >50M dims/mo, paid analytics, paid D1 capacity) requires explicit approval.
 - **Scraper footprint:** GitHub API rate limit is 5,000 requests/hour with a PAT. Any Phase 1.5 feature that needs backfill (skill birth dates, star history) must fit inside the rate limit with room for the daily cron.
 - **Data integrity:** Do not drift from the calibrated filter rules in `scripts/filter.js` without re-running against `skills-raw.json` and comparing the before/after distributions.
 - **Deployment:** Zero-downtime rollout is mandatory. The live site must keep serving through every Phase 1.5 deploy.

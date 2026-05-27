@@ -30,8 +30,14 @@ const SITEMAP_PATH = join(ROOT, 'dist', 'sitemap-0.xml');
 const SKILLS_NDJSON_PATH = join(ROOT, 'data', 'skills.ndjson');
 
 // Margin for static pages (homepage, methodology, 404, category/*, creators,
-// apis, etc.). Generous to avoid false fails; tighten if drift surfaces.
-const STATIC_PAGES_TOLERANCE = 1500;
+// apis, etc.). Scales with catalog size because /creators/[username].astro
+// auto-emits one page per unique repo owner — that set grew ~10x with
+// Phase 3.1's catalog expansion (~360 creators → ~3,400 creators at 34k
+// catalog). Floor of 1,500 preserves the original safety net for small
+// catalogs; the 15% term covers creator-page scaling with catalog growth.
+function computeTolerance(skillCount) {
+  return Math.max(1500, Math.floor(skillCount * 0.15));
+}
 
 function main() {
   if (!existsSync(SITEMAP_PATH)) {
@@ -62,15 +68,17 @@ function main() {
     process.exit(1);
   }
 
+  const tolerance = computeTolerance(skillCount);
+
   console.log(`[sitemap-completeness] sitemap-0.xml: ${locCount} <loc> entries`);
   console.log(`[sitemap-completeness] skills.ndjson: ${skillCount} records`);
-  console.log(`[sitemap-completeness] tolerance: ±${STATIC_PAGES_TOLERANCE} (for static pages)`);
+  console.log(`[sitemap-completeness] tolerance: ±${tolerance} (max(1500, 15% of catalog) — scales with creator page count)`);
 
   // Allowed range: skill count - small (some skills may legitimately be
   // omitted, e.g. malformed) up to skill count + tolerance (static pages).
   const diff = locCount - skillCount;
-  if (diff < -25 || diff > STATIC_PAGES_TOLERANCE) {
-    console.error(`[sitemap-completeness] FATAL: <loc> count ${locCount} not in [${skillCount - 25}, ${skillCount + STATIC_PAGES_TOLERANCE}]`);
+  if (diff < -25 || diff > tolerance) {
+    console.error(`[sitemap-completeness] FATAL: <loc> count ${locCount} not in [${skillCount - 25}, ${skillCount + tolerance}]`);
     console.error('[sitemap-completeness] Likely cause: astro.config.mjs `customPages` not enumerating every slug,');
     console.error('[sitemap-completeness] or skills.ndjson is stale. Re-run filter then rebuild.');
     process.exit(1);
