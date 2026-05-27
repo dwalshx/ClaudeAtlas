@@ -68,7 +68,10 @@ export function buildNewSkillsWeekChart(skills, opts = {}) {
   const earliest = buckets[0].start;
 
   for (const skill of skills) {
-    const rawDate = skill.skill_first_commit_at || skill.repo_created_at;
+    // F2: prefer extra.skill_first_commit_at (v2 EntityRecord<SkillExtra>);
+    // fall back to top-level skill_first_commit_at (legacy v1 + dual-shape
+    // upcaster output during the cutover window).
+    const rawDate = skill.extra?.skill_first_commit_at || skill.skill_first_commit_at || skill.repo_created_at;
     if (!rawDate) continue;
     const t = Date.parse(rawDate);
     if (isNaN(t) || t < earliest) continue;

@@ -131,7 +131,7 @@ const jsonLd = {
       <div class="space-y-3">
         <ScoreBar label="Stars" value={Math.min(100, Math.round(Math.log10((skill.repo_stars || 0) + 1) * 33.3))} weight="20%" />
         <ScoreBar label="Recency" value={daysToRecency(skill.repo_pushed_at)} weight="20%" />
-        <ScoreBar label="Frontmatter" value={skill.has_name && skill.has_description ? 70 : skill.has_description ? 40 : 10} weight="20%" />
+        <ScoreBar label="Frontmatter" value={(skill.extra?.has_name ?? skill.has_name) && (skill.extra?.has_description ?? skill.has_description) ? 70 : (skill.extra?.has_description ?? skill.has_description) ? 40 : 10} weight="20%" />
         <ScoreBar label="Documentation" value={Math.min(100, Math.round(skill.body_length / 20))} weight="15%" />
         <ScoreBar label="Issue Health" value={skill.repo_open_issues === 0 ? 80 : 50} weight="10%" />
         <ScoreBar label="License" value={skill.repo_license ? 100 : 0} weight="10%" />
@@ -139,18 +139,21 @@ const jsonLd = {
       </div>
     </div>
 
-    <!-- Skill Content Preview -->
-    {skill.body_markdown && skill.body_markdown.length > 50 && (
-      <div class="bg-gray-900 border border-gray-800 rounded-xl p-6 mb-8">
-        <h2 class="text-sm font-medium text-gray-400 mb-4 uppercase tracking-wider">Skill Content</h2>
-        <div class="prose prose-invert prose-sm max-w-none text-gray-300 whitespace-pre-wrap font-mono text-xs leading-relaxed max-h-96 overflow-y-auto">
-          {skill.body_markdown.substring(0, 2000)}
-          {skill.body_markdown.length > 2000 && (
-            <p class="text-gray-500 mt-4">... <a href={skill.repo_url} target="_blank" class="text-atlas-400 hover:underline">View full content on GitHub</a></p>
-          )}
+    <!-- Skill Content Preview (F2: read from entity.extra.body_markdown) -->
+    {(() => {
+      const bodyMd = skill.extra?.body_markdown ?? skill.body_markdown;
+      return bodyMd && bodyMd.length > 50 && (
+        <div class="bg-gray-900 border border-gray-800 rounded-xl p-6 mb-8">
+          <h2 class="text-sm font-medium text-gray-400 mb-4 uppercase tracking-wider">Skill Content</h2>
+          <div class="prose prose-invert prose-sm max-w-none text-gray-300 whitespace-pre-wrap font-mono text-xs leading-relaxed max-h-96 overflow-y-auto">
+            {bodyMd.substring(0, 2000)}
+            {bodyMd.length > 2000 && (
+              <p class="text-gray-500 mt-4">... <a href={skill.repo_url} target="_blank" class="text-atlas-400 hover:underline">View full content on GitHub</a></p>
+            )}
+          </div>
         </div>
-      </div>
-    )}
+      );
+    })()}
 
     <!-- Metadata -->
     <div class="bg-gray-900 border border-gray-800 rounded-xl p-6 mb-8">

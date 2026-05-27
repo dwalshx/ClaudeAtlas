@@ -372,7 +372,10 @@ function renderListedSkillHtml(skill) {
   const tier = escapeHtml(skill.quality_tier || 'listed');
   const score = Number(skill.quality_score || 0);
   const installCmd = escapeHtml(`claude install-skill ${skill.repo_full_name || ''}`);
-  const bodyExcerpt = escapeHtml((skill.body_markdown || '').slice(0, 1500));
+  // F2: prefer entity.extra.body_markdown (v2 EntityRecord<SkillExtra>);
+  // fall back to top-level body_markdown for legacy v1 records or
+  // the dual-shape upcaster output during the cutover window.
+  const bodyExcerpt = escapeHtml(((skill.extra && skill.extra.body_markdown) || skill.body_markdown || '').slice(0, 1500));
 
   // Minimal but functional template. Visual chrome (nav/footer matching
   // BaseLayout.astro) is intentionally light here — a future polish task
