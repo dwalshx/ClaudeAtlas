@@ -79,18 +79,24 @@ ClaudeAtlas/
 
 ## Data model
 
-Each skill in `skills.json` has roughly this shape:
+**Phase 3.1.2 reshaped the on-disk record into a polymorphic `EntityRecord`
+discriminated union.** Every record now carries `entity_type` and nests its
+type-specific fields under `extra`. NDJSON files begin with a
+`{ "_header": true, "schema_version": 2, "entity_type": "skill", ... }`
+sentinel line (read- and write-aware in `scripts/lib/ndjson.js`).
+
+Canonical TypeScript shape lives in `src/lib/types.d.ts`; JSDoc mirror in
+`src/lib/types.js`. Abbreviated:
 
 ```typescript
-interface SkillRecord {
-  // Identity
-  id: string;                   // "repo_full_name/skill_path"
-  name: string;                 // Cleaned skill name (lowercase, hyphens)
-  slug: string;                 // "author/skill-name" for URLs
-  description: string;          // From SKILL.md frontmatter or first paragraph
-  skill_path: string;           // Path within the repo
+interface EntityCommon {
+  id: string;                   // "<entity_type>:<repo_full_name>/<path>"
+  slug: string;                 // URL-safe; "<author>/<name>"
+  entity_type: 'skill' | 'plugin' | 'mcp_server' | 'command_lib' | 'agent_lib' | 'hook_lib';
+  name: string;
+  description: string;
 
-  // Repo metadata (from GitHub API)
+  // Repo metadata (unchanged from pre-3.1.2 SkillRecord shape)
   repo_full_name: string;
   repo_url: string;
   repo_stars: number;
@@ -108,36 +114,58 @@ interface SkillRecord {
   repo_is_fork: boolean;
   repo_description: string | null;
 
-  // Parsed SKILL.md content
-  frontmatter: Record<string, any>;
-  body_markdown: string;        // Truncated to 1500 chars in filter output
-  body_length: number;
-  has_name: boolean;
-  has_description: boolean;
+  // Content
+  body_length: number;          // ORIGINAL body length BEFORE filter-stage truncation
 
   // Computed
   quality_score: number;        // 0-100
-  quality_tier: 'featured' | 'solid' | 'listed';  // 90+ / 70-89 / <70
-  category: string;             // One of 8 categories
-  tags: string[];
+  quality_tier: 'featured' | 'solid' | 'listed';
+  novelty_score: number;        // 0-1; populated by enrich.js
+  is_duplicate: boolean;        // populated by enrich.js
+  canonical_id: string | null;  // points to canonical EntityRecord.id
 
-  // Phase 3.1 — embedding-derived
-  is_duplicate: boolean | null; // true when cosine sim > 0.92 to another
-                                // record. null = not assessed yet (record
-                                // has no embedding). false = assessed clean.
-  canonical_slug: string | null;// when is_duplicate=true, the slug of the
-                                // older canonical skill in the dup cluster.
-  novelty_score: number | null; // 0-1; 1 - max cosine sim to any other
-                                // record. null for duplicates and
-                                // un-assessed records. Phase 3.4 UI will
-                                // surface skills in the top 5% percentile.
+  // Classification
+  tags: string[];               // PRIMARY classifier; min one `category:<slug>` tag
+  category: string | null;      // LEGACY display field, derived from tags. Removed in 3.6.
 
-  // Pipeline metadata
+  // Lineage
   scraped_at: string;
   content_sha: string;
-  source: 'code-search' | 'topics' | 'seed' | 'discover';
+  source: 'code-search' | 'topics' | 'seed' | 'discover' | 'registry' | 'manual';
+  discovery_signals: string[];
+  schema_version: 2;
 }
+
+interface SkillExtra {
+  type: 'skill';
+  skill_path: string;
+  body_markdown: string;        // 1500 chars in filter output, 5000 in raw
+  frontmatter: Record<string, any>;
+  has_name: boolean;
+  has_description: boolean;
+  skill_first_commit_at: string | null;
+}
+
+type EntityRecord =
+  | (EntityCommon & { entity_type: 'skill'; extra: SkillExtra })
+  | /* PluginExtra, McpExtra, etc. land in 3.2+ */;
 ```
+
+`PluginExtra`, `McpExtra`, `CommandLibExtra`, `AgentLibExtra`, `HookLibExtra`
+are defined in `src/lib/types.d.ts` ready for 3.2+. `framework` is
+intentionally NOT an entity_type — frameworks are tag-based
+(`framework:gsd`, attachable to any entity).
+
+**Cutover (2026-05-28 — Phase 3.1.2 / F2 ships):** the F2 branch lands the
+polymorphic envelope. During the D+0 to D+7 cutover window the legacy flat
+fields (`skill.body_markdown`, `skill.frontmatter`, `skill.skill_path`,
+`skill.has_name`, `skill.has_description`, `skill.skill_first_commit_at`)
+remain dual-shape (top-level AND nested under `extra.*`) so any unmigrated
+consumer keeps working. On D+7 a cutover commit deletes
+`src/lib/skills.js`, `scripts/lib/legacy-skill-reader.js`, and
+`scripts/migrate-to-entities.js`, flips `lint:legacy-shape` from warning
+to error, and ships the strict-envelope form. Schedule + rollback CLI in
+`.planning/phases/03.1.2-polymorphic-envelope/3.1.2-CUTOVER.md`.
 
 Daily history snapshots in `data/history/YYYY-MM-DD.json` use short keys:
 
@@ -266,6 +294,32 @@ npm run preview
    the absolute `novelty > 0.45` gate** from the early spec drafts —
    research confirmed it's the noise floor for `text-embedding-3-small`
    embeddings (`.planning/phases/3.1-filter-overhaul/RESEARCH.md` §Q2).
+
+9. **Phase 3.1.2 polymorphic envelope cutover in progress (D+0 to D+7,
+   starting from the F2 branch merge to main).** `src/lib/skills.js` is now
+   a thin shim re-exporting from `src/lib/entities.js`; new code should
+   import from `entities.js`. Legacy field paths
+   (`skill.body_markdown`, `skill.frontmatter`, `skill.has_name`,
+   `skill.has_description`, `skill.skill_path`,
+   `skill.skill_first_commit_at`) are deprecated — use `entity.extra.*`
+   instead. `scripts/lint-no-legacy-skill-shape.js` warns on legacy paths
+   today; the D+7 cutover commit flips it to blocking and deletes the
+   shim, the upcaster (`scripts/lib/legacy-skill-reader.js`), and the
+   one-shot migrator (`scripts/migrate-to-entities.js`). Schedule +
+   rollback CLI: `.planning/phases/03.1.2-polymorphic-envelope/3.1.2-CUTOVER.md`.
+
+   The first daily-scrape after F2 merge produces v2 NDJSON natively
+   (filter.js dispatches by `entity_type`). `data/skills.ndjson` is
+   gitignored, so no separate "production migration" step is needed —
+   the cutover happens automatically on the next scheduled run, and the
+   release-asset tagging step (`skills-latest-prev`) in daily-scrape.yml
+   provides the rollback target.
+
+   T2.5 (Vectorize tag-array filtering probe) was deferred to Phase 3.4
+   per `3.1.2-VECTORIZE-PROBE.md`. T8 conservatively populates
+   `metadata.entity_type` only (NOT `metadata.tags`), and the worker's
+   `?category` filter resolves against legacy `metadata.category`. Tag-
+   array filtering is a 3.4 optimization, not an F2 blocker.
 
 ## Pipeline footguns (F1 streaming foundation, Phase 3.1.1)
 
