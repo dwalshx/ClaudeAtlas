@@ -2,6 +2,7 @@
 import BaseLayout from '../layouts/BaseLayout.astro';
 import SkillCard from '../components/SkillCard.astro';
 import CategoryChip from '../components/CategoryChip.astro';
+import JsonLd from '../components/JsonLd.astro';
 import { allSkills, getFeaturedSkills, getAllCategories, getStats, getPipelineStats } from '../lib/skills.js';
 import { buildNewSkillsWeekChart, buildMaintenanceChart } from '../lib/charts.js';
 
@@ -27,9 +28,71 @@ const maintenanceChartSvg = buildMaintenanceChart(allSkills);
 // timestamp (when the scraper last ran) and falls back to build time.
 const updatedDate = pstats.updated_at ? new Date(pstats.updated_at) : new Date();
 const updatedLabel = `Updated ${updatedDate.toISOString().slice(0, 10)}`;
+
+// Phase 3.1.3 (Agent Hub) — DataCatalog JSON-LD for the homepage. Search
+// engines + agent crawlers consume this to understand that ClaudeAtlas
+// is a structured dataset rather than a wiki page. `distribution` points
+// at the two bulk-download surfaces (the curated registry JSON and the
+// full NDJSON release asset).
+const homeJsonLd = {
+  "@context": "https://schema.org",
+  "@type": "DataCatalog",
+  "name": "ClaudeAtlas",
+  "description": "Curated discovery index of top Claude ecosystem skills",
+  "url": "https://claudeatlas.com",
+  "publisher": {
+    "@type": "Organization",
+    "name": "ClaudeAtlas",
+    "url": "https://claudeatlas.com",
+  },
+  "creator": {
+    "@type": "Organization",
+    "name": "ClaudeAtlas",
+    "url": "https://claudeatlas.com",
+  },
+  "isAccessibleForFree": true,
+  "numberOfItems": pstats.total_indexed,
+  "dateModified": updatedDate.toISOString(),
+  "license": "https://opensource.org/licenses/MIT",
+  "distribution": [
+    {
+      "@type": "DataDownload",
+      "name": "Curated registry (JSON, Featured + Solid tiers)",
+      "encodingFormat": "application/json",
+      "contentUrl": "https://claudeatlas.com/skills-registry.json",
+    },
+    {
+      "@type": "DataDownload",
+      "name": "Full catalog (NDJSON release asset)",
+      "encodingFormat": "application/x-ndjson",
+      "contentUrl": "https://github.com/dwalshx/ClaudeAtlas/releases/download/skills-latest/skills.ndjson",
+    },
+    {
+      "@type": "DataFeed",
+      "name": "What's new (last 30 days)",
+      "encodingFormat": "application/feed+json",
+      "contentUrl": "https://claudeatlas.com/feed/whats-new.json",
+    },
+    {
+      "@type": "DataFeed",
+      "name": "Trending (7-day star deltas)",
+      "encodingFormat": "application/feed+json",
+      "contentUrl": "https://claudeatlas.com/feed/trending.json",
+    },
+    {
+      "@type": "DataFeed",
+      "name": "Notable this week",
+      "encodingFormat": "application/feed+json",
+      "contentUrl": "https://claudeatlas.com/feed/notable.json",
+    },
+  ],
+  "citation": "Source: ClaudeAtlas — https://claudeatlas.com",
+};
 ---
 
 <BaseLayout>
+  <JsonLd data={homeJsonLd} />
+
   <!-- Sticky Search Bar -->
   <div id="search-bar" class="sticky top-[57px] z-40 bg-gray-950/90 backdrop-blur border-b border-gray-800 px-4 py-3">
     <div class="max-w-3xl mx-auto relative">
