@@ -121,6 +121,17 @@ const LINT_ALLOWLIST = [
     line: 624,
     reason: 'pipeline-stats.json write (Track 2) — bounded (~5 KB; same shape as filter.js stats write)',
   },
+  // ---------------------------------------------------------------------------
+  // Phase 3.1.3 — Agent Hub generators. All bounded outputs (~1-10 KB each).
+  // ---------------------------------------------------------------------------
+  {
+    file: 'scripts/generate-llms-txt.js',
+    reason: 'llms.txt template render — bounded ~5 KB plaintext output; pipeline-stats.json sidecar read',
+  },
+  {
+    file: 'scripts/generate-feeds.js',
+    reason: 'JSON Feed 1.1 generator — 3 bounded files (~1-5 KB each) capped at 25/50/100 items; history snapshot reads are bounded sidecars',
+  },
 ];
 
 // ---------------------------------------------------------------------------
