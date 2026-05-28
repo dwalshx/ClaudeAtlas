@@ -209,6 +209,8 @@ export async function semanticSearch(request, env) {
   let topK = SEARCH_DEFAULT_K;
   let filterTier = null;
   let filterCategory = null;
+  let filterType = null;   // F2 (B4): new ?type filter, additive — does NOT
+                           //         replace tier/category (forbidden refactor).
 
   if (request.method === 'GET') {
     const url = new URL(request.url);
@@ -217,6 +219,7 @@ export async function semanticSearch(request, env) {
     if (!isNaN(k) && k > 0) topK = Math.min(k, SEARCH_MAX_K);
     filterTier = url.searchParams.get('tier') || null;
     filterCategory = url.searchParams.get('category') || null;
+    filterType = url.searchParams.get('type') || null;
   } else if (request.method === 'POST') {
     let body;
     try {
@@ -228,6 +231,7 @@ export async function semanticSearch(request, env) {
     if (typeof body?.k === 'number' && body.k > 0) topK = Math.min(body.k, SEARCH_MAX_K);
     if (typeof body?.tier === 'string') filterTier = body.tier;
     if (typeof body?.category === 'string') filterCategory = body.category;
+    if (typeof body?.type === 'string') filterType = body.type;
   } else {
     return new Response('Method Not Allowed', { status: 405 });
   }
@@ -265,11 +269,21 @@ export async function semanticSearch(request, env) {
       topK,
       returnMetadata: 'all',
     };
-    // Optional metadata filters
-    if (filterTier || filterCategory) {
+    // F2 (B4) — Filter TRIAD: ?tier, ?category, ?type. Build the filter
+    // object ADDITIVELY (do NOT replace the existing block with a single
+    // `if (filterType || filterCategory)` — that's the forbidden refactor
+    // T11 Smoke I asserts against by re-checking tier-filtered query
+    // results pre vs post-F2). Vectorize per-vector metadata currently
+    // carries quality_tier + category + entity_type (added by T8's
+    // upload-vectors changes). Tag-array filtering (metadata.tags) was
+    // probed in T2.5; outcome documented in 3.1.2-VECTORIZE-PROBE.md.
+    // Until that probe lands, ?category resolves against metadata.category
+    // (legacy field, populated by upload-vectors.js).
+    if (filterTier || filterCategory || filterType) {
       const filter = {};
       if (filterTier) filter.quality_tier = { $eq: filterTier };
       if (filterCategory) filter.category = { $eq: filterCategory };
+      if (filterType) filter.entity_type = { $eq: filterType };
       opts.filter = filter;
     }
     vectorResults = await env.VECTORIZE.query(queryVector, opts);
@@ -303,6 +317,10 @@ export async function semanticSearch(request, env) {
       repo_stars: m.metadata?.repo_stars || null,
       repo_full_name: m.metadata?.repo_full_name || null,
       description: m.metadata?.description || null,
+      // F2 (DOD-7 / Smoke H): echo entity_type so cross-type clients can
+      // discriminate without a second round-trip. Defaults to 'skill' for
+      // legacy vectors uploaded before T8 populated the metadata field.
+      entity_type: m.metadata?.entity_type || 'skill',
       detail_url: `/skills/${m.metadata.slug}/`,
     }));
 
@@ -372,7 +390,10 @@ function renderListedSkillHtml(skill) {
   const tier = escapeHtml(skill.quality_tier || 'listed');
   const score = Number(skill.quality_score || 0);
   const installCmd = escapeHtml(`claude install-skill ${skill.repo_full_name || ''}`);
-  const bodyExcerpt = escapeHtml((skill.body_markdown || '').slice(0, 1500));
+  // F2: prefer entity.extra.body_markdown (v2 EntityRecord<SkillExtra>);
+  // fall back to top-level body_markdown for legacy v1 records or
+  // the dual-shape upcaster output during the cutover window.
+  const bodyExcerpt = escapeHtml(((skill.extra && skill.extra.body_markdown) || skill.body_markdown || '').slice(0, 1500));
 
   // Minimal but functional template. Visual chrome (nav/footer matching
   // BaseLayout.astro) is intentionally light here — a future polish task

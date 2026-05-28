@@ -97,6 +97,17 @@ function sleep(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
+// F2: helper that reads body_markdown from either v2 extra or legacy top-level.
+// Used by BOTH computeContentSha and buildEmbeddingInput so the embedding
+// cache key stays byte-identical across the v1→v2 migration (per R6 — do
+// NOT trigger a 35k-record Vectorize re-upload).
+function readBodyMarkdown(skill) {
+  if (skill && skill.extra && typeof skill.extra.body_markdown === 'string') {
+    return skill.extra.body_markdown;
+  }
+  return skill?.body_markdown || '';
+}
+
 // Content SHA is a stable fingerprint of the fields we embed.
 // Any change to name/description/category/body_markdown invalidates the vector.
 function computeContentSha(skill) {
@@ -104,7 +115,7 @@ function computeContentSha(skill) {
     skill.name || '',
     skill.description || '',
     skill.category || '',
-    skill.body_markdown || '',
+    readBodyMarkdown(skill),
   ].join('|');
   return createHash('sha256').update(payload).digest('hex');
 }
@@ -137,7 +148,7 @@ function buildEmbeddingInput(skill) {
     skill.name,
     skill.description || '',
     skill.category || '',
-    (skill.body_markdown || '').slice(0, 1500),
+    readBodyMarkdown(skill).slice(0, 1500),
   ].filter(Boolean);
   return parts.join('\n\n').slice(0, 6000);
 }
@@ -305,6 +316,11 @@ async function main() {
           repo_stars: skill.repo_stars || 0,
           repo_full_name: skill.repo_full_name || '',
           description: (skill.description || '').slice(0, 500),
+          // F2 (B4 / DOD-7): carry entity_type into Vectorize metadata so
+          // the worker's ?type filter has a queryable field the day plugins
+          // (Phase 3.2) land. Default to 'skill' for legacy v1 records on
+          // disk during the cutover window.
+          entity_type: skill.entity_type || 'skill',
           _content_sha: sha,
         },
       });

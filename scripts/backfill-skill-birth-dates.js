@@ -182,27 +182,44 @@ async function main() {
   for (let i = 0; i < skills.length; i++) {
     const skill = skills[i];
 
+    // F2: read skill_first_commit_at + skill_path from entity.extra.* first
+    // (v2 EntityRecord<SkillExtra>); fall back to top-level legacy fields
+    // (v1 records on disk, or dual-shape upcaster output during cutover).
+    const existingBirth = skill.extra?.skill_first_commit_at ?? skill.skill_first_commit_at;
+    const skillPath = skill.extra?.skill_path ?? skill.skill_path;
+
     // Skip if already populated
-    if (skill.skill_first_commit_at !== undefined && skill.skill_first_commit_at !== null) {
+    if (existingBirth !== undefined && existingBirth !== null) {
       stats.skipped++;
       processed++;
       continue;
     }
 
+    /** Persist the discovered (or fallback) birth date to BOTH the legacy
+     *  top-level field AND the v2 extra.* path. Dual-write through the
+     *  cutover window — readers may resolve through either path. The T9
+     *  migration commits the v2 shape as authoritative. */
+    function writeBirth(value) {
+      skill.skill_first_commit_at = value;
+      if (skill.extra && typeof skill.extra === 'object') {
+        skill.extra.skill_first_commit_at = value;
+      }
+    }
+
     try {
-      const firstCommitAt = await findFirstCommit(skill.repo_full_name, skill.skill_path);
+      const firstCommitAt = await findFirstCommit(skill.repo_full_name, skillPath);
       if (firstCommitAt) {
-        skill.skill_first_commit_at = firstCommitAt;
+        writeBirth(firstCommitAt);
         stats.ok++;
       } else {
         // Fall back to repo_created_at so every skill has *some* value
-        skill.skill_first_commit_at = skill.repo_created_at || null;
+        writeBirth(skill.repo_created_at || null);
         stats.fallback++;
       }
     } catch (err) {
-      skill.skill_first_commit_at = skill.repo_created_at || null;
+      writeBirth(skill.repo_created_at || null);
       stats.error++;
-      log(`  [ERROR] ${skill.repo_full_name}/${skill.skill_path}: ${err.message}`);
+      log(`  [ERROR] ${skill.repo_full_name}/${skillPath}: ${err.message}`);
     }
 
     processed++;

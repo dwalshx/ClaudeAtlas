@@ -179,10 +179,12 @@ const SERVICES = [
 // --- Matching ---
 
 function buildSearchText(skill) {
+  // F2: prefer entity.extra.body_markdown (v2); fall back to legacy top-level.
+  const body = skill.extra?.body_markdown ?? skill.body_markdown ?? '';
   const parts = [
     skill.name || '',
     skill.description || '',
-    skill.body_markdown || '',
+    body,
     skill.repo_description || '',
     (skill.repo_topics || []).join(' '),
   ];

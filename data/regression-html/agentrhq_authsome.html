@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>authsome — ClaudeAtlas</title>
+<meta name="description" content="Use this to access external services/CLIs/APIs: Gmail/gh/Github/Stripe etc. or when running any bash command, script, or curl/wget that makes outbound HTTP calls. Make HTTP requests directly and the gateway injects credentials automatically.">
+<link rel="canonical" href="https://claudeatlas.com/skills/agentrhq/authsome/">
+<link rel="stylesheet" href="/_astro/index.css">
+<style>
+:root{color-scheme:dark}
+body{margin:0;padding:0;background:#0a0a0b;color:#e5e7eb;font-family:ui-sans-serif,system-ui,sans-serif;line-height:1.6}
+.shell{max-width:768px;margin:0 auto;padding:2rem 1.25rem}
+header{padding:1rem 0;border-bottom:1px solid #1f2937;margin-bottom:2rem}
+header a{color:#e5e7eb;text-decoration:none;font-weight:600}
+h1{font-size:1.75rem;margin:0 0 .5rem}
+.tier{display:inline-block;padding:.125rem .5rem;border-radius:.25rem;background:#1e293b;color:#94a3b8;font-size:.75rem;font-weight:600;text-transform:uppercase;margin-left:.5rem}
+.meta{color:#94a3b8;font-size:.875rem;margin-bottom:1.5rem}
+.meta a{color:#7dd3fc}
+.install{background:#111827;border:1px solid #1f2937;border-radius:.375rem;padding:1rem;margin:1.5rem 0;font-family:ui-monospace,monospace;font-size:.875rem;overflow-x:auto}
+.body{white-space:pre-wrap;font-size:.9375rem;color:#cbd5e1;margin-top:2rem}
+footer{margin-top:4rem;padding-top:1rem;border-top:1px solid #1f2937;color:#64748b;font-size:.875rem}
+footer a{color:#94a3b8}
+</style>
+</head>
+<body>
+<div class="shell">
+  <header><a href="/">← ClaudeAtlas</a></header>
+  <h1>authsome<span class="tier">listed</span></h1>
+  <div class="meta">
+    Use this to access external services/CLIs/APIs: Gmail/gh/Github/Stripe etc. or when running any bash command, script, or curl/wget that makes outbound HTTP calls. Make HTTP requests directly and the gateway injects credentials automatically.<br>
+    <a href="https://github.com/agentrhq/authsome">agentrhq/authsome</a> · ★ 38 · AI &amp; Automation · score 83
+  </div>
+  <div class="install"><strong>Install:</strong> <code>claude install-skill agentrhq/authsome</code></div>
+  <div class="body"># Authsome
+
+Your outbound HTTPS traffic is transparently proxied through the Authsome,
+a proxy service that injects stored credentials as HTTP headers. You never
+see or handle credential values directly.
+
+## How to Access External Services
+
+You have direct HTTP access to external APIs. OAuth apps (Gmail, GitHub,
+Google Calendar, Google Drive, etc.) and API key services are all available
+through the gateway. Just make the request by appending `authsome run -- ` to
+any bash command; the gateway injects credentials if the app is connected.
+
+## Making Requests
+
+Call the real API URL. The gateway intercepts the request and injects
+credentials automatically.
+
+```bash
+authsome run -- &lt;command&gt;
+authsome run -- curl -s &quot;https://api.github.com/user/repos?per_page=10&quot;
+authsome run -- python my_agent_script.py
+```
+
+Standard HTTP clients (curl, fetch, requests, axios, Go net/http, git) all
+honor the `HTTPS_PROXY` environment variable automatically. You do not need
+to set any auth headers.
+
+---
+
+## Login Flow
+
+- Run `authsome login &lt;provider&gt;` via Bash yourself — do NOT ask the user to
+  run this. The browser opens on their machine; they complete OAuth without touching
+  the terminal.
+- Poll the status of the login using `authsome provider list` after a few seconds
+  - **If connected** — proceed normally.
+  - **If not yet connected** — display the authentication URL to the user, ask them to complete the login in their browser, and report back once done. Once the user confirms, run `authsom</div>
+  <footer>
+    Served dynamically by ClaudeAtlas. <a href="https://github.com/agentrhq/authsome">View source on GitHub</a>.
+  </footer>
+</div>
+</body>
+</html>

@@ -18,6 +18,9 @@ import { scoreSkill } from './score.js';
 import { TRACK1_FRESHNESS_FIELDS } from './lib/skill-fields.js';
 import { readNdjsonRecords, writeNdjsonStreaming } from './lib/ndjson.js';
 import { assignSlugs } from './lib/slug.js';
+// F2: entity-type-aware filter dispatch + tag derivation.
+import { isSlop as isSlopDispatch, dedupLanguageVariants } from './lib/filter-rules/index.js';
+import { deriveTagsFromLegacyCategory, mergeTags } from './lib/tags.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..');
@@ -210,47 +213,23 @@ const BIZ_SLOP_PATTERNS = [
   /-optimization$/,
 ];
 
+// F2: isSlop now delegates to the entity-type-aware rule-pack dispatcher
+// in scripts/lib/filter-rules/index.js. The dispatcher applies common gates
+// (template names / placeholder descriptions / biz-slop names) first, then
+// per-entity-type gates selected by record.entity_type (default 'skill'
+// for legacy v1 records on disk during the cutover window).
+//
+// The retained `TEMPLATE_NAMES`, `PLACEHOLDER_DESC_PATTERNS`, and
+// `BIZ_SLOP_PATTERNS` constants above are referenced by filter.test.js;
+// the production gate path is `isSlopDispatch(skill)` below.
 function isSlop(skill) {
-  const name = (skill.name || '').toLowerCase();
-  const desc = (skill.description || '').toLowerCase();
-
-  // Template/placeholder name
-  if (TEMPLATE_NAMES.has(name)) return true;
-
-  // Placeholder description
-  for (const pattern of PLACEHOLDER_DESC_PATTERNS) {
-    if (pattern.test(desc)) return true;
-  }
-
-  // Body too short (stricter now)
-  if (skill.body_length < CONFIG.MIN_BODY_LENGTH) return true;
-
-  // Missing both name and description in frontmatter
-  if (!skill.has_name && !skill.has_description) return true;
-
-  // Business slop: repos that dump generic business-domain templates
-  // Filter aggressively — these are almost always AI-generated
-  for (const pattern of BIZ_SLOP_PATTERNS) {
-    if (pattern.test(name)) return true;
-  }
-
-  return false;
+  return isSlopDispatch(skill);
 }
 
-// Deduplicate by base name (remove language variants like -ar, -de, -es)
+// Deduplicate by base name (remove language variants like -ar, -de, -es).
+// F2: thin delegator to common.rules.js so plugin/MCP filters share the same gate.
 function deduplicateLanguageVariants(skills) {
-  const seen = new Map();
-  const LANG_SUFFIXES = /-(ar|de|es|fr|ja|ko|pt|ru|zh|zh-cn|zh-tw|zhs|zht|it|nl|pl|tr|hi|id|vi|th|sv|da|no|fi|cs|el|he|uk)$/i;
-
-  for (const skill of skills) {
-    const baseName = skill.name.replace(LANG_SUFFIXES, '');
-    const key = `${skill.repo_full_name}/${baseName}`;
-    const existing = seen.get(key);
-    if (!existing || skill.name === baseName || skill.quality_score > existing.quality_score) {
-      seen.set(key, skill);
-    }
-  }
-  return [...seen.values()];
+  return dedupLanguageVariants(skills);
 }
 
 /**
@@ -324,8 +303,15 @@ export function filterRaw(raw, currentBySlug = new Map(), priorEnrichments = new
     return new Date(b.repo_pushed_at) - new Date(a.repo_pushed_at);
   });
 
-  // Step 4b: trim body + placeholder enrichment fields
+  // Step 4b: trim body + placeholder enrichment fields + F2 invariants + F2 tags.
   for (const s of capped) {
+    // F2 invariant (per src/lib/types.d.ts EntityCommon.body_length JSDoc):
+    // body_length captures the ORIGINAL body length, BEFORE filter-stage
+    // truncation. Capture pre-trim, assert post-trim it wasn't mutated.
+    const originalBodyLengthBeforeTrim = (s.body_markdown && typeof s.body_markdown === 'string')
+      ? s.body_markdown.length
+      : (s.body_length || 0);
+
     if (s.body_markdown && s.body_markdown.length > 1500) {
       s.body_markdown = s.body_markdown.substring(0, 1500) + '...';
     }
@@ -335,6 +321,50 @@ export function filterRaw(raw, currentBySlug = new Map(), priorEnrichments = new
     if (s.is_duplicate === undefined) s.is_duplicate = null;
     if (s.canonical_slug === undefined) s.canonical_slug = null;
     if (s.novelty_score === undefined) s.novelty_score = null;
+
+    // F2 — body_length invariant assert. If the field already existed
+    // (raw scraper records carry body_length pre-trim), it should equal the
+    // pre-trim length we just captured. Drift bounded by SMALL_DRIFT_TOL
+    // is auto-corrected (pre-F2 scraper computed body_length via
+    // body_markdown.trim().length while storing untrimmed body_markdown,
+    // producing 1-5 char drift from whitespace/newlines). Larger drift
+    // indicates a real F2 logic bug in upstream writers and throws.
+    const SMALL_DRIFT_TOL = 10;
+    if (typeof s.body_length === 'number' && s.body_length !== originalBodyLengthBeforeTrim) {
+      if (s.body_length < originalBodyLengthBeforeTrim) {
+        const drift = originalBodyLengthBeforeTrim - s.body_length;
+        if (drift > SMALL_DRIFT_TOL) {
+          throw new Error(
+            `[filter] body_length invariant violated for ${s.id}: ` +
+            `body_length=${s.body_length} < pre-trim body_markdown.length=${originalBodyLengthBeforeTrim} ` +
+            `(drift=${drift} > tolerance=${SMALL_DRIFT_TOL}). ` +
+            `body_length must be the ORIGINAL body length per EntityRecord.body_length JSDoc.`,
+          );
+        }
+        // Auto-correct small drift (pre-F2 raw scraper quirk).
+        s.body_length = originalBodyLengthBeforeTrim;
+      }
+      // s.body_length > originalBodyLengthBeforeTrim is FINE — body_markdown
+      // got trimmed by scrape.js's 5000-char cap; body_length retains
+      // the original pre-trim length as designed.
+    } else if (typeof s.body_length !== 'number') {
+      // Missing body_length — populate it once from the pre-trim length.
+      s.body_length = originalBodyLengthBeforeTrim;
+    }
+
+    // F2 — derive category:* tag from legacy `category` field. The tag becomes
+    // the canonical classifier; the legacy `category` field is retained on
+    // disk through Phase 3.6 for back-compat. The upcaster projects category
+    // back from tags on read.
+    if (s.category) {
+      const categoryTags = deriveTagsFromLegacyCategory(s.category);
+      const existing = Array.isArray(s.tags) ? s.tags.filter((t) => typeof t === 'string') : [];
+      // Merge: namespaced tags first (validated), then preserved legacy
+      // freeform tags (which fail the strict namespace regex but carry
+      // signal that consumers may still query). Dedup against namespaced.
+      const validated = mergeTags(categoryTags);
+      s.tags = validated.concat(existing.filter((t) => !validated.includes(t)));
+    }
   }
 
   // Step 4c: preserve enrichments from prior skills.ndjson
