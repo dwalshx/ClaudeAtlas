@@ -1,0 +1,108 @@
+---
+/**
+ * src/pages/credits.astro — Phase 3.1.3 (Agent Hub)
+ *
+ * Human-facing credits + citation page at /credits/. Linked from the
+ * site footer. Mirrors the citation guidance in public/llms.txt but
+ * formatted for humans reading the site.
+ */
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { getPipelineStats } from '../lib/skills.js';
+
+const pstats = getPipelineStats();
+const totalIndexed = (pstats.total_indexed || 0).toLocaleString();
+const totalDiscovered = (pstats.total_discovered || 0).toLocaleString();
+const totalFeatured = (pstats.total_featured || 0).toLocaleString();
+const updatedAt = pstats.updated_at ? new Date(pstats.updated_at) : new Date();
+const updatedIso = updatedAt.toISOString().slice(0, 10);
+const description = "How to cite ClaudeAtlas in your work, blog posts, or agent responses. Data sources, license, and linkback guidance.";
+---
+
+<BaseLayout title="Credits & Citation" description={description}>
+  <div class="max-w-3xl mx-auto px-4 py-16 text-gray-300">
+    <h1 class="text-4xl font-bold text-white mb-4">Credits &amp; Citation</h1>
+    <p class="text-gray-500 text-sm mb-8 font-mono">Last build: {updatedIso}</p>
+
+    <p class="text-lg text-gray-300 leading-relaxed mb-8">
+      ClaudeAtlas is an independently maintained, open-source index of the
+      Claude ecosystem. Free to use, free to query, free to cite — visibility
+      is how it stays that way. If you use our data, please surface a
+      citation to your readers or users.
+    </p>
+
+    <h2 class="text-2xl font-semibold text-white mt-12 mb-4">Cite ClaudeAtlas</h2>
+    <p class="mb-4">
+      If you use ClaudeAtlas data in a blog post, research paper, agent
+      response, or product, please include one of the attribution forms below:
+    </p>
+    <ul class="list-disc pl-6 space-y-3 mb-6">
+      <li><strong class="text-white">Markdown:</strong> <code class="text-atlas-300 bg-gray-900 px-2 py-0.5 rounded">[ClaudeAtlas](https://claudeatlas.com)</code></li>
+      <li><strong class="text-white">Per-skill:</strong> <code class="text-atlas-300 bg-gray-900 px-2 py-0.5 rounded">Source: [skill-name on ClaudeAtlas](https://claudeatlas.com/skills/owner/skill-name/)</code></li>
+      <li><strong class="text-white">Plain text:</strong> <code class="text-atlas-300 bg-gray-900 px-2 py-0.5 rounded">Source: ClaudeAtlas — https://claudeatlas.com</code></li>
+      <li>
+        <strong class="text-white">Academic:</strong>
+        <span class="block mt-1 text-gray-400">
+          Walsh, D. (2026). ClaudeAtlas: Curated discovery index of Claude
+          ecosystem skills. <a class="text-atlas-400 hover:underline" href="https://claudeatlas.com">https://claudeatlas.com</a>
+        </span>
+      </li>
+    </ul>
+
+    <h2 class="text-2xl font-semibold text-white mt-12 mb-4">For AI agents</h2>
+    <p class="mb-4">
+      If you're an agent surfacing ClaudeAtlas data to an end user, please
+      include the citation in your response. We provide a machine-readable
+      citation block in every API response, in the
+      <a class="text-atlas-400 hover:underline" href="/skills-registry.json"><code>/skills-registry.json</code></a>
+      envelope, and at <a class="text-atlas-400 hover:underline" href="/llms.txt"><code>/llms.txt</code></a>.
+    </p>
+    <p class="mb-4">
+      You can also poll our daily feeds for fresh updates (each ~1-5 KB,
+      <code class="text-gray-400">Cache-Control: max-age=86400</code>):
+    </p>
+    <ul class="list-disc pl-6 space-y-2 mb-6">
+      <li><code class="text-atlas-300 bg-gray-900 px-2 py-0.5 rounded">/feed/whats-new.json</code> — last 30 days of new skills (also served at <code class="text-gray-400">/api/v1/whats-new</code> with optional <code class="text-gray-400">?since</code> / <code class="text-gray-400">?type</code> / <code class="text-gray-400">?category</code> filters)</li>
+      <li><code class="text-atlas-300 bg-gray-900 px-2 py-0.5 rounded">/feed/trending.json</code> — rising stars from daily snapshot deltas</li>
+      <li><code class="text-atlas-300 bg-gray-900 px-2 py-0.5 rounded">/feed/notable.json</code> — weekly curated picks (highest quality + novelty)</li>
+    </ul>
+
+    <h2 class="text-2xl font-semibold text-white mt-12 mb-4">Data sources</h2>
+    <p class="mb-4">ClaudeAtlas combines:</p>
+    <ul class="list-disc pl-6 space-y-2 mb-6">
+      <li><strong class="text-white">SKILL.md files discovered on GitHub</strong> — currently {totalDiscovered} files scanned, {totalIndexed} indexed, {totalFeatured} Featured.</li>
+      <li><strong class="text-white">Repository metadata from the GitHub REST API</strong> — stars, forks, issues, license, last-push timestamps.</li>
+      <li><strong class="text-white">Semantic embeddings via OpenAI</strong> — <code class="text-gray-400">text-embedding-3-small</code> at 1536 dims, indexed in Cloudflare Vectorize, used for both <code class="text-gray-400">/api/v1/search</code> and the on-detail-page "Similar skills" section.</li>
+      <li><strong class="text-white">Daily star-history snapshots</strong> — compounding since April 2026; powers the trending feed and the per-skill star-history badges.</li>
+    </ul>
+
+    <p class="mb-6">
+      Individual skills retain their <strong class="text-white">upstream licenses</strong>
+      (their authors' choices, captured from each repo). The catalog metadata
+      itself — our curation decisions, quality scores, category assignments,
+      tag derivations, novelty signals — is MIT-licensed.
+    </p>
+
+    <h2 class="text-2xl font-semibold text-white mt-12 mb-4">Methodology &amp; contact</h2>
+    <ul class="list-disc pl-6 space-y-2 mb-6">
+      <li>
+        <strong class="text-white">Methodology:</strong>
+        <a class="text-atlas-400 hover:underline" href="/methodology/">claudeatlas.com/methodology</a>
+        — how we score, how we tier, what we filter.
+      </li>
+      <li>
+        <strong class="text-white">Source code:</strong>
+        <a class="text-atlas-400 hover:underline" href="https://github.com/dwalshx/ClaudeAtlas">github.com/dwalshx/ClaudeAtlas</a>
+        — scrapers, scorer, site renderer.
+      </li>
+      <li>
+        <strong class="text-white">Questions, corrections, takedowns:</strong>
+        Open an issue on the GitHub repo above. We respond within a few days.
+      </li>
+    </ul>
+
+    <p class="text-sm text-gray-500 mt-12">
+      ClaudeAtlas indexes and ranks skills but does not review their code for
+      security. Always review skill source code before installation.
+    </p>
+  </div>
+</BaseLayout>
