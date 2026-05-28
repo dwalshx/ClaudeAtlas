@@ -105,6 +105,19 @@ function main() {
     url: SITE_URL,
     methodology_url: `${SITE_URL}/methodology/`,
     generated_at: new Date().toISOString(),
+    // Phase 3.1.3 (Agent Hub): top-level citation block so any agent
+    // that pulls the registry can surface attribution without a second
+    // round-trip. Matches the citation spec in public/llms.txt and the
+    // `source` field returned by /api/v1/search.
+    citation: {
+      source: 'ClaudeAtlas',
+      source_url: SITE_URL,
+      license: 'MIT (catalog metadata); skills retain upstream licenses',
+      data_recency: 'Updated daily ~06:30 UTC',
+      methodology_url: `${SITE_URL}/methodology/`,
+      citation_url: `${SITE_URL}/credits/`,
+      recommended_citation: 'Source: ClaudeAtlas — https://claudeatlas.com',
+    },
     count: entries.length,
     // Phase 3.1.x: catalog totals reflect FULL catalog; `count` reflects
     // the renderable subset actually included in `skills` below.
@@ -119,8 +132,8 @@ function main() {
     total_solid: totalSolid,
     total_listed: totalListed,
     categories: [...new Set(entries.map(e => e.category))].sort(),
-    schema_version: '2',
-    schema_notes: 'Phase 3.1.x — filtered to renderable tiers due to 25MB asset cap. Full catalog via /api/v1/search or bulk_download_url.',
+    schema_version: '3',
+    schema_notes: 'Phase 3.1.3 — added top-level `citation` block (Agent Hub). Phase 3.1.x — filtered to renderable tiers due to 25MB asset cap. Full catalog via /api/v1/search or bulk_download_url.',
     skills: entries,
   };
 
