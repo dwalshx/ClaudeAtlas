@@ -1,26 +1,27 @@
 {
-  "timestamp": "2026-05-25T23:57:09.490Z",
-  "total_discovered": 42321,
-  "total_skills": 1286,
-  "unique_repos": 950,
+  "timestamp": "2026-05-28T11:19:43.034Z",
+  "total_discovered": 49954,
+  "total_skills": 37274,
+  "unique_repos": 3885,
   "tiers": {
-    "featured": 361,
-    "solid": 782,
-    "listed": 143
+    "featured": 3727,
+    "solid": 11182,
+    "listed": 22365
   },
   "categories": {
-    "AI & Automation": 575,
-    "Data & Documents": 241,
-    "Web & Frontend": 160,
-    "Code & Development": 152,
-    "API & Backend": 60,
-    "DevOps & Infrastructure": 45,
-    "Testing & QA": 53
+    "AI & Automation": 23389,
+    "Testing & QA": 1255,
+    "Web & Frontend": 2651,
+    "Code & Development": 3042,
+    "API & Backend": 1350,
+    "DevOps & Infrastructure": 1489,
+    "Data & Documents": 4098
   },
   "filter_config": {
-    "MAX_PER_REPO": 2,
-    "MIN_STARS": 10,
-    "MIN_BODY_LENGTH": 500,
+    "MIN_BODY_LENGTH": 200,
+    "FEATURED_PERCENTILE": 0.1,
+    "SOLID_PERCENTILE": 0.3,
+    "RENDERABLE_CAP": 18000,
     "FEATURED_THRESHOLD": 90,
     "SOLID_THRESHOLD": 70
   }
