@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: — Agent-Native Directory
 status: phase-complete
-stopped_at: "Phase 3.1.2 (polymorphic-envelope) READY-TO-MERGE 2026-05-28. EntityRecord discriminated union + tag-based categorization + type-aware scoring/filter/recipe registries + v1→v2 upcaster + Vectorize entity_type metadata. 14 commits on gsd/phase-3.1.2-polymorphic-envelope. Branch CI 26543565423 validated full pipeline at production scale (37,247 records, 18,559-page build, 48,365 dist files all under cap). Verifier passed 12/13 truths (1 deferral: scrape.js recipe delegation rolls into 3.2). Cutover happens on first post-merge daily-scrape; D+7 cleanup PR (~2026-06-04) removes legacy upcaster. Next: Phase 3.2 (plugin scoring + filtering) — registries are ready, just add plugin scorer/recipe/filter packs."
-last_updated: "2026-05-28T16:12:39.747Z"
-last_activity: 2026-05-28 -- Phase 3.1.2 polymorphic envelope verified, ready to merge
+stopped_at: "Phase 3.1.3 (agent-hub) READY-TO-MERGE 2026-05-29. Citation infrastructure on 4 surfaces (llms.txt §Citation, /api/v1/search source field, /skills-registry citation block, /credits page), 3 JSON Feed 1.1 endpoints (/feed/whats-new.json 100 items, /trending.json 50, /notable.json 1), worker routes with Cache-Control + filter passthrough, schema.org JSON-LD (DataCatalog on homepage with 5 distribution entries, Article+creator+citation on every detail page). Dynamic llms.txt (8,713 bytes, regenerated build-time from pipeline-stats). Driven by 55k/day GPTBot traffic discovered on Cloudflare 2026-05-28. Branch CI run 26594611105 validated full pipeline at 38,360 records (3 feeds populated correctly, all postbuild guards green). Verifier passed 15/15 truths. Next: Phase 3.2 (plugin scoring + filtering) — Phase 3.1.2 registries make this 'add files, don't refactor.'"
+last_updated: "2026-05-29T05:26:23.147Z"
+last_activity: 2026-05-29 -- Phase 3.1.3 Agent Hub verified, ready to merge
 progress:
-  total_phases: 14
-  completed_phases: 3
-  total_plans: 9
-  completed_plans: 10
+  total_phases: 15
+  completed_phases: 4
+  total_plans: 10
+  completed_plans: 11
   percent: 100
 ---
 
@@ -21,19 +21,19 @@ progress:
 See: `.planning/PROJECT.md` (last updated 2026-04-10)
 
 **Core value:** Users can find the best Claude skill for a given task in under 30 seconds, with visible signals for why it's trustworthy.
-**Current focus:** Phase 3.1.2 — polymorphic-envelope (READY-TO-MERGE)
+**Current focus:** Phase 3.1.3 — agent-hub (READY-TO-MERGE)
 **Milestone:** v3.0 — Comprehensive Agent Tooling Index (in progress)
 
 ## Current Position
 
-Phase: **3.1.2 (polymorphic-envelope) — READY-TO-MERGE 2026-05-28**
-Plan: 1 of 1 (T1–T11 done, T9 + cleanup completed; verifier passed 12/13 + 1 deferral)
-Branch: gsd/phase-3.1.2-polymorphic-envelope, 14 commits ahead of main
-Status: Branch CI 26543565423 validated full pipeline at production scale (37,247 records); cutover happens on first post-merge daily-scrape
-Next phase: **3.2 (plugin scoring + filtering)** — registries are now ready; just add plugin scorer/recipe/filter packs
-Last activity: 2026-05-28 -- Phase 3.1.2 verified, ready to merge
+Phase: **3.1.3 (agent-hub) — READY-TO-MERGE 2026-05-29**
+Plan: 1 of 1 (6 task commits + 1 plan commit, all pushed to origin)
+Branch: gsd/phase-3.1.3-agent-hub, 7 commits ahead of main
+Status: Branch CI 26594611105 validated full pipeline at 38,360 records; verifier passed 15/15 truths
+Next phase: **3.2 (plugin scoring + filtering)** — Phase 3.1.2 registries make this 'add files, don't refactor'
+Last activity: 2026-05-29 -- Phase 3.1.3 verified, ready to merge
 
-Progress: Phase 1.5 [██████████] 100% · v2.0 [██████████] 100% · 3.0.x trilogy [██████████] 100% · 3.1.1 F1 [██████████] 100% · 3.1 filter overhaul [██████████] 100% (shipped 2026-05-27) · **3.1.2 polymorphic envelope [██████████] 100% (ready-to-merge 2026-05-28)** · 3.2 plugin scoring [░░░░░░░░░░] 0% · 3.3–3.9 [░░░░░░░░░░] 0%
+Progress: Phase 1.5 [██████████] 100% · v2.0 [██████████] 100% · 3.0.x trilogy [██████████] 100% · 3.1.1 F1 [██████████] 100% · 3.1 filter overhaul [██████████] 100% (shipped 2026-05-27) · 3.1.2 polymorphic envelope [██████████] 100% (shipped 2026-05-28) · **3.1.3 agent hub [██████████] 100% (ready-to-merge 2026-05-29)** · 3.2 plugin scoring [░░░░░░░░░░] 0% · 3.3–3.9 [░░░░░░░░░░] 0%
 
 ## Completed Milestones
 

@@ -126,6 +126,142 @@ export async function logSearch(request, env) {
 }
 
 // ---------------------------------------------------------------------------
+// Phase 3.1.3 (Agent Hub) — citation block returned with every API response
+// that surfaces catalog data. Mirrors the citation spec in public/llms.txt
+// and the top-level `citation` field on /skills-registry.json.
+// ---------------------------------------------------------------------------
+
+const SOURCE_CITATION = {
+  source: 'ClaudeAtlas',
+  source_url: 'https://claudeatlas.com',
+  license: 'MIT (catalog metadata); skills retain upstream licenses',
+  data_recency: 'Updated daily ~06:30 UTC',
+  methodology_url: 'https://claudeatlas.com/methodology/',
+  citation_url: 'https://claudeatlas.com/credits/',
+  recommended_citation: 'Source: ClaudeAtlas — https://claudeatlas.com',
+};
+
+// ---------------------------------------------------------------------------
+// Phase 3.1.3 — Agent Hub feed routes
+//
+// /api/v1/whats-new, /trending, /notable proxy the static JSON Feed files
+// under public/feed/ baked at build time by scripts/generate-feeds.js.
+//
+// Pass-through path (no query filters): we forward the static body
+// verbatim with content-type: application/feed+json and Cache-Control:
+// public, max-age=86400. Cloudflare's edge caches the response so a
+// flurry of identical requests from the same region hits the worker
+// just once per day.
+//
+// Filtered path (?since / ?type / ?category): we parse the JSON, apply
+// filters in-worker, and return the trimmed envelope. ~1-5 KB feeds
+// at most 100 items — well within CPU budget.
+//
+// `run_worker_first = ["/api/*"]` in wrangler.toml already routes
+// /api/v1/whats-new through this worker before the assets binding
+// serves it as a 404, so no config change needed.
+// ---------------------------------------------------------------------------
+
+async function serveFeed(request, env, feedName) {
+  const url = new URL(request.url);
+  const since = url.searchParams.get('since');
+  const type = url.searchParams.get('type');
+  const category = url.searchParams.get('category');
+
+  if (!env || !env.ASSETS) {
+    return jsonResponse({ error: 'feeds_unavailable' }, 503);
+  }
+
+  // Fetch the static file via the assets binding. We construct a same-
+  // origin URL pointing at /feed/<name>.json — the binding handles the
+  // actual disk lookup.
+  const assetUrl = new URL(url.toString());
+  assetUrl.pathname = `/feed/${feedName}.json`;
+  assetUrl.search = '';
+  const assetReq = new Request(assetUrl.toString(), { method: 'GET' });
+
+  let assetResp;
+  try {
+    assetResp = await env.ASSETS.fetch(assetReq);
+  } catch (err) {
+    console.error('feed assets fetch failed:', err && err.message);
+    return jsonResponse({ error: 'feed_unavailable' }, 503);
+  }
+
+  if (!assetResp || !assetResp.ok) {
+    return jsonResponse({ error: 'feed_unavailable', name: feedName }, 503);
+  }
+
+  const cacheHeaders = {
+    'content-type': 'application/feed+json; charset=utf-8',
+    'cache-control': 'public, max-age=86400',
+    'access-control-allow-origin': '*',
+  };
+
+  // Fast path: no filters → forward verbatim.
+  if (!since && !type && !category) {
+    const body = await assetResp.text();
+    return new Response(body, { status: 200, headers: cacheHeaders });
+  }
+
+  // Filter path.
+  let feed;
+  try {
+    feed = await assetResp.json();
+  } catch (err) {
+    console.error('feed parse failed:', err && err.message);
+    return jsonResponse({ error: 'feed_corrupt', name: feedName }, 502);
+  }
+
+  let items = Array.isArray(feed.items) ? feed.items : [];
+  const beforeCount = items.length;
+
+  if (since) {
+    const sinceMs = Date.parse(since);
+    if (!isNaN(sinceMs)) {
+      items = items.filter((i) => {
+        const t = Date.parse(i.date_published || '');
+        return !isNaN(t) && t >= sinceMs;
+      });
+    }
+  }
+
+  if (type) {
+    items = items.filter(
+      (i) => (i._claudeatlas && i._claudeatlas.type_chip) === type,
+    );
+  }
+
+  if (category) {
+    const catTag = `category:${category.toLowerCase().replace(/\s+/g, '-')}`;
+    items = items.filter((i) => {
+      const tags = Array.isArray(i.tags) ? i.tags : [];
+      if (tags.includes(catTag)) return true;
+      // Legacy/category fallback: _claudeatlas.category exact match.
+      const c = i._claudeatlas && i._claudeatlas.category;
+      return c === category;
+    });
+  }
+
+  const filtered = {
+    ...feed,
+    items,
+    _filtered: {
+      since: since || null,
+      type: type || null,
+      category: category || null,
+      before_count: beforeCount,
+      after_count: items.length,
+    },
+  };
+
+  return new Response(JSON.stringify(filtered), {
+    status: 200,
+    headers: cacheHeaders,
+  });
+}
+
+// ---------------------------------------------------------------------------
 // GET/POST /api/v1/search — semantic search over skill embeddings
 // ---------------------------------------------------------------------------
 
@@ -346,6 +482,10 @@ export async function semanticSearch(request, env) {
     timings_ms: { embed: embedMs, vector: vecMs, total: embedMs + vecMs },
     embed_cached: embedCached,
     results,
+    // Phase 3.1.3 — citation block on every search response so agents
+    // surfacing our data to end users have attribution metadata in hand
+    // without a second round-trip.
+    source: SOURCE_CITATION,
   });
 }
 
@@ -495,6 +635,16 @@ export default {
     }
     if (url.pathname === '/api/v1/search') {
       return semanticSearch(request, env);
+    }
+    // Phase 3.1.3 — Agent Hub feed routes.
+    if (url.pathname === '/api/v1/whats-new') {
+      return serveFeed(request, env, 'whats-new');
+    }
+    if (url.pathname === '/api/v1/trending') {
+      return serveFeed(request, env, 'trending');
+    }
+    if (url.pathname === '/api/v1/notable') {
+      return serveFeed(request, env, 'notable');
     }
 
     // Phase 3.1: 301 redirect for pre-fix colliding slug URLs.

@@ -4,6 +4,7 @@ import QualityBadge from '../../components/QualityBadge.astro';
 import CopyButton from '../../components/CopyButton.astro';
 import SkillCard from '../../components/SkillCard.astro';
 import ScoreBar from '../../components/ScoreBar.astro';
+import JsonLd from '../../components/JsonLd.astro';
 import { allSkills, getRelatedSkills, getSimilarSkills, getSkillIntegrations, timeAgo, categoryColor, getCategorySlug } from '../../lib/skills.js';
 
 function daysToRecency(dateStr) {
@@ -50,21 +51,46 @@ const updated = timeAgo(skill.repo_pushed_at);
 const created = timeAgo(skill.repo_created_at);
 const installCmd = `claude install-skill ${skill.repo_full_name}`;
 
-// JSON-LD structured data
+// JSON-LD structured data (Phase 3.1.3 — Agent Hub)
+// Article + creator + citation + isPartOf DataCatalog. The Article shape
+// matches what Google + OpenAI + Anthropic crawlers consume; the
+// `citation` field is read by some agent frameworks to auto-attribute
+// our data when surfacing it. `isPartOf` links each detail page back
+// to the homepage's DataCatalog node so machines see the relationship.
+const ownerName = (skill.repo_full_name || '').split('/')[0] || '';
+const firstCommitAt = (skill.extra && skill.extra.skill_first_commit_at) || skill.skill_first_commit_at || null;
 const jsonLd = {
   "@context": "https://schema.org",
-  "@type": "SoftwareSourceCode",
-  "name": skill.name,
-  "description": skill.description,
-  "codeRepository": skill.repo_url,
-  "programmingLanguage": "Markdown",
-  "dateCreated": skill.repo_created_at,
+  "@type": "Article",
+  "headline": skill.name,
+  "description": skill.description || `${skill.name} — Claude skill indexed on ClaudeAtlas`,
+  "url": `https://claudeatlas.com/skills/${skill.slug}/`,
+  "datePublished": firstCommitAt || skill.repo_created_at,
   "dateModified": skill.repo_pushed_at,
   "author": {
     "@type": skill.repo_owner_type === 'Organization' ? 'Organization' : 'Person',
-    "name": skill.repo_full_name.split('/')[0],
+    "name": ownerName,
+    "url": `https://github.com/${ownerName}`,
   },
-  "license": skill.repo_license ? `https://spdx.org/licenses/${skill.repo_license}` : undefined,
+  "publisher": {
+    "@type": "Organization",
+    "name": "ClaudeAtlas",
+    "url": "https://claudeatlas.com",
+  },
+  "isPartOf": {
+    "@type": "DataCatalog",
+    "name": "ClaudeAtlas",
+    "url": "https://claudeatlas.com",
+  },
+  "citation": "Source: ClaudeAtlas — https://claudeatlas.com",
+  "license": skill.repo_license
+    ? `https://spdx.org/licenses/${skill.repo_license}`
+    : "https://opensource.org/licenses/MIT",
+  "keywords": Array.isArray(skill.tags) ? skill.tags.join(', ') : (skill.category || ''),
+  "mainEntityOfPage": {
+    "@type": "WebPage",
+    "@id": `https://claudeatlas.com/skills/${skill.slug}/`,
+  },
 };
 ---
 
@@ -72,7 +98,7 @@ const jsonLd = {
   title={`${skill.name} — Claude Skill`}
   description={skill.description || `${skill.name} is a Claude ecosystem skill indexed on ClaudeAtlas.`}
 >
-  <script type="application/ld+json" set:html={JSON.stringify(jsonLd)} />
+  <JsonLd data={jsonLd} />
 
   <div class="max-w-4xl mx-auto px-4 py-12">
     <!-- Breadcrumb -->
