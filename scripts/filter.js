@@ -21,6 +21,14 @@ import { assignSlugs } from './lib/slug.js';
 // F2: entity-type-aware filter dispatch + tag derivation.
 import { isSlop as isSlopDispatch, dedupLanguageVariants } from './lib/filter-rules/index.js';
 import { deriveTagsFromLegacyCategory, mergeTags } from './lib/tags.js';
+// Phase 3.1.4: convert records to v2 EntityRecord shape on write so the
+// polymorphic envelope is honored on the write path, not just the read
+// path via the upcaster. Without this, skills-latest ships v1-shape
+// records forever and Phase 3.2 plugins would need parallel data
+// infrastructure. The upcaster preserves legacy flat fields alongside
+// `extra.*` for the D+7 cutover window per 3.1.2-CUTOVER.md.
+import { upcastRecord } from './lib/legacy-skill-reader.js';
+import { buildHeader } from './lib/entity-version.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..');
@@ -506,8 +514,15 @@ function main() {
   }
 
   // T5: streaming NDJSON write (V8-string-limit safe).
-  writeNdjsonStreaming(OUTPUT_PATH, capped);
-  console.log(`\nWritten to ${OUTPUT_PATH}`);
+  // Phase 3.1.4: each record is upcast to v2 EntityRecord shape (nests
+  // skill-specific fields under `extra`, sets entity_type='skill',
+  // schema_version=2). Legacy flat fields are preserved by the upcaster
+  // for the D+7 cutover window. `opts.header` prepends the canonical
+  // `_header: true, schema_version: 2, entity_type: 'skill', generated_at`
+  // sentinel line per scripts/lib/entity-version.js.
+  const v2Records = capped.map(upcastRecord);
+  writeNdjsonStreaming(OUTPUT_PATH, v2Records, { header: buildHeader('skill') });
+  console.log(`\nWritten to ${OUTPUT_PATH} (v2 EntityRecord shape; schema_version=2; entity_type=skill)`);
 
   // Also update the stats file
   const STATS_PATH = join(ROOT, 'data', 'pipeline-stats.json');
