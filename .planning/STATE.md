@@ -2,12 +2,12 @@
 gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: — Agent-Native Directory
-status: phase-complete
-stopped_at: "Phase 3.1.3 (agent-hub) READY-TO-MERGE 2026-05-29. Citation infrastructure on 4 surfaces (llms.txt §Citation, /api/v1/search source field, /skills-registry citation block, /credits page), 3 JSON Feed 1.1 endpoints (/feed/whats-new.json 100 items, /trending.json 50, /notable.json 1), worker routes with Cache-Control + filter passthrough, schema.org JSON-LD (DataCatalog on homepage with 5 distribution entries, Article+creator+citation on every detail page). Dynamic llms.txt (8,713 bytes, regenerated build-time from pipeline-stats). Driven by 55k/day GPTBot traffic discovered on Cloudflare 2026-05-28. Branch CI run 26594611105 validated full pipeline at 38,360 records (3 feeds populated correctly, all postbuild guards green). Verifier passed 15/15 truths. Next: Phase 3.2 (plugin scoring + filtering) — Phase 3.1.2 registries make this 'add files, don't refactor.'"
-last_updated: "2026-05-29T05:26:23.147Z"
-last_activity: 2026-05-29 -- Phase 3.1.3 Agent Hub verified, ready to merge
+status: verifying
+stopped_at: Phase 3.2 context captured (11 decisions)
+last_updated: "2026-05-30T22:27:40.234Z"
+last_activity: 2026-05-29 -- Phase 3.1.3 verified, ready to merge
 progress:
-  total_phases: 15
+  total_phases: 16
   completed_phases: 4
   total_plans: 10
   completed_plans: 11
@@ -151,8 +151,8 @@ These were INSERTED ahead of the Phase 3.0 spec's 3.1–3.9 lineup because the d
 
 ## Session Continuity
 
-Last session: 2026-05-17 (Phase 3.1 planning + final infrastructure fixes)
-Stopped at: All 3.0.x infrastructure shipped; daily pipeline verified end-to-end on commit `ebb5a80`; Phase 3.1 plan PASS plan-check on Rev 2; planning artifacts committed at `6c55715`. Phase 3.1 ready to execute.
+Last session: 2026-05-30T22:27:40.224Z
+Stopped at: Phase 3.2 context captured (11 decisions)
 
 **Resume:** read `.planning/SESSION-MEMO-2026-04-to-05.md` for full context, then `/gsd:execute-phase 3.1`.
 
