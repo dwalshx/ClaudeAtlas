@@ -29,6 +29,9 @@ import { deriveTagsFromLegacyCategory, mergeTags } from './lib/tags.js';
 // `extra.*` for the D+7 cutover window per 3.1.2-CUTOVER.md.
 import { upcastRecord } from './lib/legacy-skill-reader.js';
 import { buildHeader } from './lib/entity-version.js';
+// Phase 3.2 (B-1): shared percentile tier assignment, also used by
+// filter-plugins.js / filter-mcps.js. NO small-N carve-out.
+import { assignPercentileTiers } from './lib/tier-assignment.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..');
@@ -55,6 +58,10 @@ const PRESERVED_FIELDS = [
   'is_duplicate',
   'canonical_slug',
   'novelty_score',
+  // Phase 3.2 / F-3: the bundle-graph back edge populated by
+  // scripts/link-bundles.js. Preserve it across re-filters so a partial
+  // re-run of filter.js after link-bundles.js does not reset it to [].
+  'bundled_in_plugins',
 ];
 
 function loadPriorEnrichments() {
@@ -273,36 +280,12 @@ export function filterRaw(raw, currentBySlug = new Map(), priorEnrichments = new
 
   // Step 3: tier assignment (percentile rank + safety cap).
   //
-  // Sort indices by (quality_score desc, repo_stars desc, id asc) for
-  // deterministic boundary behavior; assign tiers by rank position.
-  // Don't mutate `capped` order yet — Step 4 does the final sort.
-  const tierOrder = capped
-    .map((s, i) => ({ i, score: s.quality_score, stars: s.repo_stars, id: s.id }))
-    .sort((a, b) => {
-      if (b.score !== a.score) return b.score - a.score;
-      if (b.stars !== a.stars) return b.stars - a.stars;
-      return (a.id || '').localeCompare(b.id || '');
-    });
-
-  const total = tierOrder.length;
-  const featuredTarget = Math.floor(total * CONFIG.FEATURED_PERCENTILE);
-  const solidTarget = Math.floor(total * CONFIG.SOLID_PERCENTILE);
-
-  // Defense in depth: if percentiles would exceed the renderable cap,
-  // trim Solid first (preserve the top-10% Featured signal).
-  const effectiveFeatured = Math.min(featuredTarget, CONFIG.RENDERABLE_CAP);
-  const effectiveSolid = Math.min(
-    solidTarget,
-    Math.max(0, CONFIG.RENDERABLE_CAP - effectiveFeatured)
-  );
-  const renderableCount = effectiveFeatured + effectiveSolid;
-
-  for (let rank = 0; rank < total; rank++) {
-    const s = capped[tierOrder[rank].i];
-    if (rank < effectiveFeatured) s.quality_tier = 'featured';
-    else if (rank < renderableCount) s.quality_tier = 'solid';
-    else s.quality_tier = 'listed';
-  }
+  // Phase 3.2 (B-1): delegated to the shared `assignPercentileTiers` helper
+  // so filter.js / filter-plugins.js / filter-mcps.js use identical math.
+  // Passing CONFIG.RENDERABLE_CAP preserves the skill path's
+  // defense-in-depth Solid-trim byte-for-byte (the plugin/MCP filters omit
+  // the cap). NO small-N carve-out exists in the helper.
+  assignPercentileTiers(capped, { renderableCap: CONFIG.RENDERABLE_CAP });
 
   // Step 4: sort
   capped.sort((a, b) => {
