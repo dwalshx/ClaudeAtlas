@@ -16,6 +16,44 @@
  * mid-phase. The cutover commit at D+7 strips the dual shape.
  *
  * Lifecycle: kept until D+7 cutover commit; deleted then.
+ *
+ * ---------------------------------------------------------------------------
+ * PHASE 3.2 EXPANSION — plugin + mcp_server upcast paths.
+ *
+ * F-1 RAW-SHAPE INSPECTION (data/plugins-raw.ndjson, observed 2026-05-31):
+ *   The plugins scraper writes REPO-LEVEL records, NOT entity-tagged ones.
+ *   Each line has top-level keys:
+ *     repo_full_name, discovery_paths, discovery_sources, stars, forks,
+ *     open_issues, description, topics, language, license, created_at,
+ *     pushed_at, archived, is_fork, owner_type, owner_avatar,
+ *     default_branch, plugin_manifest, marketplace_manifest, components,
+ *     component_summary, scraped_at, processing_time_ms
+ *   There is NO `entity_type`, NO `schema_version`, NO `extra`, NO
+ *   `plugin_path`/`server_path`. `plugin_manifest` is
+ *   `{name, description, version, author:{name}, [dependencies], [lspServers]}`.
+ *   `marketplace_manifest` is usually null. `component_summary` is
+ *   `{skills, agents, commands, hooks, mcp_servers, lsp_servers, total}`.
+ *   MCP servers are NESTED COMPONENTS of a plugin repo, surfaced via
+ *   `component_summary.mcp_servers > 0` and `components["mcp-servers"]`.
+ *
+ *   DEVIATION (Rule 3): the plan assumed entity-tagged raw records with
+ *   flat `plugin_path`/`commands`/`hooks`. The repo→entity TRANSFORM
+ *   (deriving entity_type, mapping repo fields → the pre-v2 envelope) lives
+ *   in the filter stage (Task 7's filter-plugins.js / filter-mcps.js). By
+ *   the time a record reaches THIS upcaster it has already been tagged with
+ *   `entity_type` and had its type-specific fields hoisted to the top level
+ *   (or nested under `extra`). The upcaster's job is therefore the same as
+ *   for skills: dispatch on entity_type, nest into `extra`, fill 3.2 defaults
+ *   (bundled_*=[], marketplace_listings=[], manifest_completeness=0,
+ *   bundled_in_plugins=[]). It accepts BOTH flat and already-nested inputs
+ *   defensively (the `?? rec.extra?.x ?? rec.x` chains below).
+ *
+ * D+7 COORDINATION: the 3.1.2-CUTOVER.md D+7 commit DELETES this file. The
+ * plugin/MCP upcast paths are transient bridges for any v1-shape records on
+ * disk after 3.2 ships; once scrape-plugins.js + filter-plugins.js emit
+ * native v2 always, these paths become unreachable and are removed with the
+ * rest of the file.
+ * ---------------------------------------------------------------------------
  */
 
 import {
@@ -57,6 +95,145 @@ export function upcastRecord(rec) {
     assertKnownSchemaVersion(/** @type {any} */({ _header: true, schema_version: rec.schema_version }));
   }
 
+  // Phase 3.2 dispatch — route by entity_type when the upstream stage has
+  // already tagged the record (filter-plugins.js / filter-mcps.js). v1 skill
+  // records carry no entity_type and fall through to the skill path.
+  if (rec.entity_type === 'plugin') return upcastPluginRecord(rec);
+  if (rec.entity_type === 'mcp_server') return upcastMcpRecord(rec);
+
+  return upcastSkillRecord(rec);
+}
+
+/**
+ * Build the shared EntityCommon scalar fields from a (possibly v1) record.
+ * Used by all three upcasters so repo-metadata handling stays identical.
+ *
+ * @param {any} rec
+ * @returns {Record<string, any>}
+ */
+function buildCommonFields(rec) {
+  return {
+    slug: rec.slug || '',
+    name: rec.name || '',
+    description: rec.description || '',
+    repo_full_name: rec.repo_full_name || '',
+    repo_url: rec.repo_url || '',
+    repo_stars: typeof rec.repo_stars === 'number' ? rec.repo_stars : 0,
+    repo_forks: typeof rec.repo_forks === 'number' ? rec.repo_forks : 0,
+    repo_open_issues: typeof rec.repo_open_issues === 'number' ? rec.repo_open_issues : 0,
+    repo_topics: Array.isArray(rec.repo_topics) ? rec.repo_topics : [],
+    repo_license: rec.repo_license ?? null,
+    repo_language: rec.repo_language ?? null,
+    repo_created_at: rec.repo_created_at || '',
+    repo_updated_at: rec.repo_updated_at || '',
+    repo_pushed_at: rec.repo_pushed_at || '',
+    repo_owner_type: rec.repo_owner_type || 'User',
+    repo_owner_avatar: rec.repo_owner_avatar || '',
+    repo_archived: Boolean(rec.repo_archived),
+    repo_is_fork: Boolean(rec.repo_is_fork),
+    repo_description: rec.repo_description ?? null,
+    body_length: typeof rec.body_length === 'number' ? rec.body_length : 0,
+    quality_score: typeof rec.quality_score === 'number' ? rec.quality_score : 0,
+    quality_tier: rec.quality_tier || 'listed',
+    novelty_score: typeof rec.novelty_score === 'number' ? rec.novelty_score : 0,
+    is_duplicate: rec.is_duplicate === true,
+    canonical_id: rec.canonical_id ?? rec.canonical_slug ?? null,
+    scraped_at: rec.scraped_at || '',
+    content_sha: rec.content_sha || '',
+    source: rec.source || 'discover',
+    discovery_signals: Array.isArray(rec.discovery_signals) ? rec.discovery_signals : [],
+    schema_version: CURRENT_SCHEMA_VERSION,
+    // Phase 3.2 / D-02 back edge — default empty; link-bundles.js fills it.
+    bundled_in_plugins: Array.isArray(rec.bundled_in_plugins) ? rec.bundled_in_plugins : [],
+  };
+}
+
+/**
+ * Upcast a v1/flat plugin record to EntityRecord<PluginExtra>.
+ * Accepts both flat (top-level plugin_path/manifest/...) and already-nested
+ * (`rec.extra.*`) inputs (F-1 defensive chains).
+ *
+ * @param {any} rec
+ * @returns {any}
+ */
+function upcastPluginRecord(rec) {
+  const e = rec.extra || {};
+  const plugin_path = e.plugin_path ?? rec.plugin_path ?? '';
+  const extra = {
+    type: 'plugin',
+    plugin_path,
+    manifest: e.manifest ?? rec.manifest ?? {},
+    readme_markdown: e.readme_markdown ?? rec.readme_markdown ?? '',
+    commands: arr(e.commands ?? rec.commands),
+    hooks: arr(e.hooks ?? rec.hooks),
+    marketplace_listings: arr(e.marketplace_listings ?? rec.marketplace_listings),
+    bundled_skills: arr(e.bundled_skills ?? rec.bundled_skills),
+    bundled_agents: arr(e.bundled_agents ?? rec.bundled_agents),
+    bundled_commands: arr(e.bundled_commands ?? rec.bundled_commands),
+    bundled_hooks: arr(e.bundled_hooks ?? rec.bundled_hooks),
+    bundled_mcp_servers: arr(e.bundled_mcp_servers ?? rec.bundled_mcp_servers),
+    manifest_completeness:
+      typeof (e.manifest_completeness ?? rec.manifest_completeness) === 'number'
+        ? (e.manifest_completeness ?? rec.manifest_completeness)
+        : 0,
+  };
+  const tags = Array.isArray(rec.tags) ? rec.tags.filter((t) => typeof t === 'string') : [];
+  return {
+    id: rec.id || `plugin:${rec.repo_full_name || ''}/${plugin_path}`,
+    entity_type: 'plugin',
+    ...buildCommonFields(rec),
+    tags,
+    category: rec.category ?? projectCategoryFromTags(tags),
+    extra,
+  };
+}
+
+/**
+ * Upcast a v1/flat mcp_server record to EntityRecord<McpExtra>.
+ *
+ * @param {any} rec
+ * @returns {any}
+ */
+function upcastMcpRecord(rec) {
+  const e = rec.extra || {};
+  const server_path = e.server_path ?? rec.server_path ?? '';
+  const transport = e.transport ?? rec.transport ?? null;
+  const extra = {
+    type: 'mcp_server',
+    server_path,
+    manifest: e.manifest ?? rec.manifest ?? {},
+    readme_markdown: e.readme_markdown ?? rec.readme_markdown ?? '',
+    tools: arr(e.tools ?? rec.tools),
+    transport: transport === undefined ? null : transport,
+    manifest_completeness:
+      typeof (e.manifest_completeness ?? rec.manifest_completeness) === 'number'
+        ? (e.manifest_completeness ?? rec.manifest_completeness)
+        : 0,
+  };
+  const tags = Array.isArray(rec.tags) ? rec.tags.filter((t) => typeof t === 'string') : [];
+  return {
+    id: rec.id || `mcp_server:${rec.repo_full_name || ''}/${server_path}`,
+    entity_type: 'mcp_server',
+    ...buildCommonFields(rec),
+    tags,
+    category: rec.category ?? projectCategoryFromTags(tags),
+    extra,
+  };
+}
+
+/** Coerce to a string array. */
+function arr(v) {
+  return Array.isArray(v) ? v.filter((x) => typeof x === 'string') : [];
+}
+
+/**
+ * Upcast a single v1 flat SKILL record → v2 EntityRecord<SkillExtra>.
+ * (The original upcastRecord body, unchanged — regression snapshot guards it.)
+ *
+ * @param {any} rec
+ * @returns {any}
+ */
+function upcastSkillRecord(rec) {
   // v1 (implicit schema_version=1): build v2 envelope.
   const legacyTags = Array.isArray(rec.tags) ? rec.tags.filter((t) => typeof t === 'string') : [];
   const categoryTags = deriveTagsFromLegacyCategory(rec.category);
@@ -131,6 +308,9 @@ export function upcastRecord(rec) {
     source: rec.source || 'discover',
     discovery_signals: Array.isArray(rec.discovery_signals) ? rec.discovery_signals : [],
     schema_version: CURRENT_SCHEMA_VERSION,
+
+    // Phase 3.2 / D-02 back edge — default empty; link-bundles.js fills it.
+    bundled_in_plugins: Array.isArray(rec.bundled_in_plugins) ? rec.bundled_in_plugins : [],
 
     // Discriminated union payload
     extra,
