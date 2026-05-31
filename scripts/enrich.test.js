@@ -147,3 +147,30 @@ test('enrich: 3-way duplicate cluster → oldest canonical, other two get same c
   assert.equal(skills[1].canonical_slug, 'a/x');
   assert.equal(skills[2].canonical_slug, 'a/x');
 });
+
+test('Task 10: plugin enrich — entity-type-agnostic dedup over 10 plugins flags 2 near-dups', () => {
+  // 10 plugins; the last two share a vector with plugin[0] (cosine 1.0 > 0.92).
+  // enrichSkills is type-agnostic — it keys on .id/.slug/.repo_created_at, all
+  // of which plugin EntityRecords carry. This locks the D-10 plugin enrich path.
+  const plugins = [];
+  for (let i = 0; i < 10; i++) {
+    plugins.push({
+      id: `plugin:owner/repo${i}/.claude-plugin/plugin.json`,
+      slug: `owner/p${i}`,
+      entity_type: 'plugin',
+      repo_created_at: `2024-0${(i % 9) + 1}-01T00:00:00Z`,
+    });
+  }
+  // Distinct vectors for 0..7, but 8 and 9 collide with 0 (canonical = oldest).
+  const vectors = plugins.map((p, i) => ({
+    id: expectedVid(p.id),
+    values: vec(16, { slot: i < 8 ? i : 0 }),
+  }));
+  enrichSkills(plugins, vectors);
+  const dups = plugins.filter((p) => p.is_duplicate === true);
+  assert.equal(dups.length, 2, 'exactly two near-duplicates flagged');
+  // Both duplicates point at plugin[0] (oldest in its cluster: 2024-01).
+  assert.equal(plugins[0].is_duplicate, false);
+  assert.equal(plugins[8].canonical_slug, plugins[0].slug);
+  assert.equal(plugins[9].canonical_slug, plugins[0].slug);
+});
