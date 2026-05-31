@@ -8,6 +8,8 @@
  */
 
 import { scoreSkill } from './skill.scorer.js';
+import { scorePlugin } from './plugin.scorer.js';
+import { scoreMcp } from './mcp.scorer.js';
 
 /**
  * @typedef {(record: any) => number} Scorer
@@ -16,6 +18,8 @@ import { scoreSkill } from './skill.scorer.js';
 /** @type {Record<string, Scorer>} */
 export const scorers = {
   skill: scoreSkill,
+  plugin: scorePlugin,
+  mcp_server: scoreMcp,
 };
 
 /**
