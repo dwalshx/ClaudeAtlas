@@ -44,18 +44,46 @@
  * ~30 requests/minute to stay well under any tier limit.
  */
 
-import { readFileSync, writeFileSync, existsSync } from 'fs';
 import { createHash } from 'crypto';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { readNdjsonRecords, writeNdjsonStreaming } from './lib/ndjson.js';
 import { loadSkillsArray } from './lib/skills-stream.js';
+import { buildEmbeddingInput as buildEmbeddingInputRegistry } from './lib/embedding-input/index.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..');
 // T5: NDJSON format. SKILLS_PATH retained for error messages; reads use loadSkillsArray().
 const SKILLS_PATH = join(ROOT, 'data', 'skills.ndjson');
-const OUTPUT_PATH = join(ROOT, 'data', 'skill-vectors.ndjson');
+
+// Phase 3.2 (D-09): embed-skills.js is the unified embedder for all three
+// entity_types. CLI: --input <path> --output <path> --entity-type <type>.
+// Defaults preserve the legacy skill invocation so daily-scrape.yml's
+// `node scripts/embed-skills.js` keeps working unchanged.
+function parseArgs(argv) {
+  const out = { input: null, output: null, entityType: 'skill' };
+  for (let i = 2; i < argv.length; i++) {
+    const a = argv[i];
+    if (a === '--input') out.input = argv[++i];
+    else if (a === '--output') out.output = argv[++i];
+    else if (a === '--entity-type') out.entityType = argv[++i];
+    else if (a.startsWith('--input=')) out.input = a.slice('--input='.length);
+    else if (a.startsWith('--output=')) out.output = a.slice('--output='.length);
+    else if (a.startsWith('--entity-type=')) out.entityType = a.slice('--entity-type='.length);
+  }
+  return out;
+}
+
+const DEFAULT_OUTPUTS = {
+  skill: join(ROOT, 'data', 'skill-vectors.ndjson'),
+  plugin: join(ROOT, 'data', 'plugin-vectors.ndjson'),
+  mcp_server: join(ROOT, 'data', 'mcp-vectors.ndjson'),
+};
+const DEFAULT_INPUTS = {
+  skill: join(ROOT, 'data', 'skills.ndjson'),
+  plugin: join(ROOT, 'data', 'plugins.ndjson'),
+  mcp_server: join(ROOT, 'data', 'mcp-servers.ndjson'),
+};
 
 const OPENAI_KEY = process.env.OPENAI_API_KEY;
 // Note: we don't hard-fail on missing key here. If there are no deltas to
@@ -109,15 +137,28 @@ function readBodyMarkdown(skill) {
 }
 
 // Content SHA is a stable fingerprint of the fields we embed.
-// Any change to name/description/category/body_markdown invalidates the vector.
-function computeContentSha(skill) {
-  const payload = [
-    skill.name || '',
-    skill.description || '',
-    skill.category || '',
-    readBodyMarkdown(skill),
-  ].join('|');
-  return createHash('sha256').update(payload).digest('hex');
+//
+// IMPORTANT (Phase 3.2 / B-2): for SKILLS the sha formula is FROZEN to the
+// legacy pipe-join over name|description|category|body_markdown. Switching it
+// to hash buildEmbeddingInput() output would change every prior _content_sha
+// on disk and force a 35k-record re-embed (cache hit → 0%, ~$0.22). The skill
+// embedding-input text is held byte-identical by the registry's
+// buildSkillEmbeddingInput (parity-guarded in Task 4), so the embedded vectors
+// do not drift — only the delta-detection key must stay stable.
+//
+// For NEW types (plugin/mcp_server) there is no prior vector file, so the sha
+// is derived from the registry embedding-input text directly.
+function computeContentSha(record, entityType) {
+  if (entityType === 'skill') {
+    const payload = [
+      record.name || '',
+      record.description || '',
+      record.category || '',
+      readBodyMarkdown(record),
+    ].join('|');
+    return createHash('sha256').update(payload).digest('hex');
+  }
+  return createHash('sha256').update(buildEmbeddingInputRegistry(record)).digest('hex');
 }
 
 // Vectorize accepts IDs up to 64 characters. Our skill.id values (full
@@ -140,34 +181,39 @@ export function vectorizeId(skillId) {
   return 'sk_' + hash.slice(0, 40);
 }
 
-// Build the text we actually send to OpenAI. This is what gets embedded,
-// so the richer the better — but we cap at ~2000 chars to stay within
-// single-batch token budgets and avoid tail-content dominating.
-function buildEmbeddingInput(skill) {
-  const parts = [
-    skill.name,
-    skill.description || '',
-    skill.category || '',
-    readBodyMarkdown(skill).slice(0, 1500),
-  ].filter(Boolean);
-  return parts.join('\n\n').slice(0, 6000);
+// Build the text we actually send to OpenAI via the Phase 3.2 registry
+// (scripts/lib/embedding-input). Dispatches by entity_type. The skill builder
+// is byte-identical to the legacy inline logic (B-2 parity guard, Task 4) so
+// existing skill vectors do not drift.
+function buildEmbeddingInput(record) {
+  return buildEmbeddingInputRegistry(record);
 }
 
 // --- Prior-run resume ---
 
 // Load prior vectors keyed by metadata.skill_id (the source-of-truth unique
 // identifier). The record's vector `id` is a derived vectorize-safe form.
-function loadPriorVectors() {
+function loadPriorVectors(outputPath) {
   // Uses the shared streaming reader from scripts/lib/ndjson.js (chunked
   // readSync — avoids V8 ~536 MB string limit). Header records (_header:
   // true) are filtered defensively.
   try {
-    return readNdjsonRecords(OUTPUT_PATH, {
+    return readNdjsonRecords(outputPath, {
       keyFn: (r) => r.metadata?.skill_id || r.id,
     });
   } catch {
     return new Map();
   }
+}
+
+// Load the records to embed for the requested entity_type. Skills keep the
+// legacy loadSkillsArray() path (NDJSON + legacy fallback, V8-safe); plugin
+// and mcp_server records stream from their NDJSON via readNdjsonRecords.
+function loadRecords(entityType, inputPath) {
+  if (entityType === 'skill' && inputPath === DEFAULT_INPUTS.skill) {
+    return loadSkillsArray();
+  }
+  return [...readNdjsonRecords(inputPath, { keyFn: (r) => r.id }).values()];
 }
 
 // --- OpenAI embedding call ---
@@ -212,45 +258,75 @@ async function embedBatch(inputs, attempt = 1) {
 // --- Main ---
 
 async function main() {
-  log('=== skill embedder start ===');
+  const args = parseArgs(process.argv);
+  const entityType = args.entityType || 'skill';
+  if (!DEFAULT_INPUTS[entityType]) {
+    console.error(`ERROR: unknown --entity-type "${entityType}" (skill|plugin|mcp_server).`);
+    process.exit(1);
+  }
+  const inputPath = args.input || DEFAULT_INPUTS[entityType];
+  const outputPath = args.output || DEFAULT_OUTPUTS[entityType];
 
-  // T5: loadSkillsArray() resolves NDJSON + legacy fallback; V8-string-limit safe.
-  let skills;
+  log(`=== embedder start (entity_type=${entityType}) ===`);
+  log(`input:  ${inputPath}`);
+  log(`output: ${outputPath}`);
+
+  let records;
   try {
-    skills = loadSkillsArray();
+    records = loadRecords(entityType, inputPath);
   } catch (err) {
     console.error(`ERROR: ${err.message}`);
     process.exit(1);
   }
-  log(`loaded ${skills.length} skills`);
+  log(`loaded ${records.length} ${entityType} records`);
 
-  const prior = loadPriorVectors();
+  const prior = loadPriorVectors(outputPath);
   log(`prior vectors: ${prior.size}`);
 
-  // Partition skills into 'kept' (unchanged, reuse prior vector) and 'todo' (needs embedding)
+  // Partition records into 'kept' (unchanged, reuse prior vector) and 'todo'.
   const kept = [];
   const todo = [];
 
-  for (const skill of skills) {
-    if (!skill.id) continue;
-    const sha = computeContentSha(skill);
-    const priorRec = prior.get(skill.id);
+  for (const rec of records) {
+    if (!rec.id) continue;
+    const sha = computeContentSha(rec, entityType);
+    const priorRec = prior.get(rec.id);
 
     if (priorRec && priorRec.metadata && priorRec.metadata._content_sha === sha && Array.isArray(priorRec.values) && priorRec.values.length === DIMENSIONS) {
       kept.push(priorRec);
     } else {
-      todo.push({ skill, sha });
+      todo.push({ skill: rec, sha });
     }
   }
 
   log(`unchanged: ${kept.length}`);
   log(`to embed:  ${todo.length}`);
 
+  // B-2 cache-hit pre-check: when re-embedding an EXISTING vector file, a low
+  // hit rate means the embedding-input (and therefore the content_sha) drifted
+  // from what produced the prior vectors — re-embedding the whole catalog
+  // would silently cost real money. Bail loudly unless explicitly forced.
+  const FORCE_REEMBED = process.env.EMBED_FORCE_REEMBED === '1';
+  if (prior.size > 0 && records.length > 0) {
+    const hitRate = kept.length / records.length;
+    log(`cache hit rate: ${(hitRate * 100).toFixed(3)}% (${kept.length}/${records.length})`);
+    if (hitRate < 0.99 && !FORCE_REEMBED) {
+      console.error(
+        `[embed-skills] DRIFT DETECTED: only ${(hitRate * 100).toFixed(2)}% cache hit ` +
+        `against prior ${outputPath}.\n` +
+        `This likely means buildEmbeddingInput() output diverged from the logic that\n` +
+        `produced the prior vectors. Cost of proceeding: a full re-embed of ${records.length} records.\n` +
+        `Bailing out. Re-run with EMBED_FORCE_REEMBED=1 to override.`,
+      );
+      process.exit(1);
+    }
+  }
+
   if (todo.length === 0) {
     log('no changes — writing output unchanged and exiting');
-    writeNdjsonStreaming(OUTPUT_PATH, kept);
-    log(`wrote ${OUTPUT_PATH} (${kept.length} vectors)`);
-    log('=== skill embedder complete ===');
+    writeNdjsonStreaming(outputPath, kept);
+    log(`wrote ${outputPath} (${kept.length} vectors)`);
+    log('=== embedder complete ===');
     return;
   }
 
@@ -291,7 +367,7 @@ async function main() {
         log(`  [FATAL] batch ${Math.floor(i / BATCH_SIZE) + 1} failed: ${err.message}`);
         // Save progress before exiting so we can resume
         const partial = [...kept, ...newRecords];
-        writeNdjsonStreaming(OUTPUT_PATH, partial);
+        writeNdjsonStreaming(outputPath, partial);
         log(`saved partial: ${partial.length} vectors written`);
         process.exit(1);
       }
@@ -319,8 +395,9 @@ async function main() {
           // F2 (B4 / DOD-7): carry entity_type into Vectorize metadata so
           // the worker's ?type filter has a queryable field the day plugins
           // (Phase 3.2) land. Default to 'skill' for legacy v1 records on
-          // disk during the cutover window.
-          entity_type: skill.entity_type || 'skill',
+          // disk during the cutover window. Phase 3.2: falls back to the
+          // run's --entity-type so plugin/mcp vectors are tagged correctly.
+          entity_type: skill.entity_type || entityType || 'skill',
           _content_sha: sha,
         },
       });
@@ -331,7 +408,7 @@ async function main() {
     log(`  [${done}/${todo.length}] batch ${Math.floor(i / BATCH_SIZE) + 1} done (${elapsed}s elapsed)`);
 
     // Checkpoint every batch (streaming write — V8-safe)
-    writeNdjsonStreaming(OUTPUT_PATH, [...kept, ...newRecords]);
+    writeNdjsonStreaming(outputPath, [...kept, ...newRecords]);
 
     // Polite pause between batches (skipped in DRY_RUN — no rate limit)
     if (i + BATCH_SIZE < todo.length && !DRY_RUN) {
@@ -340,10 +417,10 @@ async function main() {
   }
 
   const totalElapsed = ((Date.now() - startTime) / 1000).toFixed(1);
-  log(`embedded ${newRecords.length} new/changed skills in ${totalElapsed}s`);
+  log(`embedded ${newRecords.length} new/changed records in ${totalElapsed}s`);
   log(`final output: ${kept.length + newRecords.length} total vectors`);
-  log(`wrote ${OUTPUT_PATH}`);
-  log('=== skill embedder complete ===');
+  log(`wrote ${outputPath}`);
+  log('=== embedder complete ===');
 }
 
 // Phase 3.1 Task 4: gate main() so importing vectorizeId from this module
