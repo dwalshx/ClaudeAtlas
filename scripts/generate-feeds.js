@@ -44,6 +44,7 @@ import { fileURLToPath } from 'node:url';
 import { loadAllSkillsMemo } from './lib/skills-stream.js';
 import { resolveSkillsNdjsonPath } from './lib/build-input.js';
 import { upcastRecord } from './lib/legacy-skill-reader.js';
+import { readNdjsonRecords } from './lib/ndjson.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..');
@@ -336,6 +337,30 @@ function loadSkills() {
   return raw.map(upcastRecord).filter((e) => e && e.entity_type === 'skill');
 }
 
+// Phase 3.2 (D-06): feeds become mixed-type. Load plugins.ndjson +
+// mcp-servers.ndjson alongside skills and concatenate into one entities array.
+// Each entry's _claudeatlas.type_chip is its entity_type (set in buildItem).
+// Graceful no-op when a file is missing (early in 3.2 ship, plugins.ndjson may
+// not exist on some CI branches). Ranking/sort logic is type-agnostic.
+function loadExtraEntities(filename, entityType) {
+  const p = join(DATA_DIR, filename);
+  if (!existsSync(p)) {
+    log(`note: ${filename} missing — no ${entityType} entries in feeds`);
+    return [];
+  }
+  const recs = [...readNdjsonRecords(p, { keyFn: (r) => r.id }).values()];
+  log(`loaded ${recs.length.toLocaleString()} ${entityType} entities`);
+  return recs;
+}
+
+function loadAllEntities() {
+  return [
+    ...loadSkills(),
+    ...loadExtraEntities('plugins.ndjson', 'plugin'),
+    ...loadExtraEntities('mcp-servers.ndjson', 'mcp_server'),
+  ];
+}
+
 function writeFeed(name, feed) {
   if (!existsSync(FEED_DIR)) mkdirSync(FEED_DIR, { recursive: true });
   const path = join(FEED_DIR, `${name}.json`);
@@ -348,14 +373,25 @@ function writeFeed(name, feed) {
 
 function main() {
   log('=== feeds generator start ===');
-  const skills = loadSkills();
-  log(`loaded ${skills.length.toLocaleString()} skill entities`);
+  const entities = loadAllEntities();
+  log(`loaded ${entities.length.toLocaleString()} total entities (skill + plugin + mcp_server)`);
 
-  writeFeed('whats-new', buildWhatsNew(skills));
-  writeFeed('notable', buildNotable(skills));
-  writeFeed('trending', buildTrending(skills));
+  writeFeed('whats-new', buildWhatsNew(entities));
+  writeFeed('notable', buildNotable(entities));
+  writeFeed('trending', buildTrending(entities));
 
   log('=== feeds generator complete ===');
 }
 
-main();
+// Only run main() when invoked as a script, not when imported by tests.
+const invokedAsScript = (() => {
+  try {
+    return import.meta.url === fileURLToPath(`file://${process.argv[1]}`).replace(/\\/g, '/')
+      || fileURLToPath(import.meta.url) === process.argv[1];
+  } catch {
+    return false;
+  }
+})();
+if (invokedAsScript) main();
+
+export { buildWhatsNew, buildNotable, buildItem, loadAllEntities };
