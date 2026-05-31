@@ -65,6 +65,11 @@
  * @property {'code-search' | 'topics' | 'seed' | 'discover' | 'registry' | 'manual'} source
  * @property {string[]} discovery_signals
  * @property {2} schema_version   Bumped from implicit 1 in F2.
+ *
+ * @property {string[]} bundled_in_plugins
+ *   Phase 3.2 / D-02. IDs of plugin EntityRecords that bundle this entity
+ *   (back edge of the bundle graph; forward edge is PluginExtra.bundled_*).
+ *   Populated by scripts/link-bundles.js; `[]` for non-bundled entities.
  */
 
 /**
@@ -86,6 +91,13 @@
  * @property {string} readme_markdown
  * @property {string[]} commands
  * @property {string[]} hooks
+ * @property {string[]} marketplace_listings   Phase 3.2 — marketplace listing IDs advertising this plugin.
+ * @property {string[]} bundled_skills         Phase 3.2 / D-02 — skill EntityRecord IDs this plugin bundles (forward edge).
+ * @property {string[]} bundled_agents         Phase 3.2 — agent component IDs/names bundled.
+ * @property {string[]} bundled_commands       Phase 3.2 — command component IDs/names bundled.
+ * @property {string[]} bundled_hooks          Phase 3.2 — hook component IDs/names bundled.
+ * @property {string[]} bundled_mcp_servers    Phase 3.2 / D-02 — mcp_server EntityRecord IDs this plugin bundles.
+ * @property {number} manifest_completeness    Phase 3.2 / D-03 — 0-1 manifest-field coverage; feeds Manifest-Completeness signal.
  */
 
 /**
@@ -96,6 +108,7 @@
  * @property {string} readme_markdown
  * @property {string[]} tools
  * @property {'stdio' | 'sse' | 'streamable-http' | null} transport
+ * @property {number} manifest_completeness    Phase 3.2 / D-03 — 0-1 manifest-field coverage; feeds Manifest-Completeness signal.
  */
 
 /**

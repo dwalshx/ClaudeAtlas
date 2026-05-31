@@ -92,6 +92,15 @@ export interface EntityCommon {
   discovery_signals: string[];
   /** Bumped from implicit 1 in F2. */
   schema_version: 2;
+
+  // --- Bundle lineage (Phase 3.2 / D-02) ---
+  /**
+   * IDs of plugin EntityRecords that bundle this entity. Populated by
+   * `scripts/link-bundles.js` (the bidirectional bundle-graph pass).
+   * The forward edge is `PluginExtra.bundled_*[]`; this is the back edge.
+   * `[]` for entities not bundled by any plugin (the common case).
+   */
+  bundled_in_plugins: string[];
 }
 
 export interface SkillExtra {
@@ -112,6 +121,26 @@ export interface PluginExtra {
   readme_markdown: string;
   commands: string[];
   hooks: string[];
+
+  // --- Phase 3.2 bundle graph + manifest signals (D-02, D-03) ---
+  /** Marketplace listing IDs that advertise this plugin. */
+  marketplace_listings: string[];
+  /** IDs of skill EntityRecords this plugin bundles (forward edge of D-02). */
+  bundled_skills: string[];
+  /** Agent component IDs/names this plugin bundles. */
+  bundled_agents: string[];
+  /** Command component IDs/names this plugin bundles. */
+  bundled_commands: string[];
+  /** Hook component IDs/names this plugin bundles. */
+  bundled_hooks: string[];
+  /** IDs of mcp_server EntityRecords this plugin bundles. */
+  bundled_mcp_servers: string[];
+  /**
+   * 0-1 fraction of expected manifest fields present. Feeds the
+   * Manifest-Completeness signal that swaps in for the Frontmatter
+   * signal in the plugin/MCP scorer (D-03).
+   */
+  manifest_completeness: number;
 }
 
 export interface McpExtra {
@@ -121,6 +150,11 @@ export interface McpExtra {
   readme_markdown: string;
   tools: string[];
   transport: 'stdio' | 'sse' | 'streamable-http' | null;
+  /**
+   * 0-1 fraction of expected manifest fields present. Feeds the
+   * Manifest-Completeness signal in the plugin/MCP scorer (D-03).
+   */
+  manifest_completeness: number;
 }
 
 export interface CommandLibExtra {
