@@ -150,12 +150,67 @@ jobs:
           path: data/etag-cache.json
           key: etag-cache-${{ github.run_number }}
 
+      # Phase 3.2 (Task 12, D-11): restore the plugins-raw discovery cache
+      # before the plugin scrape. Mirrors the skills-raw GHA-cache pattern:
+      # scrape-plugins.js checkpoints incrementally to data/plugins-raw.ndjson
+      # (+ .partial), so a warm cache makes the daily plugin pass cheap.
+      - name: Restore plugins-raw cache
+        if: github.event_name != 'push'
+        uses: actions/cache/restore@v4
+        with:
+          path: data/plugins-raw.ndjson
+          key: plugins-raw-ndjson-${{ github.run_number }}
+          restore-keys: |
+            plugins-raw-ndjson-
+
+      # Phase 3.2 (Task 12): NEW — Scrape plugins (~30 min). Discovers
+      # .claude-plugin/marketplace.json + plugin.json across GitHub, writes
+      # data/plugins-raw.ndjson. Cron/manual only (push events skip scrape).
+      - name: Run plugin discovery (scrape-plugins)
+        if: github.event_name != 'push'
+        run: node scripts/scrape-plugins.js
+        env:
+          GITHUB_TOKEN: ${{ secrets.SCRAPE_PAT }}
+
+      # Save plugins-raw cache even on timeout/failure/cancel (mirrors the
+      # skills-raw `if: always()` pattern). Partial corpus stays useful.
+      - name: Save plugins-raw cache
+        if: always() && github.event_name != 'push' && hashFiles('data/plugins-raw.ndjson') != ''
+        uses: actions/cache/save@v4
+        with:
+          path: data/plugins-raw.ndjson
+          key: plugins-raw-ndjson-${{ github.run_number }}
+
       # Filter: reads data/skills-raw.json (now persisted via GHA cache),
       # applies slop removal / dedup / per-repo cap / tier recalibration,
       # writes data/skills.json for build/deploy.
       - name: Filter and calibrate skills
         if: github.event_name != 'push'
         run: npm run filter
+
+      # Phase 3.2 (Task 12): NEW — Filter plugins. Reads data/plugins-raw.ndjson,
+      # scores via the plugin scorer registry, writes data/plugins.ndjson +
+      # appends a plugin section to data/pipeline-stats.json (allowlisted sidecar
+      # — no F1 banned-pattern delta).
+      - name: Filter plugins
+        if: github.event_name != 'push'
+        run: node scripts/filter-plugins.js
+
+      # Phase 3.2 (Task 12): NEW — Filter MCP servers. Reads MCP discovery
+      # (mcp-servers-raw / registry), writes data/mcp-servers.ndjson + appends an
+      # mcp_server section to data/pipeline-stats.json (allowlisted sidecar).
+      - name: Filter MCP servers
+        if: github.event_name != 'push'
+        run: node scripts/filter-mcps.js
+
+      # Phase 3.2 (Task 12, D-02): NEW — Link bundles. Builds the bidirectional
+      # bundle graph (plugin.extra.bundled_skills[] <-> skill.bundled_in_plugins[])
+      # and rewrites data/skills.ndjson + data/plugins.ndjson atomically via
+      # writeNdjsonStreaming. NDJSON-only writes — no F1 banned-pattern delta.
+      # Graceful exit-0 if data/plugins.ndjson is absent.
+      - name: Link bundles (skill <-> plugin graph)
+        if: github.event_name != 'push'
+        run: node scripts/link-bundles.js
 
       # --- Semantic search: embed new/changed skills, upload to Vectorize ---
       # Embed step is resumable and idempotent: reads prior ndjson, only embeds
@@ -164,6 +219,24 @@ jobs:
       - name: Embed skills (OpenAI)
         if: github.event_name != 'push'
         run: npm run embed
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+
+      # Phase 3.2 (Task 12): NEW — Embed plugins. Same OpenAI embedder, dispatched
+      # by --entity-type. Reads data/plugins.ndjson, writes data/plugin-vectors.ndjson;
+      # resumable + idempotent via the per-record _content_sha delta check.
+      - name: Embed plugins (OpenAI)
+        if: github.event_name != 'push'
+        run: node scripts/embed-skills.js --entity-type plugin
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+
+      # Phase 3.2 (Task 12): NEW — Embed MCP servers. Reads data/mcp-servers.ndjson,
+      # writes data/mcp-vectors.ndjson. metadata.entity_type=mcp_server lets the
+      # worker ?type= filter resolve MCP results.
+      - name: Embed MCP servers (OpenAI)
+        if: github.event_name != 'push'
+        run: node scripts/embed-skills.js --entity-type mcp_server
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
 
@@ -178,12 +251,33 @@ jobs:
         if: github.event_name != 'push'
         run: npm run enrich
 
+      # Phase 3.2 (Task 12, D-10): NEW — Enrich plugins (dedup + novelty).
+      # Reads data/plugin-vectors.ndjson + data/plugins.ndjson, rewrites
+      # data/plugins.ndjson with is_duplicate / canonical_id / novelty_score.
+      # MCP servers are intentionally NOT enriched — the MCP corpus is below
+      # the dedup threshold (enrich.js early-returns for entity_type=mcp_server).
+      - name: Enrich plugins (dedup + novelty)
+        if: github.event_name != 'push'
+        run: node scripts/enrich.js --input data/plugin-vectors.ndjson --records data/plugins.ndjson --entity-type plugin
+
+      # Phase 3.2 (Task 12): Upload vectors to Vectorize — extended to upsert all
+      # three entity vector files (skills + plugins + MCPs). Each invocation logs
+      # its metadata.entity_type distribution. Missing inputs are skipped gracefully
+      # by upload-vectors.js. Main-only (writes to prod Vectorize index).
       - name: Upload vectors to Vectorize
         # Branch dispatch safety (Phase 3.1): writes to production Vectorize
         # index. Gated to main so branch dry-runs exercise embed locally
         # without touching prod search.
         if: github.event_name != 'push' && github.ref == 'refs/heads/main'
-        run: npm run upload-vectors
+        run: |
+          for f in data/skill-vectors.ndjson data/plugin-vectors.ndjson data/mcp-vectors.ndjson; do
+            if [ -f "$f" ]; then
+              echo "Uploading vectors from $f"
+              node scripts/upload-vectors.js --input "$f"
+            else
+              echo "::notice::$f absent — skipping"
+            fi
+          done
         env:
           CF_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
           CF_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
