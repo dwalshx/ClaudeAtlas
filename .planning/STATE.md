@@ -2,10 +2,10 @@
 gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: — Agent-Native Directory
-status: verifying
-stopped_at: Phase 3.2 context captured (11 decisions)
-last_updated: "2026-05-30T22:27:40.234Z"
-last_activity: 2026-05-29 -- Phase 3.1.3 verified, ready to merge
+status: ready-to-execute
+stopped_at: "Phase 3.2 (plugin + MCP scoring) PLAN.md Rev 2 PASS plan-check. 11 decisions locked in CONTEXT.md. 14-task plan in PLAN.md across 5 internal waves. Plus all of Phase 3.1.4 (filter.js v2 writer) shipped earlier 2026-05-30. Ready for /gsd:execute-phase 3.2 in fresh session."
+last_updated: "2026-05-31T05:55:00.000Z"
+last_activity: "2026-05-31 -- Phase 3.2 plan PR #12 merged, fresh-session handoff prepared"
 progress:
   total_phases: 16
   completed_phases: 4
@@ -21,19 +21,54 @@ progress:
 See: `.planning/PROJECT.md` (last updated 2026-04-10)
 
 **Core value:** Users can find the best Claude skill for a given task in under 30 seconds, with visible signals for why it's trustworthy.
-**Current focus:** Phase 3.1.3 — agent-hub (READY-TO-MERGE)
+**Current focus:** Phase 3.2 — plugin + MCP scoring (PLAN ready, awaiting execute)
 **Milestone:** v3.0 — Comprehensive Agent Tooling Index (in progress)
 
 ## Current Position
 
-Phase: **3.1.3 (agent-hub) — READY-TO-MERGE 2026-05-29**
-Plan: 1 of 1 (6 task commits + 1 plan commit, all pushed to origin)
-Branch: gsd/phase-3.1.3-agent-hub, 7 commits ahead of main
-Status: Branch CI 26594611105 validated full pipeline at 38,360 records; verifier passed 15/15 truths
-Next phase: **3.2 (plugin scoring + filtering)** — Phase 3.1.2 registries make this 'add files, don't refactor'
-Last activity: 2026-05-29 -- Phase 3.1.3 verified, ready to merge
+Phase: **3.2 (plugin + MCP scoring) — PLAN READY, AWAITING EXECUTE 2026-05-31**
+Plan: 1 of 1 (14 tasks across 5 internal waves, autonomous=true, Rev 2 PASS plan-check)
+Status: PR #12 merged. CONTEXT.md (11 decisions) + PLAN.md Rev 2 (1,055 lines) + PLAN-CHECK.md (PASS) all on main.
+Next action: `/gsd:execute-phase 3.2` (fresh session recommended due to context size)
+Last activity: 2026-05-31 -- Phase 3.2 plan PR #12 merged
 
-Progress: Phase 1.5 [██████████] 100% · v2.0 [██████████] 100% · 3.0.x trilogy [██████████] 100% · 3.1.1 F1 [██████████] 100% · 3.1 filter overhaul [██████████] 100% (shipped 2026-05-27) · 3.1.2 polymorphic envelope [██████████] 100% (shipped 2026-05-28) · **3.1.3 agent hub [██████████] 100% (ready-to-merge 2026-05-29)** · 3.2 plugin scoring [░░░░░░░░░░] 0% · 3.3–3.9 [░░░░░░░░░░] 0%
+Progress: Phase 1.5 [██████████] 100% · v2.0 [██████████] 100% · 3.0.x trilogy [██████████] 100% · 3.1.1 F1 [██████████] 100% · 3.1 filter overhaul [██████████] 100% (shipped 2026-05-27) · 3.1.2 polymorphic envelope [██████████] 100% (shipped 2026-05-28) · 3.1.3 agent hub [██████████] 100% (shipped 2026-05-29) · 3.1.4 filter v2 writer [██████████] 100% (shipped 2026-05-30) · **3.2 plugin+MCP scoring [████████░░] 80% (plan ready, execute pending)** · 3.3–3.9 [░░░░░░░░░░] 0%
+
+## Phase 3.2 Quick-Start Guide (for fresh session)
+
+**Goal:** Add `entity_type: 'plugin'` and `entity_type: 'mcp_server'` to the catalog pipeline. Mixed-type feeds. Plugins + MCPs in `/api/v1/search?type=...`. Daily-scrape produces fresh plugin + MCP data.
+
+**Plan artifacts:**
+- `.planning/phases/3.2-plugin-and-mcp-scoring/3.2-CONTEXT.md` — 11 user-locked decisions
+- `.planning/phases/3.2-plugin-and-mcp-scoring/3.2-PLAN.md` Rev 2 — 14 tasks, executable
+- `.planning/phases/3.2-plugin-and-mcp-scoring/3.2-PLAN-CHECK.md` — Rev 1 (3 BLOCKERs/7 FLAGs) → Rev 2 PASS
+
+**Fresh data ready:**
+- `data/plugins-raw.ndjson` — 7,339 records, scraped 2026-05-30
+- `data/plugins-meta.json` — stats: 3,112 plugin.json + 4,687 marketplace + 38 MCPs + 4,191 with skills + 1,625 agents
+
+**Critical context for the new session:**
+
+1. **MCPs are a separate entity_type 'mcp_server'** (per D-10). McpExtra typedef stubbed; needs full expansion.
+2. **Bidirectional bundling** (per D-02): `bundled_in_plugins: []` on skills, `bundled_skills: []` etc. on plugins. Data only in 3.2; display deferred to 3.3.
+3. **5h cron timeout WAS HIT** on 2026-05-30 at 09:00 UTC (scheduled run cancelled). Task 13 in PLAN.md addresses with mitigation D+C (timeout 300→330 min + reduce enrich K 5→3). Three runtime gates enforce this.
+4. **D+7 cutover** (legacy-skill-reader.js cleanup) is ~2026-06-04. Phase 3.2 must NOT block this; plugin+MCP work happens on its own branch.
+5. **Phase 3.1.4 shipped** the v2-write filter.js. New session can assume `data/skills.ndjson` is v2 shape with `_header` line.
+
+## Open Items (carryover for fresh session)
+
+### Phase 3.2 ready to execute
+- `/gsd:execute-phase 3.2` — spawns gsd-executor against 14-task plan; ~3-4h autonomous + branch CI validation
+
+### Operational items
+- **2026-05-30 09:00 UTC scheduled cron CANCELLED at 5h timeout.** Task 13 in PLAN addresses. Today's 06:30 UTC cron (in progress shortly after this handoff) is the next observation.
+- **Phase 3.1.2 D+7 cleanup** (~2026-06-04, ~4 days away) — Delete legacy-skill-reader.js, flip lint-no-legacy-skill-shape.js to fail mode. Can ship as small standalone PR after Phase 3.2 OR be folded in.
+- **PAT scope:** User's fine-grained PAT lacks `mergePullRequest` permission. Uses GitHub UI for PR merges. Workflow_dispatch via `gh workflow run` also 403s; UI also works. Could be fixed permanently with `gh auth refresh -s repo,workflow`.
+
+### Carried forward (still pending; not blocking)
+- Smoke seed annual review (`data/smoke-seed.json` — some entries deliberately don't exist, verify they still 404)
+- Cron-failure external webhook alert (deferred backlog)
+- HNSW migration for compute-similar (Phase 3.x; mitigation in 3.2 task 13 is interim)
 
 ## Completed Milestones
 
