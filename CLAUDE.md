@@ -391,6 +391,21 @@ npm run preview
    easy to miss). Regression coverage: `scripts/filter.test.js`
    "Phase 3.2 F-3: filter re-run preserves bundled_in_plugins from prior".
 
+12. **Phase 3.2 Task 13 reduced `compute-similar.js` `TOP_K` 5 → 3 and
+   bumped the daily-scrape `timeout-minutes` 300 → 330.** The K reduction
+   is an OUTPUT-SIZE trim only (shrinks `similar-skills.json` ~40%) — it
+   does NOT save build time. The real binding cost in the daily run is the
+   **Build Astro step (~94 min mean)**, dominated by `compute-similar.js`'s
+   O(n²) cosine scan (which runs for every record regardless of K) plus
+   Astro page generation for ~18k renderable records. The timeout bump is
+   the operative mitigation for the added plugin/MCP pipeline steps
+   (~48 min); projected post-3.2 full-run total is ~293 min vs. the 330-min
+   ceiling. Full audit + projection table:
+   `.planning/phases/3.2-plugin-and-mcp-scoring/3.2-CRON-AUDIT.md`. If the
+   "related skills" UI feels too sparse, bump `TOP_K` back toward 5 — the
+   runtime cost is unchanged. The genuine long-term fix is an HNSW index
+   for the similarity computation (deferred to Phase 3.x backlog).
+
 ## Pipeline footguns (F1 streaming foundation, Phase 3.1.1)
 
 V8 has a ~536 MB single-string ceiling. The entire pipeline used to assume

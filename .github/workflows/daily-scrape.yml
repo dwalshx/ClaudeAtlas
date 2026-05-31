@@ -32,7 +32,18 @@ jobs:
     # 300-min cap is a safety net for the initial KV bootstrap (~10k
     # records on first publish) + any cold-cache scenarios. Cherry-picked
     # from archive commit 5b04b87. Still under GitHub's 6h platform cap.
-    timeout-minutes: 300
+    #
+    # Phase 3.2 Task 13 (3.2-DOD-12): bumped 300 → 330. The 2026-05-30
+    # 09:00 UTC schedule hit the 300-min ceiling (5h0m18s) BEFORE the
+    # plugin/MCP steps were added. Measured pre-3.2 full-run mean is
+    # ~244 min (Build Astro alone is ~94 min — the O(n²) compute-similar
+    # scan dominates, NOT embed/enrich). Adding ~48 min of plugin/MCP work
+    # projects to ~293 min post-mitigation — under the 320-min B-3 gate
+    # with a 37-min margin. See 3.2-CRON-AUDIT.md for the full projection
+    # table and the verified finding that compute-similar TOP_K reduction
+    # saves ~0 compute (so Option D / this bump is the operative
+    # mitigation). GHA platform cap is 6h/360 min.
+    timeout-minutes: 330
     steps:
       - uses: actions/checkout@v4
 
