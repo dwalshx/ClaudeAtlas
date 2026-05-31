@@ -7,8 +7,12 @@
  */
 
 import { skillRecipe } from './skill.recipe.js';
+import { pluginRecipe } from './plugin.recipe.js';
+import { mcpRecipe } from './mcp.recipe.js';
 
 /** @type {Record<string, import('../recipe-engine.js').DiscoveryRecipe>} */
 export const recipes = {
   skill: skillRecipe,
+  plugin: pluginRecipe,
+  mcp_server: mcpRecipe,
 };
