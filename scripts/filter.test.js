@@ -209,3 +209,17 @@ test('Phase 3.1: PRESERVED_FIELDS carries is_duplicate / canonical_slug / novelt
   assert.equal(capped[0].canonical_slug, 'older/foo');
   assert.equal(capped[0].novelty_score, 0.42);
 });
+
+test('Phase 3.2 F-3: filter re-run preserves bundled_in_plugins from prior', () => {
+  const raw = [makeAdmissible({ id: 'p/q/foo/SKILL.md', repo_full_name: 'p/q',
+    name: 'foo', slug: 'p/foo' })];
+  // A skill that link-bundles.js previously linked into a plugin. On the next
+  // filter run the raw record has no bundled_in_plugins; it must be restored
+  // from the prior enrichment rather than reset to [].
+  const priorEnrichments = new Map([['p/q/foo/SKILL.md', {
+    bundled_in_plugins: ['plugin:x/y/.claude-plugin/plugin.json'],
+  }]]);
+  const { capped } = filterRaw(raw, new Map(), priorEnrichments);
+  assert.equal(capped.length, 1);
+  assert.deepEqual(capped[0].bundled_in_plugins, ['plugin:x/y/.claude-plugin/plugin.json']);
+});
