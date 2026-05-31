@@ -7,6 +7,8 @@
  */
 
 import { isSkillSlop } from './skill.rules.js';
+import { isPluginSlop } from './plugin.rules.js';
+import { isMcpSlop } from './mcp.rules.js';
 import {
   hasTemplateName,
   hasPlaceholderDescription,
@@ -24,7 +26,12 @@ export const rulePacks = {
   skill: {
     isSlop: isSkillSlop,
   },
-  // Plugin/MCP rule packs slot in here in 3.2+.
+  plugin: {
+    isSlop: isPluginSlop,
+  },
+  mcp_server: {
+    isSlop: isMcpSlop,
+  },
 };
 
 /**
