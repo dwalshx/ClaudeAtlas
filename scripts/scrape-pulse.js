@@ -2,7 +2,7 @@
 /**
  * ClaudeAtlas Track 1 — Star Pulse
  *
- * Daily refresh of engagement signals on every repo in data/skills.json.
+ * Daily refresh of engagement signals on every repo in data/skills.ndjson.
  * Refreshes via batched GraphQL repository(...) queries (50 repos/query via
  * aliases, ~88 serial queries for ~4,351 repos). This replaces the prior
  * per-repo REST GET loop, which fired ~4,351 back-to-back requests and tripped
@@ -14,9 +14,11 @@
  * Side effect: writes today's data/history/YYYY-MM-DD.json snapshot from the
  * fresh metadata (the moat-feeder).
  *
- * Inputs:  data/skills.json (current corpus), data/etag-cache.json
- * Outputs: data/skills.json (mutated in-place), data/history/YYYY-MM-DD.json
- * Cost:    ~826 requests today, fits in 5000/hr general API budget.
+ * Inputs:  data/skills.ndjson (current corpus). The GraphQL pulse path does
+ *          NOT use data/etag-cache.json (that's Track 2's REST content fetch).
+ * Outputs: data/skills.ndjson (mutated in-place), data/history/YYYY-MM-DD.json
+ * Cost:    ~88 GraphQL queries (50 repos/query) at ~1 point each for ~4,351
+ *          repos, well within the 5000 GraphQL-points/hr SCRAPE_PAT budget.
  * Resumable: No checkpoint — script is fast enough that failure = re-run from start.
  *            Tolerates partial failures (404/451) up to 10% of repos.
  */
