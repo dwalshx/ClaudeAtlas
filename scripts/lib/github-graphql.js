@@ -1,4 +1,12 @@
 /**
+ * PARKED — Not currently wired into Track 1. GraphQL 403'd at production scale
+ * (SCRAPE_PAT, a fine-grained PAT, is rejected by GitHub's GraphQL API). Track 1
+ * fell back to the REST per-repo path in scrape-pulse.js. Revisit this as an
+ * optimization once a classic PAT is provisioned. See
+ * .planning/quick/260603-e96-.../260603-e96-SUMMARY.md "Deviation: GraphQL→REST".
+ * The pure exports (buildPulseQuery, mapGraphqlRepoToFields) and their unit
+ * tests remain valid and import-safe; only fetchRepoBatchGraphql is unused.
+ *
  * ClaudeAtlas — GitHub GraphQL batch client for Track 1 (Star Pulse).
  *
  * Replaces the per-repo REST `GET /repos/{owner}/{name}` loop with a batched
