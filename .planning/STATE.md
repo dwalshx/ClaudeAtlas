@@ -3,9 +3,9 @@ gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: — Agent-Native Directory
 status: verifying
-stopped_at: Completed quick-260603-bug (agent-ping affordance); 3 tasks committed f02965e/1a3e0cf/098124f
-last_updated: "2026-06-03T15:38:32.967Z"
-last_activity: 2026-05-31
+stopped_at: Completed quick-260603-e96 (Track 1 GraphQL batch migration + retry-after stopgap); 3 tasks committed c0902b7/e0ca2fa/921be94
+last_updated: "2026-06-03T17:32:01.422Z"
+last_activity: "2026-06-03 - Completed quick task 260603-bug: Add agent-ping affordance endpoint + llms.txt invitation"
 progress:
   total_phases: 16
   completed_phases: 5
@@ -37,6 +37,7 @@ Last activity: 2026-06-03 - Completed quick task 260603-bug: Add agent-ping affo
 | # | Description | Date | Commit | Directory |
 |---|-------------|------|--------|-----------|
 | 260603-bug | Add agent-ping affordance endpoint + llms.txt invitation | 2026-06-03 | 098124f | [260603-bug-add-agent-ping-affordance-endpoint-llms-](./quick/260603-bug-add-agent-ping-affordance-endpoint-llms-/) |
+| 260603-e96 | Fix failing daily-scrape Track 1 star pulse (retry-after stopgap + GraphQL batch migration) | 2026-06-03 | 921be94 | [260603-e96-fix-failing-daily-scrape-track-1-star-pu](./quick/260603-e96-fix-failing-daily-scrape-track-1-star-pu/) |
 
 Progress: Phase 1.5 [██████████] 100% · v2.0 [██████████] 100% · 3.0.x trilogy [██████████] 100% · 3.1.1 F1 [██████████] 100% · 3.1 filter overhaul [██████████] 100% (shipped 2026-05-27) · 3.1.2 polymorphic envelope [██████████] 100% (shipped 2026-05-28) · 3.1.3 agent hub [██████████] 100% (shipped 2026-05-29) · 3.1.4 filter v2 writer [██████████] 100% (shipped 2026-05-30) · **3.2 plugin+MCP scoring [██████████] 100% (plan executed; branch-CI smoke pending)** · 3.3–3.9 [░░░░░░░░░░] 0%
 
@@ -197,8 +198,8 @@ These were INSERTED ahead of the Phase 3.0 spec's 3.1–3.9 lineup because the d
 
 ## Session Continuity
 
-Last session: 2026-06-03T15:38:32.955Z
-Stopped at: Completed quick-260603-bug (agent-ping affordance); 3 tasks committed f02965e/1a3e0cf/098124f
+Last session: 2026-06-03T17:32:01.408Z
+Stopped at: Completed quick-260603-e96 (Track 1 GraphQL batch migration + retry-after stopgap); 3 tasks committed c0902b7/e0ca2fa/921be94
 
 **Resume:** read `.planning/SESSION-MEMO-2026-04-to-05.md` for full context, then `/gsd:execute-phase 3.1`.
 
