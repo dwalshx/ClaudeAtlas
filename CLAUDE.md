@@ -50,7 +50,14 @@ ClaudeAtlas/
 │   │                            # (skills-raw-bootstrap, permanent). NEVER committed.
 │   ├── etag-cache.json          # GITIGNORED: GitHub API ETag cache (~500 MB, makes re-scrapes cheap)
 │   ├── scrape-log.txt           # GITIGNORED: scraper stdout/stderr
-│   └── skills.json.partial      # GITIGNORED: checkpoint saves from scraper
+│   ├── skills.json.partial      # GITIGNORED: checkpoint saves from scraper
+│   │                            # --- Phase 3.2 plugin + MCP catalog (rebuilt each cron run) ---
+│   ├── plugins-raw.ndjson       # GITIGNORED: raw plugin discovery (~34 MB), GHA-cached (plugins-raw-ndjson-*)
+│   ├── plugins.ndjson           # GITIGNORED: filtered/scored plugins (filter-plugins.js → link-bundles.js)
+│   ├── mcp-servers.ndjson       # GITIGNORED: filtered/scored MCP servers (filter-mcps.js)
+│   ├── plugin-vectors.ndjson    # GITIGNORED: plugin embeddings (embed-skills.js --entity-type plugin)
+│   └── mcp-vectors.ndjson       # GITIGNORED: MCP embeddings (embed-skills.js --entity-type mcp_server)
+│                                #   pipeline-stats.json gains committed plugin + mcp_server sections.
 │
 ├── src/
 │   ├── layouts/
@@ -124,6 +131,12 @@ interface EntityCommon {
   is_duplicate: boolean;        // populated by enrich.js
   canonical_id: string | null;  // points to canonical EntityRecord.id
 
+  // Bundle graph back-edge (Phase 3.2, D-02). IDs of plugin EntityRecords
+  // that bundle this entity. [] for unbundled entities (the common case).
+  // Forward edge is PluginExtra.bundled_*[]. Populated by link-bundles.js;
+  // PRESERVED across filter re-runs via filter.js PRESERVED_FIELDS.
+  bundled_in_plugins: string[];
+
   // Classification
   tags: string[];               // PRIMARY classifier; min one `category:<slug>` tag
   category: string | null;      // LEGACY display field, derived from tags. Removed in 3.6.
@@ -146,13 +159,47 @@ interface SkillExtra {
   skill_first_commit_at: string | null;
 }
 
+// shipped 3.2 (D+0 = 2026-05-30) — plugin scoring + bundle graph live in the
+// daily pipeline (filter-plugins.js → link-bundles.js → embed → enrich).
+interface PluginExtra {
+  type: 'plugin';
+  plugin_path: string;
+  manifest: Record<string, any>;
+  readme_markdown: string;
+  commands: string[];
+  hooks: string[];
+  // Phase 3.2 bundle graph + manifest signals (D-02, D-03):
+  marketplace_listings: string[];   // marketplace listing IDs advertising this plugin
+  bundled_skills: string[];         // forward edge of D-02 (→ skill.bundled_in_plugins)
+  bundled_agents: string[];
+  bundled_commands: string[];
+  bundled_hooks: string[];
+  bundled_mcp_servers: string[];
+  manifest_completeness: number;    // 0-1; feeds the Manifest-Completeness scorer signal (D-03)
+}
+
+// shipped 3.2 (D+0 = 2026-05-30) — MCP servers scored + embedded. NOT enriched
+// (corpus below dedup threshold; enrich.js early-returns for mcp_server, D-10).
+interface McpExtra {
+  type: 'mcp_server';
+  server_path: string;
+  manifest: Record<string, any>;
+  readme_markdown: string;
+  tools: string[];
+  transport: 'stdio' | 'sse' | 'streamable-http' | null;
+  manifest_completeness: number;    // 0-1; feeds the Manifest-Completeness scorer signal (D-03)
+}
+
 type EntityRecord =
   | (EntityCommon & { entity_type: 'skill'; extra: SkillExtra })
-  | /* PluginExtra, McpExtra, etc. land in 3.2+ */;
+  | (EntityCommon & { entity_type: 'plugin'; extra: PluginExtra })       // shipped 3.2
+  | (EntityCommon & { entity_type: 'mcp_server'; extra: McpExtra })      // shipped 3.2
+  | /* CommandLibExtra, AgentLibExtra, HookLibExtra land in 3.3+ */;
 ```
 
-`PluginExtra`, `McpExtra`, `CommandLibExtra`, `AgentLibExtra`, `HookLibExtra`
-are defined in `src/lib/types.d.ts` ready for 3.2+. `framework` is
+`PluginExtra` and `McpExtra` **shipped in Phase 3.2 (D+0 = 2026-05-30)** — see
+the expanded blocks above. `CommandLibExtra`, `AgentLibExtra`, `HookLibExtra`
+are defined in `src/lib/types.d.ts` ready for 3.3+. `framework` is
 intentionally NOT an entity_type — frameworks are tag-based
 (`framework:gsd`, attachable to any entity).
 
@@ -240,7 +287,7 @@ npm run preview
 
 - **Hosting:** Cloudflare Workers Static Assets (configured via `wrangler.toml`)
 - **Deploy command:** `npx wrangler deploy` (runs inside CI)
-- **Daily cron:** `.github/workflows/daily-scrape.yml` runs at 6:30 AM UTC — scrapes, filters, builds, deploys, commits updated `data/skills.json` and `data/history/<today>.json` back to main
+- **Daily cron:** `.github/workflows/daily-scrape.yml` runs at 6:30 AM UTC — scrapes, filters, builds, deploys, commits updated `data/skills.json` and `data/history/<today>.json` back to main. **Phase 3.2 (Task 12) extended the flow:** Track 1 → Track 2 → scrape-plugins → filter (skills) → filter-plugins → filter-mcps → link-bundles → embed (skills) → embed plugins → embed MCPs → enrich (skills) → enrich plugins (MCPs skip enrich, D-10) → upload-vectors (loops skill/plugin/mcp vector files) → build → deploy → commit. New steps gate on `github.event_name != 'push'`; publish/deploy/upload steps stay `main`-only.
 - **Required GitHub Actions secrets:** `SCRAPE_PAT`, `CF_API_TOKEN`, `CF_ACCOUNT_ID`
 
 ## Known issues / things a new session should know
@@ -320,6 +367,44 @@ npm run preview
    `metadata.entity_type` only (NOT `metadata.tags`), and the worker's
    `?category` filter resolves against legacy `metadata.category`. Tag-
    array filtering is a 3.4 optimization, not an F2 blocker.
+
+10. **Phase 3.2 plugin/MCP enrichment shares the skill enrichment-
+   preservation contract.** filter-plugins.js reuses filter.js's
+   `PRESERVED_FIELDS` mechanism: if `npm run enrich` (skills) OR the
+   `enrich plugins` step fails, the affected records keep yesterday's
+   `is_duplicate` / `novelty_score` / `canonical_id` (preserved through
+   the next filter re-run) and `null` for any brand-new records. The
+   site still renders — the fields are additive and the UI degrades to
+   "show everything" on null. MCP servers are intentionally NOT enriched
+   (corpus below the dedup threshold; `enrich.js` early-returns for
+   `entity_type=mcp_server`, D-10) — they carry `is_duplicate=false`.
+
+11. **link-bundles.js depends on `bundled_in_plugins` staying in
+   filter.js `PRESERVED_FIELDS`.** The bundle graph is bidirectional:
+   `plugin.extra.bundled_*[]` is the forward edge, `skill.bundled_in_plugins[]`
+   is the back edge, written by `scripts/link-bundles.js` AFTER filter.
+   filter.js runs again on the next cron and would reset
+   `bundled_in_plugins` to `[]` unless it's in `PRESERVED_FIELDS`. **Do
+   not remove `bundled_in_plugins` from `PRESERVED_FIELDS`** — doing so
+   silently drops the inverse-bundle links on every filter re-run (the
+   forward edge on plugins survives, so the breakage is asymmetric and
+   easy to miss). Regression coverage: `scripts/filter.test.js`
+   "Phase 3.2 F-3: filter re-run preserves bundled_in_plugins from prior".
+
+12. **Phase 3.2 Task 13 reduced `compute-similar.js` `TOP_K` 5 → 3 and
+   bumped the daily-scrape `timeout-minutes` 300 → 330.** The K reduction
+   is an OUTPUT-SIZE trim only (shrinks `similar-skills.json` ~40%) — it
+   does NOT save build time. The real binding cost in the daily run is the
+   **Build Astro step (~94 min mean)**, dominated by `compute-similar.js`'s
+   O(n²) cosine scan (which runs for every record regardless of K) plus
+   Astro page generation for ~18k renderable records. The timeout bump is
+   the operative mitigation for the added plugin/MCP pipeline steps
+   (~48 min); projected post-3.2 full-run total is ~293 min vs. the 330-min
+   ceiling. Full audit + projection table:
+   `.planning/phases/3.2-plugin-and-mcp-scoring/3.2-CRON-AUDIT.md`. If the
+   "related skills" UI feels too sparse, bump `TOP_K` back toward 5 — the
+   runtime cost is unchanged. The genuine long-term fix is an HNSW index
+   for the similarity computation (deferred to Phase 3.x backlog).
 
 ## Pipeline footguns (F1 streaming foundation, Phase 3.1.1)
 

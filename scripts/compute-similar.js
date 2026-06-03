@@ -37,7 +37,12 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..');
 const VECTORS_PATH = join(ROOT, 'data', 'skill-vectors.ndjson');
 const OUTPUT_PATH = join(ROOT, 'data', 'similar-skills.json');
-const TOP_K = 5;
+// Phase 3.2 Task 13 (3.2-DOD-12): reduced 5 → 3. NOTE: this is an OUTPUT-SIZE
+// trim only (shrinks similar-skills.json ~40%), NOT a compute mitigation. The
+// dominant cost here is the O(n²) cosine scan + per-row full sort below; TOP_K
+// only bounds the retained slice. See 3.2-CRON-AUDIT.md. If the "related skills"
+// UI feels too sparse, bump back toward 5 — the runtime cost is unchanged.
+const TOP_K = 3;
 
 function log(msg) {
   console.log(`[similar] ${msg}`);

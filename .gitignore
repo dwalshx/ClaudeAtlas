@@ -70,6 +70,24 @@ data/plugins-raw.json.partial
 scripts/scrape-plugins.log
 scripts/scrape-plugins-resume.log
 
+# Phase 3.2 (Task 12): filtered/scored plugin + MCP NDJSON and their embedding
+# vectors are rebuilt each cron run from the pipeline (mirrors the skills.ndjson
+# rebuilt-each-run pattern). Not committed — keeps the repo lean and avoids the
+# F1 commit-back footgun on growing data files. pipeline-stats.json (which gains
+# plugin/mcp sections) IS committed as a bounded sidecar.
+data/plugins.ndjson
+data/plugins.ndjson.partial
+data/mcp-servers.ndjson
+data/mcp-servers.ndjson.partial
+data/mcp-servers-raw.ndjson
+data/mcp-servers-raw.ndjson.partial
+data/plugin-vectors.ndjson
+data/mcp-vectors.ndjson
+
+# check-banned-patterns.js baseline-mode artifact (transient; never committed —
+# a stale baseline would silently suppress new banned-pattern hits in lint mode)
+.lint-baseline.json
+
 # Phase 3.0.1 smoke harness output (regenerated each run)
 data/smoke-output.json
 last-run.log

@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: — Agent-Native Directory
-status: ready-to-execute
-stopped_at: "Phase 3.2 (plugin + MCP scoring) PLAN.md Rev 2 PASS plan-check. 11 decisions locked in CONTEXT.md. 14-task plan in PLAN.md across 5 internal waves. Plus all of Phase 3.1.4 (filter.js v2 writer) shipped earlier 2026-05-30. Ready for /gsd:execute-phase 3.2 in fresh session."
-last_updated: "2026-05-31T05:55:00.000Z"
-last_activity: "2026-05-31 -- Phase 3.2 plan PR #12 merged, fresh-session handoff prepared"
+status: verifying
+stopped_at: Completed quick-260603-bug (agent-ping affordance); 3 tasks committed f02965e/1a3e0cf/098124f
+last_updated: "2026-06-03T15:38:32.967Z"
+last_activity: 2026-05-31
 progress:
   total_phases: 16
-  completed_phases: 4
-  total_plans: 10
-  completed_plans: 11
+  completed_phases: 5
+  total_plans: 11
+  completed_plans: 12
   percent: 100
 ---
 
@@ -21,29 +21,37 @@ progress:
 See: `.planning/PROJECT.md` (last updated 2026-04-10)
 
 **Core value:** Users can find the best Claude skill for a given task in under 30 seconds, with visible signals for why it's trustworthy.
-**Current focus:** Phase 3.2 — plugin + MCP scoring (PLAN ready, awaiting execute)
+**Current focus:** Phase 3.2 — plugin-and-mcp-scoring
 **Milestone:** v3.0 — Comprehensive Agent Tooling Index (in progress)
 
 ## Current Position
 
-Phase: **3.2 (plugin + MCP scoring) — PLAN READY, AWAITING EXECUTE 2026-05-31**
-Plan: 1 of 1 (14 tasks across 5 internal waves, autonomous=true, Rev 2 PASS plan-check)
-Status: PR #12 merged. CONTEXT.md (11 decisions) + PLAN.md Rev 2 (1,055 lines) + PLAN-CHECK.md (PASS) all on main.
-Next action: `/gsd:execute-phase 3.2` (fresh session recommended due to context size)
-Last activity: 2026-05-31 -- Phase 3.2 plan PR #12 merged
+Phase: 3.2 (plugin-and-mcp-scoring) — READY FOR VERIFICATION
+Plan: 1 of 1 (all 14 tasks committed: 0b460d0 … d37c9a2)
+Status: Phase complete — ready for verification
+Next action: dispatch branch CI per 3.2-SMOKE-RESULTS.md Part B, then `/gsd:verify-phase 3.2`
+Last activity: 2026-06-03 - Completed quick task 260603-bug: Add agent-ping affordance endpoint + llms.txt invitation
 
-Progress: Phase 1.5 [██████████] 100% · v2.0 [██████████] 100% · 3.0.x trilogy [██████████] 100% · 3.1.1 F1 [██████████] 100% · 3.1 filter overhaul [██████████] 100% (shipped 2026-05-27) · 3.1.2 polymorphic envelope [██████████] 100% (shipped 2026-05-28) · 3.1.3 agent hub [██████████] 100% (shipped 2026-05-29) · 3.1.4 filter v2 writer [██████████] 100% (shipped 2026-05-30) · **3.2 plugin+MCP scoring [████████░░] 80% (plan ready, execute pending)** · 3.3–3.9 [░░░░░░░░░░] 0%
+### Quick Tasks Completed
+
+| # | Description | Date | Commit | Directory |
+|---|-------------|------|--------|-----------|
+| 260603-bug | Add agent-ping affordance endpoint + llms.txt invitation | 2026-06-03 | 098124f | [260603-bug-add-agent-ping-affordance-endpoint-llms-](./quick/260603-bug-add-agent-ping-affordance-endpoint-llms-/) |
+
+Progress: Phase 1.5 [██████████] 100% · v2.0 [██████████] 100% · 3.0.x trilogy [██████████] 100% · 3.1.1 F1 [██████████] 100% · 3.1 filter overhaul [██████████] 100% (shipped 2026-05-27) · 3.1.2 polymorphic envelope [██████████] 100% (shipped 2026-05-28) · 3.1.3 agent hub [██████████] 100% (shipped 2026-05-29) · 3.1.4 filter v2 writer [██████████] 100% (shipped 2026-05-30) · **3.2 plugin+MCP scoring [██████████] 100% (plan executed; branch-CI smoke pending)** · 3.3–3.9 [░░░░░░░░░░] 0%
 
 ## Phase 3.2 Quick-Start Guide (for fresh session)
 
 **Goal:** Add `entity_type: 'plugin'` and `entity_type: 'mcp_server'` to the catalog pipeline. Mixed-type feeds. Plugins + MCPs in `/api/v1/search?type=...`. Daily-scrape produces fresh plugin + MCP data.
 
 **Plan artifacts:**
+
 - `.planning/phases/3.2-plugin-and-mcp-scoring/3.2-CONTEXT.md` — 11 user-locked decisions
 - `.planning/phases/3.2-plugin-and-mcp-scoring/3.2-PLAN.md` Rev 2 — 14 tasks, executable
 - `.planning/phases/3.2-plugin-and-mcp-scoring/3.2-PLAN-CHECK.md` — Rev 1 (3 BLOCKERs/7 FLAGs) → Rev 2 PASS
 
 **Fresh data ready:**
+
 - `data/plugins-raw.ndjson` — 7,339 records, scraped 2026-05-30
 - `data/plugins-meta.json` — stats: 3,112 plugin.json + 4,687 marketplace + 38 MCPs + 4,191 with skills + 1,625 agents
 
@@ -58,14 +66,17 @@ Progress: Phase 1.5 [██████████] 100% · v2.0 [████�
 ## Open Items (carryover for fresh session)
 
 ### Phase 3.2 ready to execute
+
 - `/gsd:execute-phase 3.2` — spawns gsd-executor against 14-task plan; ~3-4h autonomous + branch CI validation
 
 ### Operational items
+
 - **2026-05-30 09:00 UTC scheduled cron CANCELLED at 5h timeout.** Task 13 in PLAN addresses. Today's 06:30 UTC cron (in progress shortly after this handoff) is the next observation.
 - **Phase 3.1.2 D+7 cleanup** (~2026-06-04, ~4 days away) — Delete legacy-skill-reader.js, flip lint-no-legacy-skill-shape.js to fail mode. Can ship as small standalone PR after Phase 3.2 OR be folded in.
 - **PAT scope:** User's fine-grained PAT lacks `mergePullRequest` permission. Uses GitHub UI for PR merges. Workflow_dispatch via `gh workflow run` also 403s; UI also works. Could be fixed permanently with `gh auth refresh -s repo,workflow`.
 
 ### Carried forward (still pending; not blocking)
+
 - Smoke seed annual review (`data/smoke-seed.json` — some entries deliberately don't exist, verify they still 404)
 - Cron-failure external webhook alert (deferred backlog)
 - HNSW migration for compute-similar (Phase 3.x; mitigation in 3.2 task 13 is interim)
@@ -186,8 +197,8 @@ These were INSERTED ahead of the Phase 3.0 spec's 3.1–3.9 lineup because the d
 
 ## Session Continuity
 
-Last session: 2026-05-30T22:27:40.224Z
-Stopped at: Phase 3.2 context captured (11 decisions)
+Last session: 2026-06-03T15:38:32.955Z
+Stopped at: Completed quick-260603-bug (agent-ping affordance); 3 tasks committed f02965e/1a3e0cf/098124f
 
 **Resume:** read `.planning/SESSION-MEMO-2026-04-to-05.md` for full context, then `/gsd:execute-phase 3.1`.
 

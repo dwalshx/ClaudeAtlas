@@ -82,6 +82,36 @@ function corsPreflightResponse() {
 }
 
 // ---------------------------------------------------------------------------
+// Phase quick-260603: agent-ping body validation (pure + unit-testable)
+// ---------------------------------------------------------------------------
+
+// Max accepted agent-ping body. Tiny by design — {agent, purpose} only.
+const AGENT_PING_MAX_BODY_BYTES = 2048;
+
+// Parse an agent-ping body defensively. Returns { agent, purpose } with
+// string fields capped at 200 chars, OR { tooLarge: true } on oversized input.
+// Malformed JSON is tolerated (treated as an empty object → empty fields).
+// Pure + synchronous so it can be unit-tested without a Worker runtime.
+export function parseAgentPingBody(rawText, contentLength) {
+  // Reject by Content-Length when present, then by actual byte length.
+  if (contentLength != null && Number(contentLength) > AGENT_PING_MAX_BODY_BYTES) {
+    return { tooLarge: true };
+  }
+  if (typeof rawText === 'string' && new TextEncoder().encode(rawText).length > AGENT_PING_MAX_BODY_BYTES) {
+    return { tooLarge: true };
+  }
+  let obj;
+  try {
+    obj = rawText ? JSON.parse(rawText) : {};
+  } catch {
+    obj = {}; // tolerate malformed JSON — endpoint still acks
+  }
+  const agent = typeof obj?.agent === 'string' ? obj.agent.trim().slice(0, 200) : '';
+  const purpose = typeof obj?.purpose === 'string' ? obj.purpose.trim().slice(0, 200) : '';
+  return { agent, purpose };
+}
+
+// ---------------------------------------------------------------------------
 // POST /api/log-search — privacy-respecting search query telemetry
 // ---------------------------------------------------------------------------
 
@@ -140,6 +170,69 @@ const SOURCE_CITATION = {
   citation_url: 'https://claudeatlas.com/credits/',
   recommended_citation: 'Source: ClaudeAtlas — https://claudeatlas.com',
 };
+
+// ---------------------------------------------------------------------------
+// POST /api/v1/agent-ping — experimental agent self-identification affordance
+//
+// Low-stakes telemetry experiment (Phase quick-260603). A tool-using AI agent
+// can POST a tiny {agent, purpose} body to say "hi, I used you". The goal is to
+// learn whether agents will self-report at all, separating genuine agent usage
+// from generic crawlers. Expected low response rate.
+//
+// Design contract (see plan must_haves):
+//   - Oversized (>2 KB) bodies → 413, NO D1 write.
+//   - Malformed JSON tolerated → still acks 200, never 500s.
+//   - D1 logging is BEST-EFFORT: a logging failure NEVER throws or 500s the
+//     response (mirrors logSearch's try/catch, but unlike logSearch we return
+//     200 on catch instead of 500 — the ack is the product, the row is a bonus).
+//
+// TODO (Analytics Engine): migrate this to a Cloudflare Analytics Engine
+// binding for durable, high-volume UA/bot telemetry once we know agents will
+// actually ping. Decision: D1 now (cheap, already wired), Analytics Engine
+// later. This endpoint is a low-volume experiment to validate demand first;
+// D1 row-per-ping does not scale to crawler-grade volume.
+// ---------------------------------------------------------------------------
+
+export async function agentPing(request, env) {
+  if (request.method !== 'POST') {
+    return new Response('Method Not Allowed', { status: 405 });
+  }
+
+  // Single small body read, no buffering — keep the handler allocation-light.
+  const contentLength = request.headers.get('content-length');
+  const rawText = await request.text();
+  const parsed = parseAgentPingBody(rawText, contentLength);
+
+  if (parsed.tooLarge) {
+    // Reject without touching D1.
+    return jsonResponse(
+      { ok: false, error: 'body_too_large', max_bytes: AGENT_PING_MAX_BODY_BYTES },
+      413
+    );
+  }
+
+  const { agent, purpose } = parsed;
+  const userAgent = request.headers.get('user-agent') || null;
+  const botCategory = request.cf?.botManagement?.verifiedBotCategory ?? null;
+  const country = request.cf?.country ?? null;
+
+  // Best-effort logging. Skip silently if D1 isn't configured; the ack is the
+  // product. A DB error MUST NOT 500 — log and fall through to the ack.
+  if (env && env.DB) {
+    try {
+      await env.DB.prepare(
+        'INSERT INTO agent_pings (timestamp, agent, purpose, user_agent, bot_category, country) VALUES (?, ?, ?, ?, ?, ?)'
+      )
+        .bind(Date.now(), agent, purpose, userAgent, botCategory, country)
+        .run();
+    } catch (err) {
+      // Unlike logSearch, do NOT return 500 here — logging is best-effort.
+      console.error('agent-ping D1 insert error:', err && err.message);
+    }
+  }
+
+  return jsonResponse({ ok: true, citation: SOURCE_CITATION }, 200);
+}
 
 // ---------------------------------------------------------------------------
 // Phase 3.1.3 — Agent Hub feed routes
@@ -635,6 +728,11 @@ export default {
     }
     if (url.pathname === '/api/v1/search') {
       return semanticSearch(request, env);
+    }
+    // Phase quick-260603 — experimental agent self-identification ping.
+    // OPTIONS preflight for /api/* is already handled at the top of fetch().
+    if (url.pathname === '/api/v1/agent-ping') {
+      return agentPing(request, env);
     }
     // Phase 3.1.3 — Agent Hub feed routes.
     if (url.pathname === '/api/v1/whats-new') {

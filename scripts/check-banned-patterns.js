@@ -88,8 +88,18 @@ const LINT_ALLOWLIST = [
   },
   {
     file: 'scripts/filter.js',
-    line: 538,
-    reason: 'pipeline-stats.json write — bounded (~5 KB; tier counts + categories summary). Line shifted by F2 T6 + 3.1.2 drift hotfix + 3.1.4 v2-writer imports.',
+    line: 521,
+    reason: 'pipeline-stats.json write — bounded (~5 KB; tier counts + categories summary). Line shifted by F2 T6 + 3.1.2 drift hotfix + 3.1.4 v2-writer imports + 3.2 T7 tier-assignment extraction.',
+  },
+  {
+    file: 'scripts/filter-plugins.js',
+    line: 273,
+    reason: 'pipeline-stats.json plugin-section merge write — bounded (~5 KB; tier counts). Phase 3.2 T7.',
+  },
+  {
+    file: 'scripts/filter-mcps.js',
+    line: 246,
+    reason: 'pipeline-stats.json mcp-section merge write — bounded (~5 KB; tier counts). Phase 3.2 T7.',
   },
   {
     file: 'scripts/filter.js',

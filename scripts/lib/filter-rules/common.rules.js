@@ -65,6 +65,17 @@ export function hasBizSlopName(record) {
 }
 
 /**
+ * Return true if the record's description is shorter than `minLen` chars
+ * (after trim). Shared by the plugin + MCP slop gates (Phase 3.2 D-05).
+ *
+ * @param {{ description?: string }} record
+ * @param {number} minLen
+ */
+export function hasShortDescription(record, minLen) {
+  return (record?.description || '').trim().length < minLen;
+}
+
+/**
  * Dedup by base name (strip language suffix). Preserves the highest-quality
  * variant within each (repo, base_name) bucket.
  *

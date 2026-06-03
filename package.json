@@ -17,6 +17,7 @@
     "upload-vectors": "node scripts/upload-vectors.js",
     "compute-similar": "node scripts/compute-similar.js",
     "enrich": "node scripts/enrich.js",
+    "link-bundles": "node scripts/link-bundles.js",
     "marketplace": "node scripts/generate-marketplace.js",
     "mine-apis": "node scripts/mine-apis.js",
     "prebuild": "node scripts/generate-llms-txt.js && node scripts/generate-feeds.js && node scripts/generate-badges.js && node scripts/generate-registry.js && node scripts/compute-similar.js && node scripts/generate-marketplace.js && node scripts/mine-apis.js && node scripts/check-tier-budget.js",

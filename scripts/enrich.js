@@ -34,6 +34,7 @@ import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { readNdjsonRecords, writeNdjsonStreaming } from './lib/ndjson.js';
+import { buildHeader } from './lib/entity-version.js';
 // Phase 3.1 Rev 2 BLOCKER 1: import the REAL vectorizeId from embed-skills.js.
 // A local re-implementation was wrong — it didn't handle the >64-char SHA
 // branch, so most production IDs (`owner/repo/path/to/SKILL.md`) trivially
@@ -47,6 +48,32 @@ const SKILLS_PATH = join(ROOT, 'data', 'skills.ndjson');
 const VECTORS_PATH = join(ROOT, 'data', 'skill-vectors.ndjson');
 
 const DUP_THRESHOLD = 0.92;
+
+// Phase 3.2 (Task 10, D-10): enrich.js gains entity-type dispatch.
+//   --input <vectors.ndjson> --records <records.ndjson> [--entity-type <t>] [--dry-run]
+// Defaults preserve the legacy skills-only invocation. MCP enrich is SKIPPED
+// (planner-discretion per D-10): at N=38 the O(n²) dedup overhead exceeds any
+// benefit. Plugin enrich runs the SAME cosine logic (N≈4,500, well within the
+// O(n²) practicality window — skills already run at N≈35k).
+function parseArgs(argv) {
+  const out = { input: null, records: null, entityType: null, dryRun: false };
+  for (let i = 2; i < argv.length; i++) {
+    const a = argv[i];
+    if (a === '--input') out.input = argv[++i];
+    else if (a.startsWith('--input=')) out.input = a.slice('--input='.length);
+    else if (a === '--records') out.records = argv[++i];
+    else if (a.startsWith('--records=')) out.records = a.slice('--records='.length);
+    else if (a === '--entity-type') out.entityType = argv[++i];
+    else if (a.startsWith('--entity-type=')) out.entityType = a.slice('--entity-type='.length);
+    else if (a === '--dry-run') out.dryRun = true;
+  }
+  return out;
+}
+
+function resolvePath(p) {
+  if (!p) return null;
+  return (p.startsWith('/') || /^[A-Za-z]:/.test(p)) ? p : join(ROOT, p);
+}
 
 function log(msg) { console.log(`[enrich] ${msg}`); }
 function warn(msg) { console.warn(`[enrich] WARN: ${msg}`); }
@@ -237,18 +264,34 @@ function loadVectors(path) {
 }
 
 function main() {
+  const args = parseArgs(process.argv);
+  const recordsPath = resolvePath(args.records) || SKILLS_PATH;
+  const vectorsPath = resolvePath(args.input) || VECTORS_PATH;
+
   log('=== enrichment start ===');
 
-  if (!existsSync(SKILLS_PATH)) {
-    warn(`${SKILLS_PATH} missing — nothing to enrich. Exiting 0.`);
+  if (!existsSync(recordsPath)) {
+    warn(`${recordsPath} missing — nothing to enrich. Exiting 0.`);
     process.exit(0);
   }
 
-  const skillsMap = readNdjsonRecords(SKILLS_PATH, { keyFn: r => r.id });
-  const skills = [...skillsMap.values()];
-  log(`loaded ${skills.length} skills`);
+  const recordsMap = readNdjsonRecords(recordsPath, { keyFn: r => r.id });
+  const records = [...recordsMap.values()];
+  log(`loaded ${records.length} records`);
 
-  const vectorRecords = loadVectors(VECTORS_PATH);
+  // Determine entity_type: explicit flag wins; else infer from records.
+  const entityType = args.entityType
+    || (records[0] && records[0].entity_type)
+    || 'skill';
+  log(`entity_type: ${entityType}`);
+
+  // D-10: MCP enrich is intentionally skipped (N=38 below dedup threshold).
+  if (entityType === 'mcp_server') {
+    log(`skipping mcp_server (N=${records.length} below dedup threshold; dedup overhead exceeds benefit per D-10). Exiting 0.`);
+    process.exit(0);
+  }
+
+  const vectorRecords = loadVectors(vectorsPath);
   if (!vectorRecords) {
     log('no vectors available; leaving placeholders as-is. Exiting 0.');
     process.exit(0);
@@ -256,22 +299,32 @@ function main() {
   log(`loaded ${vectorRecords.length} vectors`);
 
   const startTime = Date.now();
-  const { stats } = enrichSkills(skills, vectorRecords);
+  // enrichSkills is entity-type-agnostic: it keys on .id/.slug/.repo_* fields
+  // that every EntityRecord carries. canonical ordering falls through
+  // skill_first_commit_at → repo_created_at → repo_pushed_at → slug.
+  const { stats } = enrichSkills(records, vectorRecords);
   const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
 
   log(`enrichment complete in ${elapsed}s`);
   log(`stats: ${JSON.stringify(stats)}`);
 
   // Phase 3.1 Rev 2 FLAG 2: timing hard-warn.
-  // Daily budget is 25 min for the WHOLE pipeline. enrich.js at 600s eats
-  // 40% of that — start HNSW migration before the cliff hits.
   if (Number(elapsed) > 600) {
     warn(`ran ${elapsed}s — approaching 25-min daily budget; consider HNSW migration per RESEARCH.md §R2/§Q7`);
   }
 
-  // Atomic NDJSON write via tmp+rename (writeNdjsonStreaming handles both).
-  writeNdjsonStreaming(SKILLS_PATH, skills);
-  log(`wrote ${SKILLS_PATH}`);
+  if (args.dryRun) {
+    log('--dry-run: computed enrichment in memory, NOT writing records file.');
+    log('=== enrichment done (dry-run) ===');
+    return;
+  }
+
+  // Atomic NDJSON write via tmp+rename. Preserve the entity_type header so the
+  // v2 sentinel is not lost on rewrite (skills.ndjson historically had no
+  // header; for non-skill types we MUST write one).
+  const header = entityType === 'skill' ? undefined : buildHeader(entityType);
+  writeNdjsonStreaming(recordsPath, records, header ? { header } : {});
+  log(`wrote ${recordsPath}`);
   log('=== enrichment done ===');
 }
 

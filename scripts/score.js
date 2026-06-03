@@ -46,14 +46,19 @@ export function scoreSkill(skill) {
 }
 
 // --- Individual signal scorers (each returns 0-100) ---
+//
+// Phase 3.2 Task 3: these are now `export`ed (behaviour unchanged) so the
+// plugin + mcp_server scorers can reuse the Stars/Recency/Issues/License/
+// Description/Docs sub-signals and swap ONLY the Frontmatter signal for a
+// Manifest-Completeness signal (D-03's "1-signal swap" promise).
 
-function scoreStars(stars) {
+export function scoreStars(stars) {
   if (!stars || stars <= 0) return 0;
   // Log scale: 1 star = ~0, 10 = ~33, 100 = ~66, 1000 = ~100
   return Math.min(100, Math.round(Math.log10(stars + 1) * 33.3));
 }
 
-function scoreRecency(pushedAt) {
+export function scoreRecency(pushedAt) {
   if (!pushedAt) return 0;
   const daysSincePush = (Date.now() - new Date(pushedAt).getTime()) / (1000 * 60 * 60 * 24);
 
@@ -65,7 +70,7 @@ function scoreRecency(pushedAt) {
   return 5;
 }
 
-function scoreFrontmatter(skill) {
+export function scoreFrontmatter(skill) {
   let score = 0;
   const fm = skill.frontmatter || {};
 
@@ -84,7 +89,7 @@ function scoreFrontmatter(skill) {
   return Math.min(100, score);
 }
 
-function scoreDocs(skill) {
+export function scoreDocs(skill) {
   let score = 0;
 
   // Body length (longer = more documentation)
@@ -104,7 +109,7 @@ function scoreDocs(skill) {
   return Math.min(100, score);
 }
 
-function scoreIssues(skill) {
+export function scoreIssues(skill) {
   // No open issues is fine
   if (!skill.repo_open_issues || skill.repo_open_issues === 0) return 80;
 
@@ -124,7 +129,7 @@ function scoreIssues(skill) {
   return 60;
 }
 
-function scoreLicense(license) {
+export function scoreLicense(license) {
   if (!license || license === 'NOASSERTION') return 0;
   // Common permissive licenses get full marks
   const permissive = ['MIT', 'Apache-2.0', 'BSD-2-Clause', 'BSD-3-Clause', 'ISC', 'Unlicense', '0BSD'];
@@ -133,7 +138,7 @@ function scoreLicense(license) {
   return 70;
 }
 
-function scoreDescription(desc) {
+export function scoreDescription(desc) {
   if (!desc) return 0;
   if (desc.length > 50) return 100;
   if (desc.length > 20) return 60;
