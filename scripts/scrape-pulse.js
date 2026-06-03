@@ -35,9 +35,18 @@ const HISTORY_DIR = join(DATA_DIR, 'history');
 const SKILLS_PATH = join(DATA_DIR, 'skills.ndjson');
 
 const CONFIG = {
-  MAX_FAIL_RATIO: 0.10,   // workflow-fatal threshold
+  // RESEARCH §5: bumped 0.10 → 0.15 so a partial secondary-limit blip does not
+  // drop the unreplayable daily-history snapshot. A 15% casualty rate is still
+  // well inside the deleted/private/DMCA noise band for ~4,351 repos.
+  MAX_FAIL_RATIO: 0.15,   // workflow-fatal threshold
   LOG_EVERY: 50,          // progress cadence
 };
+
+// Stopgap inter-request delay (RESEARCH §5). Stays well under the secondary
+// 900-pts/min limit; ~7-8 min added at 4,351 repos — fine under the 330-min
+// ceiling. NOTE: Task 2 replaces the REST loop with the GraphQL batch loop,
+// which re-applies a smaller inter-BATCH delay instead.
+const PULSE_DELAY_MS = 100;
 
 function log(msg) { console.log(`[pulse] ${msg}`); }
 
@@ -150,6 +159,7 @@ async function main() {
     if (processed % CONFIG.LOG_EVERY === 0) {
       log(`progress: ${processed}/${uniqueRepos.size} (${cachedCount} cached, ${failures.length} failed)`);
     }
+    await sleep(PULSE_DELAY_MS);
   }
 
   // Persist ETag cache mid-run safety

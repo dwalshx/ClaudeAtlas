@@ -91,8 +91,21 @@ export async function rateLimitedFetch(url, isSearch = false, retries = 3) {
     throw err;
   }
 
-  // Handle rate limit errors
+  // Handle rate limit errors.
+  // retry-after = SECONDARY (abuse) limit; x-ratelimit-reset = PRIMARY.
+  // Check retry-after first per RESEARCH §6 — the prior code over-waited up to
+  // ~1hr on a secondary 403 (it read x-ratelimit-reset, which is the primary
+  // hourly reset, not the short secondary backoff GitHub actually asks for).
   if (res.status === 403 || res.status === 429) {
+    const retryAfter = res.headers.get('retry-after');
+    const retryAfterSecs = retryAfter ? parseInt(retryAfter, 10) : NaN;
+    if (Number.isInteger(retryAfterSecs) && retryAfterSecs > 0) {
+      // Cap at 120s to avoid a pathological multi-minute over-wait.
+      const waitMs = Math.min(retryAfterSecs * 1000 + 1000, 120000);
+      console.log(`  [rate-limit] secondary limit, retry-after ${retryAfterSecs}s...`);
+      await sleep(waitMs);
+      return rateLimitedFetch(url, isSearch, retries); // retry
+    }
     const resetHeader = res.headers.get('x-ratelimit-reset');
     if (resetHeader) {
       const resetTime = parseInt(resetHeader) * 1000;
@@ -189,7 +202,21 @@ export async function fetchWithETag(url, retries = 3) {
     return { data: cached.data, cached: true };
   }
 
+  // retry-after = SECONDARY (abuse) limit; x-ratelimit-reset = PRIMARY.
+  // Check retry-after first per RESEARCH §6 — the prior code over-waited up to
+  // ~1hr on a secondary 403 (Track 1's proximate failure: ~4,351 back-to-back
+  // GETs trip the secondary 900-pts/min abuse heuristic, which signals via
+  // retry-after, not x-ratelimit-reset).
   if (res.status === 403 || res.status === 429) {
+    const retryAfter = res.headers.get('retry-after');
+    const retryAfterSecs = retryAfter ? parseInt(retryAfter, 10) : NaN;
+    if (Number.isInteger(retryAfterSecs) && retryAfterSecs > 0) {
+      // Cap at 120s to avoid a pathological multi-minute over-wait.
+      const waitMs = Math.min(retryAfterSecs * 1000 + 1000, 120000);
+      console.log(`  [rate-limit] secondary limit, retry-after ${retryAfterSecs}s...`);
+      await sleep(waitMs);
+      return fetchWithETag(url, retries);
+    }
     const resetHeader = res.headers.get('x-ratelimit-reset');
     if (resetHeader) {
       const resetTime = parseInt(resetHeader) * 1000;
