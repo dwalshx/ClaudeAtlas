@@ -1,11 +1,12 @@
 /**
- * PARKED — Not currently wired into Track 1. GraphQL 403'd at production scale
- * (SCRAPE_PAT, a fine-grained PAT, is rejected by GitHub's GraphQL API). Track 1
- * fell back to the REST per-repo path in scrape-pulse.js. Revisit this as an
- * optimization once a classic PAT is provisioned. See
- * .planning/quick/260603-e96-.../260603-e96-SUMMARY.md "Deviation: GraphQL→REST".
- * The pure exports (buildPulseQuery, mapGraphqlRepoToFields) and their unit
- * tests remain valid and import-safe; only fetchRepoBatchGraphql is unused.
+ * ACTIVE (2026-06-03) — wired into Track 1 (scrape-pulse.js) and authenticated
+ * via SCRAPE_PAT_CLASSIC (a CLASSIC PAT, verified against GitHub's GraphQL API).
+ * The fine-grained SCRAPE_PAT is REJECTED by the GraphQL endpoint (403), which
+ * caused the temporary REST fallback (commit 1e5d1a5) — now retired. Track 1 on
+ * GraphQL uses GraphQL's SEPARATE 5,000-points/hr budget, freeing the shared
+ * REST budget for Track 2 + plugin discovery (budget starvation on REST was
+ * crawling/timing out plugin discovery). The workflow's Track 1 step sets
+ * process.env.GITHUB_TOKEN = SCRAPE_PAT_CLASSIC; Track 2 stays on SCRAPE_PAT.
  *
  * ClaudeAtlas — GitHub GraphQL batch client for Track 1 (Star Pulse).
  *
@@ -122,9 +123,10 @@ export function buildPulseQuery(repoFullNames) {
  * Fetch a batch of repos via GraphQL. Serial-friendly (caller loops batches
  * with a small inter-batch delay).
  *
- * Auth: MUST stay SCRAPE_PAT (5,000 GraphQL pts/hr); the Actions GITHUB_TOKEN
- * is only 1,000 pts/hr — RESEARCH §6. The workflow sets process.env.GITHUB_TOKEN
- * to SCRAPE_PAT, so we read that.
+ * Auth: MUST be SCRAPE_PAT_CLASSIC (a CLASSIC PAT — fine-grained PATs are 403'd
+ * by the GraphQL API; the Actions GITHUB_TOKEN is only 1,000 pts/hr). Classic
+ * PATs get the full 5,000 GraphQL pts/hr — RESEARCH §6. The workflow's Track 1
+ * step sets process.env.GITHUB_TOKEN to SCRAPE_PAT_CLASSIC, so we read that.
  *
  * Partial-data semantics (RESEARCH §3): HTTP 200 with both `data` and a
  * non-empty `errors[]` is NORMAL when some aliases resolve and others fail
@@ -144,7 +146,7 @@ export async function fetchRepoBatchGraphql(repoFullNames, retries = 3) {
   }
 
   const { query, aliasMap } = buildPulseQuery(repoFullNames);
-  const token = process.env.GITHUB_TOKEN; // SCRAPE_PAT in CI — see header (RESEARCH §6).
+  const token = process.env.GITHUB_TOKEN; // SCRAPE_PAT_CLASSIC in CI — see header (RESEARCH §6).
 
   let res;
   try {
@@ -168,6 +170,20 @@ export async function fetchRepoBatchGraphql(repoFullNames, retries = 3) {
       failures.push({ repoFullName, status: 'graphql-network' });
     }
     return { freshByRepo, failures };
+  }
+
+  // CRITICAL DIAGNOSTIC FIX (2026-06-03): on any non-OK GraphQL response,
+  // capture and log the response BODY + status text BEFORE the retry/backoff.
+  // The prior REST-fallback episode (commit 1e5d1a5) was blind: a fine-grained
+  // SCRAPE_PAT 403'd every batch but we logged only the bare status, so the
+  // auth root-cause was invisible in CI. A future auth/limit failure (e.g. the
+  // classic PAT being revoked or hitting the GraphQL points budget) must now be
+  // diagnosable from the CI log. res.text() consumes the body once, so we read
+  // it here and reuse the captured string in both non-OK branches below.
+  if (!res.ok) {
+    let body = '';
+    try { body = await res.text(); } catch { body = '<unreadable body>'; }
+    console.error(`[pulse] GraphQL ${res.status}: ${body.slice(0, 300)}`);
   }
 
   // 403/429 → secondary abuse limit. Honor retry-after first (RESEARCH §6),

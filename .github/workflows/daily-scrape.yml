@@ -126,7 +126,10 @@ jobs:
         if: github.event_name != 'push' && hashFiles('data/skills.ndjson') != ''
         run: npm run scrape:pulse
         env:
-          GITHUB_TOKEN: ${{ secrets.SCRAPE_PAT }}
+          # Track 1 uses GraphQL → needs a CLASSIC PAT (fine-grained SCRAPE_PAT
+          # is 403'd by the GraphQL API). GraphQL's separate 5,000-pts/hr budget
+          # also frees the REST budget for Track 2 + plugin discovery.
+          GITHUB_TOKEN: ${{ secrets.SCRAPE_PAT_CLASSIC }}
 
       # Track 2: Discovery via repo search — incremental SKILL.md discovery.
       # Reads cached data/skills-raw.ndjson (restored above), skips known IDs,

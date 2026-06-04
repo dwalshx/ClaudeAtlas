@@ -3,21 +3,24 @@
  * ClaudeAtlas Track 1 — Star Pulse
  *
  * Daily refresh of engagement signals on every repo in data/skills.ndjson.
- * Hits GET /repos/{owner}/{name} per unique repo via fetchWithETag (ETag-
- * supported, 304s are free against the primary rate limit).
+ * Refreshes via batched GraphQL repository(...) queries (50 repos/query via
+ * aliases, ~88 serial queries for ~4,351 repos). This replaces the prior
+ * per-repo REST GET loop, which fired ~4,351 back-to-back requests and tripped
+ * GitHub's secondary (abuse) rate limit — RESEARCH §2.
  *
- * RATE-LIMIT STOPGAP (commit c0902b7): the serial loop spaces requests by
- * ~100ms (PULSE_DELAY_MS) to stay under GitHub's secondary (abuse) 900-pts/min
- * heuristic, and github-fetch.js honors the `retry-after` header (the SECONDARY
- * signal) before falling back to x-ratelimit-reset on a 403/429. MAX_FAIL_RATIO
- * is 0.15 so a partial secondary-limit blip does not drop the unreplayable
- * daily-history snapshot.
+ * AUTH (2026-06-03): the GraphQL pulse path authenticates with SCRAPE_PAT_CLASSIC
+ * (a CLASSIC PAT, verified to work against GitHub's GraphQL API). The fine-grained
+ * SCRAPE_PAT is REJECTED by the GraphQL endpoint (403) — that rejection caused the
+ * temporary REST fallback (commit 1e5d1a5), now retired. The workflow sets
+ * process.env.GITHUB_TOKEN = SCRAPE_PAT_CLASSIC for the Track 1 step ONLY; Track 2
+ * (REST content discovery + plugin discovery) stays on SCRAPE_PAT.
  *
- * NOTE: a batched-GraphQL pulse path was prototyped (scripts/lib/github-graphql.js)
- * but is currently PARKED — GitHub's GraphQL API 403'd at production scale
- * (SCRAPE_PAT, a fine-grained PAT, is rejected by the GraphQL endpoint). Track 1
- * runs on this REST per-repo path until a classic PAT is provisioned. See
- * .planning/quick/260603-e96-.../260603-e96-SUMMARY.md "Deviation: GraphQL→REST".
+ * WHY GRAPHQL (budget rationale): GraphQL has a SEPARATE 5,000-points/hr budget,
+ * distinct from REST's 5,000-requests/hr. Moving Track 1 to GraphQL frees the
+ * entire REST budget for Track 2 + plugin discovery. The REST fallback proved
+ * Track 1 itself *passes*, but the full run drained the shared REST budget
+ * across Track 1 + Track 2, starving plugin discovery → timeout. Off-loading
+ * Track 1 to the GraphQL budget removes that contention.
  *
  * Updates in-place: all 11 TRACK1_FRESHNESS_FIELDS (stars, forks, open_issues,
  * pushed_at, updated_at, archived, topics, license, language, description,
@@ -26,10 +29,11 @@
  * Side effect: writes today's data/history/YYYY-MM-DD.json snapshot from the
  * fresh metadata (the moat-feeder).
  *
- * Inputs:  data/skills.ndjson (current corpus), data/etag-cache.json.
- * Outputs: data/skills.ndjson (mutated in-place), data/history/YYYY-MM-DD.json.
- * Cost:    one conditional GET per unique repo (~4,351); 304s are free, so warm
- *          runs cost far fewer than 4,351 against the 5000/hr general budget.
+ * Inputs:  data/skills.ndjson (current corpus). The GraphQL pulse path does
+ *          NOT use data/etag-cache.json (that's Track 2's REST content fetch).
+ * Outputs: data/skills.ndjson (mutated in-place), data/history/YYYY-MM-DD.json
+ * Cost:    ~88 GraphQL queries (50 repos/query) at ~1 point each for ~4,351
+ *          repos, well within the 5000 GraphQL-points/hr SCRAPE_PAT_CLASSIC budget.
  * Resumable: No checkpoint — script is fast enough that failure = re-run from start.
  *            Tolerates partial failures (404/451) up to MAX_FAIL_RATIO of repos.
  */
@@ -37,7 +41,8 @@
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
-import { fetchWithETag, getETagCache, saveETagCache, sleep } from './lib/github-fetch.js';
+import { sleep } from './lib/github-fetch.js';
+import { fetchRepoBatchGraphql } from './lib/github-graphql.js';
 import { TRACK1_FRESHNESS_FIELDS } from './lib/skill-fields.js';
 import { writeNdjsonStreaming } from './lib/ndjson.js';
 import { loadSkillsArray } from './lib/skills-stream.js';
@@ -55,45 +60,17 @@ const CONFIG = {
   // drop the unreplayable daily-history snapshot. A 15% casualty rate is still
   // well inside the deleted/private/DMCA noise band for ~4,351 repos.
   MAX_FAIL_RATIO: 0.15,   // workflow-fatal threshold
-  LOG_EVERY: 50,          // progress cadence
+  LOG_EVERY: 5,           // progress cadence (now in BATCHES, not repos)
 };
 
-// Stopgap inter-request delay (RESEARCH §5, commit c0902b7). Stays well under
-// the secondary 900-pts/min limit; ~7-8 min added at 4,351 repos — fine under
-// the 330-min ceiling.
-const PULSE_DELAY_MS = 100;
+// GraphQL batch sizing (RESEARCH §2). 50 repos/query × ~88 serial batches for
+// ~4,351 repos; a small inter-batch delay keeps the sweep far under the
+// 2,000-pts/min secondary GraphQL limit. ~88 batches cannot trip the abuse
+// heuristic the way ~4,351 back-to-back REST GETs did.
+const BATCH_SIZE = 50;
+const BATCH_DELAY_MS = 100;
 
 function log(msg) { console.log(`[pulse] ${msg}`); }
-
-// --- Refresh one repo ---
-
-async function refreshRepo(repoFullName) {
-  const url = `https://api.github.com/repos/${repoFullName}`;
-  const { data, status, cached } = await fetchWithETag(url);
-  if (!data) {
-    // 404 (repo deleted), 451 (DMCA), 0 (network), or non-200
-    return { ok: false, status: status ?? 0, repoFullName };
-  }
-  return {
-    ok: true,
-    cached: !!cached,
-    repoFullName,
-    fields: {
-      repo_stars: data.stargazers_count || 0,
-      repo_forks: data.forks_count || 0,
-      repo_open_issues: data.open_issues_count || 0,
-      repo_pushed_at: data.pushed_at,
-      repo_updated_at: data.updated_at,
-      repo_archived: data.archived || false,
-      // C11: expanded fields — same response, zero extra cost
-      repo_topics: data.topics || [],
-      repo_license: data.license?.spdx_id || data.license?.key || null,
-      repo_language: data.language || null,
-      repo_description: data.description || null,
-      repo_default_branch: data.default_branch || null,
-    },
-  };
-}
 
 // --- History snapshot (copied from scripts/scrape.js writeHistorySnapshot) ---
 // Reads repo_archived (refreshed by pulse) and repo_is_fork (sourced from the
@@ -156,30 +133,30 @@ async function main() {
   const uniqueRepos = new Set(skills.map(s => s.repo_full_name).filter(Boolean));
   log(`Unique repos to refresh: ${uniqueRepos.size}`);
 
-  // Refresh each repo
+  // Refresh in batched GraphQL queries (RESEARCH §2). GraphQL has no 304/ETag
+  // path — every batch is a fresh fetch (no cached-count tracking).
   const freshByRepo = new Map();    // repoFullName -> { fields }
   const failures = [];              // { repoFullName, status }
-  let cachedCount = 0;
-  let processed = 0;
+  const repoList = [...uniqueRepos];
+  const totalBatches = Math.ceil(repoList.length / BATCH_SIZE);
+  let batchIdx = 0;
 
-  for (const repoFullName of uniqueRepos) {
-    processed++;
-    const result = await refreshRepo(repoFullName);
-    if (!result.ok) {
-      failures.push({ repoFullName, status: result.status });
-    } else {
-      freshByRepo.set(repoFullName, result.fields);
-      if (result.cached) cachedCount++;
+  for (let i = 0; i < repoList.length; i += BATCH_SIZE) {
+    batchIdx++;
+    const slice = repoList.slice(i, i + BATCH_SIZE);
+    const { freshByRepo: batchFresh, failures: batchFailures } =
+      await fetchRepoBatchGraphql(slice);
+    for (const [repoFullName, fields] of batchFresh) {
+      freshByRepo.set(repoFullName, fields);
     }
-    if (processed % CONFIG.LOG_EVERY === 0) {
-      log(`progress: ${processed}/${uniqueRepos.size} (${cachedCount} cached, ${failures.length} failed)`);
+    for (const f of batchFailures) failures.push(f);
+    if (batchIdx % CONFIG.LOG_EVERY === 0 || batchIdx === totalBatches) {
+      log(`progress: batch ${batchIdx}/${totalBatches} (${freshByRepo.size} ok, ${failures.length} failed)`);
     }
-    await sleep(PULSE_DELAY_MS);
+    await sleep(BATCH_DELAY_MS);
   }
 
-  // Persist ETag cache mid-run safety
-  saveETagCache(getETagCache());
-  log(`refresh done: ${freshByRepo.size}/${uniqueRepos.size} ok, ${failures.length} failed, ${cachedCount} from cache`);
+  log(`refresh done: ${freshByRepo.size}/${uniqueRepos.size} ok, ${failures.length} failed`);
 
   // Fail-loud only if too many failures
   const failRatio = failures.length / Math.max(uniqueRepos.size, 1);
@@ -214,9 +191,6 @@ async function main() {
 
   // Build snapshot map (use fresh fields where available, fall back to existing for is_fork)
   writeHistorySnapshot(skills);
-
-  // Final ETag persist
-  saveETagCache(getETagCache());
 
   const elapsed = ((Date.now() - startTime) / 1000).toFixed(0);
   log(`=== Track 1 complete in ${elapsed}s ===`);
