@@ -44,6 +44,23 @@ jobs:
     # saves ~0 compute (so Option D / this bump is the operative
     # mitigation). GHA platform cap is 6h/360 min.
     timeout-minutes: 330
+    # quick-260603-e96 (2026-06-04): TEMPORARY plugin/MCP gate. The full
+    # plugin-discovery sweep (scrape-plugins.js) is a whole-ecosystem search
+    # throttled to GitHub's 5,000 REST/hr; it never finishes inside the
+    # 330-min timeout, so the run dies at "Run plugin discovery" BEFORE the
+    # commit/deploy/history-snapshot steps — losing the daily history snapshot
+    # and skipping the deploy. Plugin/MCP data also isn't rendered anywhere
+    # yet (plugin pages = Phase 3.3, unbuilt), so processing it buys nothing
+    # today. Setting PLUGINS_ENABLED='false' gates the entire plugin/MCP
+    # pipeline OFF (discovery → filter → link-bundles → embed → enrich) and
+    # restores a healthy skills-only daily cron (Track 1 history + skills +
+    # build + deploy + commit, ~244 min, under the 330 cap).
+    # REVERSIBLE: set PLUGINS_ENABLED='true' to re-enable once plugin
+    # discovery is made incremental + bootstrapped (mirrors the skills-raw
+    # GHA-cache + bootstrap-release pattern). The gated steps AND-combine this
+    # flag with their existing conditions, so the skill side is untouched.
+    env:
+      PLUGINS_ENABLED: 'false'
     steps:
       - uses: actions/checkout@v4
 
@@ -169,7 +186,8 @@ jobs:
       # scrape-plugins.js checkpoints incrementally to data/plugins-raw.ndjson
       # (+ .partial), so a warm cache makes the daily plugin pass cheap.
       - name: Restore plugins-raw cache
-        if: github.event_name != 'push'
+        # quick-260603-e96: plugin/MCP pipeline gated OFF (see job env above).
+        if: ${{ env.PLUGINS_ENABLED == 'true' && github.event_name != 'push' }}
         uses: actions/cache/restore@v4
         with:
           path: data/plugins-raw.ndjson
@@ -181,7 +199,9 @@ jobs:
       # .claude-plugin/marketplace.json + plugin.json across GitHub, writes
       # data/plugins-raw.ndjson. Cron/manual only (push events skip scrape).
       - name: Run plugin discovery (scrape-plugins)
-        if: github.event_name != 'push'
+        # quick-260603-e96: plugin/MCP pipeline gated OFF (see job env above).
+        # This step is the timeout culprit — full-ecosystem sweep at 5k REST/hr.
+        if: ${{ env.PLUGINS_ENABLED == 'true' && github.event_name != 'push' }}
         run: node scripts/scrape-plugins.js
         env:
           GITHUB_TOKEN: ${{ secrets.SCRAPE_PAT }}
@@ -189,7 +209,8 @@ jobs:
       # Save plugins-raw cache even on timeout/failure/cancel (mirrors the
       # skills-raw `if: always()` pattern). Partial corpus stays useful.
       - name: Save plugins-raw cache
-        if: always() && github.event_name != 'push' && hashFiles('data/plugins-raw.ndjson') != ''
+        # quick-260603-e96: plugin/MCP pipeline gated OFF (see job env above).
+        if: ${{ always() && env.PLUGINS_ENABLED == 'true' && github.event_name != 'push' && hashFiles('data/plugins-raw.ndjson') != '' }}
         uses: actions/cache/save@v4
         with:
           path: data/plugins-raw.ndjson
@@ -207,14 +228,16 @@ jobs:
       # appends a plugin section to data/pipeline-stats.json (allowlisted sidecar
       # — no F1 banned-pattern delta).
       - name: Filter plugins
-        if: github.event_name != 'push'
+        # quick-260603-e96: plugin/MCP pipeline gated OFF (see job env above).
+        if: ${{ env.PLUGINS_ENABLED == 'true' && github.event_name != 'push' }}
         run: node scripts/filter-plugins.js
 
       # Phase 3.2 (Task 12): NEW — Filter MCP servers. Reads MCP discovery
       # (mcp-servers-raw / registry), writes data/mcp-servers.ndjson + appends an
       # mcp_server section to data/pipeline-stats.json (allowlisted sidecar).
       - name: Filter MCP servers
-        if: github.event_name != 'push'
+        # quick-260603-e96: plugin/MCP pipeline gated OFF (see job env above).
+        if: ${{ env.PLUGINS_ENABLED == 'true' && github.event_name != 'push' }}
         run: node scripts/filter-mcps.js
 
       # Phase 3.2 (Task 12, D-02): NEW — Link bundles. Builds the bidirectional
@@ -223,7 +246,8 @@ jobs:
       # writeNdjsonStreaming. NDJSON-only writes — no F1 banned-pattern delta.
       # Graceful exit-0 if data/plugins.ndjson is absent.
       - name: Link bundles (skill <-> plugin graph)
-        if: github.event_name != 'push'
+        # quick-260603-e96: plugin/MCP pipeline gated OFF (see job env above).
+        if: ${{ env.PLUGINS_ENABLED == 'true' && github.event_name != 'push' }}
         run: node scripts/link-bundles.js
 
       # --- Semantic search: embed new/changed skills, upload to Vectorize ---
@@ -240,7 +264,8 @@ jobs:
       # by --entity-type. Reads data/plugins.ndjson, writes data/plugin-vectors.ndjson;
       # resumable + idempotent via the per-record _content_sha delta check.
       - name: Embed plugins (OpenAI)
-        if: github.event_name != 'push'
+        # quick-260603-e96: plugin/MCP pipeline gated OFF (see job env above).
+        if: ${{ env.PLUGINS_ENABLED == 'true' && github.event_name != 'push' }}
         run: node scripts/embed-skills.js --entity-type plugin
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
@@ -249,7 +274,8 @@ jobs:
       # writes data/mcp-vectors.ndjson. metadata.entity_type=mcp_server lets the
       # worker ?type= filter resolve MCP results.
       - name: Embed MCP servers (OpenAI)
-        if: github.event_name != 'push'
+        # quick-260603-e96: plugin/MCP pipeline gated OFF (see job env above).
+        if: ${{ env.PLUGINS_ENABLED == 'true' && github.event_name != 'push' }}
         run: node scripts/embed-skills.js --entity-type mcp_server
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
@@ -271,7 +297,8 @@ jobs:
       # MCP servers are intentionally NOT enriched — the MCP corpus is below
       # the dedup threshold (enrich.js early-returns for entity_type=mcp_server).
       - name: Enrich plugins (dedup + novelty)
-        if: github.event_name != 'push'
+        # quick-260603-e96: plugin/MCP pipeline gated OFF (see job env above).
+        if: ${{ env.PLUGINS_ENABLED == 'true' && github.event_name != 'push' }}
         run: node scripts/enrich.js --input data/plugin-vectors.ndjson --records data/plugins.ndjson --entity-type plugin
 
       # Phase 3.2 (Task 12): Upload vectors to Vectorize — extended to upsert all
