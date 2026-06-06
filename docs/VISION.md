@@ -121,3 +121,71 @@ leaning on us, not before.
   sacrificing the authority bar?
 - When (if) the citation loop closes, what's the monetization / influence model —
   audience, reputation, standards, or something more direct?
+
+## Near-Term Roadmap Sketch (loose, non-binding)
+
+> Captured 2026-06-06. A *candidate* ordering, not a commitment. Formal phases live
+> in `.planning/ROADMAP.md` and get refined via `/gsd:plan-phase` when started.
+> Order/dates are directional.
+
+**Where we are (2026-06-06):** Scraper-health crisis resolved — Track 1 migrated to
+batched GraphQL (`SCRAPE_PAT_CLASSIC`, separate rate-limit budget), and the plugin/MCP
+pipeline is temporarily gated off (`PLUGINS_ENABLED=false`) so the daily cron runs the
+known-good skills-only path (history + skills + build + deploy). 3.2 code is on main and
+tested but not run daily yet. Milestone v3.0 (Comprehensive Agent Tooling Index) in progress.
+
+### A. Optimization phase — "Pipeline & Build Headroom" (proposed, BEFORE 3.3)
+- **Goal:** kill the O(N²) build long-pole so the daily cron has comfortable margin under
+  the 330-min cap — *before* 3.3 adds load.
+- **Core:** replace `compute-similar.js`'s all-pairs cosine scan (~94 min) with **HNSW**
+  (e.g. hnswlib-node) OR by querying **Cloudflare Vectorize** (embeddings already live
+  there) for top-K neighbors → minutes. Approximate-nearest-neighbor trade-off accepted.
+- **Maybe also:** incremental builds (re-render only changed pages), more dynamic
+  rendering (like the Listed tier already is). The "run compute-similar weekly" idea is
+  dropped — HNSW makes it moot (fast enough to stay daily + fresh).
+- **Why first:** 3.3 adds plugin pages + plugin-similarity → more build load, and we're
+  already near the ceiling (skills-only was ~297 min, ~33 min headroom). HNSW serves both
+  skills *and* plugins. Optimize-first creates the headroom 3.3 consumes.
+- **Rough size:** small–medium, self-contained.
+
+### B. Phase 3.3 — "Plugins, for real"
+- **3.3.0 (front half) — plugin discovery rework:** make `scrape-plugins` **incremental**
+  (blob-sha skip, like Track 2's 3.0.2 fix) + a **one-time bootstrap** to populate
+  `plugins-raw` (à la the skills-raw bootstrap), on its own cadence. Then flip
+  `PLUGINS_ENABLED='true'`. This is the data prerequisite — without it the daily cron
+  times out (the reason plugins are gated today).
+- **3.3.x (back half) — plugin surfaces:** `/plugins/`, `/plugins/[slug]/`, marketplace
+  landing; plugin similarity (reuses HNSW from A); mixed-type search.
+- **Depends on:** A (HNSW + build headroom).
+
+### C. Phase 3.4 — "New & Noteworthy" (the cure for the static homepage)
+- **Goal:** a fresh, daily-changing surface (newly added / rising this week) *next to* the
+  appropriately-stable Featured — gives returning visitors and agents a reason to come back.
+- **Core:** novelty detection (`novelty_score` already on records), rising/trending from
+  the daily history time-series (accumulating again post-fix), homepage section
+  (+ overlaps the roadmap's 3.9 `/trends`).
+- **Candidate to pull EARLIER:** it directly addresses the engagement deadness we just
+  observed, and its inputs (history time-series, novelty) are nearly ready. Open decision:
+  right after 3.3, or jump ahead of it.
+
+### X. Analytics feedback loop (cross-cutting — slot anytime, high value)
+- A daily-committed `data/analytics-snapshot.json`: GSC (top queries, indexed pages) +
+  Cloudflare (top paths, crawler stats) + D1 (on-site searches, agent pings). Readable by
+  Claude (strategy) AND usable by the site (dynamic elevation of popular/trending).
+- **Caveat:** elevate on *clean* signals (GSC clicks/impressions, on-site search queries,
+  agent pings) — NOT bot-dominated RUM pageviews.
+- Natural pairing with C (3.4's "rising" needs the same data); could be its own small phase
+  or folded into C. Also the thing that lets Claude *see* the tripwires without hand-run SQL.
+
+### Background (not a phase): the agent-citation experiment
+- Tripwires armed and baking — agent-ping guestbook, LLM referrals (chatgpt/perplexity),
+  `search_events`. Months-scale signal. Watch; do NOT build more agent infrastructure until
+  something shows up.
+
+### Deferred / demand-gated (from the 5-layer vision above)
+- Non-GitHub / company-site indexing; the AI news / editorial layer (+ newsletter);
+  the ClaudeAtlas-MCP "first stop" tool. All gated on the citation loop showing green.
+
+**Candidate order at a glance:** `A (Optimization/HNSW) → B (3.3 Plugins) → C (3.4 New &
+Noteworthy)`, with `X (Analytics loop)` sliding in around C, and the citation experiment
+baking in the background throughout.
