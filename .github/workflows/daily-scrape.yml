@@ -3,7 +3,12 @@ name: Daily Scrape & Deploy
 on:
   schedule:
     - cron: '30 6 * * *' # 6:30 AM UTC daily
-  workflow_dispatch: {} # Manual trigger
+  workflow_dispatch:
+    inputs:
+      force_reembed:
+        description: 'Force a full skill re-embed (one-time bootstrap of skill-vectors cache)'
+        type: boolean
+        default: false
   push:
     branches: [main]
 
@@ -254,11 +259,46 @@ jobs:
       # Embed step is resumable and idempotent: reads prior ndjson, only embeds
       # deltas. Safe to run on every workflow event. Upload step upserts into
       # the Vectorize index; matching ids are replaced.
+
+      # Restore skill-vectors cache from previous run. Mirrors the skills-raw
+      # cache pattern (split restore/save so save can run with `if: always()`).
+      # WITHOUT this, every run starts from the committed stale 1,078-vector
+      # Phase-1 seed against ~50k current skills — the embed's incremental
+      # delta-check sees a ~2% cache hit and embed-skills.js's drift guard
+      # correctly aborts rather than brute-force re-embedding 50k records
+      # (~$0.40/run, over the cost ceiling). The GHA cache carries the
+      # incrementally-grown skill-vectors.ndjson between runs so the embed
+      # stays a true delta. Cold-start: falls back to restore-keys' most
+      # recent prior cache, then to the committed seed (one-time bootstrap
+      # via the force_reembed dispatch input below).
+      - name: Restore skill-vectors cache
+        if: github.event_name != 'push'
+        uses: actions/cache/restore@v4
+        with:
+          path: data/skill-vectors.ndjson
+          key: skill-vectors-${{ github.run_number }}
+          restore-keys: skill-vectors-
+
       - name: Embed skills (OpenAI)
         if: github.event_name != 'push'
         run: npm run embed
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          # One-time bootstrap: dispatch the workflow with force_reembed=true to
+          # rebuild skill-vectors.ndjson from scratch (and seed the GHA cache).
+          # workflow_dispatch boolean inputs arrive as the STRING 'true'/'false'.
+          EMBED_FORCE_REEMBED: ${{ github.event.inputs.force_reembed == 'true' && '1' || '0' }}
+
+      # Save skill-vectors cache even on timeout/failure/cancel, mirroring the
+      # skills-raw `if: always()` pattern. The embed grows the vector file
+      # incrementally; persisting it (even partially) keeps the next run warm
+      # so the drift guard never re-trips on a cold seed.
+      - name: Save skill-vectors cache
+        if: always() && github.event_name != 'push' && hashFiles('data/skill-vectors.ndjson') != ''
+        uses: actions/cache/save@v4
+        with:
+          path: data/skill-vectors.ndjson
+          key: skill-vectors-${{ github.run_number }}
 
       # Phase 3.2 (Task 12): NEW — Embed plugins. Same OpenAI embedder, dispatched
       # by --entity-type. Reads data/plugins.ndjson, writes data/plugin-vectors.ndjson;

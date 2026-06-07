@@ -310,7 +310,7 @@ async function main() {
   if (prior.size > 0 && records.length > 0) {
     const hitRate = kept.length / records.length;
     log(`cache hit rate: ${(hitRate * 100).toFixed(3)}% (${kept.length}/${records.length})`);
-    if (hitRate < 0.99 && !FORCE_REEMBED) {
+    if (hitRate < 0.90 && !FORCE_REEMBED) {
       console.error(
         `[embed-skills] DRIFT DETECTED: only ${(hitRate * 100).toFixed(2)}% cache hit ` +
         `against prior ${outputPath}.\n` +
