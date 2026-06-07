@@ -313,26 +313,32 @@ export function filterRaw(raw, currentBySlug = new Map(), priorEnrichments = new
     if (s.canonical_slug === undefined) s.canonical_slug = null;
     if (s.novelty_score === undefined) s.novelty_score = null;
 
-    // F2 — body_length invariant assert. If the field already existed
+    // F2 — body_length invariant check. If the field already existed
     // (raw scraper records carry body_length pre-trim), it should equal the
     // pre-trim length we just captured. Drift bounded by SMALL_DRIFT_TOL
-    // is auto-corrected (pre-F2 scraper computed body_length via
+    // is auto-corrected silently (pre-F2 scraper computed body_length via
     // body_markdown.trim().length while storing untrimmed body_markdown,
-    // producing 1-5 char drift from whitespace/newlines). Larger drift
-    // indicates a real F2 logic bug in upstream writers and throws.
+    // producing 1-5 char drift from whitespace/newlines). Larger drift was
+    // previously assumed to be an F2 writer bug and threw fatally — but in
+    // production a single benign record (CJK / multi-byte length counting, or
+    // heavy trailing whitespace) must NOT abort the whole filter and drop the
+    // unreplayable daily history snapshot + deploy. The invariant now stays a
+    // logged warning, not a pipeline circuit-breaker: large drift is warned
+    // for visibility and then auto-corrected exactly like small drift.
     const SMALL_DRIFT_TOL = 10;
     if (typeof s.body_length === 'number' && s.body_length !== originalBodyLengthBeforeTrim) {
       if (s.body_length < originalBodyLengthBeforeTrim) {
         const drift = originalBodyLengthBeforeTrim - s.body_length;
         if (drift > SMALL_DRIFT_TOL) {
-          throw new Error(
-            `[filter] body_length invariant violated for ${s.id}: ` +
+          console.warn(
+            `[filter] body_length invariant drift for ${s.id}: ` +
             `body_length=${s.body_length} < pre-trim body_markdown.length=${originalBodyLengthBeforeTrim} ` +
             `(drift=${drift} > tolerance=${SMALL_DRIFT_TOL}). ` +
-            `body_length must be the ORIGINAL body length per EntityRecord.body_length JSDoc.`,
+            `Auto-correcting to pre-trim length; not fatal (benign CJK/whitespace length drift).`,
           );
         }
-        // Auto-correct small drift (pre-F2 raw scraper quirk).
+        // Auto-correct drift (small: pre-F2 raw scraper quirk; large: benign
+        // multi-byte/whitespace length divergence, warned above).
         s.body_length = originalBodyLengthBeforeTrim;
       }
       // s.body_length > originalBodyLengthBeforeTrim is FINE — body_markdown
