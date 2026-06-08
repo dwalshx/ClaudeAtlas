@@ -48,7 +48,12 @@ jobs:
     # table and the verified finding that compute-similar TOP_K reduction
     # saves ~0 compute (so Option D / this bump is the operative
     # mitigation). GHA platform cap is 6h/360 min.
-    timeout-minutes: 330
+    # quick-260603-e96 (2026-06-07): bumped 330 → 360 (GHA platform max). At
+    # ~50k records the warm full run (Track1+2 ~25m, incremental embed ~5m,
+    # enrich ~59m, build >162m) needs more runway than 330 once the catalog
+    # grew. 360 is the LAST stopgap — the durable fix is the HNSW/Vectorize
+    # optimization for compute-similar (build) + enrich dedup, both O(n²) at 50k.
+    timeout-minutes: 360
     # quick-260603-e96 (2026-06-04): TEMPORARY plugin/MCP gate. The full
     # plugin-discovery sweep (scrape-plugins.js) is a whole-ecosystem search
     # throttled to GitHub's 5,000 REST/hr; it never finishes inside the
