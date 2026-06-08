@@ -10,23 +10,33 @@
  * would erode over weeks. That's why astro.config.mjs uses customPages to
  * enumerate every skill slug regardless of tier.
  *
- * This script asserts that the generated sitemap-0.xml has the expected
- * number of `<loc>` entries: one per record in data/skills.ndjson, plus a
- * small allowance for static pages (homepage, methodology, category pages,
+ * This script asserts that the generated sitemap has the expected number of
+ * `<loc>` entries: one per record in data/skills.ndjson, plus a small
+ * allowance for static pages (homepage, methodology, category pages,
  * creators, /apis, etc.).
+ *
+ * Once the catalog crossed ~45,000 URLs, @astrojs/sitemap split the output
+ * across multiple numbered files (sitemap-0.xml capped at 45,000 entries,
+ * sitemap-1.xml the remainder, etc.) plus a sitemap-index.xml that points to
+ * the sub-sitemaps. This script sums `<loc>` across ALL numbered sitemap
+ * files (sitemap-N.xml) and intentionally EXCLUDES sitemap-index.xml — the
+ * index's <loc> entries reference sub-sitemaps, not pages.
  *
  * Runs as postbuild. Exit 1 if the count is off — that's the silent-
  * SEO-erosion failure mode DOD-10 was added to catch.
  */
 
-import { readFileSync, existsSync } from 'node:fs';
+import { readFileSync, existsSync, readdirSync } from 'node:fs';
 import { execSync } from 'node:child_process';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..');
-const SITEMAP_PATH = join(ROOT, 'dist', 'sitemap-0.xml');
+const DIST_DIR = join(ROOT, 'dist');
+// Matches sitemap-0.xml, sitemap-1.xml, … — and EXCLUDES sitemap-index.xml
+// (whose <loc> entries point to sub-sitemaps, not indexable pages).
+const NUMBERED_SITEMAP_RE = /^sitemap-\d+\.xml$/;
 const SKILLS_NDJSON_PATH = join(ROOT, 'data', 'skills.ndjson');
 
 // Margin for static pages (homepage, methodology, 404, category/*, creators,
@@ -40,8 +50,21 @@ function computeTolerance(skillCount) {
 }
 
 function main() {
-  if (!existsSync(SITEMAP_PATH)) {
-    console.error(`[sitemap-completeness] FATAL: ${SITEMAP_PATH} not found (did Astro build emit sitemap?)`);
+  // Enumerate every numbered sitemap file (sitemap-N.xml). @astrojs/sitemap
+  // emits a single sitemap-0.xml below ~45k URLs and splits into multiple
+  // numbered files above that, alongside a sitemap-index.xml we deliberately
+  // skip (its <loc> entries point to sub-sitemaps, not pages).
+  let sitemapFiles;
+  try {
+    sitemapFiles = readdirSync(DIST_DIR)
+      .filter((f) => NUMBERED_SITEMAP_RE.test(f))
+      .sort();
+  } catch {
+    sitemapFiles = [];
+  }
+
+  if (sitemapFiles.length === 0) {
+    console.error(`[sitemap-completeness] FATAL: no sitemap-N.xml found in ${DIST_DIR} (did Astro build emit sitemap?)`);
     process.exit(1);
   }
 
@@ -50,10 +73,14 @@ function main() {
     process.exit(0);
   }
 
-  // Sitemap read uses readFileSync on dist/ — allowed (one-shot CI check
-  // against a bounded ~5 MB XML file). Lint scans data/ only.
-  const sitemapXml = readFileSync(SITEMAP_PATH, 'utf-8');
-  const locCount = (sitemapXml.match(/<loc>/g) || []).length;
+  // Sitemap reads use readFileSync on dist/ — allowed (one-shot CI check
+  // against bounded XML files). Lint scans data/ only. Sum <loc> across all
+  // numbered sitemap files so multi-file (split) sitemaps count fully.
+  let locCount = 0;
+  for (const f of sitemapFiles) {
+    const sitemapXml = readFileSync(join(DIST_DIR, f), 'utf-8');
+    locCount += (sitemapXml.match(/<loc>/g) || []).length;
+  }
 
   // Skill count via wc -l (no readFileSync on data/skills.ndjson — dodges
   // the lint rule entirely; also fast on large files).
@@ -70,7 +97,7 @@ function main() {
 
   const tolerance = computeTolerance(skillCount);
 
-  console.log(`[sitemap-completeness] sitemap-0.xml: ${locCount} <loc> entries`);
+  console.log(`[sitemap-completeness] ${sitemapFiles.length} sitemap file(s) (${sitemapFiles.join(', ')}), ${locCount} <loc> entries total`);
   console.log(`[sitemap-completeness] skills.ndjson: ${skillCount} records`);
   console.log(`[sitemap-completeness] tolerance: ±${tolerance} (max(1500, 15% of catalog) — scales with creator page count)`);
 
