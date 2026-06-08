@@ -11,6 +11,37 @@
  * gate now (see scripts/enrich.js). Those gates are NOT reintroduced here.
  */
 
+// SECURITY (additive exclusion — NOT a filter recalibration).
+//
+// Repo-level denylist: every record whose `repo_full_name` matches an entry
+// here is DROPPED before scoring/tiering, on EVERY filter pass (so a re-scrape
+// can never re-introduce them).
+//
+// These are skill-SCANNER / antivirus / eval-corpus repos whose SKILL.md files
+// are DELIBERATE TEST FIXTURES — malicious samples (e.g. curl|bash data-exfil,
+// jailbreak / prompt-injection payloads) plus benign samples — used to TEST
+// scanners. They are NOT real, installable skills and must NEVER appear in the
+// curated index. This is an exact `repo_full_name` match ONLY: it does not key
+// off paths (e.g. `examples/`, `evals/`, `tests/`), because ~95 legitimate
+// example skills live in guide/tutorial repos under those paths and must NOT
+// be removed.
+//
+// Extend this list as more scanner / fixture repos are discovered.
+export const FIXTURE_REPO_DENYLIST = new Set([
+  'claude-world/claude-skill-antivirus',
+  'cisco-ai-defense/skill-scanner',
+]);
+
+/**
+ * Return true if the record belongs to a denylisted scanner / fixture repo
+ * (exact `repo_full_name` match). Such records must be dropped entirely.
+ *
+ * @param {{ repo_full_name?: string }} record
+ */
+export function isFixtureRepo(record) {
+  return FIXTURE_REPO_DENYLIST.has(record?.repo_full_name);
+}
+
 export const TEMPLATE_NAMES = new Set([
   'agent-name', 'skill-name', 'example', 'example-skill', 'template',
   'my-skill', 'sample', 'sample-skill', 'untitled', 'new-skill',

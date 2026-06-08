@@ -210,6 +210,51 @@ test('Phase 3.1: PRESERVED_FIELDS carries is_duplicate / canonical_slug / novelt
   assert.equal(capped[0].novelty_score, 0.42);
 });
 
+test('Security: record from a fixture-repo-denylist repo is dropped', () => {
+  // claude-world/claude-skill-antivirus and cisco-ai-defense/skill-scanner are
+  // skill-scanner / eval-corpus repos whose SKILL.md files are deliberate test
+  // fixtures (malicious + benign samples), NOT real skills. Every record from
+  // them must be dropped on every filter pass.
+  const raw = [
+    makeAdmissible({
+      id: 'claude-world/claude-skill-antivirus/super-helper/SKILL.md',
+      repo_full_name: 'claude-world/claude-skill-antivirus',
+      name: 'super-helper',
+      slug: 'claude-world/super-helper',
+    }),
+    makeAdmissible({
+      id: 'cisco-ai-defense/skill-scanner/jailbreak-override/SKILL.md',
+      repo_full_name: 'cisco-ai-defense/skill-scanner',
+      name: 'jailbreak-override',
+      slug: 'cisco-ai-defense/jailbreak-override',
+    }),
+    makeAdmissible({
+      id: 'real/repo/legit-skill/SKILL.md',
+      repo_full_name: 'real/repo',
+      name: 'legit-skill',
+      slug: 'real/legit-skill',
+    }),
+  ];
+  const { capped } = filterRaw(raw);
+  assert.equal(capped.length, 1);
+  assert.equal(capped[0].repo_full_name, 'real/repo');
+});
+
+test('Security: non-denylisted repo with an examples/ path is KEPT (no over-removal)', () => {
+  // Guards against accidentally adding path-based examples/evals/tests
+  // exclusion. ~95 legitimate example skills live under examples/ in
+  // guide/tutorial repos and must survive.
+  const raw = [makeAdmissible({
+    id: 'guide/tutorial-repo/examples/my-example/SKILL.md',
+    repo_full_name: 'guide/tutorial-repo',
+    name: 'my-example',
+    slug: 'guide/my-example',
+  })];
+  const { capped } = filterRaw(raw);
+  assert.equal(capped.length, 1);
+  assert.equal(capped[0].repo_full_name, 'guide/tutorial-repo');
+});
+
 test('Phase 3.2 F-3: filter re-run preserves bundled_in_plugins from prior', () => {
   const raw = [makeAdmissible({ id: 'p/q/foo/SKILL.md', repo_full_name: 'p/q',
     name: 'foo', slug: 'p/foo' })];

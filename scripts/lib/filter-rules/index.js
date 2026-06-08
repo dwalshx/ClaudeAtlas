@@ -13,6 +13,7 @@ import {
   hasTemplateName,
   hasPlaceholderDescription,
   hasBizSlopName,
+  isFixtureRepo,
   dedupLanguageVariants,
 } from './common.rules.js';
 
@@ -42,6 +43,12 @@ export const rulePacks = {
  * @returns {boolean} true if the record should be REJECTED.
  */
 export function isSlop(record) {
+  // SECURITY gate first — repo-level denylist of scanner/fixture/eval-corpus
+  // repos (e.g. claude-skill-antivirus, skill-scanner). Their SKILL.md files
+  // are deliberate malicious + benign test fixtures, never real skills. Drop
+  // them on every filter pass so a re-scrape can never re-introduce them.
+  if (isFixtureRepo(record)) return true;
+
   // Common gates first — exercised exactly once per record.
   if (hasTemplateName(record)) return true;
   if (hasPlaceholderDescription(record)) return true;
