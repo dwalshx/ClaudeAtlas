@@ -30,7 +30,7 @@
  */
 
 import { readFileSync, existsSync } from 'node:fs';
-import { execSync } from 'node:child_process';
+import { execFileSync } from 'node:child_process';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -77,9 +77,12 @@ function main() {
   console.log(`[sitemap-stability] pre-F1 snapshot: ${preUrls.length} URLs`);
 
   // Fetch live sitemap via curl (network egress required).
+  // Use execFileSync with an args array (no shell) so the URL is passed as a
+  // single argv entry and cannot be interpreted as shell syntax — closes the
+  // command-injection vector from the prior shell-string execSync.
   let liveXml;
   try {
-    liveXml = execSync(`curl -sLf "${liveUrl}"`, { encoding: 'utf-8' });
+    liveXml = execFileSync('curl', ['-sLf', liveUrl], { encoding: 'utf-8' });
   } catch (err) {
     console.error(`[sitemap-stability] FATAL: failed to fetch ${liveUrl}: ${err.message}`);
     process.exit(2);
