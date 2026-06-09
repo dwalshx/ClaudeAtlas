@@ -57,6 +57,20 @@ function todayISO() {
   return new Date().toISOString().slice(0, 10);
 }
 
+// Privacy-preserving per-IP identifier. Hashes `cf-connecting-ip` (falling
+// back to x-forwarded-for) with the daily-rotating SALT_SECRET so we NEVER
+// store or key on a raw IP (CLAUDE.md privacy constraint). Reused by the
+// search_events D1 logging AND the /api/v1/search rate limiter so both
+// derive the same opaque identifier from the same source of truth.
+async function hashedClientIp(request, env) {
+  const salt = (env && env.SALT_SECRET) || '';
+  const ip =
+    request.headers.get('cf-connecting-ip') ||
+    request.headers.get('x-forwarded-for') ||
+    'unknown';
+  return sha256Hex(`${salt}:${todayISO()}:${ip}`);
+}
+
 function jsonResponse(body, status = 200, extraHeaders = {}) {
   return new Response(JSON.stringify(body), {
     status,
@@ -132,9 +146,7 @@ export async function logSearch(request, env) {
     return new Response('Query required', { status: 400 });
   }
 
-  const salt = (env && env.SALT_SECRET) || '';
-  const ip = request.headers.get('cf-connecting-ip') || request.headers.get('x-forwarded-for') || 'unknown';
-  const ipHash = await sha256Hex(`${salt}:${todayISO()}:${ip}`);
+  const ipHash = await hashedClientIp(request, env);
   const country = (request.cf && request.cf.country) || null;
 
   if (!env || !env.DB) {
@@ -374,6 +386,47 @@ function queryCacheKey(query) {
   return 'qe:' + query.toLowerCase().trim();
 }
 
+// ---------------------------------------------------------------------------
+// Rate limiting — /api/v1/search ONLY (audit #5)
+//
+// /api/v1/search is UNAUTHENTICATED and calls OpenAI to embed novel queries
+// (a credit-burn + CPU abuse vector for cache-busting floods). We cap it at
+// 30 requests/minute/IP — deliberately generous so legit humans and
+// well-behaved agents (agents calling this API is the product thesis) are
+// never hindered, while a flood gets stopped. The counter lives in
+// QUERY_CACHE KV, keyed by a per-minute bucket + the SALT_SECRET-hashed IP
+// (never a raw IP — CLAUDE.md privacy constraint). KV is eventually-
+// consistent, so the cap is approximate — good enough to kill a flood, not
+// a precise quota. FAIL-OPEN by design: any KV hiccup logs and PROCEEDS with
+// the search. The limiter is abuse mitigation, not a hard gate, and must
+// never break search. Applies ONLY here — the static-JSON feed proxies
+// (whats-new/trending/notable) and agent-ping don't hit OpenAI.
+// ---------------------------------------------------------------------------
+const SEARCH_RL_MAX_PER_MIN = 30;
+const SEARCH_RL_TTL_SECONDS = 120; // 2 min — covers clock skew across buckets
+
+// Returns true if the request should be BLOCKED (over the per-minute cap).
+// Fail-open: returns false on any error so the caller proceeds with search.
+async function searchRateLimited(request, env) {
+  if (!env || !env.QUERY_CACHE) return false;
+  try {
+    const ipHash = await hashedClientIp(request, env);
+    const bucket = Math.floor(Date.now() / 60000);
+    const key = `rl:search:${bucket}:${ipHash}`;
+    const count = parseInt(await env.QUERY_CACHE.get(key)) || 0;
+    if (count >= SEARCH_RL_MAX_PER_MIN) return true;
+    // Best-effort increment; don't block the request on the write.
+    await env.QUERY_CACHE.put(key, String(count + 1), {
+      expirationTtl: SEARCH_RL_TTL_SECONDS,
+    });
+    return false;
+  } catch (err) {
+    // FAIL-OPEN — never break search because the limiter hiccupped.
+    console.error('search rate-limit check failed (fail-open):', err && err.message);
+    return false;
+  }
+}
+
 async function embedQuery(query, env) {
   if (!env || !env.OPENAI_API_KEY) {
     throw new Error('OPENAI_API_KEY secret not configured on worker');
@@ -476,6 +529,16 @@ export async function semanticSearch(request, env) {
     return jsonResponse({ error: 'VECTORIZE binding not configured on worker' }, 503);
   }
 
+  // Rate-limit gate — BEFORE any OpenAI/embedding call. 30/min/IP via the
+  // QUERY_CACHE KV counter (hashed IP, fail-open). See searchRateLimited().
+  if (await searchRateLimited(request, env)) {
+    return jsonResponse(
+      { ok: false, error: 'rate_limited', retry_after: 60 },
+      429,
+      { 'Retry-After': '60' },
+    );
+  }
+
   // Embed the query (may be served from KV cache)
   let queryVector;
   let embedCached = false;
@@ -555,9 +618,7 @@ export async function semanticSearch(request, env) {
 
   // Fire-and-forget log to D1 if available. Don't block the response.
   if (env && env.DB) {
-    const ip = request.headers.get('cf-connecting-ip') || request.headers.get('x-forwarded-for') || 'unknown';
-    const salt = env.SALT_SECRET || '';
-    sha256Hex(`${salt}:${todayISO()}:${ip}`).then(ipHash => {
+    hashedClientIp(request, env).then(ipHash => {
       const country = (request.cf && request.cf.country) || null;
       return env.DB.prepare(
         'INSERT INTO search_events (timestamp, query, ip_hash, country) VALUES (?, ?, ?, ?)'
