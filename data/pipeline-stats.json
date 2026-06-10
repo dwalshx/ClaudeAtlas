@@ -1,21 +1,21 @@
 {
-  "timestamp": "2026-06-01T13:28:10.916Z",
-  "total_discovered": 56122,
-  "total_skills": 42515,
-  "unique_repos": 4558,
+  "timestamp": "2026-06-10T11:10:18.580Z",
+  "total_discovered": 71259,
+  "total_skills": 55044,
+  "unique_repos": 5999,
   "tiers": {
-    "featured": 4251,
-    "solid": 12754,
-    "listed": 25510
+    "featured": 5504,
+    "solid": 12496,
+    "listed": 37044
   },
   "categories": {
-    "AI & Automation": 26705,
-    "Testing & QA": 1447,
-    "Web & Frontend": 3122,
-    "Code & Development": 3537,
-    "API & Backend": 1512,
-    "DevOps & Infrastructure": 1567,
-    "Data & Documents": 4625
+    "AI & Automation": 34801,
+    "Testing & QA": 1849,
+    "Data & Documents": 5805,
+    "DevOps & Infrastructure": 1857,
+    "Web & Frontend": 4094,
+    "API & Backend": 1841,
+    "Code & Development": 4797
   },
   "filter_config": {
     "MIN_BODY_LENGTH": 200,
