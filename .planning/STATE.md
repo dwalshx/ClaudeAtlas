@@ -27,7 +27,7 @@ See: `.planning/PROJECT.md` (last updated 2026-04-10)
 ## Current Position
 
 Status: STABLE — scraper saga + security audit closed (2026-06-10). Cron green (~4.5-5.5h, tight under 360 cap), site fresh/self-updating, security hardened, git tree clean. Plugins GATED OFF (PLUGINS_ENABLED=false) pending 3.3.
-Next action: **HNSW optimization phase** — `/gsd:plan-phase`. Kills the O(N²) build long-pole (compute-similar + enrich dedup at 50k) to reclaim timeout headroom + unblock plugins (3.3). Roadmap: Optimization → 3.3 → 3.4 (see docs/VISION.md).
+Next action: **Phase 3.2.1 — HNSW optimization** (inserted into roadmap 2026-06-10) — `/gsd:plan-phase 3.2.1`. Kills the O(N²) build long-pole (compute-similar + enrich dedup at 50k) to reclaim timeout headroom + unblock plugins (3.3). Roadmap: Optimization → 3.3 → 3.4 (see docs/VISION.md).
 **READ FIRST:** `.planning/SESSION-HANDOFF-2026-06-10.md` — full context, key decisions/rationale, operational gotchas.
 Last activity: 2026-06-10 - Scraper saga (6 walls) + security audit (8 items) closed; quick task 260603-e96 complete
 
@@ -167,6 +167,10 @@ These were INSERTED ahead of the Phase 3.0 spec's 3.1–3.9 lineup because the d
 - Cache hit rates: high after first warm day; etag cache + skills-raw cache both bootstrapped from release assets
 
 ## Accumulated Context
+
+### Roadmap Evolution
+
+- Phase 3.2.1 inserted after Phase 3.2 (2026-06-10): HNSW optimization — replace O(N²) cosine scans (compute-similar.js + enrich.js dedup) with approximate-NN; folds in security Audit B content-scanner filter (URGENT — cron at 4.5-5.5h vs 360-min hard cap; blocks 3.3 plugin re-enable)
 
 ### Decisions log (cumulative; see `.planning/SESSION-MEMO-2026-04-to-05.md` for full reasoning)
 
