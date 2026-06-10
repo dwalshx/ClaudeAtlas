@@ -94,3 +94,10 @@ last-run.log
 
 # Phase 03.1.1 T2 streaming-loader smoke fixtures (regenerated each run, ~450 MB)
 data/test-fixtures/
+
+# F2 (3.1.2) cutover render-smoke fixtures — regenerated locally by
+# scripts/test/capture-regression-fixtures.js and read only by manual smoke
+# scripts (not CI). Stale post-cutover and perpetually "modified" in the tree,
+# so untracked. (The captured HTML also embedded a public PostHog project key —
+# security audit 2026-06-08 #3; removing from tracking is the hygiene fix.)
+data/regression-*
