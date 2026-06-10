@@ -3,9 +3,9 @@ gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: — Agent-Native Directory
 status: verifying
-stopped_at: Completed quick-260603-e96 (Track 1 GraphQL batch migration + retry-after stopgap); 3 tasks committed c0902b7/e0ca2fa/921be94
-last_updated: "2026-06-03T17:32:01.422Z"
-last_activity: "2026-06-03 - Completed quick task 260603-bug: Add agent-ping affordance endpoint + llms.txt invitation"
+stopped_at: "Scraper-saga + security audit CLOSED (2026-06-10). Cron green, site fresh, hardened, git clean. NEXT = HNSW optimization phase. READ .planning/SESSION-HANDOFF-2026-06-10.md FIRST."
+last_updated: "2026-06-10T21:48:00.000Z"
+last_activity: "2026-06-10 - Closed scraper saga (6 walls) + 2026-06-08 security audit; gitignored regression fixtures; wrote SESSION-HANDOFF-2026-06-10.md"
 progress:
   total_phases: 16
   completed_phases: 5
@@ -26,11 +26,10 @@ See: `.planning/PROJECT.md` (last updated 2026-04-10)
 
 ## Current Position
 
-Phase: 3.2 (plugin-and-mcp-scoring) — READY FOR VERIFICATION
-Plan: 1 of 1 (all 14 tasks committed: 0b460d0 … d37c9a2)
-Status: Phase complete — ready for verification
-Next action: dispatch branch CI per 3.2-SMOKE-RESULTS.md Part B, then `/gsd:verify-phase 3.2`
-Last activity: 2026-06-03 - Completed quick task 260603-e96: Fix failing daily-scrape Track 1 rate-limit (branch fix/track1-rate-limit; awaiting branch-CI validation)
+Status: STABLE — scraper saga + security audit closed (2026-06-10). Cron green (~4.5-5.5h, tight under 360 cap), site fresh/self-updating, security hardened, git tree clean. Plugins GATED OFF (PLUGINS_ENABLED=false) pending 3.3.
+Next action: **HNSW optimization phase** — `/gsd:plan-phase`. Kills the O(N²) build long-pole (compute-similar + enrich dedup at 50k) to reclaim timeout headroom + unblock plugins (3.3). Roadmap: Optimization → 3.3 → 3.4 (see docs/VISION.md).
+**READ FIRST:** `.planning/SESSION-HANDOFF-2026-06-10.md` — full context, key decisions/rationale, operational gotchas.
+Last activity: 2026-06-10 - Scraper saga (6 walls) + security audit (8 items) closed; quick task 260603-e96 complete
 
 ### Quick Tasks Completed
 
