@@ -145,6 +145,10 @@ function buildCommonFields(rec) {
     schema_version: CURRENT_SCHEMA_VERSION,
     // Phase 3.2 / D-02 back edge — default empty; link-bundles.js fills it.
     bundled_in_plugins: Array.isArray(rec.bundled_in_plugins) ? rec.bundled_in_plugins : [],
+    // Phase 3.2.1 / Audit B annotation — explicit passthrough (this builder
+    // uses a field whitelist, not a spread; without this line the
+    // content_flags written by filterRaw would be dropped on the v2 write).
+    content_flags: Array.isArray(rec.content_flags) ? rec.content_flags : [],
   };
 }
 
@@ -311,6 +315,12 @@ function upcastSkillRecord(rec) {
 
     // Phase 3.2 / D-02 back edge — default empty; link-bundles.js fills it.
     bundled_in_plugins: Array.isArray(rec.bundled_in_plugins) ? rec.bundled_in_plugins : [],
+
+    // Phase 3.2.1 / Audit B annotation — explicit passthrough (this builder
+    // uses a field whitelist, not a spread; without this line the
+    // content_flags written by filterRaw Step 1c would be dropped on the
+    // v2 write in filter.js main()).
+    content_flags: Array.isArray(rec.content_flags) ? rec.content_flags : [],
 
     // Discriminated union payload
     extra,
