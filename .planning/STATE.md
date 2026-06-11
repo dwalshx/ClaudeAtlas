@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: — Agent-Native Directory
 status: executing
-stopped_at: Completed 03.2.1-02-PLAN.md (Audit B content scanner)
-last_updated: "2026-06-11T05:10:00.633Z"
+stopped_at: Completed 03.2.1-03-PLAN.md (enrich.js dedup migration to ann.js)
+last_updated: "2026-06-11T05:19:08.735Z"
 last_activity: 2026-06-11
 progress:
   total_phases: 17
   completed_phases: 5
   total_plans: 18
-  completed_plans: 14
+  completed_plans: 15
   percent: 100
 ---
 
@@ -27,7 +27,7 @@ See: `.planning/PROJECT.md` (last updated 2026-04-10)
 ## Current Position
 
 Phase: 3.2.1 (hnsw-optimization) — EXECUTING
-Plan: 3 of 7
+Plan: 4 of 7
 Status: Ready to execute
 Next action: **Phase 3.2.1 — HNSW optimization** (inserted into roadmap 2026-06-10) — `/gsd:plan-phase 3.2.1`. Kills the O(N²) build long-pole (compute-similar + enrich dedup at 50k) to reclaim timeout headroom + unblock plugins (3.3). Roadmap: Optimization → 3.3 → 3.4 (see docs/VISION.md).
 **READ FIRST:** `.planning/SESSION-HANDOFF-2026-06-10.md` — full context, key decisions/rationale, operational gotchas.
@@ -191,6 +191,7 @@ These were INSERTED ahead of the Phase 3.0 spec's 3.1–3.9 lineup because the d
 - Plugin work explicitly deferred to Phase 3.2 + 3.3; Phase 3.1 is skills-only
 - (3.2.1-01) ann.js owns exact verification: hnsw candidates re-scored via dot(), index 1-distance discarded — hnsw/exact parity is exact float equality, false dedup merges impossible
 - (3.2.1-01) hnswlib-node is an optionalDependency only; lint CI test job compiles the native addon and runs npm test with ANN_REQUIRE_HNSW=1 (lint job keeps --ignore-scripts)
+- (3.2.1-03) enrich.js dedup migrated to ann.js topKNeighbors (K_DUP=64, efSearch=150): present[] sorted by skill.id for determinism, candidate edges symmetrized; BFS clustering, compareForCanonical, novelty, PRESERVED_FIELDS interplay all unchanged; 600s hard-warn retargeted as the engine-fallback regression tripwire
 
 ### Spec corrections (rolled into 3.1 Task 8)
 
@@ -207,8 +208,8 @@ These were INSERTED ahead of the Phase 3.0 spec's 3.1–3.9 lineup because the d
 
 ## Session Continuity
 
-Last session: 2026-06-11T05:10:00.622Z
-Stopped at: Completed 03.2.1-02-PLAN.md (Audit B content scanner)
+Last session: 2026-06-11T05:19:08.724Z
+Stopped at: Completed 03.2.1-03-PLAN.md (enrich.js dedup migration to ann.js)
 
 **Resume:** read `.planning/SESSION-MEMO-2026-04-to-05.md` for full context, then `/gsd:execute-phase 3.1`.
 
