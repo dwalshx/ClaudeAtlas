@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: — Agent-Native Directory
 status: executing
-stopped_at: Completed 03.2.1-01-PLAN.md (shared ANN helper)
-last_updated: "2026-06-11T05:06:37.905Z"
+stopped_at: Completed 03.2.1-02-PLAN.md (Audit B content scanner)
+last_updated: "2026-06-11T05:10:00.633Z"
 last_activity: 2026-06-11
 progress:
   total_phases: 17
   completed_phases: 5
   total_plans: 18
-  completed_plans: 13
+  completed_plans: 14
   percent: 100
 ---
 
@@ -27,7 +27,7 @@ See: `.planning/PROJECT.md` (last updated 2026-04-10)
 ## Current Position
 
 Phase: 3.2.1 (hnsw-optimization) — EXECUTING
-Plan: 2 of 7
+Plan: 3 of 7
 Status: Ready to execute
 Next action: **Phase 3.2.1 — HNSW optimization** (inserted into roadmap 2026-06-10) — `/gsd:plan-phase 3.2.1`. Kills the O(N²) build long-pole (compute-similar + enrich dedup at 50k) to reclaim timeout headroom + unblock plugins (3.3). Roadmap: Optimization → 3.3 → 3.4 (see docs/VISION.md).
 **READ FIRST:** `.planning/SESSION-HANDOFF-2026-06-10.md` — full context, key decisions/rationale, operational gotchas.
@@ -176,6 +176,8 @@ These were INSERTED ahead of the Phase 3.0 spec's 3.1–3.9 lineup because the d
 
 ### Decisions log (cumulative; see `.planning/SESSION-MEMO-2026-04-to-05.md` for full reasoning)
 
+- (3.2.1-02) Audit B content scanner ships flag-don't-block: `content_flags[]` annotations recomputed from the raw 5000-char body every run (NOT in PRESERVED_FIELDS), scanned pre-truncation in filterRaw Step 1c; the only blocking mechanism stays FIXTURE_REPO_DENYLIST
+- (3.2.1-02) content_flags passthrough added to upcastSkillRecord + buildCommonFields (the v2 builders are field whitelists, not spreads) so the annotation survives the v2 NDJSON write
 - 0.92 cosine threshold validated empirically for duplicate detection
 - Novelty is percentile-based (top 5%), NOT absolute 0.45 (spec corrected)
 - Active-fork detection is dead code (scrape skips git forks); replaced with semantic-clone via skill_first_commit_at
@@ -205,8 +207,8 @@ These were INSERTED ahead of the Phase 3.0 spec's 3.1–3.9 lineup because the d
 
 ## Session Continuity
 
-Last session: 2026-06-11T05:06:37.894Z
-Stopped at: Completed 03.2.1-01-PLAN.md (shared ANN helper)
+Last session: 2026-06-11T05:10:00.622Z
+Stopped at: Completed 03.2.1-02-PLAN.md (Audit B content scanner)
 
 **Resume:** read `.planning/SESSION-MEMO-2026-04-to-05.md` for full context, then `/gsd:execute-phase 3.1`.
 
