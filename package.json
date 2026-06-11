@@ -38,7 +38,8 @@
     "check:sitemap": "node scripts/check-sitemap-completeness.js",
     "check:sitemap-stability": "node scripts/check-sitemap-stability.js",
     "check:tier-budget": "node scripts/check-tier-budget.js",
-    "check:asset-sizes": "node scripts/check-asset-sizes.js"
+    "check:asset-sizes": "node scripts/check-asset-sizes.js",
+    "test": "node --test \"scripts/**/*.test.js\""
   },
   "keywords": [
     "claude",
@@ -60,6 +61,9 @@
     "@astrojs/check": "^0.9.9",
     "typescript": "^5.9.3",
     "wrangler": "^4"
+  },
+  "optionalDependencies": {
+    "hnswlib-node": "^3.0.0"
   },
   "overrides": {
     "devalue": "^5.8.1"

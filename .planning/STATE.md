@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: — Agent-Native Directory
-status: verifying
-stopped_at: Completed quick-260603-e96 (Track 1 GraphQL batch migration + retry-after stopgap); 3 tasks committed c0902b7/e0ca2fa/921be94
-last_updated: "2026-06-03T17:32:01.422Z"
-last_activity: "2026-06-03 - Completed quick task 260603-bug: Add agent-ping affordance endpoint + llms.txt invitation"
+status: executing
+stopped_at: Completed 03.2.1-05-PLAN.md (CI engine/timing gates + recall harness)
+last_updated: "2026-06-11T05:53:30.784Z"
+last_activity: 2026-06-11
 progress:
-  total_phases: 16
+  total_phases: 17
   completed_phases: 5
-  total_plans: 11
-  completed_plans: 12
+  total_plans: 18
+  completed_plans: 18
   percent: 100
 ---
 
@@ -21,16 +21,17 @@ progress:
 See: `.planning/PROJECT.md` (last updated 2026-04-10)
 
 **Core value:** Users can find the best Claude skill for a given task in under 30 seconds, with visible signals for why it's trustworthy.
-**Current focus:** Phase 3.2 — plugin-and-mcp-scoring
+**Current focus:** Phase 3.2.1 — hnsw-optimization
 **Milestone:** v3.0 — Comprehensive Agent Tooling Index (in progress)
 
 ## Current Position
 
-Phase: 3.2 (plugin-and-mcp-scoring) — READY FOR VERIFICATION
-Plan: 1 of 1 (all 14 tasks committed: 0b460d0 … d37c9a2)
-Status: Phase complete — ready for verification
-Next action: dispatch branch CI per 3.2-SMOKE-RESULTS.md Part B, then `/gsd:verify-phase 3.2`
-Last activity: 2026-06-03 - Completed quick task 260603-e96: Fix failing daily-scrape Track 1 rate-limit (branch fix/track1-rate-limit; awaiting branch-CI validation)
+Phase: 3.2.1 (hnsw-optimization) — EXECUTING
+Plan: 6 of 7 complete (01–06; next: 07 — branch-dispatch validation run)
+Status: Ready to execute
+Next action: **Phase 3.2.1 — HNSW optimization** (inserted into roadmap 2026-06-10) — `/gsd:plan-phase 3.2.1`. Kills the O(N²) build long-pole (compute-similar + enrich dedup at 50k) to reclaim timeout headroom + unblock plugins (3.3). Roadmap: Optimization → 3.3 → 3.4 (see docs/VISION.md).
+**READ FIRST:** `.planning/SESSION-HANDOFF-2026-06-10.md` — full context, key decisions/rationale, operational gotchas.
+Last activity: 2026-06-11
 
 ### Quick Tasks Completed
 
@@ -169,8 +170,14 @@ These were INSERTED ahead of the Phase 3.0 spec's 3.1–3.9 lineup because the d
 
 ## Accumulated Context
 
+### Roadmap Evolution
+
+- Phase 3.2.1 inserted after Phase 3.2 (2026-06-10): HNSW optimization — replace O(N²) cosine scans (compute-similar.js + enrich.js dedup) with approximate-NN; folds in security Audit B content-scanner filter (URGENT — cron at 4.5-5.5h vs 360-min hard cap; blocks 3.3 plugin re-enable)
+
 ### Decisions log (cumulative; see `.planning/SESSION-MEMO-2026-04-to-05.md` for full reasoning)
 
+- (3.2.1-02) Audit B content scanner ships flag-don't-block: `content_flags[]` annotations recomputed from the raw 5000-char body every run (NOT in PRESERVED_FIELDS), scanned pre-truncation in filterRaw Step 1c; the only blocking mechanism stays FIXTURE_REPO_DENYLIST
+- (3.2.1-02) content_flags passthrough added to upcastSkillRecord + buildCommonFields (the v2 builders are field whitelists, not spreads) so the annotation survives the v2 NDJSON write
 - 0.92 cosine threshold validated empirically for duplicate detection
 - Novelty is percentile-based (top 5%), NOT absolute 0.45 (spec corrected)
 - Active-fork detection is dead code (scrape skips git forks); replaced with semantic-clone via skill_first_commit_at
@@ -182,6 +189,13 @@ These were INSERTED ahead of the Phase 3.0 spec's 3.1–3.9 lineup because the d
 - `is_duplicate` filtered site-side in `src/lib/skills.js` default-browse helpers (direct URLs unaffected)
 - `PRESERVED_FIELDS` extended so one-day enrich failures don't wipe dedup state
 - Plugin work explicitly deferred to Phase 3.2 + 3.3; Phase 3.1 is skills-only
+- (3.2.1-01) ann.js owns exact verification: hnsw candidates re-scored via dot(), index 1-distance discarded — hnsw/exact parity is exact float equality, false dedup merges impossible
+- (3.2.1-01) hnswlib-node is an optionalDependency only; lint CI test job compiles the native addon and runs npm test with ANN_REQUIRE_HNSW=1 (lint job keeps --ignore-scripts)
+- (3.2.1-03) enrich.js dedup migrated to ann.js topKNeighbors (K_DUP=64, efSearch=150): present[] sorted by skill.id for determinism, candidate edges symmetrized; BFS clustering, compareForCanonical, novelty, PRESERVED_FIELDS interplay all unchanged; 600s hard-warn retargeted as the engine-fallback regression tripwire
+- (3.2.1-04) compute-similar.js migrated to ann.js topKNeighbors under a pre-swap 7-test shape baseline (Wave-0 lock): output key order is now slug-sorted (caller-sort contract, shape-neutral), computeSimilar() nulls rec.values after Float32 normalization (Pitfall 7), TOP_K=3 now output-size-only, 'similar-skill sets in Ns' log line preserved for Plan 05's timing gate
+- (3.2.1-06) FIXTURE_REPO_DENYLIST extended 2 → 6 entries, all 4 Audit B candidates human-verified 2026-06-11 and approved (majiayu000/claude-skill-registry + -data aggregator mirrors, liminal-ai/skill-scanner-ts scanner port, RekitRex21/Dino_Scan preventive); denylist stays exact repo_full_name match, regression test locks the contract incl. a near-miss negative
+- (3.2.1-05) Engine/timing gates wired into daily-scrape: enrich + Build logs tee'd (set -o pipefail first), non-push gate steps grep '[ann] engine=hnsw' (anti-silent-fallback, Pitfall 2) and enforce <900s elapsed via awk, failing loudly if ELAPSED parses empty; validate_ann dispatch input runs the four-gate recall harness BEFORE enrich so a FAIL stops the run pre-publish
+- (3.2.1-05) validate-ann-recall.js mirrors per-consumer production semantics: symmetrized top-1 (enrich nnSim parity) vs unsymmetrized top-K (compute-similar parity); misses-only invariant (annPairs ⊆ exactPairs) fails the run regardless of recall; hard-requires annEngine()==='hnsw' — CI-only by design
 
 ### Spec corrections (rolled into 3.1 Task 8)
 
@@ -198,8 +212,8 @@ These were INSERTED ahead of the Phase 3.0 spec's 3.1–3.9 lineup because the d
 
 ## Session Continuity
 
-Last session: 2026-06-03T17:32:01.408Z
-Stopped at: Completed quick-260603-e96 (Track 1 GraphQL batch migration + retry-after stopgap); 3 tasks committed c0902b7/e0ca2fa/921be94
+Last session: 2026-06-11T05:53:30.772Z
+Stopped at: Completed 03.2.1-05-PLAN.md (CI engine/timing gates + recall harness)
 
 **Resume:** read `.planning/SESSION-MEMO-2026-04-to-05.md` for full context, then `/gsd:execute-phase 3.1`.
 

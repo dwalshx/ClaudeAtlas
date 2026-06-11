@@ -20,6 +20,8 @@ import { readNdjsonRecords, writeNdjsonStreaming } from './lib/ndjson.js';
 import { assignSlugs } from './lib/slug.js';
 // F2: entity-type-aware filter dispatch + tag derivation.
 import { isSlop as isSlopDispatch, dedupLanguageVariants } from './lib/filter-rules/index.js';
+// Phase 3.2.1 (Audit B): content scanner — annotation only, never a gate.
+import { scanContentFlags } from './lib/filter-rules/content.rules.js';
 import { deriveTagsFromLegacyCategory, mergeTags } from './lib/tags.js';
 // Phase 3.1.4: convert records to v2 EntityRecord shape on write so the
 // polymorphic envelope is honored on the write path, not just the read
@@ -53,7 +55,11 @@ const LEGACY_OUTPUT_PATH = join(ROOT, 'data', 'skills.json');
 // NDJSON corrupt, runner OOM), yesterday's is_duplicate / canonical_slug /
 // novelty_score values survive — the site doesn't visibly explode with
 // duplicates until enrich.js succeeds again.
-const PRESERVED_FIELDS = [
+// NOTE (Phase 3.2.1, Audit B): 'content_flags' is deliberately NOT in PRESERVED_FIELDS —
+// it is recomputed from the raw body on every filter run (see Step 1c in
+// filterRaw). Copying it forward would let stale flags shadow a fresh scan.
+// Exported for the filter.test.js regression guard.
+export const PRESERVED_FIELDS = [
   'skill_first_commit_at',
   'is_duplicate',
   'canonical_slug',
@@ -263,6 +269,7 @@ function deduplicateLanguageVariants(skills) {
  *   uniqueRepos: number,
  *   mergedCount: number,
  *   preservedCount: number,
+ *   contentFlagStats: { flagged_records: number, by_rule: Object<string, number>, multi_rule_records: number },
  * }}
  */
 export function filterRaw(raw, currentBySlug = new Map(), priorEnrichments = new Map()) {
@@ -273,6 +280,21 @@ export function filterRaw(raw, currentBySlug = new Map(), priorEnrichments = new
 
   // Step 1b: language variant dedup
   filtered = deduplicateLanguageVariants(filtered);
+
+  // Step 1c (Phase 3.2.1, Audit B): content-scanner annotation. FLAG, don't
+  // block — see content.rules.js header. MUST run before Step 4b truncation:
+  // body_markdown here is the raw scraper output (5000-char cap); truncating
+  // first would blind the scanner to payloads at offsets 1500-5000.
+  // Recomputed from raw every run — deliberately NOT in PRESERVED_FIELDS.
+  const contentFlagStats = { flagged_records: 0, by_rule: {}, multi_rule_records: 0 };
+  for (const s of filtered) {
+    s.content_flags = scanContentFlags(s);
+    if (s.content_flags.length > 0) {
+      contentFlagStats.flagged_records++;
+      if (s.content_flags.length >= 2) contentFlagStats.multi_rule_records++;
+      for (const r of s.content_flags) contentFlagStats.by_rule[r] = (contentFlagStats.by_rule[r] || 0) + 1;
+    }
+  }
 
   // Step 2: path-aware slug assignment (replaces old MAX_PER_REPO cap)
   const capped = filtered;
@@ -396,6 +418,7 @@ export function filterRaw(raw, currentBySlug = new Map(), priorEnrichments = new
     uniqueRepos,
     mergedCount,
     preservedCount,
+    contentFlagStats,
   };
 }
 
@@ -466,7 +489,7 @@ function main() {
   const {
     capped, redirects, collisionCount,
     tiers, categories, uniqueRepos,
-    mergedCount, preservedCount,
+    mergedCount, preservedCount, contentFlagStats,
   } = filterRaw(raw, currentSkillsBySlug, priorEnrichments);
 
   if (mergedCount > 0) {
@@ -497,6 +520,8 @@ function main() {
   console.log(`Total skills: ${capped.length}`);
   console.log(`Unique repos: ${uniqueRepos}`);
   console.log(`Tiers: ${tiers.featured} Featured, ${tiers.solid} Solid, ${tiers.listed} Listed`);
+  // Audit B summary — flags are annotations, never gates; surfaced for review.
+  console.log(`Content flags: ${contentFlagStats.flagged_records} flagged (${contentFlagStats.multi_rule_records} multi-rule)`);
   console.log(`Categories:`);
   for (const [cat, count] of Object.entries(categories).sort((a, b) => b[1] - a[1])) {
     console.log(`  ${cat}: ${count}`);
@@ -522,6 +547,9 @@ function main() {
     unique_repos: uniqueRepos,
     tiers,
     categories,
+    // Phase 3.2.1 (Audit B): per-run content-scanner summary. Counts only —
+    // pipeline-stats.json stays a bounded sidecar (allowlisted).
+    content_flags: contentFlagStats,
     filter_config: CONFIG,
   };
   writeFileSync(STATS_PATH, JSON.stringify(stats, null, 2), 'utf-8');

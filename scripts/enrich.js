@@ -24,9 +24,8 @@
  *
  * Idempotent: re-running on the same input produces the same output.
  *
- * Scaling: brute-force O(n²) cosine. n=1,885 ≈ 5s. n=5,000 ≈ 50s.
- * n=20,000 ≈ 800s (R2 in 3.1-CONTEXT.md — known cliff; defer LSH to
- * Phase 3.x if/when n grows past O(n²) practicality).
+ * Scaling: ANN candidate retrieval via scripts/lib/ann.js (HNSW in CI,
+ * exact fallback on dev). ~O(N log N); 51k ≈ 6-10 min on GHA.
  */
 
 import { existsSync } from 'node:fs';
@@ -41,6 +40,7 @@ import { buildHeader } from './lib/entity-version.js';
 // exceed 64 chars and would silently fail to join. Fixed by sharing the
 // canonical helper (which `export`s the function as of Task 4 Step 0).
 import { vectorizeId } from './embed-skills.js';
+import { topKNeighbors, normalizeFloat32, dot, annEngine } from './lib/ann.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..');
@@ -77,26 +77,6 @@ function resolvePath(p) {
 
 function log(msg) { console.log(`[enrich] ${msg}`); }
 function warn(msg) { console.warn(`[enrich] WARN: ${msg}`); }
-
-/**
- * Pre-normalize a vector to unit length. After normalization, plain dot
- * product = cosine similarity. Stored as Float32 for ~2× speed.
- */
-function normalizeFloat32(values) {
-  const nv = new Float32Array(values.length);
-  let n = 0;
-  for (let i = 0; i < values.length; i++) n += values[i] * values[i];
-  n = Math.sqrt(n);
-  if (n === 0) return nv;
-  for (let i = 0; i < values.length; i++) nv[i] = values[i] / n;
-  return nv;
-}
-
-function dot(a, b) {
-  let d = 0;
-  for (let i = 0; i < a.length; i++) d += a[i] * b[i];
-  return d;
-}
 
 /**
  * Decide which of two duplicates is canonical. Older wins.
@@ -152,6 +132,12 @@ export function enrichSkills(skills, vectorRecords) {
 
   log(`enriching ${present.length} skills with vectors (${absent.length} without — left as-is)`);
 
+  // Determinism contract (ann.js): insertion order must be stable. Sort by
+  // skill.id — present[] indexes stay internally consistent because every
+  // downstream structure (nnSim, dupNeighbors, clusters) is index-based and
+  // output writes go through present[i].skill references.
+  present.sort((a, b) => (a.skill.id < b.skill.id ? -1 : a.skill.id > b.skill.id ? 1 : 0));
+
   const n = present.length;
   const nnSim = new Float32Array(n);
   for (let i = 0; i < n; i++) nnSim[i] = -1;
@@ -159,17 +145,26 @@ export function enrichSkills(skills, vectorRecords) {
   // Adjacency: dup pairs above DUP_THRESHOLD.
   const dupNeighbors = Array.from({ length: n }, () => []);
 
+  // Phase 3.2.1: ANN candidate retrieval replaces the O(n²) scan.
+  // K_DUP=64 + efSearch=150 (locked decision). Misses-only error model:
+  // ann.js exact-verifies every candidate sim via dot before returning, so
+  // a pair above DUP_THRESHOLD can be MISSED (cluster split) but never
+  // invented (false merge). Edges are symmetrized — either endpoint
+  // finding the other suffices for BFS connectivity.
+  const K_DUP = 64;
+  const items = present.map((p) => ({ id: p.skill.id, vec: p.vec }));
+  log(`ann: engine=${annEngine()} querying top-${K_DUP} candidates for ${n} records`);
+  const neighborSets = topKNeighbors(items, K_DUP, { efSearch: 150 });
   for (let i = 0; i < n; i++) {
-    for (let j = i + 1; j < n; j++) {
-      const s = dot(present[i].vec, present[j].vec);
-      if (s > nnSim[i]) nnSim[i] = s;
-      if (s > nnSim[j]) nnSim[j] = s;
-      if (s > DUP_THRESHOLD) {
+    for (const { idx: j, sim } of neighborSets[i]) {
+      if (sim > nnSim[i]) nnSim[i] = sim;
+      if (sim > nnSim[j]) nnSim[j] = sim;   // symmetrize novelty input too
+      if (sim > DUP_THRESHOLD) {
         dupNeighbors[i].push(j);
-        dupNeighbors[j].push(i);
+        dupNeighbors[j].push(i);            // duplicate edges are fine — BFS visited-check tolerates them
       }
     }
-    if ((i + 1) % 500 === 0) log(`  pairwise: ${i + 1}/${n}`);
+    if ((i + 1) % 5000 === 0) log(`  ann candidates: ${i + 1}/${n}`);
   }
 
   // BFS clusters; oldest is canonical, others get is_duplicate=true.
@@ -308,9 +303,10 @@ function main() {
   log(`enrichment complete in ${elapsed}s`);
   log(`stats: ${JSON.stringify(stats)}`);
 
-  // Phase 3.1 Rev 2 FLAG 2: timing hard-warn.
+  // Phase 3.1 Rev 2 FLAG 2: timing hard-warn — post-HNSW (Phase 3.2.1) this
+  // doubles as the engine-fallback regression tripwire (RESEARCH.md Pitfall 2).
   if (Number(elapsed) > 600) {
-    warn(`ran ${elapsed}s — approaching 25-min daily budget; consider HNSW migration per RESEARCH.md §R2/§Q7`);
+    warn(`ran ${elapsed}s — post-HNSW this should be minutes; engine fallback or regression likely. Check '[ann] engine=' line above.`);
   }
 
   if (args.dryRun) {
