@@ -9,6 +9,10 @@ on:
         description: 'Force a full skill re-embed (one-time bootstrap of skill-vectors cache)'
         type: boolean
         default: false
+      validate_ann:
+        description: 'Run the one-shot HNSW-vs-exact recall validation (adds ~60-100 min; needs warm skill-vectors cache)'
+        type: boolean
+        default: false
   push:
     branches: [main]
 
@@ -305,6 +309,15 @@ jobs:
           path: data/skill-vectors.ndjson
           key: skill-vectors-${{ github.run_number }}
 
+      # Phase 3.2.1: one-shot real-vector recall validation (CI-only — the real
+      # ~51k vector file lives only in the GHA cache; local copies are the stale
+      # 1,078-vector Phase-1 seed). Dispatch with -f validate_ann=true. ~60-100 min.
+      # Placed right after the embed/save (vectors are freshest here) and BEFORE
+      # enrich, so a FAIL stops the run before bad dedup data could publish.
+      - name: Validate ANN recall vs exact baseline (dispatch-gated)
+        if: github.event_name == 'workflow_dispatch' && github.event.inputs.validate_ann == 'true'
+        run: node scripts/validate-ann-recall.js
+
       # Phase 3.2 (Task 12): NEW — Embed plugins. Same OpenAI embedder, dispatched
       # by --entity-type. Reads data/plugins.ndjson, writes data/plugin-vectors.ndjson;
       # resumable + idempotent via the per-record _content_sha delta check.
@@ -334,7 +347,25 @@ jobs:
       # per-query for novelty).
       - name: Enrich skills (dedup + novelty)
         if: github.event_name != 'push'
-        run: npm run enrich
+        # Phase 3.2.1: pipefail BEFORE the pipe — GitHub's default step shell is
+        # `bash -e {0}` WITHOUT pipefail, so `npm run enrich | tee` would
+        # otherwise mask an enrich failure behind tee's exit 0.
+        run: |
+          set -o pipefail
+          npm run enrich 2>&1 | tee /tmp/enrich.log
+
+      # Phase 3.2.1: anti-silent-fallback + timing gate. If the native hnswlib
+      # build ever breaks on a runner/Node bump, ann.js falls back to the exact
+      # engine and the cron quietly creeps back toward the 221-min O(N²) path —
+      # this gate makes that failure LOUD instead (RESEARCH.md Pitfall 2).
+      - name: "Gate: ANN engine + enrich timing"
+        if: github.event_name != 'push'
+        run: |
+          grep -q '\[ann\] engine=hnsw' /tmp/enrich.log || { echo '::error::ANN engine gate FAILED — enrich ran on the exact fallback engine (silent O(N²) regression). Check hnswlib-node compile in npm ci.'; exit 1; }
+          ELAPSED=$(grep -o 'enrichment complete in [0-9.]*s' /tmp/enrich.log | grep -o '[0-9.]*' | head -1)
+          [ -n "$ELAPSED" ] || { echo '::error::enrich timing gate FAILED — could not parse elapsed seconds from /tmp/enrich.log (log-line contract broken?)'; exit 1; }
+          echo "enrich elapsed: ${ELAPSED}s (gate: <900)"
+          awk -v e="$ELAPSED" 'BEGIN { exit (e+0 < 900) ? 0 : 1 }' || { echo "::error::enrich timing gate FAILED: ${ELAPSED}s >= 900s (15 min) — engine fallback or regression"; exit 1; }
 
       # Phase 3.2 (Task 12, D-10): NEW — Enrich plugins (dedup + novelty).
       # Reads data/plugin-vectors.ndjson + data/plugins.ndjson, rewrites
@@ -465,10 +496,27 @@ jobs:
           fi
 
       # Build site (PostHog key baked into client bundle if configured)
+      # Phase 3.2.1: log tee'd for the compute-similar engine/timing gate below
+      # (pipefail BEFORE the pipe — GitHub's bash -e default does not include it).
       - name: Build Astro site
-        run: npm run build
+        run: |
+          set -o pipefail
+          npm run build 2>&1 | tee /tmp/build.log
         env:
           PUBLIC_POSTHOG_KEY: ${{ secrets.PUBLIC_POSTHOG_KEY }}
+
+      # Phase 3.2.1: same anti-silent-fallback + timing gate for the prebuild
+      # compute-similar pass (the historical ~162-min Build long-pole). Non-push
+      # only: push-event builds run on the stale 1,078-vector seed where timings
+      # are trivially fine — keep the gate scoped to data runs.
+      - name: "Gate: compute-similar engine + timing"
+        if: github.event_name != 'push'
+        run: |
+          grep -q '\[ann\] engine=hnsw' /tmp/build.log || { echo '::error::ANN engine gate FAILED — compute-similar (prebuild) ran on the exact fallback engine.'; exit 1; }
+          ELAPSED=$(grep -o 'similar-skill sets in [0-9.]*s' /tmp/build.log | grep -o '[0-9.]*s' | grep -o '[0-9.]*' | head -1)
+          [ -n "$ELAPSED" ] || { echo '::error::compute-similar timing gate FAILED — could not parse elapsed seconds from /tmp/build.log (log-line contract broken?)'; exit 1; }
+          echo "compute-similar elapsed: ${ELAPSED}s (gate: <900)"
+          awk -v e="$ELAPSED" 'BEGIN { exit (e+0 < 900) ? 0 : 1 }' || { echo "::error::compute-similar timing gate FAILED: ${ELAPSED}s >= 900s (15 min)"; exit 1; }
 
       # Deploy to Cloudflare Workers Static Assets
       # Branch dispatch safety (Phase 3.1): deploys to claudeatlas.com.
