@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: — Agent-Native Directory
 status: executing
-stopped_at: Completed 03.2.1-06-PLAN.md (fixture-repo denylist extension)
-last_updated: "2026-06-11T06:00:00.000Z"
+stopped_at: Completed 03.2.1-05-PLAN.md (CI engine/timing gates + recall harness)
+last_updated: "2026-06-11T05:53:30.784Z"
 last_activity: 2026-06-11
 progress:
   total_phases: 17
   completed_phases: 5
   total_plans: 18
-  completed_plans: 17
+  completed_plans: 18
   percent: 100
 ---
 
@@ -27,7 +27,7 @@ See: `.planning/PROJECT.md` (last updated 2026-04-10)
 ## Current Position
 
 Phase: 3.2.1 (hnsw-optimization) — EXECUTING
-Plan: 5 of 7 complete (01–04, 06; next: 05, then 07)
+Plan: 6 of 7 complete (01–06; next: 07 — branch-dispatch validation run)
 Status: Ready to execute
 Next action: **Phase 3.2.1 — HNSW optimization** (inserted into roadmap 2026-06-10) — `/gsd:plan-phase 3.2.1`. Kills the O(N²) build long-pole (compute-similar + enrich dedup at 50k) to reclaim timeout headroom + unblock plugins (3.3). Roadmap: Optimization → 3.3 → 3.4 (see docs/VISION.md).
 **READ FIRST:** `.planning/SESSION-HANDOFF-2026-06-10.md` — full context, key decisions/rationale, operational gotchas.
@@ -194,6 +194,8 @@ These were INSERTED ahead of the Phase 3.0 spec's 3.1–3.9 lineup because the d
 - (3.2.1-03) enrich.js dedup migrated to ann.js topKNeighbors (K_DUP=64, efSearch=150): present[] sorted by skill.id for determinism, candidate edges symmetrized; BFS clustering, compareForCanonical, novelty, PRESERVED_FIELDS interplay all unchanged; 600s hard-warn retargeted as the engine-fallback regression tripwire
 - (3.2.1-04) compute-similar.js migrated to ann.js topKNeighbors under a pre-swap 7-test shape baseline (Wave-0 lock): output key order is now slug-sorted (caller-sort contract, shape-neutral), computeSimilar() nulls rec.values after Float32 normalization (Pitfall 7), TOP_K=3 now output-size-only, 'similar-skill sets in Ns' log line preserved for Plan 05's timing gate
 - (3.2.1-06) FIXTURE_REPO_DENYLIST extended 2 → 6 entries, all 4 Audit B candidates human-verified 2026-06-11 and approved (majiayu000/claude-skill-registry + -data aggregator mirrors, liminal-ai/skill-scanner-ts scanner port, RekitRex21/Dino_Scan preventive); denylist stays exact repo_full_name match, regression test locks the contract incl. a near-miss negative
+- (3.2.1-05) Engine/timing gates wired into daily-scrape: enrich + Build logs tee'd (set -o pipefail first), non-push gate steps grep '[ann] engine=hnsw' (anti-silent-fallback, Pitfall 2) and enforce <900s elapsed via awk, failing loudly if ELAPSED parses empty; validate_ann dispatch input runs the four-gate recall harness BEFORE enrich so a FAIL stops the run pre-publish
+- (3.2.1-05) validate-ann-recall.js mirrors per-consumer production semantics: symmetrized top-1 (enrich nnSim parity) vs unsymmetrized top-K (compute-similar parity); misses-only invariant (annPairs ⊆ exactPairs) fails the run regardless of recall; hard-requires annEngine()==='hnsw' — CI-only by design
 
 ### Spec corrections (rolled into 3.1 Task 8)
 
@@ -210,8 +212,8 @@ These were INSERTED ahead of the Phase 3.0 spec's 3.1–3.9 lineup because the d
 
 ## Session Continuity
 
-Last session: 2026-06-11T06:00:00.000Z
-Stopped at: Completed 03.2.1-06-PLAN.md (fixture-repo denylist extension)
+Last session: 2026-06-11T05:53:30.772Z
+Stopped at: Completed 03.2.1-05-PLAN.md (CI engine/timing gates + recall harness)
 
 **Resume:** read `.planning/SESSION-MEMO-2026-04-to-05.md` for full context, then `/gsd:execute-phase 3.1`.
 
