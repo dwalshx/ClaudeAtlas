@@ -30,6 +30,11 @@
 export const FIXTURE_REPO_DENYLIST = new Set([
   'claude-world/claude-skill-antivirus',
   'cisco-ai-defense/skill-scanner',
+  // Phase 3.2.1 (Audit B FP-calibration scan, 2026-06-10; human-verified 2026-06-11):
+  'majiayu000/claude-skill-registry',       // aggregator-mirror: auto-generated registry mirror w/ prompt-injection-test fixtures
+  'majiayu000/claude-skill-registry-data',  // data twin of the above (same mirror corpus + fixtures)
+  'liminal-ai/skill-scanner-ts',            // scanner-port: TS port of cisco-ai-defense/skill-scanner w/ embedded eval fixtures
+  'RekitRex21/Dino_Scan',                   // scanner: security-scanner repo (preventive; 0 current filtered records)
 ]);
 
 /**
