@@ -4,13 +4,13 @@ milestone: v2.0
 milestone_name: — Agent-Native Directory
 status: executing
 stopped_at: Completed 03.2.1-05-PLAN.md (CI engine/timing gates + recall harness)
-last_updated: "2026-06-11T05:53:30.784Z"
+last_updated: "2026-06-11T21:21:32.740Z"
 last_activity: 2026-06-11
 progress:
   total_phases: 17
-  completed_phases: 5
+  completed_phases: 6
   total_plans: 18
-  completed_plans: 18
+  completed_plans: 19
   percent: 100
 ---
 
@@ -26,8 +26,8 @@ See: `.planning/PROJECT.md` (last updated 2026-04-10)
 
 ## Current Position
 
-Phase: 3.2.1 (hnsw-optimization) — EXECUTING
-Plan: 6 of 7 complete (01–06; next: 07 — branch-dispatch validation run)
+Phase: 04
+Plan: Not started
 Status: Ready to execute
 Next action: **Phase 3.2.1 — HNSW optimization** (inserted into roadmap 2026-06-10) — `/gsd:plan-phase 3.2.1`. Kills the O(N²) build long-pole (compute-similar + enrich dedup at 50k) to reclaim timeout headroom + unblock plugins (3.3). Roadmap: Optimization → 3.3 → 3.4 (see docs/VISION.md).
 **READ FIRST:** `.planning/SESSION-HANDOFF-2026-06-10.md` — full context, key decisions/rationale, operational gotchas.
