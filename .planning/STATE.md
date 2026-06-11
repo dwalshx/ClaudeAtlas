@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: — Agent-Native Directory
-status: verifying
-stopped_at: "Scraper-saga + security audit CLOSED (2026-06-10). Cron green, site fresh, hardened, git clean. NEXT = HNSW optimization phase. READ .planning/SESSION-HANDOFF-2026-06-10.md FIRST."
-last_updated: "2026-06-10T21:48:00.000Z"
-last_activity: "2026-06-10 - Closed scraper saga (6 walls) + 2026-06-08 security audit; gitignored regression fixtures; wrote SESSION-HANDOFF-2026-06-10.md"
+status: executing
+stopped_at: Completed 03.2.1-01-PLAN.md (shared ANN helper)
+last_updated: "2026-06-11T05:06:37.905Z"
+last_activity: 2026-06-11
 progress:
-  total_phases: 16
+  total_phases: 17
   completed_phases: 5
-  total_plans: 11
-  completed_plans: 12
+  total_plans: 18
+  completed_plans: 13
   percent: 100
 ---
 
@@ -21,15 +21,17 @@ progress:
 See: `.planning/PROJECT.md` (last updated 2026-04-10)
 
 **Core value:** Users can find the best Claude skill for a given task in under 30 seconds, with visible signals for why it's trustworthy.
-**Current focus:** Phase 3.2 — plugin-and-mcp-scoring
+**Current focus:** Phase 3.2.1 — hnsw-optimization
 **Milestone:** v3.0 — Comprehensive Agent Tooling Index (in progress)
 
 ## Current Position
 
-Status: STABLE — scraper saga + security audit closed (2026-06-10). Cron green (~4.5-5.5h, tight under 360 cap), site fresh/self-updating, security hardened, git tree clean. Plugins GATED OFF (PLUGINS_ENABLED=false) pending 3.3.
+Phase: 3.2.1 (hnsw-optimization) — EXECUTING
+Plan: 2 of 7
+Status: Ready to execute
 Next action: **Phase 3.2.1 — HNSW optimization** (inserted into roadmap 2026-06-10) — `/gsd:plan-phase 3.2.1`. Kills the O(N²) build long-pole (compute-similar + enrich dedup at 50k) to reclaim timeout headroom + unblock plugins (3.3). Roadmap: Optimization → 3.3 → 3.4 (see docs/VISION.md).
 **READ FIRST:** `.planning/SESSION-HANDOFF-2026-06-10.md` — full context, key decisions/rationale, operational gotchas.
-Last activity: 2026-06-10 - Scraper saga (6 walls) + security audit (8 items) closed; quick task 260603-e96 complete
+Last activity: 2026-06-11
 
 ### Quick Tasks Completed
 
@@ -185,6 +187,8 @@ These were INSERTED ahead of the Phase 3.0 spec's 3.1–3.9 lineup because the d
 - `is_duplicate` filtered site-side in `src/lib/skills.js` default-browse helpers (direct URLs unaffected)
 - `PRESERVED_FIELDS` extended so one-day enrich failures don't wipe dedup state
 - Plugin work explicitly deferred to Phase 3.2 + 3.3; Phase 3.1 is skills-only
+- (3.2.1-01) ann.js owns exact verification: hnsw candidates re-scored via dot(), index 1-distance discarded — hnsw/exact parity is exact float equality, false dedup merges impossible
+- (3.2.1-01) hnswlib-node is an optionalDependency only; lint CI test job compiles the native addon and runs npm test with ANN_REQUIRE_HNSW=1 (lint job keeps --ignore-scripts)
 
 ### Spec corrections (rolled into 3.1 Task 8)
 
@@ -201,8 +205,8 @@ These were INSERTED ahead of the Phase 3.0 spec's 3.1–3.9 lineup because the d
 
 ## Session Continuity
 
-Last session: 2026-06-03T17:32:01.408Z
-Stopped at: Completed quick-260603-e96 (Track 1 GraphQL batch migration + retry-after stopgap); 3 tasks committed c0902b7/e0ca2fa/921be94
+Last session: 2026-06-11T05:06:37.894Z
+Stopped at: Completed 03.2.1-01-PLAN.md (shared ANN helper)
 
 **Resume:** read `.planning/SESSION-MEMO-2026-04-to-05.md` for full context, then `/gsd:execute-phase 3.1`.
 
