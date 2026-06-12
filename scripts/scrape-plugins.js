@@ -22,10 +22,10 @@
  * Resumable from checkpoint.
  */
 
-import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'fs';
+import { writeFileSync, existsSync, mkdirSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
-import { writeNdjsonStreaming } from './lib/ndjson.js';
+import { writeNdjsonStreaming, readNdjsonRecords } from './lib/ndjson.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..');
@@ -37,11 +37,10 @@ const OUTPUT_PATH = join(DATA_DIR, 'plugins-raw.ndjson');
 const META_PATH = join(DATA_DIR, 'plugins-meta.json');
 const PARTIAL_PATH = join(DATA_DIR, 'plugins-raw.ndjson.partial');
 
+// NOTE: the missing-token check lives at the top of main(), NOT here at
+// module level — importing this module (e.g. from the test suite) must be
+// side-effect free. See the invoked-as-script guard at the bottom.
 const TOKEN = process.env.GITHUB_TOKEN;
-if (!TOKEN) {
-  console.error('ERROR: GITHUB_TOKEN environment variable required.');
-  process.exit(1);
-}
 
 const HEADERS = {
   'Authorization': `Bearer ${TOKEN}`,
@@ -291,11 +290,24 @@ async function walkComponentDirs(repoFullName, branch = 'main') {
 
 // --- Resume support ---
 
-function loadCheckpoint() {
-  if (!existsSync(PARTIAL_PATH)) return { repos: [], processedSet: new Set() };
+/**
+ * Phase 3.3 / D-02: streaming NDJSON checkpoint read. The pre-3.3 version
+ * used the F1-banned whole-file parse-after-read pattern AND read a JSON
+ * object's `.repos` key that saveCheckpoint (NDJSON array-of-records) never wrote —
+ * the try/catch swallowed the mismatch, so `processedSet` resume never
+ * worked. readNdjsonRecords matches the writer's shape and is
+ * V8-string-limit safe.
+ *
+ * Path-injectable variant exported for unit tests
+ * (scripts/__tests__/scrape-plugins.test.js).
+ *
+ * @param {string} path
+ * @returns {{ repos: any[], processedSet: Set<string> }}
+ */
+export function loadCheckpointFrom(path) {
+  if (!existsSync(path)) return { repos: [], processedSet: new Set() };
   try {
-    const data = JSON.parse(readFileSync(PARTIAL_PATH, 'utf-8'));
-    const repos = data.repos || [];
+    const repos = [...readNdjsonRecords(path, { keyFn: r => r.repo_full_name }).values()];
     const processedSet = new Set(repos.map(r => r.repo_full_name));
     return { repos, processedSet };
   } catch {
@@ -303,14 +315,33 @@ function loadCheckpoint() {
   }
 }
 
+function loadCheckpoint() {
+  return loadCheckpointFrom(PARTIAL_PATH);
+}
+
+/**
+ * Path-injectable checkpoint writer (T6: streaming NDJSON — V8-string-limit
+ * safe). Exported for unit tests.
+ *
+ * @param {string} path
+ * @param {any[]} repos
+ */
+export function saveCheckpointTo(path, repos) {
+  writeNdjsonStreaming(path, repos);
+}
+
 function saveCheckpoint(repos) {
-  // T6: streaming NDJSON checkpoint — V8-string-limit safe.
-  writeNdjsonStreaming(PARTIAL_PATH, repos);
+  saveCheckpointTo(PARTIAL_PATH, repos);
 }
 
 // --- Main ---
 
 async function main() {
+  if (!TOKEN) {
+    console.error('ERROR: GITHUB_TOKEN environment variable required.');
+    process.exit(1);
+  }
+
   log('=== plugin scraper start ===');
 
   // Phase 1: Discovery
@@ -468,7 +499,19 @@ async function main() {
   log('=== plugin scraper complete ===');
 }
 
-main().catch(err => {
-  console.error(`FATAL: ${err.stack || err.message}`);
-  process.exit(1);
-});
+// Invoked-as-script guard (mirrors filter-plugins.js): importing this module
+// (unit tests) must NOT start the scraper.
+const invokedAsScript = (() => {
+  try {
+    return fileURLToPath(import.meta.url) === process.argv[1];
+  } catch {
+    return false;
+  }
+})();
+
+if (invokedAsScript) {
+  main().catch(err => {
+    console.error(`FATAL: ${err.stack || err.message}`);
+    process.exit(1);
+  });
+}
