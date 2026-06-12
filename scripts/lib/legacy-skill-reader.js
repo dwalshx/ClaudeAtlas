@@ -170,7 +170,11 @@ function upcastPluginRecord(rec) {
     readme_markdown: e.readme_markdown ?? rec.readme_markdown ?? '',
     commands: arr(e.commands ?? rec.commands),
     hooks: arr(e.hooks ?? rec.hooks),
-    marketplace_listings: arr(e.marketplace_listings ?? rec.marketplace_listings),
+    // Phase 3.3 / D-08: listings are { path, name } objects (declared
+    // marketplace name propagation); pre-3.3 records stored bare path
+    // strings. listingArr keeps BOTH shapes — the plain arr() string
+    // filter would silently drop the object entries.
+    marketplace_listings: listingArr(e.marketplace_listings ?? rec.marketplace_listings),
     bundled_skills: arr(e.bundled_skills ?? rec.bundled_skills),
     bundled_agents: arr(e.bundled_agents ?? rec.bundled_agents),
     bundled_commands: arr(e.bundled_commands ?? rec.bundled_commands),
@@ -228,6 +232,22 @@ function upcastMcpRecord(rec) {
 /** Coerce to a string array. */
 function arr(v) {
   return Array.isArray(v) ? v.filter((x) => typeof x === 'string') : [];
+}
+
+/**
+ * Phase 3.3 / D-08 marketplace_listings passthrough: accepts the 3.3+
+ * `{ path: string, name: string|null }` object entries AND legacy bare
+ * path strings (pre-3.3 records). Anything else is dropped.
+ *
+ * @param {any} v
+ * @returns {Array<string | { path: string, name: string | null }>}
+ */
+function listingArr(v) {
+  if (!Array.isArray(v)) return [];
+  return v.filter(
+    (x) => typeof x === 'string'
+      || (x && typeof x === 'object' && typeof x.path === 'string'),
+  );
 }
 
 /**

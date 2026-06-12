@@ -93,8 +93,8 @@ const LINT_ALLOWLIST = [
   },
   {
     file: 'scripts/filter-plugins.js',
-    line: 273,
-    reason: 'pipeline-stats.json plugin-section merge write — bounded (~5 KB; tier counts). Phase 3.2 T7.',
+    line: 290,
+    reason: 'pipeline-stats.json plugin-section merge write — bounded (~5 KB; tier counts). Phase 3.2 T7. Line shifted by 3.3-01 D-08 (resolveMarketplaceListings declared-name propagation).',
   },
   {
     file: 'scripts/filter-mcps.js',

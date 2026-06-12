@@ -169,7 +169,10 @@ interface PluginExtra {
   commands: string[];
   hooks: string[];
   // Phase 3.2 bundle graph + manifest signals (D-02, D-03):
-  marketplace_listings: string[];   // marketplace listing IDs advertising this plugin
+  // Phase 3.3 / D-08: path = owner/repo (step-1 `/plugin marketplace add`),
+  // name = DECLARED marketplace name (step-2 `@name` install token), null when
+  // undeclared. Pre-3.3 records stored bare path strings; loaders normalize both.
+  marketplace_listings: Array<{ path: string; name: string | null }>;
   bundled_skills: string[];         // forward edge of D-02 (→ skill.bundled_in_plugins)
   bundled_agents: string[];
   bundled_commands: string[];

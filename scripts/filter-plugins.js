@@ -62,12 +62,29 @@ function hasPluginManifest(raw) {
     && Object.keys(raw.plugin_manifest).length > 0;
 }
 
-/** Marketplace listing presence (manifestless-but-listed plugins). */
-function marketplaceListings(raw) {
+/**
+ * Marketplace listing resolution (manifestless-but-listed plugins).
+ *
+ * Phase 3.3 / D-08 (Q1 Option A): each listing carries BOTH the
+ * `owner/repo` path (install step 1: `/plugin marketplace add <path>`)
+ * AND the marketplace's DECLARED name from marketplace_manifest.name
+ * (install step 2: `/plugin install <plugin>@<name>`). `name` falls back
+ * to null when undeclared/blank — pages render the GitHub fallback for
+ * step 2 in that case. Pre-3.3 records stored bare path strings; loaders
+ * must normalize both shapes.
+ *
+ * Exported for tests (scripts/__tests__/marketplace-resolve.test.js).
+ *
+ * @param {any} raw  repo-level raw record.
+ * @returns {Array<{ path: string, name: string | null }>}
+ */
+export function resolveMarketplaceListings(raw) {
   const mm = raw && raw.marketplace_manifest;
   if (!mm || typeof mm !== 'object') return [];
-  // A marketplace manifest names the repo as a marketplace; list it.
-  return [raw.repo_full_name].filter(Boolean);
+  const path = raw.repo_full_name;
+  if (!path) return [];
+  const name = (typeof mm.name === 'string' && mm.name.trim()) ? mm.name.trim() : null;
+  return [{ path, name }];
 }
 
 /** Flatten a `components` section into a list of component names. */
@@ -133,7 +150,7 @@ export function repoToPluginEntity(raw, opts = {}) {
       readme_markdown: opts.readme || '',
       commands: componentNames(raw, 'commands'),
       hooks: componentNames(raw, 'hooks'),
-      marketplace_listings: marketplaceListings(raw),
+      marketplace_listings: resolveMarketplaceListings(raw),
       bundled_skills: bundledSkillIds(raw),
       bundled_agents: componentNames(raw, 'agents'),
       bundled_commands: componentNames(raw, 'commands'),
@@ -165,7 +182,7 @@ function applyTags(entity) {
 export function filterPluginsRaw(raw, priorEnrichments = new Map(), opts = {}) {
   // 1. Only repos that look like plugins (manifest OR marketplace listing).
   const candidates = raw.filter(
-    (r) => hasPluginManifest(r) || marketplaceListings(r).length > 0,
+    (r) => hasPluginManifest(r) || resolveMarketplaceListings(r).length > 0,
   );
 
   // 2. Transform → entity, 3. upcast to v2.

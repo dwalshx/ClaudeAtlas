@@ -91,7 +91,7 @@
  * @property {string} readme_markdown
  * @property {string[]} commands
  * @property {string[]} hooks
- * @property {string[]} marketplace_listings   Phase 3.2 — marketplace listing IDs advertising this plugin.
+ * @property {Array<{path: string, name: string|null}>} marketplace_listings   Phase 3.3 / D-08 — {path (owner/repo for `/plugin marketplace add`), name (declared marketplace name for `@name`)}. Pre-3.3 records stored bare path strings; loader normalizes both.
  * @property {string[]} bundled_skills         Phase 3.2 / D-02 — skill EntityRecord IDs this plugin bundles (forward edge).
  * @property {string[]} bundled_agents         Phase 3.2 — agent component IDs/names bundled.
  * @property {string[]} bundled_commands       Phase 3.2 — command component IDs/names bundled.

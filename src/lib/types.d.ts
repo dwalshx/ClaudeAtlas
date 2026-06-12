@@ -123,8 +123,18 @@ export interface PluginExtra {
   hooks: string[];
 
   // --- Phase 3.2 bundle graph + manifest signals (D-02, D-03) ---
-  /** Marketplace listing IDs that advertise this plugin. */
-  marketplace_listings: string[];
+  /**
+   * Marketplace listings that advertise this plugin (Phase 3.3 / D-08).
+   * `path` is the marketplace's `owner/repo` (install step 1:
+   * `/plugin marketplace add <path>`); `name` is the marketplace's
+   * DECLARED name from marketplace_manifest.name (install step 2:
+   * `/plugin install <plugin>@<name>`), null when undeclared/blank
+   * (pages render the GitHub fallback).
+   *
+   * NOTE: pre-3.3 records stored bare path strings — the page loader
+   * (3.3 Plan 02) must normalize both shapes.
+   */
+  marketplace_listings: Array<{ path: string; name: string | null }>;
   /** IDs of skill EntityRecords this plugin bundles (forward edge of D-02). */
   bundled_skills: string[];
   /** Agent component IDs/names this plugin bundles. */
