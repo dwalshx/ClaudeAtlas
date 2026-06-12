@@ -1,0 +1,94 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import QualityBadge from '../../components/QualityBadge.astro';
+import { getMcpServers } from '../../lib/plugins.js';
+import { timeAgo } from '../../lib/entities.js';
+
+// Phase 3.3 (D-04): /mcp/ is a static sorted list of every indexed MCP
+// server. At n≈76 records there's no A-Z grouping and no search bar —
+// a plain quality-score-sorted list is the whole page (RESEARCH Q5;
+// /api/v1/search?type=mcp_server exists but is unnecessary at this scale).
+//
+// MCP records are never enriched (D-10) so is_duplicate is always false;
+// the filter is kept for parity with the plugin/skill list contracts.
+
+function transportLabel(t: string | null | undefined): string | null {
+  if (t === 'stdio') return 'stdio';
+  if (t === 'sse') return 'SSE';
+  if (t === 'streamable-http') return 'Streamable HTTP';
+  return null;
+}
+
+const mcps = getMcpServers()
+  .filter((m) => m.is_duplicate !== true)
+  .sort((a, b) => (b.quality_score || 0) - (a.quality_score || 0));
+
+const total = mcps.length;
+const featuredCount = mcps.filter((m) => m.quality_tier === 'featured').length;
+const pageDescription = `All ${total} indexed MCP servers for Claude, ranked by quality score. ${featuredCount} Featured.`;
+---
+
+<BaseLayout title="MCP Servers" description={pageDescription}>
+  <section class="px-4 py-12">
+    <div class="max-w-4xl mx-auto">
+      <header class="mb-10">
+        <h1 class="text-3xl sm:text-4xl font-bold text-white mb-3 tracking-tight">
+          MCP Servers
+        </h1>
+        <p class="text-gray-400 text-base">
+          All {total} indexed Model Context Protocol servers, ranked by quality score.
+        </p>
+        <p class="text-sm text-gray-500 mt-2 font-mono">
+          {total} indexed &middot; {featuredCount} Featured
+        </p>
+      </header>
+
+      <ul class="space-y-3">
+        {mcps.map((mcp) => {
+          const transport = transportLabel(mcp.extra?.transport);
+          const toolCount = Array.isArray(mcp.extra?.tools) ? mcp.extra.tools.length : 0;
+          const owner = (mcp.repo_full_name || '').split('/')[0] || '';
+          return (
+            <li>
+              <a
+                href={`/mcp/${mcp.slug}/`}
+                class="group block bg-gray-900 border border-gray-800 rounded-xl p-5 hover:border-atlas-600 hover:bg-gray-900/80 transition-all duration-200"
+              >
+                <div class="flex items-start justify-between gap-3 mb-2">
+                  <h2 class="text-white font-semibold text-lg group-hover:text-atlas-400 transition-colors font-mono">
+                    {mcp.name}
+                  </h2>
+                  <QualityBadge tier={mcp.quality_tier} />
+                </div>
+                <p class="text-gray-400 text-sm mb-3 line-clamp-2 leading-relaxed">
+                  {mcp.description || 'No description available.'}
+                </p>
+                <div class="flex flex-wrap items-center gap-3 text-xs text-gray-500">
+                  <span class="inline-flex items-center px-2 py-0.5 rounded-full font-medium bg-atlas-900/60 text-atlas-300 border border-atlas-700/50">
+                    MCP server
+                  </span>
+                  {transport && (
+                    <span class="inline-flex items-center px-2 py-0.5 rounded-full font-medium bg-gray-800 text-gray-300 border border-gray-700 font-mono">
+                      {transport}
+                    </span>
+                  )}
+                  {toolCount > 0 && <span>{toolCount} tool{toolCount === 1 ? '' : 's'}</span>}
+                  <span class="flex items-center gap-1">
+                    <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 16 16"><path d="M8 .25a.75.75 0 01.673.418l1.882 3.815 4.21.612a.75.75 0 01.416 1.279l-3.046 2.97.719 4.192a.75.75 0 01-1.088.791L8 12.347l-3.766 1.98a.75.75 0 01-1.088-.79l.72-4.194L.818 6.374a.75.75 0 01.416-1.28l4.21-.611L7.327.668A.75.75 0 018 .25z"/></svg>
+                    {(mcp.repo_stars || 0).toLocaleString()}
+                  </span>
+                  <span class="text-gray-600">Updated {timeAgo(mcp.repo_pushed_at)}</span>
+                  <span class="ml-auto text-gray-600 font-mono text-[11px]">{owner}</span>
+                </div>
+              </a>
+            </li>
+          );
+        })}
+      </ul>
+
+      <footer class="mt-16 pt-8 border-t border-gray-800 text-center">
+        <a href="/" class="text-atlas-400 hover:underline">← Back to home</a>
+      </footer>
+    </div>
+  </section>
+</BaseLayout>

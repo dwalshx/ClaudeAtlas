@@ -11,9 +11,12 @@
  * enumerate every skill slug regardless of tier.
  *
  * This script asserts that the generated sitemap has the expected number of
- * `<loc>` entries: one per record in data/skills.ndjson, plus a small
+ * `<loc>` entries: one per record in data/skills.ndjson, plus (Phase 3.3)
+ * one per record in data/plugins.ndjson and data/mcp-servers.ndjson — the
+ * fully-static /plugins/<slug>/ and /mcp/<slug>/ page sets — plus a small
  * allowance for static pages (homepage, methodology, category pages,
- * creators, /apis, etc.).
+ * creators, /apis, etc.). The plugin/MCP files are guarded with existsSync
+ * (count 0 when absent) so skills-only branches/CI keep working.
  *
  * Once the catalog crossed ~45,000 URLs, @astrojs/sitemap split the output
  * across multiple numbered files (sitemap-0.xml capped at 45,000 entries,
@@ -38,6 +41,11 @@ const DIST_DIR = join(ROOT, 'dist');
 // (whose <loc> entries point to sub-sitemaps, not indexable pages).
 const NUMBERED_SITEMAP_RE = /^sitemap-\d+\.xml$/;
 const SKILLS_NDJSON_PATH = join(ROOT, 'data', 'skills.ndjson');
+// Phase 3.3: plugin + MCP detail pages are fully static (D-07), so their
+// record counts join the expected <loc> basis. existsSync-guarded → 0 when
+// absent (skills-only branches/CI keep passing).
+const PLUGINS_NDJSON = join(ROOT, 'data', 'plugins.ndjson');
+const MCP_NDJSON = join(ROOT, 'data', 'mcp-servers.ndjson');
 
 // Margin for static pages (homepage, methodology, 404, category/*, creators,
 // apis, etc.). Scales with catalog size because /creators/[username].astro
@@ -82,32 +90,54 @@ function main() {
     locCount += (sitemapXml.match(/<loc>/g) || []).length;
   }
 
-  // Skill count via wc -l (no readFileSync on data/skills.ndjson — dodges
-  // the lint rule entirely; also fast on large files).
-  let skillCount;
-  try {
-    skillCount = parseInt(
-      execSync(`wc -l < "${SKILLS_NDJSON_PATH}"`, { encoding: 'utf-8' }).trim(),
+  // Record counts via wc -l (no readFileSync on data/*.ndjson — dodges the
+  // lint rule entirely; also fast on large files). countRecords returns 0
+  // for absent files so plugin/MCP-less checkouts keep the skills-only basis.
+  function countRecords(path) {
+    if (!existsSync(path)) return 0;
+    return parseInt(
+      execSync(`wc -l < "${path}"`, { encoding: 'utf-8' }).trim(),
       10,
     );
+  }
+
+  let skillCount;
+  try {
+    skillCount = countRecords(SKILLS_NDJSON_PATH);
   } catch (err) {
     console.error(`[sitemap-completeness] FATAL: failed to count records in ${SKILLS_NDJSON_PATH}: ${err.message}`);
     process.exit(1);
   }
 
-  const tolerance = computeTolerance(skillCount);
+  // Phase 3.3: plugin + MCP detail pages are fully static — their record
+  // counts join the expected basis. A wc -l failure here degrades to 0
+  // (same as file-absent) rather than failing the gate: the tolerance below
+  // absorbs the gap and the skills basis is the load-bearing assertion.
+  let pluginCount = 0;
+  let mcpCount = 0;
+  try {
+    pluginCount = countRecords(PLUGINS_NDJSON);
+    mcpCount = countRecords(MCP_NDJSON);
+  } catch (err) {
+    console.warn(`[sitemap-completeness] WARN: failed to count plugin/MCP records (${err.message}) — using 0`);
+  }
+
+  const expectedCount = skillCount + pluginCount + mcpCount;
+  const tolerance = computeTolerance(expectedCount);
 
   console.log(`[sitemap-completeness] ${sitemapFiles.length} sitemap file(s) (${sitemapFiles.join(', ')}), ${locCount} <loc> entries total`);
-  console.log(`[sitemap-completeness] skills.ndjson: ${skillCount} records`);
-  console.log(`[sitemap-completeness] tolerance: ±${tolerance} (max(1500, 15% of catalog) — scales with creator page count)`);
+  console.log(`[sitemap-completeness] skills.ndjson: ${skillCount} records, plugins.ndjson: ${pluginCount}, mcp-servers.ndjson: ${mcpCount} → expected basis ${expectedCount}`);
+  console.log(`[sitemap-completeness] tolerance: ±${tolerance} (max(1500, 15% of combined basis) — scales with creator page count)`);
 
-  // Allowed range: skill count - small (some skills may legitimately be
-  // omitted, e.g. malformed) up to skill count + tolerance (static pages).
-  const diff = locCount - skillCount;
+  // Allowed range: expected count - small (some records may legitimately be
+  // omitted, e.g. malformed or duplicate-filtered) up to expected count +
+  // tolerance (static pages, creator pages).
+  const diff = locCount - expectedCount;
   if (diff < -25 || diff > tolerance) {
-    console.error(`[sitemap-completeness] FATAL: <loc> count ${locCount} not in [${skillCount - 25}, ${skillCount + tolerance}]`);
-    console.error('[sitemap-completeness] Likely cause: astro.config.mjs `customPages` not enumerating every slug,');
-    console.error('[sitemap-completeness] or skills.ndjson is stale. Re-run filter then rebuild.');
+    console.error(`[sitemap-completeness] FATAL: <loc> count ${locCount} not in [${expectedCount - 25}, ${expectedCount + tolerance}]`);
+    console.error('[sitemap-completeness] Likely cause: astro.config.mjs `customPages` not enumerating every skill slug,');
+    console.error('[sitemap-completeness] a plugin/MCP getStaticPaths regression, or stale skills/plugins/mcp-servers');
+    console.error('[sitemap-completeness] NDJSON. Re-run the filter steps then rebuild.');
     process.exit(1);
   }
 
