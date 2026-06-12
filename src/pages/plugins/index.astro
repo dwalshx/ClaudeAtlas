@@ -1,0 +1,421 @@
+---
+/**
+ * src/pages/plugins/index.astro — Phase 3.3 curated plugin landing (D-12).
+ *
+ * Clones the homepage's curated-landing + semantic-search pattern:
+ *   - Top-N (60) non-duplicate plugins by quality_score, rendered statically.
+ *   - Live search bar wired to /api/v1/search?type=plugin (D-13 — the worker
+ *     filter already exists; NO new search infra).
+ *   - Category chips derived from TAGS (`category:<slug>`), NOT the legacy
+ *     `category` field (removed in 3.6 — RESEARCH Q5). Display-only chips:
+ *     /category/<slug>/ pages are skill-scoped, so linking there from the
+ *     plugin landing would be misleading.
+ *
+ * RESEARCH Q5 pitfall: the worker's search response hardcodes
+ * detail_url:/skills/<slug>/ for ALL results (worker/index.js ~616). The
+ * result-card renderer below IGNORES detail_url and builds
+ * /plugins/<result.slug>/ page-side, keeping worker changes out of 3.3.
+ */
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import QualityBadge from '../../components/QualityBadge.astro';
+import { getPlugins } from '../../lib/plugins.js';
+import { timeAgo, categoryColor } from '../../lib/entities.js';
+
+// Non-duplicate plugins only (matches /browse + getStaticPaths semantics).
+const plugins = getPlugins().filter((p) => p.is_duplicate !== true);
+const sorted = [...plugins].sort((a, b) => (b.quality_score || 0) - (a.quality_score || 0));
+
+const LANDING_LIMIT = 60;
+const topPlugins = sorted.slice(0, LANDING_LIMIT);
+const totalPlugins = plugins.length;
+const featuredCount = plugins.filter((p) => p.quality_tier === 'featured').length;
+
+// --- Category chips from TAGS (`category:<slug>`), not legacy `category` ---
+// Known display labels for the 8 pipeline categories, keyed by their slug
+// (the same slugs getCategorySlug() produces). Unknown slugs fall back to a
+// title-cased rendering so future tag-namespace additions degrade gracefully.
+const CATEGORY_LABELS: Record<string, string> = {
+  'code-and-development': 'Code & Development',
+  'web-and-frontend': 'Web & Frontend',
+  'testing-and-qa': 'Testing & QA',
+  'data-and-documents': 'Data & Documents',
+  'devops-and-infrastructure': 'DevOps & Infrastructure',
+  'api-and-backend': 'API & Backend',
+  'ai-and-automation': 'AI & Automation',
+  'productivity-and-other': 'Productivity & Other',
+};
+
+function labelForCategorySlug(slug: string): string {
+  return (
+    CATEGORY_LABELS[slug] ||
+    slug
+      .split('-')
+      .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+      .join(' ')
+  );
+}
+
+// Plugin-scoped tag count over `category:` tags.
+const categoryCounts = new Map<string, number>();
+for (const p of plugins) {
+  if (!Array.isArray(p.tags)) continue;
+  for (const t of p.tags) {
+    if (typeof t === 'string' && t.startsWith('category:')) {
+      const slug = t.slice('category:'.length);
+      categoryCounts.set(slug, (categoryCounts.get(slug) || 0) + 1);
+    }
+  }
+}
+const categories = [...categoryCounts.entries()]
+  .map(([slug, count]) => ({ slug, count, label: labelForCategorySlug(slug) }))
+  .sort((a, b) => b.count - a.count);
+
+// First `category:` tag of a plugin → display label (for the static cards).
+function cardCategory(p: any): string {
+  const tag = Array.isArray(p.tags)
+    ? p.tags.find((t: string) => typeof t === 'string' && t.startsWith('category:'))
+    : null;
+  return tag ? labelForCategorySlug(tag.slice('category:'.length)) : 'Productivity & Other';
+}
+
+const pageDescription = `Discover ${totalPlugins.toLocaleString()} Claude Code plugins, scored on 7 transparent quality signals. ${featuredCount} Featured.`;
+---
+
+<BaseLayout title="Claude Code Plugins" description={pageDescription}>
+  <!-- Sticky Search Bar (plugin-scoped semantic search) -->
+  <div id="search-bar" class="sticky top-[57px] z-40 bg-gray-950/90 backdrop-blur border-b border-gray-800 px-4 py-3">
+    <div class="max-w-3xl mx-auto relative">
+      <svg class="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+        <circle cx="11" cy="11" r="8"/>
+        <path d="m21 21-4.35-4.35"/>
+      </svg>
+      <input
+        type="text"
+        id="plugin-search"
+        placeholder={`Search ${totalPlugins.toLocaleString()} Claude Code plugins semantically...`}
+        autocomplete="off"
+        data-search-endpoint="/api/v1/search?type=plugin"
+        class="w-full pl-12 pr-12 py-3 bg-gray-900 border border-gray-700 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-atlas-500 focus:border-transparent text-base"
+      />
+      <button
+        id="search-clear"
+        type="button"
+        aria-label="Clear search"
+        class="hidden absolute right-3 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full text-gray-400 hover:text-white hover:bg-gray-800 flex items-center justify-center"
+      >
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+        </svg>
+      </button>
+    </div>
+  </div>
+
+  <!-- Hero -->
+  <section class="py-16 sm:py-20 px-4">
+    <div class="max-w-6xl mx-auto text-center">
+      <h1 class="text-4xl sm:text-5xl font-bold text-white mb-4 tracking-tight">
+        Discover the best Claude Code plugins
+      </h1>
+      <p class="text-lg sm:text-xl text-gray-400 mb-2 max-w-2xl mx-auto">
+        Curated plugins that bundle skills, agents, commands, hooks, and MCP servers.
+      </p>
+      <p class="text-sm text-gray-500 mb-8 font-mono">
+        {totalPlugins.toLocaleString()} indexed &middot; {featuredCount} Featured
+      </p>
+
+      <!-- Category chips (tag-derived, display-only) -->
+      <div id="category-chips" class="flex flex-wrap justify-center gap-2 mb-4">
+        {categories.map((cat) => (
+          <span
+            data-category-chip={cat.slug}
+            class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium whitespace-nowrap bg-gray-800 text-gray-300 border border-gray-700"
+          >
+            {cat.label}
+            <span class="text-xs opacity-70">({cat.count})</span>
+          </span>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <!-- Top Plugins / Search results -->
+  <section class="px-4 pb-16">
+    <div class="max-w-6xl mx-auto">
+      <div class="flex items-end justify-between mb-6">
+        <h2 id="plugins-heading" class="text-xl font-semibold text-white flex items-center gap-2">
+          <span class="w-2 h-2 rounded-full bg-atlas-500"></span>
+          <span id="plugins-heading-text">Top Plugins</span>
+        </h2>
+        <span id="plugins-count" class="text-sm text-gray-500">Showing top {LANDING_LIMIT} of {totalPlugins.toLocaleString()}</span>
+      </div>
+
+      <!-- Static top-60 grid (hidden during active search) -->
+      <div id="plugins-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {topPlugins.map((plugin) => (
+          <a href={`/plugins/${plugin.slug}/`} class="group block bg-gray-900 border border-gray-800 rounded-xl p-5 hover:border-atlas-600 hover:bg-gray-900/80 transition-all duration-200">
+            <div class="flex items-start justify-between gap-3 mb-3">
+              <span class={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${categoryColor(cardCategory(plugin))}`}>
+                {cardCategory(plugin)}
+              </span>
+              <QualityBadge tier={plugin.quality_tier} />
+            </div>
+            <h3 class="text-white font-semibold text-lg mb-1 group-hover:text-atlas-400 transition-colors font-mono">
+              {plugin.name}
+            </h3>
+            <p class="text-gray-400 text-sm mb-4 line-clamp-2 leading-relaxed">
+              {plugin.description || 'No description available.'}
+            </p>
+            <div class="flex items-center justify-between text-xs text-gray-500">
+              <div class="flex items-center gap-3">
+                <span class="flex items-center gap-1">
+                  <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 16 16"><path d="M8 .25a.75.75 0 01.673.418l1.882 3.815 4.21.612a.75.75 0 01.416 1.279l-3.046 2.97.719 4.192a.75.75 0 01-1.088.791L8 12.347l-3.766 1.98a.75.75 0 01-1.088-.79l.72-4.194L.818 6.374a.75.75 0 01.416-1.28l4.21-.611L7.327.668A.75.75 0 018 .25z"/></svg>
+                  {(plugin.repo_stars || 0).toLocaleString()}
+                </span>
+                <span class="text-gray-600">Updated {timeAgo(plugin.repo_pushed_at)}</span>
+              </div>
+              <span class="text-gray-600 font-mono text-[11px]">
+                {(plugin.repo_full_name || '').split('/')[0]}
+              </span>
+            </div>
+          </a>
+        ))}
+      </div>
+
+      <!-- Search results grid (populated by JS during active search) -->
+      <div id="search-results" class="hidden grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+
+      <!-- Empty / error states -->
+      <div id="search-loading" class="hidden text-center py-12 text-gray-500">
+        <svg class="animate-spin w-6 h-6 mx-auto mb-3 text-atlas-400" fill="none" viewBox="0 0 24 24">
+          <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3" class="opacity-25"></circle>
+          <path d="M4 12a8 8 0 018-8" stroke="currentColor" stroke-width="3" stroke-linecap="round"></path>
+        </svg>
+        Searching…
+      </div>
+      <div id="no-results" class="hidden text-center py-12 text-gray-500">
+        No plugins match your search. Try different keywords or <a href="/plugins/browse/" class="text-atlas-400 hover:underline">browse all plugins</a>.
+      </div>
+      <div id="search-error" class="hidden text-center py-12 text-gray-500">
+        Search temporarily unavailable. <button id="search-retry" class="text-atlas-400 hover:underline">Try again</button> or <a href="/plugins/browse/" class="text-atlas-400 hover:underline">browse all plugins</a>.
+      </div>
+
+      <!-- "See all" link to /plugins/browse/ -->
+      <div id="see-all" class="text-center mt-10">
+        <a href="/plugins/browse/" class="inline-flex items-center gap-2 text-sm text-atlas-400 hover:text-atlas-300 hover:underline">
+          See all {totalPlugins.toLocaleString()} plugins
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
+        </a>
+      </div>
+    </div>
+  </section>
+</BaseLayout>
+
+<script>
+  const searchInput = document.getElementById('plugin-search') as HTMLInputElement | null;
+  const searchClear = document.getElementById('search-clear') as HTMLButtonElement | null;
+  const categoryChips = document.getElementById('category-chips');
+  const seeAll = document.getElementById('see-all');
+  const pluginsHeadingText = document.getElementById('plugins-heading-text');
+  const pluginsCount = document.getElementById('plugins-count');
+  const pluginsGrid = document.getElementById('plugins-grid');
+  const searchResults = document.getElementById('search-results');
+  const searchLoading = document.getElementById('search-loading');
+  const noResults = document.getElementById('no-results');
+  const searchError = document.getElementById('search-error');
+  const searchRetry = document.getElementById('search-retry');
+
+  const initialCountText = pluginsCount?.textContent || '';
+
+  // --- Color helpers (mirror src/lib/entities.js tierColor) ---
+  function tierLabel(tier: string): string {
+    if (tier === 'featured') return 'Featured';
+    if (tier === 'solid') return 'Solid';
+    return 'Listed';
+  }
+  function tierClasses(tier: string): { bg: string; text: string; dot: string } {
+    if (tier === 'featured') return { bg: 'bg-amber-100', text: 'text-amber-800', dot: 'bg-amber-500' };
+    if (tier === 'solid')    return { bg: 'bg-emerald-100', text: 'text-emerald-800', dot: 'bg-emerald-500' };
+    return { bg: 'bg-gray-100', text: 'text-gray-600', dot: 'bg-gray-400' };
+  }
+
+  function escapeHtml(s: string): string {
+    return String(s ?? '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  }
+
+  // Render one plugin search-result card. RESEARCH Q5: the worker's
+  // detail_url is skill-hardcoded (/skills/<slug>/ for ALL results), so the
+  // detail URL is built page-side as /plugins/<slug>/ — never use
+  // r.detail_url here. Adds a "plugin" type chip in place of the homepage's
+  // category chip.
+  function renderResultCard(r: {
+    slug: string;
+    name: string;
+    quality_tier?: string;
+    repo_stars?: number;
+    repo_full_name?: string;
+    description?: string;
+  }): string {
+    const tier = r.quality_tier || 'listed';
+    const tc = tierClasses(tier);
+    const stars = (r.repo_stars || 0).toLocaleString();
+    const owner = (r.repo_full_name || '').split('/')[0] || '';
+    const href = `/plugins/${r.slug}/`;
+    const desc = r.description || 'No description available.';
+
+    return `
+      <a href="${escapeHtml(href)}" class="group block bg-gray-900 border border-gray-800 rounded-xl p-5 hover:border-atlas-600 hover:bg-gray-900/80 transition-all duration-200">
+        <div class="flex items-start justify-between gap-3 mb-3">
+          <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-atlas-900/60 text-atlas-300 border border-atlas-700/50">
+            plugin
+          </span>
+          <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-medium ${tc.bg} ${tc.text}">
+            <span class="w-1.5 h-1.5 rounded-full ${tc.dot}"></span>
+            ${escapeHtml(tierLabel(tier))}
+          </span>
+        </div>
+        <h3 class="text-white font-semibold text-lg mb-1 group-hover:text-atlas-400 transition-colors font-mono">
+          ${escapeHtml(r.name || r.slug)}
+        </h3>
+        <p class="text-gray-400 text-sm mb-4 line-clamp-2 leading-relaxed">
+          ${escapeHtml(desc)}
+        </p>
+        <div class="flex items-center justify-between text-xs text-gray-500">
+          <div class="flex items-center gap-3">
+            <span class="flex items-center gap-1">
+              <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 16 16"><path d="M8 .25a.75.75 0 01.673.418l1.882 3.815 4.21.612a.75.75 0 01.416 1.279l-3.046 2.97.719 4.192a.75.75 0 01-1.088.791L8 12.347l-3.766 1.98a.75.75 0 01-1.088-.79l.72-4.194L.818 6.374a.75.75 0 01.416-1.28l4.21-.611L7.327.668A.75.75 0 018 .25z"/></svg>
+              ${escapeHtml(stars)}
+            </span>
+          </div>
+          <span class="text-gray-600 font-mono text-[11px]">
+            ${escapeHtml(owner)}
+          </span>
+        </div>
+      </a>
+    `;
+  }
+
+  // --- View state helpers ---
+  function showEmptyState() {
+    if (searchClear) searchClear.classList.add('hidden');
+    if (categoryChips) (categoryChips as HTMLElement).style.display = '';
+    if (seeAll) (seeAll as HTMLElement).style.display = '';
+    if (pluginsHeadingText) pluginsHeadingText.textContent = 'Top Plugins';
+    if (pluginsCount) pluginsCount.textContent = initialCountText;
+
+    if (pluginsGrid) pluginsGrid.classList.remove('hidden');
+    if (searchResults) {
+      searchResults.classList.add('hidden');
+      searchResults.innerHTML = '';
+    }
+    if (searchLoading) searchLoading.classList.add('hidden');
+    if (noResults) noResults.classList.add('hidden');
+    if (searchError) searchError.classList.add('hidden');
+  }
+
+  function showSearchingState() {
+    if (searchClear) searchClear.classList.remove('hidden');
+    if (categoryChips) (categoryChips as HTMLElement).style.display = 'none';
+    if (seeAll) (seeAll as HTMLElement).style.display = 'none';
+    if (pluginsHeadingText) pluginsHeadingText.textContent = 'Search Results';
+
+    if (pluginsGrid) pluginsGrid.classList.add('hidden');
+    if (searchResults) searchResults.classList.add('hidden');
+    if (noResults) noResults.classList.add('hidden');
+    if (searchError) searchError.classList.add('hidden');
+    if (searchLoading) searchLoading.classList.remove('hidden');
+    if (pluginsCount) pluginsCount.textContent = 'Searching…';
+  }
+
+  // --- Plugin-scoped semantic search via /api/v1/search?type=plugin (D-13) ---
+  // The endpoint (incl. the type=plugin filter) is carried on the input's
+  // data-search-endpoint attribute so the wiring is visible in the static
+  // HTML (the script itself is Vite-bundled into a hashed asset).
+  const SEARCH_ENDPOINT = searchInput?.dataset.searchEndpoint || '/api/v1/search?type=plugin';
+  let searchToken = 0;
+  let lastQuery = '';
+
+  async function runSemanticSearch(query: string) {
+    const thisToken = ++searchToken;
+    lastQuery = query;
+    showSearchingState();
+
+    let payload: { results: Array<Record<string, any>> } | null = null;
+    try {
+      const url = `${SEARCH_ENDPOINT}&q=${encodeURIComponent(query)}&k=30`;
+      const res = await fetch(url, { headers: { accept: 'application/json' } });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      payload = await res.json();
+      if (!payload || !Array.isArray(payload.results)) throw new Error('malformed response');
+    } catch (err) {
+      console.error('Plugin search failed:', err);
+      if (thisToken !== searchToken) return;
+      if (searchLoading) searchLoading.classList.add('hidden');
+      if (searchError) searchError.classList.remove('hidden');
+      if (pluginsCount) pluginsCount.textContent = '';
+      return;
+    }
+
+    // Dropped if a newer query came in mid-flight.
+    if (thisToken !== searchToken) return;
+
+    const results = payload.results;
+    if (searchLoading) searchLoading.classList.add('hidden');
+
+    if (results.length === 0) {
+      if (searchResults) {
+        searchResults.classList.add('hidden');
+        searchResults.innerHTML = '';
+      }
+      if (noResults) noResults.classList.remove('hidden');
+      if (pluginsCount) pluginsCount.textContent = 'No semantic matches';
+      return;
+    }
+
+    if (searchResults) {
+      searchResults.innerHTML = results.map(renderResultCard).join('');
+      searchResults.classList.remove('hidden');
+    }
+    if (pluginsCount) {
+      pluginsCount.textContent = `${results.length} relevant result${results.length === 1 ? '' : 's'} · semantic match`;
+    }
+  }
+
+  // --- Debounced input handler (250ms) ---
+  let debounceTimer: number | null = null;
+  searchInput?.addEventListener('input', (e) => {
+    const val = (e.target as HTMLInputElement).value.trim();
+    if (debounceTimer) window.clearTimeout(debounceTimer);
+
+    if (val.length === 0) {
+      searchToken++; // cancel any in-flight search
+      showEmptyState();
+      return;
+    }
+
+    if (searchClear) searchClear.classList.remove('hidden');
+    debounceTimer = window.setTimeout(() => {
+      runSemanticSearch(val);
+    }, 250);
+  });
+
+  searchClear?.addEventListener('click', () => {
+    if (searchInput) {
+      searchInput.value = '';
+      searchToken++;
+      showEmptyState();
+      searchInput.focus();
+    }
+  });
+
+  searchRetry?.addEventListener('click', () => {
+    if (lastQuery) runSemanticSearch(lastQuery);
+  });
+
+  // Initialize state on page load
+  showEmptyState();
+</script>
