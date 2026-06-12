@@ -1,0 +1,281 @@
+---
+/**
+ * src/pages/plugins/[...slug].astro — Phase 3.3 plugin detail page (D-11).
+ *
+ * Mirrors src/pages/skills/[...slug].astro with three deliberate divergences:
+ *   1. getStaticPaths emits ALL non-duplicate plugins with NO STATIC_TIERS
+ *      filter (D-07) — ~3.5k plugins sit far under the Cloudflare static-
+ *      asset caps, so there is no static/KV tier split and no worker route.
+ *   2. The install block renders the two-step marketplace flow (D-08):
+ *      `/plugin marketplace add <owner/repo>` then
+ *      `/plugin install <name>@<declared-marketplace-name>` — NOT the skill
+ *      page's single-command install line, which does not apply to plugins.
+ *      GitHub fallback link always present.
+ *   3. ScoreBar substitutes the Manifest-Completeness signal
+ *      (plugin.extra.manifest_completeness, D-03) where the skill page
+ *      uses Frontmatter.
+ */
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import QualityBadge from '../../components/QualityBadge.astro';
+import CopyButton from '../../components/CopyButton.astro';
+import SkillCard from '../../components/SkillCard.astro';
+import ScoreBar from '../../components/ScoreBar.astro';
+import JsonLd from '../../components/JsonLd.astro';
+import {
+  getPlugins,
+  installCommand,
+  resolveBundledSkills,
+  resolveBundledMcps,
+} from '../../lib/plugins.js';
+import { timeAgo } from '../../lib/entities.js';
+
+function daysToRecency(dateStr) {
+  if (!dateStr) return 0;
+  const days = (Date.now() - new Date(dateStr).getTime()) / (1000 * 60 * 60 * 24);
+  if (days <= 7) return 100;
+  if (days <= 30) return 90;
+  if (days <= 90) return 75;
+  if (days <= 180) return 50;
+  if (days <= 365) return 25;
+  return 5;
+}
+
+// D-07: plugins are FULLY static — every non-duplicate plugin gets a page.
+// No STATIC_TIERS filter (that's a skills-only file-cap mitigation; plugins
+// at ~3.5k records are far under the 20k Free / 100k Paid caps). Duplicate
+// records are hidden from getStaticPaths but their slugs still resolve
+// nowhere (no KV fallback for /plugins/ — matches RESEARCH Q3).
+export function getStaticPaths() {
+  return getPlugins()
+    .filter((p) => p.is_duplicate !== true)
+    .map((plugin) => ({
+      params: { slug: plugin.slug },
+      props: { plugin },
+    }));
+}
+
+const { plugin } = Astro.props;
+const inst = installCommand(plugin);
+const updated = timeAgo(plugin.repo_pushed_at);
+const created = timeAgo(plugin.repo_created_at);
+const ownerName = (plugin.repo_full_name || '').split('/')[0] || '';
+const readmeMd = plugin.extra?.readme_markdown || '';
+const manifestPct = Math.round((plugin.extra?.manifest_completeness || 0) * 100);
+
+// D-06: marketplace dimension as chips. Listings are {path, name|null}
+// objects (Plan 01+) or legacy bare path strings — normalize both.
+const marketplaces = (plugin.extra?.marketplace_listings || [])
+  .map((entry) => {
+    if (!entry) return null;
+    if (typeof entry === 'string') return { path: entry, name: null };
+    return typeof entry.path === 'string' && entry.path
+      ? { path: entry.path, name: entry.name || null }
+      : null;
+  })
+  .filter(Boolean);
+
+// JSON-LD structured data — clones the skill page's Article shape with
+// /plugins/ URLs. datePublished falls back to repo_created_at (plugins have
+// no first-commit backfill field).
+const jsonLd = {
+  "@context": "https://schema.org",
+  "@type": "Article",
+  "headline": plugin.name,
+  "description": plugin.description || `${plugin.name} — Claude Code plugin indexed on ClaudeAtlas`,
+  "url": `https://claudeatlas.com/plugins/${plugin.slug}/`,
+  "datePublished": plugin.repo_created_at,
+  "dateModified": plugin.repo_pushed_at,
+  "author": {
+    "@type": plugin.repo_owner_type === 'Organization' ? 'Organization' : 'Person',
+    "name": ownerName,
+    "url": `https://github.com/${ownerName}`,
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "ClaudeAtlas",
+    "url": "https://claudeatlas.com",
+  },
+  "isPartOf": {
+    "@type": "DataCatalog",
+    "name": "ClaudeAtlas",
+    "url": "https://claudeatlas.com",
+  },
+  "citation": "Source: ClaudeAtlas — https://claudeatlas.com",
+  "license": plugin.repo_license
+    ? `https://spdx.org/licenses/${plugin.repo_license}`
+    : "https://opensource.org/licenses/MIT",
+  "keywords": Array.isArray(plugin.tags) ? plugin.tags.join(', ') : 'plugin',
+  "mainEntityOfPage": {
+    "@type": "WebPage",
+    "@id": `https://claudeatlas.com/plugins/${plugin.slug}/`,
+  },
+};
+---
+
+<BaseLayout
+  title={`${plugin.name} — Claude Code Plugin`}
+  description={plugin.description || `${plugin.name} is a Claude Code plugin indexed on ClaudeAtlas.`}
+>
+  <JsonLd data={jsonLd} />
+
+  <div class="max-w-4xl mx-auto px-4 py-12">
+    <!-- Breadcrumb -->
+    <nav class="text-sm text-gray-500 mb-6 flex items-center gap-2">
+      <a href="/" class="hover:text-white transition-colors">Home</a>
+      <span>/</span>
+      <a href="/plugins/" class="hover:text-white transition-colors">Plugins</a>
+      <span>/</span>
+      <span class="text-gray-400">{plugin.name}</span>
+    </nav>
+
+    <!-- Header -->
+    <div class="flex flex-col sm:flex-row sm:items-start gap-4 mb-8">
+      <div class="flex-1">
+        <div class="flex items-center gap-3 mb-2">
+          <h1 class="text-3xl font-bold text-white font-mono">{plugin.name}</h1>
+          <QualityBadge tier={plugin.quality_tier} size="lg" />
+        </div>
+        <p class="text-gray-400 text-lg mb-4">{plugin.description || 'No description available.'}</p>
+
+        <div class="flex flex-wrap items-center gap-3 text-sm text-gray-500">
+          <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-atlas-900/60 text-atlas-300 border border-atlas-700/50">
+            plugin
+          </span>
+          <span class="flex items-center gap-1">
+            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 16 16"><path d="M8 .25a.75.75 0 01.673.418l1.882 3.815 4.21.612a.75.75 0 01.416 1.279l-3.046 2.97.719 4.192a.75.75 0 01-1.088.791L8 12.347l-3.766 1.98a.75.75 0 01-1.088-.79l.72-4.194L.818 6.374a.75.75 0 01.416-1.28l4.21-.611L7.327.668A.75.75 0 018 .25z"/></svg>
+            {plugin.repo_stars.toLocaleString()} stars
+          </span>
+          <span>{plugin.repo_forks} forks</span>
+          <span>Updated {updated}</span>
+          {plugin.repo_license && <span>{plugin.repo_license}</span>}
+        </div>
+      </div>
+    </div>
+
+    <!-- Install (D-08: two-step marketplace flow + GitHub fallback) -->
+    <div class="bg-gray-900 border border-gray-800 rounded-xl p-6 mb-8">
+      <h2 class="text-sm font-medium text-gray-400 mb-2 uppercase tracking-wider">Install</h2>
+      <p class="text-sm text-gray-500 mb-4">Plugins install via a marketplace, in two steps.</p>
+
+      {inst.hasMarketplace ? (
+        <div class="space-y-3 mb-4">
+          <div class="flex flex-col sm:flex-row sm:items-center gap-2">
+            <span class="text-xs font-semibold text-gray-400 uppercase tracking-wider w-16 shrink-0">Step 1</span>
+            <CopyButton text={inst.addCmd} />
+          </div>
+          {inst.installCmd ? (
+            <div class="flex flex-col sm:flex-row sm:items-center gap-2">
+              <span class="text-xs font-semibold text-gray-400 uppercase tracking-wider w-16 shrink-0">Step 2</span>
+              <CopyButton text={inst.installCmd} />
+            </div>
+          ) : (
+            <div class="flex flex-col sm:flex-row sm:items-start gap-2">
+              <span class="text-xs font-semibold text-gray-400 uppercase tracking-wider w-16 shrink-0 sm:pt-0.5">Step 2</span>
+              <p class="text-sm text-amber-400/90">
+                The marketplace's declared name isn't known for this listing — check the
+                plugin's README on GitHub for the exact
+                <code class="text-xs bg-gray-800 px-1.5 py-0.5 rounded">/plugin install name@marketplace</code> command.
+              </p>
+            </div>
+          )}
+        </div>
+      ) : (
+        <p class="text-sm text-gray-400 mb-4">
+          This plugin isn't listed in a marketplace we've indexed. Install it directly
+          from its GitHub repository — the README has the setup steps.
+        </p>
+      )}
+
+      <a
+        href={plugin.repo_url}
+        target="_blank"
+        rel="noopener"
+        class="inline-flex items-center gap-2 px-4 py-2 bg-gray-800 hover:bg-gray-700 border border-gray-700 rounded-lg text-sm text-gray-300 hover:text-white transition-all"
+      >
+        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
+        View on GitHub
+      </a>
+    </div>
+
+    <!-- Bundles section (D-09) lands in Task 2 -->
+
+    <!-- Quality Score Breakdown (D-03: Manifest substitutes for Frontmatter) -->
+    <div class="bg-gray-900 border border-gray-800 rounded-xl p-6 mb-8">
+      <h2 class="text-sm font-medium text-gray-400 mb-4 uppercase tracking-wider">Quality Score: {plugin.quality_score}/100</h2>
+      <div class="space-y-3">
+        <ScoreBar label="Stars" value={Math.min(100, Math.round(Math.log10((plugin.repo_stars || 0) + 1) * 33.3))} weight="20%" />
+        <ScoreBar label="Recency" value={daysToRecency(plugin.repo_pushed_at)} weight="20%" />
+        <ScoreBar label="Manifest" value={manifestPct} weight="20%" />
+        <ScoreBar label="Documentation" value={Math.min(100, Math.round(plugin.body_length / 20))} weight="15%" />
+        <ScoreBar label="Issue Health" value={plugin.repo_open_issues === 0 ? 80 : 50} weight="10%" />
+        <ScoreBar label="License" value={plugin.repo_license ? 100 : 0} weight="10%" />
+        <ScoreBar label="Description" value={plugin.repo_description ? 100 : 0} weight="5%" />
+      </div>
+    </div>
+
+    <!-- Readme preview -->
+    {readmeMd && readmeMd.length > 50 && (
+      <div class="bg-gray-900 border border-gray-800 rounded-xl p-6 mb-8">
+        <h2 class="text-sm font-medium text-gray-400 mb-4 uppercase tracking-wider">Readme</h2>
+        <div class="prose prose-invert prose-sm max-w-none text-gray-300 whitespace-pre-wrap font-mono text-xs leading-relaxed max-h-96 overflow-y-auto">
+          {readmeMd.substring(0, 2000)}
+          {readmeMd.length > 2000 && (
+            <p class="text-gray-500 mt-4">... <a href={plugin.repo_url} target="_blank" class="text-atlas-400 hover:underline">View full content on GitHub</a></p>
+          )}
+        </div>
+      </div>
+    )}
+
+    <!-- Metadata -->
+    <div class="bg-gray-900 border border-gray-800 rounded-xl p-6 mb-8">
+      <h2 class="text-sm font-medium text-gray-400 mb-4 uppercase tracking-wider">Details</h2>
+      <dl class="grid grid-cols-2 gap-4 text-sm">
+        <div>
+          <dt class="text-gray-500">Author</dt>
+          <dd class="text-white font-mono">
+            <a href={`https://github.com/${ownerName}`} target="_blank" rel="noopener" class="hover:text-atlas-400 transition-colors">{ownerName}</a>
+          </dd>
+        </div>
+        <div>
+          <dt class="text-gray-500">Repository</dt>
+          <dd class="text-white font-mono">{plugin.repo_full_name}</dd>
+        </div>
+        <div>
+          <dt class="text-gray-500">Created</dt>
+          <dd class="text-white">{created}</dd>
+        </div>
+        <div>
+          <dt class="text-gray-500">Last Updated</dt>
+          <dd class="text-white">{updated}</dd>
+        </div>
+        <div>
+          <dt class="text-gray-500">Language</dt>
+          <dd class="text-white">{plugin.repo_language || 'N/A'}</dd>
+        </div>
+        <div>
+          <dt class="text-gray-500">License</dt>
+          <dd class="text-white">{plugin.repo_license || 'None'}</dd>
+        </div>
+      </dl>
+    </div>
+
+    <!-- Marketplace listings (D-06: chips, no /marketplaces/ pages) -->
+    {marketplaces.length > 0 && (
+      <section class="mb-8">
+        <h2 class="text-sm font-medium text-gray-400 mb-3 uppercase tracking-wider">Listed in marketplaces</h2>
+        <div class="flex flex-wrap gap-2">
+          {marketplaces.map((m) => (
+            <a
+              href={`https://github.com/${m.path}`}
+              target="_blank"
+              rel="noopener"
+              class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-gray-800 hover:bg-gray-700 border border-gray-700 rounded-full text-xs font-medium text-gray-300 hover:text-white transition-colors font-mono"
+            >
+              {m.name || m.path}
+            </a>
+          ))}
+        </div>
+      </section>
+    )}
+  </div>
+</BaseLayout>
