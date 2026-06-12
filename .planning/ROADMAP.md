@@ -4,5 +4,5 @@
   - [ ] 03.3-03-PLAN.md — Wave 2: plugin detail page + two-step install + prominent Bundles section (D-09)
   - [ ] 03.3-04-PLAN.md — Wave 2: MCP detail page (field swap D-05) + skill-page reverse bundle edge (D-10)
   - [ ] 03.3-05-PLAN.md — Wave 3: /plugins/ landing + /plugins/browse/ + /mcp/ index + sitemap-gate widening
-  - [ ] 03.3-06-PLAN.md — Wave 1: bootstrap-plugins-raw.yml workflow (autonomous half of re-enable)
+  - [x] 03.3-06-PLAN.md — Wave 1: bootstrap-plugins-raw.yml workflow (autonomous half of re-enable)
   - [ ] 03.3-07-PLAN.md — Wave 4: human-gated release + bootstrap dispatch + branch measurement + flag flip (D-01)

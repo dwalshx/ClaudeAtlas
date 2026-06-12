@@ -1,16 +1,16 @@
 ---
 gsd_state_version: 1.0
-milestone: v2.0
-milestone_name: — Agent-Native Directory
+milestone: v1.0
+milestone_name: milestone
 status: executing
-stopped_at: Completed 03.2.1-05-PLAN.md (CI engine/timing gates + recall harness)
-last_updated: "2026-06-11T21:21:32.740Z"
-last_activity: 2026-06-11
+stopped_at: Completed 03.3-06-PLAN.md (bootstrap-plugins-raw workflow)
+last_updated: "2026-06-12T15:17:01.250Z"
+last_activity: 2026-06-12
 progress:
-  total_phases: 17
+  total_phases: 18
   completed_phases: 6
-  total_plans: 18
-  completed_plans: 19
+  total_plans: 25
+  completed_plans: 20
   percent: 100
 ---
 
@@ -21,19 +21,19 @@ progress:
 See: `.planning/PROJECT.md` (last updated 2026-04-10)
 
 **Core value:** Users can find the best Claude skill for a given task in under 30 seconds, with visible signals for why it's trustworthy.
-**Current focus:** Phase 3.3 — plugin-pages (planned, ready to execute)
+**Current focus:** Phase 3.3 — plugin-pages
 **Milestone:** v3.0 — Comprehensive Agent Tooling Index (in progress)
 
 ## Current Position
 
-Phase: 3.3 (plugin-pages) — PLANNED, ready to execute
-Plan: 7 plans in 5 waves (checker PASSED, 3 FLAGs revised)
+Phase: 3.3 (plugin-pages) — EXECUTING
+Plan: 2 of 7
 Status: Ready to execute
 Next action: **`/gsd:execute-phase 3.3`** — plugin + MCP pages + plugin-pipeline re-enable. Wave 4 (Plan 07) is human-gated: GitHub-UI release + bootstrap dispatch + cold-sweep measurement + flip PLUGINS_ENABLED=true (PAT can't dispatch via CLI). Mirrors 3.2.1's measure-before-flip checkpoint discipline.
 **Phase 3.2.1 (HNSW optimization) SHIPPED 2026-06-11** — PR #14 merged; enrich 59→2.8min, compute-similar 162→2.3min, recall 1.0000; cron ~50min vs 360 cap. Unblocked the 3.3 plugin re-enable.
 **4 commits unpushed** (3.3 planning docs: research/validation/plan/revision) — `git push origin main` before/early in next session.
 **READ FIRST:** `.planning/phases/3.3-plugin-pages/3.3-CONTEXT.md` (14 locked decisions) + `3.3-RESEARCH.md` (4 findings that reshaped the plan: split loaders, install token not in data, loadCheckpoint latent bug, bundle arrays are IDs). Then `.planning/SESSION-HANDOFF-2026-06-10.md` for operational gotchas.
-Last activity: 2026-06-12 — Phase 3.3 discussed (advisor mode, 4 gray areas) → researched → planned → verified
+Last activity: 2026-06-12
 
 ### Quick Tasks Completed
 
@@ -198,6 +198,7 @@ These were INSERTED ahead of the Phase 3.0 spec's 3.1–3.9 lineup because the d
 - (3.2.1-06) FIXTURE_REPO_DENYLIST extended 2 → 6 entries, all 4 Audit B candidates human-verified 2026-06-11 and approved (majiayu000/claude-skill-registry + -data aggregator mirrors, liminal-ai/skill-scanner-ts scanner port, RekitRex21/Dino_Scan preventive); denylist stays exact repo_full_name match, regression test locks the contract incl. a near-miss negative
 - (3.2.1-05) Engine/timing gates wired into daily-scrape: enrich + Build logs tee'd (set -o pipefail first), non-push gate steps grep '[ann] engine=hnsw' (anti-silent-fallback, Pitfall 2) and enforce <900s elapsed via awk, failing loudly if ELAPSED parses empty; validate_ann dispatch input runs the four-gate recall harness BEFORE enrich so a FAIL stops the run pre-publish
 - (3.2.1-05) validate-ann-recall.js mirrors per-consumer production semantics: symmetrized top-1 (enrich nnSim parity) vs unsymmetrized top-K (compute-similar parity); misses-only invariant (annPairs ⊆ exactPairs) fails the run regardless of recall; hard-requires annEngine()==='hnsw' — CI-only by design
+- (03.3-06) bootstrap-plugins-raw.yml authored with cache key prefix locked to `plugins-raw-ndjson-` so daily-scrape.yml's existing restore-keys prefix-match works with zero consumer changes; dispatch + release creation + PLUGINS_ENABLED flip stay human-gated in Plan 07 (measure-before-flip)
 
 ### Spec corrections (rolled into 3.1 Task 8)
 
@@ -214,8 +215,8 @@ These were INSERTED ahead of the Phase 3.0 spec's 3.1–3.9 lineup because the d
 
 ## Session Continuity
 
-Last session: 2026-06-11T05:53:30.772Z
-Stopped at: Completed 03.2.1-05-PLAN.md (CI engine/timing gates + recall harness)
+Last session: 2026-06-12T15:17:01.241Z
+Stopped at: Completed 03.3-06-PLAN.md (bootstrap-plugins-raw workflow)
 
 **Resume:** read `.planning/SESSION-MEMO-2026-04-to-05.md` for full context, then `/gsd:execute-phase 3.1`.
 
