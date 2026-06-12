@@ -21,17 +21,19 @@ progress:
 See: `.planning/PROJECT.md` (last updated 2026-04-10)
 
 **Core value:** Users can find the best Claude skill for a given task in under 30 seconds, with visible signals for why it's trustworthy.
-**Current focus:** Phase 3.2.1 — hnsw-optimization
+**Current focus:** Phase 3.3 — plugin-pages (planned, ready to execute)
 **Milestone:** v3.0 — Comprehensive Agent Tooling Index (in progress)
 
 ## Current Position
 
-Phase: 04
-Plan: Not started
+Phase: 3.3 (plugin-pages) — PLANNED, ready to execute
+Plan: 7 plans in 5 waves (checker PASSED, 3 FLAGs revised)
 Status: Ready to execute
-Next action: **Phase 3.2.1 — HNSW optimization** (inserted into roadmap 2026-06-10) — `/gsd:plan-phase 3.2.1`. Kills the O(N²) build long-pole (compute-similar + enrich dedup at 50k) to reclaim timeout headroom + unblock plugins (3.3). Roadmap: Optimization → 3.3 → 3.4 (see docs/VISION.md).
-**READ FIRST:** `.planning/SESSION-HANDOFF-2026-06-10.md` — full context, key decisions/rationale, operational gotchas.
-Last activity: 2026-06-11
+Next action: **`/gsd:execute-phase 3.3`** — plugin + MCP pages + plugin-pipeline re-enable. Wave 4 (Plan 07) is human-gated: GitHub-UI release + bootstrap dispatch + cold-sweep measurement + flip PLUGINS_ENABLED=true (PAT can't dispatch via CLI). Mirrors 3.2.1's measure-before-flip checkpoint discipline.
+**Phase 3.2.1 (HNSW optimization) SHIPPED 2026-06-11** — PR #14 merged; enrich 59→2.8min, compute-similar 162→2.3min, recall 1.0000; cron ~50min vs 360 cap. Unblocked the 3.3 plugin re-enable.
+**4 commits unpushed** (3.3 planning docs: research/validation/plan/revision) — `git push origin main` before/early in next session.
+**READ FIRST:** `.planning/phases/3.3-plugin-pages/3.3-CONTEXT.md` (14 locked decisions) + `3.3-RESEARCH.md` (4 findings that reshaped the plan: split loaders, install token not in data, loadCheckpoint latent bug, bundle arrays are IDs). Then `.planning/SESSION-HANDOFF-2026-06-10.md` for operational gotchas.
+Last activity: 2026-06-12 — Phase 3.3 discussed (advisor mode, 4 gray areas) → researched → planned → verified
 
 ### Quick Tasks Completed
 
