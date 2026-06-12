@@ -62,6 +62,30 @@ const ownerName = (plugin.repo_full_name || '').split('/')[0] || '';
 const readmeMd = plugin.extra?.readme_markdown || '';
 const manifestPct = Math.round((plugin.extra?.manifest_completeness || 0) * 100);
 
+// D-09: bundle graph — the marquee deliverable. bundled_skills /
+// bundled_mcp_servers carry entity IDs and resolve to records via the
+// loader's Map indexes (RESEARCH Q4); agents/commands/hooks are bare
+// component-name strings and render as non-linking chips. Empty subgroups
+// are hidden (the all-empty case is the norm); if ALL five are empty the
+// entire section is omitted.
+const bundledSkills = resolveBundledSkills(plugin.extra?.bundled_skills);
+const bundledMcps = resolveBundledMcps(plugin.extra?.bundled_mcp_servers);
+const bundledAgents = plugin.extra?.bundled_agents || [];
+const bundledCommands = plugin.extra?.bundled_commands || [];
+const bundledHooks = plugin.extra?.bundled_hooks || [];
+const hasBundles =
+  bundledSkills.length > 0 ||
+  bundledMcps.length > 0 ||
+  bundledAgents.length > 0 ||
+  bundledCommands.length > 0 ||
+  bundledHooks.length > 0;
+
+// Cap visible SkillCards (VISIBLE_LIMIT precedent from category/[category].astro);
+// the remainder renders behind a native <details> disclosure — no JS framework.
+const SKILLS_VISIBLE_LIMIT = 12;
+const visibleBundledSkills = bundledSkills.slice(0, SKILLS_VISIBLE_LIMIT);
+const hiddenBundledSkills = bundledSkills.slice(SKILLS_VISIBLE_LIMIT);
+
 // D-06: marketplace dimension as chips. Listings are {path, name|null}
 // objects (Plan 01+) or legacy bare path strings — normalize both.
 const marketplaces = (plugin.extra?.marketplace_listings || [])
@@ -197,7 +221,91 @@ const jsonLd = {
       </a>
     </div>
 
-    <!-- Bundles section (D-09) lands in Task 2 -->
+    {/* Bundle graph (D-09: full-width grouped section, right after Install) */}
+    {hasBundles && (
+      <section class="mb-8" id="bundles">
+        <h2 class="text-2xl font-bold text-white mb-1 flex items-center gap-2">
+          <span class="w-2.5 h-2.5 rounded-full bg-atlas-500"></span>
+          Bundles
+        </h2>
+        <p class="text-sm text-gray-500 mb-6">Everything this plugin ships — skills, agents, commands, hooks, and MCP servers it bundles.</p>
+
+        {bundledSkills.length > 0 && (
+          <div class="mb-6">
+            <h3 class="text-sm font-medium text-gray-400 mb-3 uppercase tracking-wider">Skills ({bundledSkills.length})</h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {visibleBundledSkills.map((s) => <SkillCard skill={s} />)}
+            </div>
+            {hiddenBundledSkills.length > 0 && (
+              <details class="mt-4 group">
+                <summary class="cursor-pointer inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-gray-700 text-gray-300 hover:border-atlas-400 hover:text-atlas-400 transition-colors text-sm list-none">
+                  <span class="group-open:hidden">Show all {bundledSkills.length} bundled skills</span>
+                  <span class="hidden group-open:inline">Showing all {bundledSkills.length} bundled skills</span>
+                </summary>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-4">
+                  {hiddenBundledSkills.map((s) => <SkillCard skill={s} />)}
+                </div>
+              </details>
+            )}
+          </div>
+        )}
+
+        {bundledMcps.length > 0 && (
+          <div class="mb-6">
+            <h3 class="text-sm font-medium text-gray-400 mb-3 uppercase tracking-wider">MCP servers ({bundledMcps.length})</h3>
+            <div class="flex flex-wrap gap-2">
+              {bundledMcps.map((m) => (
+                <a
+                  href={`/mcp/${m.slug}/`}
+                  class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-gray-800 hover:bg-gray-700 border border-gray-700 rounded-full text-xs font-medium text-gray-300 hover:text-white transition-colors font-mono"
+                >
+                  {m.name}
+                </a>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {bundledAgents.length > 0 && (
+          <div class="mb-6">
+            <h3 class="text-sm font-medium text-gray-400 mb-3 uppercase tracking-wider">Agents ({bundledAgents.length})</h3>
+            <div class="flex flex-wrap gap-2">
+              {bundledAgents.map((name) => (
+                <span class="inline-flex items-center px-3 py-1.5 bg-gray-800 border border-gray-700 rounded-full text-xs font-medium text-gray-400 font-mono">
+                  {name}
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {bundledCommands.length > 0 && (
+          <div class="mb-6">
+            <h3 class="text-sm font-medium text-gray-400 mb-3 uppercase tracking-wider">Commands ({bundledCommands.length})</h3>
+            <div class="flex flex-wrap gap-2">
+              {bundledCommands.map((name) => (
+                <span class="inline-flex items-center px-3 py-1.5 bg-gray-800 border border-gray-700 rounded-full text-xs font-medium text-gray-400 font-mono">
+                  {name}
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {bundledHooks.length > 0 && (
+          <div class="mb-6">
+            <h3 class="text-sm font-medium text-gray-400 mb-3 uppercase tracking-wider">Hooks ({bundledHooks.length})</h3>
+            <div class="flex flex-wrap gap-2">
+              {bundledHooks.map((name) => (
+                <span class="inline-flex items-center px-3 py-1.5 bg-gray-800 border border-gray-700 rounded-full text-xs font-medium text-gray-400 font-mono">
+                  {name}
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
+      </section>
+    )}
 
     <!-- Quality Score Breakdown (D-03: Manifest substitutes for Frontmatter) -->
     <div class="bg-gray-900 border border-gray-800 rounded-xl p-6 mb-8">
