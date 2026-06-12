@@ -1,0 +1,245 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import QualityBadge from '../../components/QualityBadge.astro';
+import ScoreBar from '../../components/ScoreBar.astro';
+import JsonLd from '../../components/JsonLd.astro';
+import { getMcpServers } from '../../lib/plugins.js';
+import { timeAgo, categoryColor } from '../../lib/entities.js';
+
+function daysToRecency(dateStr) {
+  if (!dateStr) return 0;
+  const days = (Date.now() - new Date(dateStr).getTime()) / (1000 * 60 * 60 * 24);
+  if (days <= 7) return 100;
+  if (days <= 30) return 90;
+  if (days <= 90) return 75;
+  if (days <= 180) return 50;
+  if (days <= 365) return 25;
+  return 5;
+}
+
+// Human-readable transport labels (McpExtra.transport union).
+function transportLabel(t) {
+  if (t === 'stdio') return 'stdio';
+  if (t === 'sse') return 'SSE';
+  if (t === 'streamable-http') return 'Streamable HTTP';
+  return null;
+}
+
+// Fully static (D-07): every MCP server record emits a page — NO tier filter.
+// The skills-only STATIC_TIERS filter is a file-cap mitigation that doesn't
+// apply at n≈76. MCP records are never enriched (D-10), so is_duplicate is
+// always false and the filter below is a harmless no-op kept for parity with
+// the skill/plugin getStaticPaths shape.
+//
+// NOTE: Astro hoists getStaticPaths into a separate execution context;
+// imports are visible inside it, frontmatter module-level constants are not.
+export function getStaticPaths() {
+  return getMcpServers()
+    .filter((m) => m.is_duplicate !== true)
+    .map((mcp) => ({
+      params: { slug: mcp.slug },
+      props: { mcp },
+    }));
+}
+
+const { mcp } = Astro.props;
+const cc = categoryColor(mcp.category);
+const updated = timeAgo(mcp.repo_pushed_at);
+const created = timeAgo(mcp.repo_created_at);
+const ownerName = (mcp.repo_full_name || '').split('/')[0] || '';
+const tools = (mcp.extra && mcp.extra.tools) || [];
+const transport = transportLabel(mcp.extra && mcp.extra.transport);
+const readmeMd = (mcp.extra && mcp.extra.readme_markdown) || '';
+const manifestScore = Math.round(((mcp.extra && mcp.extra.manifest_completeness) || 0) * 100);
+
+// JSON-LD structured data — mirrors the skill detail page's Article shape
+// (the validated schema.org type); the mcp_server entity type is carried in
+// keywords so crawlers/agents can distinguish it from skills.
+const jsonLd = {
+  "@context": "https://schema.org",
+  "@type": "Article",
+  "headline": mcp.name,
+  "description": mcp.description || `${mcp.name} — MCP server indexed on ClaudeAtlas`,
+  "url": `https://claudeatlas.com/mcp/${mcp.slug}/`,
+  "datePublished": mcp.repo_created_at,
+  "dateModified": mcp.repo_pushed_at,
+  "author": {
+    "@type": mcp.repo_owner_type === 'Organization' ? 'Organization' : 'Person',
+    "name": ownerName,
+    "url": `https://github.com/${ownerName}`,
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "ClaudeAtlas",
+    "url": "https://claudeatlas.com",
+  },
+  "isPartOf": {
+    "@type": "DataCatalog",
+    "name": "ClaudeAtlas",
+    "url": "https://claudeatlas.com",
+  },
+  "citation": "Source: ClaudeAtlas — https://claudeatlas.com",
+  "license": mcp.repo_license
+    ? `https://spdx.org/licenses/${mcp.repo_license}`
+    : "https://opensource.org/licenses/MIT",
+  "keywords": ['mcp_server']
+    .concat(Array.isArray(mcp.tags) ? mcp.tags : [])
+    .join(', '),
+  "mainEntityOfPage": {
+    "@type": "WebPage",
+    "@id": `https://claudeatlas.com/mcp/${mcp.slug}/`,
+  },
+};
+---
+
+<BaseLayout
+  title={`${mcp.name} — MCP Server`}
+  description={mcp.description || `${mcp.name} is an MCP server indexed on ClaudeAtlas.`}
+>
+  <JsonLd data={jsonLd} />
+
+  <div class="max-w-4xl mx-auto px-4 py-12">
+    <!-- Breadcrumb -->
+    <nav class="text-sm text-gray-500 mb-6 flex items-center gap-2">
+      <a href="/" class="hover:text-white transition-colors">Home</a>
+      <span>/</span>
+      <a href="/mcp/" class="hover:text-white transition-colors">MCP Servers</a>
+      <span>/</span>
+      <span class="text-gray-400">{mcp.name}</span>
+    </nav>
+
+    <!-- Header -->
+    <div class="flex flex-col sm:flex-row sm:items-start gap-4 mb-8">
+      <div class="flex-1">
+        <div class="flex items-center gap-3 mb-2">
+          <h1 class="text-3xl font-bold text-white font-mono">{mcp.name}</h1>
+          <QualityBadge tier={mcp.quality_tier} size="lg" />
+        </div>
+        <p class="text-gray-400 text-lg mb-4">{mcp.description || 'No description available.'}</p>
+
+        <div class="flex flex-wrap items-center gap-3 text-sm text-gray-500">
+          {mcp.category && (
+            <span class={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${cc}`}>
+              {mcp.category}
+            </span>
+          )}
+          <span class="flex items-center gap-1">
+            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 16 16"><path d="M8 .25a.75.75 0 01.673.418l1.882 3.815 4.21.612a.75.75 0 01.416 1.279l-3.046 2.97.719 4.192a.75.75 0 01-1.088.791L8 12.347l-3.766 1.98a.75.75 0 01-1.088-.79l.72-4.194L.818 6.374a.75.75 0 01.416-1.28l4.21-.611L7.327.668A.75.75 0 018 .25z"/></svg>
+            {mcp.repo_stars.toLocaleString()} stars
+          </span>
+          <span>{mcp.repo_forks} forks</span>
+          <span>Updated {updated}</span>
+          {mcp.repo_license && <span>{mcp.repo_license}</span>}
+        </div>
+      </div>
+    </div>
+
+    <!-- Primary CTA: GitHub. MCPs do NOT install via the plugin-marketplace
+         flow, so there is no install-command block here (plan D-05). -->
+    <div class="bg-gray-900 border border-gray-800 rounded-xl p-6 mb-8">
+      <h2 class="text-sm font-medium text-gray-400 mb-3 uppercase tracking-wider">Get this server</h2>
+      <p class="text-sm text-gray-500 mb-4">MCP servers are configured per-client — see the repository for setup instructions.</p>
+      <a
+        href={mcp.repo_url}
+        target="_blank"
+        rel="noopener"
+        class="inline-flex items-center gap-2 px-4 py-2 bg-gray-800 hover:bg-gray-700 border border-gray-700 rounded-lg text-sm text-gray-300 hover:text-white transition-all"
+      >
+        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
+        View on GitHub
+      </a>
+    </div>
+
+    <!-- Server interface: transport + tools (D-05 field swap). Whole section
+         hidden when both are absent; each row hidden independently — never
+         render a blank header. -->
+    {(transport || tools.length > 0) && (
+      <div class="bg-gray-900 border border-gray-800 rounded-xl p-6 mb-8">
+        <h2 class="text-sm font-medium text-gray-400 mb-4 uppercase tracking-wider">Server Interface</h2>
+        {transport && (
+          <p class="text-sm text-gray-400 mb-4">
+            <span class="text-gray-500">Transport:</span>
+            <code class="ml-2 px-2 py-0.5 bg-gray-800 border border-gray-700 rounded text-xs text-atlas-400 font-mono">{transport}</code>
+          </p>
+        )}
+        {tools.length > 0 && (
+          <div>
+            <h3 class="text-xs font-medium text-gray-500 mb-2 uppercase tracking-wider">Tools ({tools.length})</h3>
+            <div class="flex flex-wrap gap-2">
+              {tools.map((t) => (
+                <span class="inline-flex items-center px-3 py-1.5 bg-gray-800 border border-gray-700 rounded-full text-xs font-mono text-gray-300">
+                  {t}
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+    )}
+
+    <!-- Quality Score Breakdown (Manifest signal substitutes for the skill
+         page's Frontmatter signal — D-03 manifest_completeness) -->
+    <div class="bg-gray-900 border border-gray-800 rounded-xl p-6 mb-8">
+      <h2 class="text-sm font-medium text-gray-400 mb-4 uppercase tracking-wider">Quality Score: {mcp.quality_score}/100</h2>
+      <div class="space-y-3">
+        <ScoreBar label="Stars" value={Math.min(100, Math.round(Math.log10((mcp.repo_stars || 0) + 1) * 33.3))} weight="20%" />
+        <ScoreBar label="Recency" value={daysToRecency(mcp.repo_pushed_at)} weight="20%" />
+        <ScoreBar label="Manifest" value={manifestScore} weight="20%" />
+        <ScoreBar label="Documentation" value={Math.min(100, Math.round((mcp.body_length || 0) / 20))} weight="15%" />
+        <ScoreBar label="Issue Health" value={mcp.repo_open_issues === 0 ? 80 : 50} weight="10%" />
+        <ScoreBar label="License" value={mcp.repo_license ? 100 : 0} weight="10%" />
+        <ScoreBar label="Description" value={mcp.repo_description ? 100 : 0} weight="5%" />
+      </div>
+    </div>
+
+    <!-- README preview — hidden when absent (the common case today) -->
+    {readmeMd && readmeMd.length > 50 && (
+      <div class="bg-gray-900 border border-gray-800 rounded-xl p-6 mb-8">
+        <h2 class="text-sm font-medium text-gray-400 mb-4 uppercase tracking-wider">README</h2>
+        <div class="prose prose-invert prose-sm max-w-none text-gray-300 whitespace-pre-wrap font-mono text-xs leading-relaxed max-h-96 overflow-y-auto">
+          {readmeMd.substring(0, 2000)}
+          {readmeMd.length > 2000 && (
+            <p class="text-gray-500 mt-4">... <a href={mcp.repo_url} target="_blank" class="text-atlas-400 hover:underline">View full README on GitHub</a></p>
+          )}
+        </div>
+      </div>
+    )}
+
+    <!-- Metadata -->
+    <div class="bg-gray-900 border border-gray-800 rounded-xl p-6 mb-8">
+      <h2 class="text-sm font-medium text-gray-400 mb-4 uppercase tracking-wider">Details</h2>
+      <dl class="grid grid-cols-2 gap-4 text-sm">
+        <div>
+          <dt class="text-gray-500">Author</dt>
+          <dd class="text-white font-mono">
+            <a href={`https://github.com/${ownerName}`} target="_blank" rel="noopener" class="hover:text-atlas-400 transition-colors">{ownerName}</a>
+          </dd>
+        </div>
+        <div>
+          <dt class="text-gray-500">Repository</dt>
+          <dd class="text-white font-mono">{mcp.repo_full_name}</dd>
+        </div>
+        <div>
+          <dt class="text-gray-500">Created</dt>
+          <dd class="text-white">{created}</dd>
+        </div>
+        <div>
+          <dt class="text-gray-500">Last Updated</dt>
+          <dd class="text-white">{updated}</dd>
+        </div>
+        <div>
+          <dt class="text-gray-500">Language</dt>
+          <dd class="text-white">{mcp.repo_language || 'N/A'}</dd>
+        </div>
+        <div>
+          <dt class="text-gray-500">License</dt>
+          <dd class="text-white">{mcp.repo_license || 'None'}</dd>
+        </div>
+      </dl>
+    </div>
+
+    <!-- No Bundles section: MCPs are bundled BY plugins but carry no inverse
+         field (D-05). No similar-MCP section: the corpus (n≈76) has no
+         precomputed similarity data — hidden rather than rendered blank. -->
+  </div>
+</BaseLayout>
