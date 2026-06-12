@@ -1,6 +1,6 @@
 - [ ] **Phase 3.3: Plugin pages** — `/plugins/` + `/plugins/browse/` + `/plugins/owner/name/`, `/mcp/` + `/mcp/owner/name/`, bundle-graph display (both directions), two-step marketplace install, and the plugin-pipeline re-enable (bootstrap + `PLUGINS_ENABLED=true`). Marketplace landing pages OUT (chips instead, D-06). **Planned 2026-06-11: 7 plans, 5 waves** (`.planning/phases/3.3-plugin-pages/03.3-0[1-7]-PLAN.md`):
   - [ ] 03.3-01-PLAN.md — Wave 0: loadCheckpoint NDJSON fix (D-02) + declared-marketplace-name propagation (D-08), test-first
-  - [ ] 03.3-02-PLAN.md — Wave 1: src/lib/plugins.js loader + bundle-graph resolution + install-command derivation
+  - [x] 03.3-02-PLAN.md — Wave 1: src/lib/plugins.js loader + bundle-graph resolution + install-command derivation
   - [ ] 03.3-03-PLAN.md — Wave 2: plugin detail page + two-step install + prominent Bundles section (D-09)
   - [ ] 03.3-04-PLAN.md — Wave 2: MCP detail page (field swap D-05) + skill-page reverse bundle edge (D-10)
   - [ ] 03.3-05-PLAN.md — Wave 3: /plugins/ landing + /plugins/browse/ + /mcp/ index + sitemap-gate widening
