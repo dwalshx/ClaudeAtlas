@@ -6,6 +6,7 @@ import SkillCard from '../../components/SkillCard.astro';
 import ScoreBar from '../../components/ScoreBar.astro';
 import JsonLd from '../../components/JsonLd.astro';
 import { allSkills, getRelatedSkills, getSimilarSkills, getSkillIntegrations, timeAgo, categoryColor, getCategorySlug } from '../../lib/skills.js';
+import { resolveBundledPlugins } from '../../lib/plugins.js';
 
 function daysToRecency(dateStr) {
   if (!dateStr) return 0;
@@ -43,6 +44,11 @@ export function getStaticPaths() {
 }
 
 const { skill } = Astro.props;
+// Reverse bundle edge (D-10): plugin entity IDs in skill.bundled_in_plugins[]
+// (written by scripts/link-bundles.js, preserved across filter re-runs via
+// PRESERVED_FIELDS — CLAUDE.md footgun #11) resolved to plugin records.
+// Empty for most skills; the chip row below renders only when non-empty.
+const bundledInPlugins = resolveBundledPlugins(skill.bundled_in_plugins);
 const similar = getSimilarSkills(skill, 5);
 const related = similar.length > 0 ? [] : getRelatedSkills(skill, 3); // fall back to category-related if no similar data
 const integrations = getSkillIntegrations(skill);
@@ -227,6 +233,26 @@ const jsonLd = {
               {svc.name}
               <span class="text-gray-600">·</span>
               <span class="text-gray-500">{svc.category}</span>
+            </a>
+          ))}
+        </div>
+      </section>
+    )}
+
+    <!-- D-10 reverse bundle edge: compact secondary chip row, rendered ONLY
+         when the skill resolves to at least one bundling plugin record.
+         (HTML comments survive into built output — keep the section's UI
+         string out of this comment so grep checks stay unambiguous.) -->
+    {bundledInPlugins.length > 0 && (
+      <section class="mb-8">
+        <h2 class="text-sm font-medium text-gray-400 mb-3 uppercase tracking-wider">Bundled in these plugins</h2>
+        <div class="flex flex-wrap gap-2">
+          {bundledInPlugins.map((p: any) => (
+            <a
+              href={`/plugins/${p.slug}/`}
+              class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-gray-800 hover:bg-gray-700 border border-gray-700 rounded-full text-xs font-medium text-gray-300 hover:text-white transition-colors"
+            >
+              {p.name}
             </a>
           ))}
         </div>
