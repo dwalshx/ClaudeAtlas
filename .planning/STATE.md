@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Completed 03.3-04-PLAN.md (MCP detail pages + skill reverse bundle edge)
-last_updated: "2026-06-12T16:29:00.251Z"
+stopped_at: Completed 03.3-05-PLAN.md (discovery pages + sitemap gate widened; only Plan 07 human-gated re-enable remains)
+last_updated: "2026-06-12T17:08:31.227Z"
 last_activity: 2026-06-12
 progress:
   total_phases: 18
   completed_phases: 6
   total_plans: 25
-  completed_plans: 24
+  completed_plans: 25
   percent: 100
 ---
 
@@ -27,7 +27,7 @@ See: `.planning/PROJECT.md` (last updated 2026-04-10)
 ## Current Position
 
 Phase: 3.3 (plugin-pages) — EXECUTING
-Plan: 6 of 7
+Plan: 7 of 7
 Status: Ready to execute
 Next action: **`/gsd:execute-phase 3.3`** — plugin + MCP pages + plugin-pipeline re-enable. Wave 4 (Plan 07) is human-gated: GitHub-UI release + bootstrap dispatch + cold-sweep measurement + flip PLUGINS_ENABLED=true (PAT can't dispatch via CLI). Mirrors 3.2.1's measure-before-flip checkpoint discipline.
 **Phase 3.2.1 (HNSW optimization) SHIPPED 2026-06-11** — PR #14 merged; enrich 59→2.8min, compute-similar 162→2.3min, recall 1.0000; cron ~50min vs 360 cap. Unblocked the 3.3 plugin re-enable.
@@ -210,6 +210,9 @@ These were INSERTED ahead of the Phase 3.0 spec's 3.1–3.9 lineup because the d
 - (3.2.1-05) Engine/timing gates wired into daily-scrape: enrich + Build logs tee'd (set -o pipefail first), non-push gate steps grep '[ann] engine=hnsw' (anti-silent-fallback, Pitfall 2) and enforce <900s elapsed via awk, failing loudly if ELAPSED parses empty; validate_ann dispatch input runs the four-gate recall harness BEFORE enrich so a FAIL stops the run pre-publish
 - (3.2.1-05) validate-ann-recall.js mirrors per-consumer production semantics: symmetrized top-1 (enrich nnSim parity) vs unsymmetrized top-K (compute-similar parity); misses-only invariant (annPairs ⊆ exactPairs) fails the run regardless of recall; hard-requires annEngine()==='hnsw' — CI-only by design
 - (03.3-06) bootstrap-plugins-raw.yml authored with cache key prefix locked to `plugins-raw-ndjson-` so daily-scrape.yml's existing restore-keys prefix-match works with zero consumer changes; dispatch + release creation + PLUGINS_ENABLED flip stay human-gated in Plan 07 (measure-before-flip)
+- (03.3-05) /plugins/ category chips are display-only and tag-derived: /category/<slug>/ pages are skill-scoped so plugin chips don't link there; labels come from `category:<slug>` tags via slug→label map (legacy .category field unused, removed in 3.6)
+- (03.3-05) Search endpoint carried on a `data-search-endpoint` input attribute — Astro/Vite bundles page scripts into hashed assets, so the attribute keeps the type=plugin wiring visible in static HTML; result renderer builds /plugins/<slug>/ page-side (worker detail_url is skill-hardcoded)
+- (03.3-05) check-sitemap-completeness expected basis widened to skills+plugins+mcp wc -l counts (existsSync-guarded → 0 when absent); tolerance max(1500, 15%) computed on the combined basis — gate green at 29,035 locs in [26,685, 30,716]
 
 ### Spec corrections (rolled into 3.1 Task 8)
 
@@ -226,8 +229,8 @@ These were INSERTED ahead of the Phase 3.0 spec's 3.1–3.9 lineup because the d
 
 ## Session Continuity
 
-Last session: 2026-06-12T16:29:00.241Z
-Stopped at: Completed 03.3-04-PLAN.md (MCP detail pages + skill reverse bundle edge)
+Last session: 2026-06-12T17:08:31.217Z
+Stopped at: Completed 03.3-05-PLAN.md (discovery pages + sitemap gate widened; only Plan 07 human-gated re-enable remains)
 
 **Resume:** read `.planning/SESSION-MEMO-2026-04-to-05.md` for full context, then `/gsd:execute-phase 3.1`.
 
