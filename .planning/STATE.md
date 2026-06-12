@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Completed 03.3-02-PLAN.md (plugin/MCP loader)
-last_updated: "2026-06-12T15:21:57.354Z"
+stopped_at: Completed 03.3-01-PLAN.md (loadCheckpoint NDJSON fix + declared marketplace-name propagation)
+last_updated: "2026-06-12T15:26:56.924Z"
 last_activity: 2026-06-12
 progress:
   total_phases: 18
   completed_phases: 6
   total_plans: 25
-  completed_plans: 21
+  completed_plans: 22
   percent: 100
 ---
 
@@ -27,7 +27,7 @@ See: `.planning/PROJECT.md` (last updated 2026-04-10)
 ## Current Position
 
 Phase: 3.3 (plugin-pages) — EXECUTING
-Plan: 3 of 7
+Plan: 4 of 7
 Status: Ready to execute
 Next action: **`/gsd:execute-phase 3.3`** — plugin + MCP pages + plugin-pipeline re-enable. Wave 4 (Plan 07) is human-gated: GitHub-UI release + bootstrap dispatch + cold-sweep measurement + flip PLUGINS_ENABLED=true (PAT can't dispatch via CLI). Mirrors 3.2.1's measure-before-flip checkpoint discipline.
 **Phase 3.2.1 (HNSW optimization) SHIPPED 2026-06-11** — PR #14 merged; enrich 59→2.8min, compute-similar 162→2.3min, recall 1.0000; cron ~50min vs 360 cap. Unblocked the 3.3 plugin re-enable.
@@ -178,6 +178,9 @@ These were INSERTED ahead of the Phase 3.0 spec's 3.1–3.9 lineup because the d
 
 ### Decisions log (cumulative; see `.planning/SESSION-MEMO-2026-04-to-05.md` for full reasoning)
 
+- (3.3-01) marketplace_listings elements are `{ path, name }` objects: path = owner/repo for `/plugin marketplace add`, name = declared marketplace_manifest.name for the `@name` install token (null → GitHub fallback); pre-3.3 records stored bare strings, loaders normalize both
+- (3.3-01) upcastPluginRecord routes marketplace_listings through listingArr() (objects + legacy strings) — the string-only arr() silently dropped the {path,name} entries and would have broken the listing-only HAS_MANIFEST_OR_LISTING slop gate
+- (3.3-01) scrape-plugins.js import is side-effect free: GITHUB_TOKEN check moved into main(), invoked-as-script guard added (mirrors filter-plugins.js); loadCheckpointFrom/saveCheckpointTo exported for tests — and loadCheckpoint now reads the NDJSON .partial via readNdjsonRecords, so processedSet resume works for the first time (D-02)
 - (3.3-02) Plugin/MCP page data flows through NEW `src/lib/plugins.js` (streaming readNdjsonRecords on plugins.ndjson + mcp-servers.ndjson) — `entities.js getEntitiesByType('plugin')` returns [] at build time (skills-only loader)
 - (3.3-02) resolveBundledSkills is prefix-tolerant: on-disk skill IDs are legacy-UNPREFIXED (0/23,047 carry `skill:`); bundled_skills entries match directly, typedef-prefixed form normalized away on miss
 - (3.3-02) installCommand normalizes legacy bare-string marketplace listings to {path, name:null} and never emits the broken `name@owner/repo` token (declared-name only); GitHub fallback always offered
@@ -218,8 +221,8 @@ These were INSERTED ahead of the Phase 3.0 spec's 3.1–3.9 lineup because the d
 
 ## Session Continuity
 
-Last session: 2026-06-12T15:21:57.345Z
-Stopped at: Completed 03.3-02-PLAN.md (plugin/MCP loader)
+Last session: 2026-06-12T15:26:56.915Z
+Stopped at: Completed 03.3-01-PLAN.md (loadCheckpoint NDJSON fix + declared marketplace-name propagation)
 
 **Resume:** read `.planning/SESSION-MEMO-2026-04-to-05.md` for full context, then `/gsd:execute-phase 3.1`.
 
