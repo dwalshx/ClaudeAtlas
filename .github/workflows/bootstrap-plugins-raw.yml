@@ -1,0 +1,79 @@
+name: Bootstrap plugins-raw cache (one-shot)
+
+# One-time (and disaster-recovery) workflow to seed the GitHub Actions cache
+# with data/plugins-raw.ndjson — the raw plugin/MCP discovery corpus that
+# scripts/scrape-plugins.js checkpoints into. Phase 3.3 (D-01) re-enables the
+# daily plugin pipeline; the plugin scrape needs plugins-raw.ndjson present at
+# the start of every CI run so the daily pass is a cheap incremental refresh
+# instead of a cold full-ecosystem sweep (the 2026-05-30 timeout culprit).
+#
+# Mirrors bootstrap-skills-raw.yml (the proven Phase 3.0.1 bootstrap pattern).
+#
+# How it works:
+#   1. Downloads data/plugins-raw.ndjson from the `plugins-raw-ndjson-bootstrap`
+#      release asset.
+#   2. Saves it to GHA cache with a key that daily-scrape.yml's
+#      restore-keys: "plugins-raw-ndjson-" prefix-match will pick up
+#      (step "Restore plugins-raw cache", gated behind PLUGINS_ENABLED).
+#   3. The first daily-scrape run with PLUGINS_ENABLED=true finds the cache
+#      and starts warm from the seeded corpus.
+#
+# Operator action: Run ONCE via workflow_dispatch from the Actions tab
+# after creating the `plugins-raw-ndjson-bootstrap` release with
+# plugins-raw.ndjson as an asset (Plan 3.3-07, human-gated). KEEP THE
+# RELEASE — do NOT delete it (permanent disaster-recovery fallback,
+# same contract as skills-raw-ndjson-bootstrap).
+#
+# If the GHA cache ever evicts (7-day inactivity) or corrupts, re-trigger
+# this workflow via workflow_dispatch to re-seed.
+
+on:
+  workflow_dispatch: {}
+
+jobs:
+  bootstrap:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download plugins-raw.ndjson from release asset
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          mkdir -p data
+          gh release download plugins-raw-ndjson-bootstrap \
+            --pattern 'plugins-raw.ndjson' \
+            --output data/plugins-raw.ndjson
+          ls -lh data/plugins-raw.ndjson
+          echo "SHA256:"
+          sha256sum data/plugins-raw.ndjson
+          echo "Plugin record count:"
+          wc -l < data/plugins-raw.ndjson
+
+      # Cache-key prefix discipline. Key prefix MUST stay `plugins-raw-ndjson-`
+      # to match daily-scrape.yml's restore-keys. daily-scrape.yml's
+      # "Restore plugins-raw cache" step uses `restore-keys: plugins-raw-ndjson-`
+      # (prefix-match), so it will pick this entry up on the next
+      # PLUGINS_ENABLED=true run. Do NOT change the prefix without updating
+      # the consumer workflow in lockstep.
+      - name: Save to GitHub Actions cache
+        uses: actions/cache/save@v4
+        with:
+          path: data/plugins-raw.ndjson
+          key: plugins-raw-ndjson-bootstrap-${{ github.run_number }}
+
+      - name: Confirm cache was saved
+        run: |
+          echo "Cache saved with key: plugins-raw-ndjson-bootstrap-${{ github.run_number }}"
+          echo ""
+          echo "daily-scrape.yml uses restore-keys: 'plugins-raw-ndjson-'"
+          echo "(prefix match), so it will pick up this entry on the next"
+          echo "run with PLUGINS_ENABLED=true."
+          echo ""
+          echo "Next steps:"
+          echo "  1. Verify cache exists: 'gh cache list --limit 5'"
+          echo "  2. Measure the cold sweep + flip PLUGINS_ENABLED per Plan 3.3-07"
+          echo "     (measure-before-flip discipline)."
+          echo "  3. KEEP the release 'plugins-raw-ndjson-bootstrap' in place."
+          echo "     If GHA cache ever evicts/corrupts, re-run THIS workflow to re-seed."
