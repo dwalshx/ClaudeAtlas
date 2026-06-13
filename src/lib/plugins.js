@@ -30,7 +30,24 @@ import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { readNdjsonRecords } from '../../scripts/lib/ndjson.js';
-import { allSkills } from './entities.js';
+
+// Bundled-skill resolution (resolveBundledSkills) needs the full skill catalog
+// from entities.js. That module does eager skills-load AT IMPORT TIME and
+// THROWS in CI when data/skills.ndjson is absent (build-input.js CI guard) —
+// e.g. the lint-pipeline unit-test job, which never fetches the skills asset.
+// A static `import { allSkills }` can't catch that throw, so it would crash the
+// ENTIRE plugin/MCP build whenever skills data is missing, contradicting this
+// loader's own graceful-empty contract (load() below). A caught dynamic import
+// (top-level await) degrades bundled-skill resolution to empty instead, while
+// keeping the public API synchronous (the await resolves before exports run).
+let allSkills = [];
+try {
+  ({ allSkills } = await import('./entities.js'));
+} catch (err) {
+  console.warn(
+    `[plugins] skill catalog unavailable; bundled-skill resolution disabled (${err.message})`,
+  );
+}
 
 const DATA = join(dirname(fileURLToPath(import.meta.url)), '../../data');
 
