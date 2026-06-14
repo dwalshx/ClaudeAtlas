@@ -3,9 +3,9 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: "03.3-07-PLAN.md paused at Task 1 checkpoint (human-action: create plugins-raw-ndjson-bootstrap release + dispatch bootstrap-plugins-raw.yml via GitHub UI)"
-last_updated: "2026-06-12T17:11:35.713Z"
-last_activity: 2026-06-12
+stopped_at: "Phase 3.3 COMPLETE (plugin/MCP pages shipped + deployed). Plan 07 pipeline re-enable measured → NO-GO (discovery rate-limit-bound) → DEFERRED to Phase 3.4 (incremental plugin discovery), the NEXT phase. PLUGINS_ENABLED stays 'false'; pages live-but-empty until 3.4."
+last_updated: "2026-06-14T00:00:00.000Z"
+last_activity: 2026-06-14
 progress:
   total_phases: 18
   completed_phases: 6
@@ -21,19 +21,24 @@ progress:
 See: `.planning/PROJECT.md` (last updated 2026-04-10)
 
 **Core value:** Users can find the best Claude skill for a given task in under 30 seconds, with visible signals for why it's trustworthy.
-**Current focus:** Phase 3.3 — plugin-pages
+**Current focus:** Phase 3.4 — incremental plugin discovery (NEXT; re-enable deferred from 3.3)
 **Milestone:** v3.0 — Comprehensive Agent Tooling Index (in progress)
 
 ## Current Position
 
-Phase: 3.3 (plugin-pages) — EXECUTING
-Plan: 7 of 7
-Status: Ready to execute
-Next action: **`/gsd:execute-phase 3.3`** — plugin + MCP pages + plugin-pipeline re-enable. Wave 4 (Plan 07) is human-gated: GitHub-UI release + bootstrap dispatch + cold-sweep measurement + flip PLUGINS_ENABLED=true (PAT can't dispatch via CLI). Mirrors 3.2.1's measure-before-flip checkpoint discipline.
-**Phase 3.2.1 (HNSW optimization) SHIPPED 2026-06-11** — PR #14 merged; enrich 59→2.8min, compute-similar 162→2.3min, recall 1.0000; cron ~50min vs 360 cap. Unblocked the 3.3 plugin re-enable.
-**4 commits unpushed** (3.3 planning docs: research/validation/plan/revision) — `git push origin main` before/early in next session.
-**READ FIRST:** `.planning/phases/3.3-plugin-pages/3.3-CONTEXT.md` (14 locked decisions) + `3.3-RESEARCH.md` (4 findings that reshaped the plan: split loaders, install token not in data, loadCheckpoint latent bug, bundle arrays are IDs). Then `.planning/SESSION-HANDOFF-2026-06-10.md` for operational gotchas.
-Last activity: 2026-06-12
+Phase: 3.3 (plugin-pages) — ✅ COMPLETE 2026-06-14 (pages shipped + deployed; pipeline re-enable deferred to 3.4)
+Next phase: 3.4 (incremental plugin discovery) — NOT YET PLANNED
+Next action: **`/gsd:plan-phase 3.4`** — make `scripts/scrape-plugins.js` discovery incremental so the plugin pipeline fits the daily budget, then flip `PLUGINS_ENABLED='true'` (the one step left from 3.3). User flagged this as the immediate next priority.
+
+**Why 3.4 exists / 3.3 re-enable NO-GO:** Plan 07 branch measurement (2026-06-13, run 27472968169) proved plugin discovery is rate-limit-bound — ~1,700 of ~7,300 repos in 5.5h, 403 wall every ~800-1,100 repos forcing ~44-min resets, full sweep ~24h. Flipping `PLUGINS_ENABLED` would break the daily cron (Pitfall 5). Full analysis + the three rework levers: `.planning/phases/3.3-plugin-pages/3.3-07-MEASUREMENT.md`.
+
+**What's already in place for the re-enable (so 3.4 is just the sweep fix + a flag flip):**
+- `plugins-raw-ndjson-bootstrap` release (permanent, 7339 records) + warm GHA cache `plugins-raw-ndjson-bootstrap-1`
+- All plugin/MCP page code shipped + deployed (live-but-empty; `src/lib/plugins.js` degrades gracefully when data absent — commit b9f2ed7)
+- `bootstrap-plugins-raw.yml` workflow + daily-scrape gated plugin steps (AND `PLUGINS_ENABLED=='true'`)
+
+**READ FIRST for 3.4:** `3.3-plugin-pages/3.3-07-MEASUREMENT.md` (the NO-GO + levers), then `3.3-RESEARCH.md` §Q2d (sweep cost analysis). CLAUDE.md note #7 documents the Track 1 GraphQL-batch precedent — the same pattern applies to plugin discovery.
+Last activity: 2026-06-14
 
 ### Quick Tasks Completed
 
@@ -174,6 +179,7 @@ These were INSERTED ahead of the Phase 3.0 spec's 3.1–3.9 lineup because the d
 
 ### Roadmap Evolution
 
+- Phase 3.4 added after Phase 3.3 (2026-06-14): Incremental plugin discovery. Phase 3.3's plugin/MCP PAGES shipped, but the pipeline re-enable (Plan 07) hit a measured NO-GO — plugin discovery is rate-limit-bound (~24h full sweep; run 27472968169). The bootstrap cache only avoids re-fetching content; the per-repo discovery walk over ~7,300 repos burns the 5,000 REST/hr budget. Re-enable deferred to 3.4, which makes discovery incremental (skip-known-repos / GraphQL batch) so the sweep fits, then flips `PLUGINS_ENABLED='true'`. User-flagged as the immediate next priority. See `3.3-plugin-pages/3.3-07-MEASUREMENT.md`.
 - Phase 3.2.1 inserted after Phase 3.2 (2026-06-10): HNSW optimization — replace O(N²) cosine scans (compute-similar.js + enrich.js dedup) with approximate-NN; folds in security Audit B content-scanner filter (URGENT — cron at 4.5-5.5h vs 360-min hard cap; blocks 3.3 plugin re-enable)
 
 ### Decisions log (cumulative; see `.planning/SESSION-MEMO-2026-04-to-05.md` for full reasoning)
