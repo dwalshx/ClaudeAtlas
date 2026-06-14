@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: Ready to execute
-stopped_at: Completed 3.4-02-PLAN.md
-last_updated: "2026-06-14T19:53:16.131Z"
+stopped_at: Completed 3.4-03-PLAN.md
+last_updated: "2026-06-14T20:01:48.008Z"
 last_activity: 2026-06-14
 progress:
   total_phases: 19
   completed_phases: 7
   total_plans: 29
-  completed_plans: 28
+  completed_plans: 29
   percent: 100
 ---
 
@@ -27,7 +27,7 @@ See: `.planning/PROJECT.md` (last updated 2026-04-10)
 ## Current Position
 
 Phase: 3.4 (incremental-plugin-discovery) — EXECUTING
-Plan: 3 of 4
+Plan: 4 of 4
 Next phase: 3.4 (incremental plugin discovery) — NOT YET PLANNED
 Next action: **`/gsd:plan-phase 3.4`** — make `scripts/scrape-plugins.js` discovery incremental so the plugin pipeline fits the daily budget, then flip `PLUGINS_ENABLED='true'` (the one step left from 3.3). User flagged this as the immediate next priority.
 
@@ -186,6 +186,7 @@ These were INSERTED ahead of the Phase 3.0 spec's 3.1–3.9 lineup because the d
 
 ### Decisions log (cumulative; see `.planning/SESSION-MEMO-2026-04-to-05.md` for full reasoning)
 
+- (3.4-03) Change C completeness gate: exported pure `shouldRewalk(known, freshPushedAt, opts)` re-walks a KNOWN plugin repo ONLY when its fresh `pushed_at` (Plan 02's GraphQL Map) advanced past the stored `walked_pushed_at` — missing stamp → backfill (re-walk once), missing fresh signal (refresh casualty) + valid stamp → keep cached, `opts.periodicFull` → always. ISO-string lexicographic `>` (= chronological) avoids null Date parsing; mirrors Track 2's blob-sha skip at repo granularity. `walkComponentDirs` rewritten as ONE `git/trees/{branch}?recursive=1` scan (was ~6-18 contents calls/repo, now ETag 304-free warm) emitting the BYTE-IDENTICAL `inventory[dir]={path,count,entries}` shape (git tree/blob → contents-API dir/file, single-level immediate children) — `mcp-servers` component preserved (R-5/Pitfall 6; filter-mcps `MIN_MCP_REPOS=10`). Re-walked known repos OVERWRITE their prior `allRepos` record via `indexByName` so OUTPUT has no duplicate `repo_full_name`s. Periodic full re-walk safety net = weekly UTC Sundays (`getUTCDay()===0`) + `PLUGINS_FULL_REWALK=1` override + `[gate] periodicFull=...` log line for Plan 04's mode-aware measurement. check-banned-patterns `plugins-meta.json` allowlist re-pinned 634→761. The warm plugin step is now bounded to (new repos) + (repos pushed since last walk) + (everything, once weekly).
 - (3.4-01) Cross-run plugin skip now seeds `processedSet` from the cached OUTPUT `data/plugins-raw.ndjson` via new exported `buildProcessedSeedFrom(OUTPUT_PATH, PARTIAL_PATH)`, merging the same-job `.partial` with `.partial` winning per-repo. The pre-3.4 `loadCheckpoint()` read ONLY the never-cached `.partial`, so `processedSet` started empty every run and all ~7,300 repos re-walked cold (~24h → the 3.3 re-enable NO-GO). main() now logs `resume: N known repos seeded from OUTPUT+partial` (Pitfall-1 warning-sign instrument for Plan 04). RESEARCH Q1 option a; main() skip loop unchanged. check-banned-patterns allowlist re-pinned 483→520 (Change A shifted the plugins-meta.json sidecar write).
 - (3.3-01) marketplace_listings elements are `{ path, name }` objects: path = owner/repo for `/plugin marketplace add`, name = declared marketplace_manifest.name for the `@name` install token (null → GitHub fallback); pre-3.3 records stored bare strings, loaders normalize both
 - (3.3-01) upcastPluginRecord routes marketplace_listings through listingArr() (objects + legacy strings) — the string-only arr() silently dropped the {path,name} entries and would have broken the listing-only HAS_MANIFEST_OR_LISTING slop gate
@@ -238,8 +239,8 @@ These were INSERTED ahead of the Phase 3.0 spec's 3.1–3.9 lineup because the d
 
 ## Session Continuity
 
-Last session: 2026-06-14T19:53:16.122Z
-Stopped at: Completed 3.4-02-PLAN.md
+Last session: 2026-06-14T20:01:47.996Z
+Stopped at: Completed 3.4-03-PLAN.md
 
 **Resume:** read `.planning/SESSION-MEMO-2026-04-to-05.md` for full context, then `/gsd:execute-phase 3.1`.
 
