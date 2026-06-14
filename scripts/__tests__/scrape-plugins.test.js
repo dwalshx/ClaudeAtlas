@@ -26,6 +26,7 @@ import {
   loadCheckpointFrom,
   saveCheckpointTo,
   buildProcessedSeedFrom,
+  applyFreshFields,
 } from '../scrape-plugins.js';
 import { writeNdjsonStreaming } from '../lib/ndjson.js';
 
@@ -211,4 +212,119 @@ test('R-2: buildProcessedSeedFrom with OUTPUT present + .partial absent seeds th
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }
+});
+
+// ---------------------------------------------------------------------------
+// Phase 3.4 Plan 02 (R-3): GraphQL engagement-refresh field mapping.
+//
+// Change B refreshes known plugin repos' engagement signals via batched
+// GraphQL. fetchRepoBatchGraphql returns repo_*-PREFIXED fields; the plugins-raw
+// record uses the BARE fetchRepoMetadata shape (stars/forks/open_issues/...).
+// applyFreshFields(records, freshByRepo) is the pure mapper that writes the
+// repo_* values onto the bare keys IN-PLACE for every record whose
+// repo_full_name has a freshByRepo entry. A record with NO entry is left
+// untouched (miss = no-op). default_branch uses `?? existing` so a null/undefined
+// fresh value keeps the prior branch (graceful staleness).
+// ---------------------------------------------------------------------------
+
+test('R-3: applyFreshFields maps repo_* GraphQL fields onto bare plugins-raw keys in-place', () => {
+  const records = [
+    {
+      repo_full_name: 'owner/known',
+      stars: 1,
+      forks: 1,
+      open_issues: 1,
+      pushed_at: '2026-01-01T00:00:00Z',
+      topics: ['old'],
+      archived: false,
+      license: 'OLD',
+      language: 'OldLang',
+      description: 'old desc',
+      default_branch: 'master',
+      created_at: '2020-01-01T00:00:00Z', // NOT in the refresh set — must survive
+    },
+  ];
+  const freshByRepo = new Map([
+    [
+      'owner/known',
+      {
+        repo_stars: 42,
+        repo_forks: 7,
+        repo_open_issues: 3,
+        repo_pushed_at: '2026-06-14T00:00:00Z',
+        repo_updated_at: '2026-06-14T00:00:00Z',
+        repo_archived: true,
+        repo_topics: ['claude', 'plugin'],
+        repo_license: 'MIT',
+        repo_language: 'TypeScript',
+        repo_description: 'fresh desc',
+        repo_default_branch: 'main',
+      },
+    ],
+  ]);
+
+  applyFreshFields(records, freshByRepo);
+
+  const r = records[0];
+  assert.equal(r.stars, 42, 'repo_stars → stars');
+  assert.equal(r.forks, 7, 'repo_forks → forks');
+  assert.equal(r.open_issues, 3, 'repo_open_issues → open_issues');
+  assert.equal(r.pushed_at, '2026-06-14T00:00:00Z', 'repo_pushed_at → pushed_at');
+  assert.deepEqual(r.topics, ['claude', 'plugin'], 'repo_topics → topics');
+  assert.equal(r.archived, true, 'repo_archived → archived');
+  assert.equal(r.license, 'MIT', 'repo_license → license');
+  assert.equal(r.language, 'TypeScript', 'repo_language → language');
+  assert.equal(r.description, 'fresh desc', 'repo_description → description');
+  assert.equal(r.default_branch, 'main', 'repo_default_branch → default_branch');
+  // created_at is NOT in the GraphQL freshness set — must be untouched.
+  assert.equal(r.created_at, '2020-01-01T00:00:00Z', 'non-refresh field untouched');
+});
+
+test('R-3: applyFreshFields leaves a record with no freshByRepo entry byte-for-byte unchanged (miss = no-op)', () => {
+  const original = {
+    repo_full_name: 'owner/absent',
+    stars: 5,
+    forks: 2,
+    open_issues: 0,
+    pushed_at: '2025-05-05T00:00:00Z',
+    topics: ['keep'],
+    archived: false,
+    license: 'Apache-2.0',
+    language: 'Go',
+    description: 'unchanged',
+    default_branch: 'trunk',
+  };
+  const records = [{ ...original }];
+  // freshByRepo has a DIFFERENT repo — the record's repo is absent.
+  const freshByRepo = new Map([
+    ['someone/else', { repo_stars: 999, repo_default_branch: 'main' }],
+  ]);
+
+  applyFreshFields(records, freshByRepo);
+
+  assert.deepEqual(records[0], original, 'absent record untouched (miss = no-op)');
+});
+
+test('R-3: applyFreshFields keeps existing default_branch when fresh value is null/undefined', () => {
+  const records = [
+    { repo_full_name: 'owner/repo', default_branch: 'develop', stars: 1 },
+  ];
+  const freshByRepo = new Map([
+    [
+      'owner/repo',
+      {
+        repo_stars: 10,
+        repo_default_branch: null, // null fresh branch → keep existing
+      },
+    ],
+  ]);
+
+  applyFreshFields(records, freshByRepo);
+
+  assert.equal(records[0].stars, 10, 'other fields still refreshed');
+  assert.equal(
+    records[0].default_branch,
+    'develop',
+    'null fresh default_branch keeps the existing branch (?? existing)',
+  );
 });
