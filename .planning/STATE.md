@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: executing
-stopped_at: "Phase 3.3 COMPLETE (plugin/MCP pages shipped + deployed). Plan 07 pipeline re-enable measured → NO-GO (discovery rate-limit-bound) → DEFERRED to Phase 3.4 (incremental plugin discovery), the NEXT phase. PLUGINS_ENABLED stays 'false'; pages live-but-empty until 3.4."
-last_updated: "2026-06-14T00:00:00.000Z"
+status: Ready to execute
+stopped_at: "Completed 03.4-01-PLAN.md (Change A: cross-run skip-wiring fix)"
+last_updated: "2026-06-14T19:45:07.058Z"
 last_activity: 2026-06-14
 progress:
-  total_phases: 18
-  completed_phases: 6
-  total_plans: 25
-  completed_plans: 25
+  total_phases: 19
+  completed_phases: 7
+  total_plans: 29
+  completed_plans: 27
   percent: 100
 ---
 
@@ -21,18 +21,20 @@ progress:
 See: `.planning/PROJECT.md` (last updated 2026-04-10)
 
 **Core value:** Users can find the best Claude skill for a given task in under 30 seconds, with visible signals for why it's trustworthy.
-**Current focus:** Phase 3.4 — incremental plugin discovery (NEXT; re-enable deferred from 3.3)
+**Current focus:** Phase 3.4 — incremental-plugin-discovery
 **Milestone:** v3.0 — Comprehensive Agent Tooling Index (in progress)
 
 ## Current Position
 
-Phase: 3.3 (plugin-pages) — ✅ COMPLETE 2026-06-14 (pages shipped + deployed; pipeline re-enable deferred to 3.4)
+Phase: 3.4 (incremental-plugin-discovery) — EXECUTING
+Plan: 2 of 4
 Next phase: 3.4 (incremental plugin discovery) — NOT YET PLANNED
 Next action: **`/gsd:plan-phase 3.4`** — make `scripts/scrape-plugins.js` discovery incremental so the plugin pipeline fits the daily budget, then flip `PLUGINS_ENABLED='true'` (the one step left from 3.3). User flagged this as the immediate next priority.
 
 **Why 3.4 exists / 3.3 re-enable NO-GO:** Plan 07 branch measurement (2026-06-13, run 27472968169) proved plugin discovery is rate-limit-bound — ~1,700 of ~7,300 repos in 5.5h, 403 wall every ~800-1,100 repos forcing ~44-min resets, full sweep ~24h. Flipping `PLUGINS_ENABLED` would break the daily cron (Pitfall 5). Full analysis + the three rework levers: `.planning/phases/3.3-plugin-pages/3.3-07-MEASUREMENT.md`.
 
 **What's already in place for the re-enable (so 3.4 is just the sweep fix + a flag flip):**
+
 - `plugins-raw-ndjson-bootstrap` release (permanent, 7339 records) + warm GHA cache `plugins-raw-ndjson-bootstrap-1`
 - All plugin/MCP page code shipped + deployed (live-but-empty; `src/lib/plugins.js` degrades gracefully when data absent — commit b9f2ed7)
 - `bootstrap-plugins-raw.yml` workflow + daily-scrape gated plugin steps (AND `PLUGINS_ENABLED=='true'`)
@@ -184,6 +186,7 @@ These were INSERTED ahead of the Phase 3.0 spec's 3.1–3.9 lineup because the d
 
 ### Decisions log (cumulative; see `.planning/SESSION-MEMO-2026-04-to-05.md` for full reasoning)
 
+- (3.4-01) Cross-run plugin skip now seeds `processedSet` from the cached OUTPUT `data/plugins-raw.ndjson` via new exported `buildProcessedSeedFrom(OUTPUT_PATH, PARTIAL_PATH)`, merging the same-job `.partial` with `.partial` winning per-repo. The pre-3.4 `loadCheckpoint()` read ONLY the never-cached `.partial`, so `processedSet` started empty every run and all ~7,300 repos re-walked cold (~24h → the 3.3 re-enable NO-GO). main() now logs `resume: N known repos seeded from OUTPUT+partial` (Pitfall-1 warning-sign instrument for Plan 04). RESEARCH Q1 option a; main() skip loop unchanged. check-banned-patterns allowlist re-pinned 483→520 (Change A shifted the plugins-meta.json sidecar write).
 - (3.3-01) marketplace_listings elements are `{ path, name }` objects: path = owner/repo for `/plugin marketplace add`, name = declared marketplace_manifest.name for the `@name` install token (null → GitHub fallback); pre-3.3 records stored bare strings, loaders normalize both
 - (3.3-01) upcastPluginRecord routes marketplace_listings through listingArr() (objects + legacy strings) — the string-only arr() silently dropped the {path,name} entries and would have broken the listing-only HAS_MANIFEST_OR_LISTING slop gate
 - (3.3-01) scrape-plugins.js import is side-effect free: GITHUB_TOKEN check moved into main(), invoked-as-script guard added (mirrors filter-plugins.js); loadCheckpointFrom/saveCheckpointTo exported for tests — and loadCheckpoint now reads the NDJSON .partial via readNdjsonRecords, so processedSet resume works for the first time (D-02)
@@ -235,8 +238,8 @@ These were INSERTED ahead of the Phase 3.0 spec's 3.1–3.9 lineup because the d
 
 ## Session Continuity
 
-Last session: 2026-06-12T17:11:35.702Z
-Stopped at: 03.3-07-PLAN.md paused at Task 1 checkpoint (human-action: create plugins-raw-ndjson-bootstrap release + dispatch bootstrap-plugins-raw.yml via GitHub UI)
+Last session: 2026-06-14T19:45:07.047Z
+Stopped at: Completed 03.4-01-PLAN.md (Change A: cross-run skip-wiring fix)
 
 **Resume:** read `.planning/SESSION-MEMO-2026-04-to-05.md` for full context, then `/gsd:execute-phase 3.1`.
 
