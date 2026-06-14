@@ -251,47 +251,85 @@ async function fetchFileContent(repoFullName, path, branch = 'main') {
 
 const COMPONENT_DIRS = ['skills', 'agents', 'commands', 'hooks', 'mcp-servers', 'lsp-servers'];
 
+/**
+ * Phase 3.4 / Change C (RESEARCH §C / §3, Q3): fetch the FULL repo tree in ONE
+ * recursive call and derive the component inventory from it, replacing the prior
+ * COMPONENT_DIRS × 3-variants × contents-API loop (~6-18 REST calls/repo) with a
+ * SINGLE `git/trees?recursive=1` GET. This mirrors Track 2's listSkillPaths
+ * (scrape-discover-repos.js:152-168) and is strictly cheaper (ETag-cacheable,
+ * 304-free on warm), which matters now that Change C re-walks the daily delta.
+ *
+ * CRITICAL (Pitfall 6 / R-5): the emitted shape is IDENTICAL to the old code —
+ * `inventory[dir] = { path, count, entries }` with
+ * `entries[] = { name, type:'dir'|'file', path, size }`. The `mcp-servers`
+ * component MUST keep producing entries because filter-mcps.js derives EVERY
+ * mcp_server record from `components['mcp-servers'].entries[]` +
+ * `component_summary.mcp_servers` (MIN_MCP_REPOS=10 pre-flight FATALs otherwise).
+ * git/trees `type` is 'tree'|'blob' → mapped to 'dir'|'file' to match the
+ * contents-API shape the downstream consumers expect.
+ *
+ * Semantics preserved from the old walk:
+ *   - variant precedence [`<dir>`, `.claude-plugin/<dir>`, `.claude/<dir>`];
+ *     first NON-EMPTY variant wins (the old `break`).
+ *   - IMMEDIATE entries only (one level deep): a tree path is an entry of the
+ *     variant prefix iff its dirname === the prefix (matches the contents-API
+ *     single-level listing — RESEARCH §4 caveat).
+ *   - count = entries that are a dir OR end `.md`/`.json`.
+ */
 async function walkComponentDirs(repoFullName, branch = 'main') {
   const inventory = {};
 
+  const url = `https://api.github.com/repos/${repoFullName}/git/trees/${branch}?recursive=1`;
+  const res = await rateLimitedFetch(url);
+  if (!res.ok) return inventory; // tree fetch failed → no components (same as all-404)
+
+  const data = await res.json();
+  const tree = Array.isArray(data.tree) ? data.tree : [];
+  if (data.truncated) {
+    log(`    [tree-truncated] ${repoFullName} — large repo, component inventory may be partial`);
+  }
+
+  // Immediate children of a given directory prefix, mapped to the old
+  // contents-API entry shape (tree→dir, blob→file).
+  const childrenOf = (prefix) => {
+    const depth = prefix.split('/').length; // prefix is e.g. "skills" or ".claude/skills"
+    return tree
+      .filter((f) => {
+        if (!f || typeof f.path !== 'string') return false;
+        if (f.type !== 'tree' && f.type !== 'blob') return false;
+        if (!f.path.startsWith(`${prefix}/`)) return false;
+        // one level deep only: exactly one path segment past the prefix
+        return f.path.split('/').length === depth + 1;
+      })
+      .map((f) => ({
+        name: f.path.split('/').pop(),
+        type: f.type === 'tree' ? 'dir' : 'file',
+        path: f.path,
+        size: f.size || 0,
+      }));
+  };
+
   for (const dir of COMPONENT_DIRS) {
-    // Try multiple possible locations
-    const paths = [
-      dir,                          // repo root: skills/
-      `.claude-plugin/${dir}`,      // inside .claude-plugin/
-      `.claude/${dir}`,             // legacy location
+    // Try multiple possible locations; first non-empty variant wins.
+    const variants = [
+      dir, // repo root: skills/
+      `.claude-plugin/${dir}`, // inside .claude-plugin/
+      `.claude/${dir}`, // legacy location
     ];
 
-    for (const path of paths) {
-      const url = `https://api.github.com/repos/${repoFullName}/contents/${path}?ref=${branch}`;
-      const res = await rateLimitedFetch(url);
-
-      if (res.status === 404) continue;
-      if (!res.ok) continue;
-
-      const data = await res.json();
-      if (!Array.isArray(data)) continue;
-
-      const entries = data
-        .filter(item => item.type === 'dir' || item.type === 'file')
-        .map(item => ({
-          name: item.name,
-          type: item.type,
-          path: item.path,
-          size: item.size || 0,
-        }));
-
+    for (const path of variants) {
+      const entries = childrenOf(path);
       if (entries.length > 0) {
         inventory[dir] = {
           path,
-          count: entries.filter(e => e.type === 'dir' || e.name.endsWith('.md') || e.name.endsWith('.json')).length,
+          count: entries.filter(
+            (e) => e.type === 'dir' || e.name.endsWith('.md') || e.name.endsWith('.json'),
+          ).length,
           entries,
         };
         break; // found the directory, skip other path variants
       }
     }
-
-    await sleep(100); // Be gentle between directory listings
   }
 
   return inventory;
