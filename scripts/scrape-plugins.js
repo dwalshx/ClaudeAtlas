@@ -574,9 +574,23 @@ async function main() {
     indexByName.set(r.repo_full_name, i);
   }
 
-  // Phase 3.4 / Change C: periodic full re-walk safety net. Task 4 replaces this
-  // stub with a UTC day-of-week shard (+ PLUGINS_FULL_REWALK=1 override).
-  const periodicFull = false;
+  // Phase 3.4 / Change C: periodic FULL re-walk safety net (RESEARCH §Q2,
+  // CONTEXT "periodic full re-walk = Claude's discretion → weekly shard").
+  // The pushed_at gate (shouldRewalk) is the PRIMARY mechanism; this is
+  // belt-and-suspenders for the rare case where a repo's components changed but
+  // its pushed_at somehow didn't advance. Cadence: re-walk the ENTIRE known
+  // corpus once per week, gated on UTC day-of-week (Sundays = getUTCDay() === 0),
+  // matching the skills weekly-sweep convention (scrape-discover-repos.js). On
+  // the other 6 days only the pushed_at-changed delta walks, so steady-state
+  // cost stays single-digit minutes. Now that each re-walk is ONE recursive-tree
+  // call (Task 3), even the Sunday full sweep is bounded by the GraphQL refresh
+  // budget, not the old N-contents-calls blowup.
+  //
+  // PLUGINS_FULL_REWALK=1 forces the full re-walk regardless of day so Plan 04's
+  // branch measurement can take the worst-case full-sweep number on demand (and
+  // the cheap steady-state number on a non-Sunday).
+  const periodicFull = process.env.PLUGINS_FULL_REWALK === '1' || new Date().getUTCDay() === 0;
+  log(`[gate] periodicFull=${periodicFull} (UTC day ${new Date().getUTCDay()})`);
 
   // Phase 3.4 / Change A: on a warm run this should print near the full known
   // corpus (~7,300), NOT 0. A count near 0 is the Pitfall-1 warning sign that
