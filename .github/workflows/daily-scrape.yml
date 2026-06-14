@@ -218,7 +218,15 @@ jobs:
         if: ${{ env.PLUGINS_ENABLED == 'true' && github.event_name != 'push' }}
         run: node scripts/scrape-plugins.js
         env:
+          # REST discovery/walk uses the fine-grained SCRAPE_PAT (GITHUB_TOKEN).
           GITHUB_TOKEN: ${{ secrets.SCRAPE_PAT }}
+          # Phase 3.4 / Change B: the in-process GraphQL engagement-refresh
+          # (refreshKnownRepos) needs a CLASSIC PAT — fine-grained SCRAPE_PAT is
+          # 403'd by GitHub's GraphQL API (same constraint as scrape-pulse.js's
+          # Track 1). refreshKnownRepos swaps GITHUB_TOKEN to this for the GraphQL
+          # batch loop only, then restores the REST PAT. Single process, no second
+          # cache restore — the refresh operates on the same in-memory corpus.
+          SCRAPE_PAT_CLASSIC: ${{ secrets.SCRAPE_PAT_CLASSIC }}
 
       # Save plugins-raw cache even on timeout/failure/cancel (mirrors the
       # skills-raw `if: always()` pattern). Partial corpus stays useful.
