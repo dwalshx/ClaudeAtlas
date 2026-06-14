@@ -360,6 +360,44 @@ function loadCheckpoint() {
 }
 
 /**
+ * Phase 3.4 / Change C (RESEARCH §C / Code Examples §3): the repo-level
+ * completeness gate. Skip-fix (Change A) + GraphQL refresh (Change B) still
+ * won't catch a KNOWN repo that ADDS a component (new skill/command/agent/MCP) —
+ * no new repo ID, so the bare processedSet skip misses it. shouldRewalk decides
+ * whether a KNOWN repo's component dirs need re-walking, by comparing the FRESH
+ * pushed_at (from Change B's GraphQL refresh) against the pushed_at captured at
+ * the LAST walk (record.walked_pushed_at). This mirrors Track 2's blob-sha
+ * change-detection skip (scrape-discover-repos.js) at repo granularity.
+ *
+ * ISO 8601 timestamps compare lexicographically === chronologically, so a plain
+ * string `>` is correct (and avoids Date parsing of possibly-null inputs).
+ *
+ * Decision table (KNOWN repo only — a brand-new repo is not in processedSet and
+ * never reaches this helper):
+ *   - opts.periodicFull          → TRUE  (safety-net full re-walk shard, Task 4)
+ *   - no walked_pushed_at stamp   → TRUE  (never stamped → walk once to backfill)
+ *   - no fresh pushed_at signal   → FALSE (refresh casualty → keep cached, don't
+ *                                          churn a re-walk every run with no signal)
+ *   - freshPushedAt > stamp       → TRUE  (pushed since last walk → component may
+ *                                          have been added → re-walk)
+ *   - freshPushedAt <= stamp      → FALSE (unchanged → keep cached for free)
+ *
+ * Pure + network-free; exported for unit tests
+ * (scripts/__tests__/scrape-plugins.test.js R-4).
+ *
+ * @param {{ walked_pushed_at?: string|null }} known   the cached corpus record
+ * @param {string|null|undefined} freshPushedAt         fresh pushed_at (Change B)
+ * @param {{ periodicFull?: boolean }} [opts]
+ * @returns {boolean} true → re-walk this repo's components
+ */
+export function shouldRewalk(known, freshPushedAt, opts = {}) {
+  if (opts.periodicFull) return true;            // safety-net full re-walk shard
+  if (!known.walked_pushed_at) return true;      // never stamped → walk to backfill
+  if (!freshPushedAt) return false;              // no fresh signal → keep cached
+  return freshPushedAt > known.walked_pushed_at; // ISO lexicographic = chronological
+}
+
+/**
  * Path-injectable checkpoint writer (T6: streaming NDJSON — V8-string-limit
  * safe). Exported for unit tests.
  *
@@ -485,6 +523,22 @@ async function main() {
   const { repos: existingRepos, processedSet } = loadCheckpoint();
   const allRepos = [...existingRepos];
   let newCount = 0;
+  let rewalkCount = 0;
+
+  // Phase 3.4 / Change C: index the cached corpus by name so the discovery loop
+  // can look up a KNOWN repo's record (its walked_pushed_at stamp) and its
+  // position in allRepos to OVERWRITE on re-walk rather than append a duplicate.
+  const byName = new Map();
+  const indexByName = new Map();
+  for (let i = 0; i < allRepos.length; i++) {
+    const r = allRepos[i];
+    byName.set(r.repo_full_name, r);
+    indexByName.set(r.repo_full_name, i);
+  }
+
+  // Phase 3.4 / Change C: periodic full re-walk safety net. Task 4 replaces this
+  // stub with a UTC day-of-week shard (+ PLUGINS_FULL_REWALK=1 override).
+  const periodicFull = false;
 
   // Phase 3.4 / Change A: on a warm run this should print near the full known
   // corpus (~7,300), NOT 0. A count near 0 is the Pitfall-1 warning sign that
@@ -511,11 +565,19 @@ async function main() {
     const disc = discovered[i];
     const repoName = disc.repo_full_name;
 
-    if (processedSet.has(repoName)) {
-      continue; // Already processed in a prior run
+    // Phase 3.4 / Change C (RESEARCH §3): a KNOWN repo is skipped UNLESS its
+    // components may have changed. shouldRewalk gates on the fresh pushed_at
+    // (Change B) advancing past the stored walked_pushed_at, the periodicFull
+    // safety-net shard, or a missing stamp (backfill). A brand-new repo
+    // (`known === undefined`) is NOT in processedSet, so it falls through to the
+    // walk via the existing new-repo path.
+    const known = byName.get(repoName);
+    const isRewalk = known ? shouldRewalk(known, fresh.get(repoName)?.repo_pushed_at, { periodicFull }) : false;
+    if (processedSet.has(repoName) && !isRewalk) {
+      continue; // unchanged known repo — keep cached components for free
     }
 
-    log(`  [${newCount + 1}/?] Processing ${repoName}...`);
+    log(`  [${(isRewalk ? rewalkCount : newCount) + 1}/?] ${isRewalk ? 'Re-walking' : 'Processing'} ${repoName}...`);
 
     const startTime = Date.now();
 
@@ -585,21 +647,34 @@ async function main() {
       },
       scraped_at: new Date().toISOString(),
       processing_time_ms: Date.now() - startTime,
+      // Phase 3.4 / Change C: stamp the pushed_at captured at THIS walk so the
+      // next run's shouldRewalk gate can detect a later push (new component).
+      walked_pushed_at: meta.pushed_at,
     };
 
-    allRepos.push(record);
+    if (isRewalk && indexByName.has(repoName)) {
+      // Re-walked KNOWN repo: OVERWRITE its prior record in place so the OUTPUT
+      // stays free of duplicate repo_full_names (a dupe would inflate the next
+      // run's processedSet and skew component-summary stats).
+      allRepos[indexByName.get(repoName)] = record;
+      rewalkCount++;
+    } else {
+      allRepos.push(record);
+      indexByName.set(repoName, allRepos.length - 1);
+      newCount++;
+    }
+    byName.set(repoName, record);
     processedSet.add(repoName);
-    newCount++;
 
     const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
     const compSummary = Object.entries(record.component_summary)
       .filter(([k, v]) => k !== 'total' && v > 0)
       .map(([k, v]) => `${v} ${k}`)
       .join(', ') || 'no components found';
-    log(`    ${meta.stars} stars | ${compSummary} | ${elapsed}s`);
+    log(`    ${meta.stars} stars | ${compSummary} | ${elapsed}s${isRewalk ? ' (re-walk)' : ''}`);
 
     // Checkpoint
-    if (newCount % CHECKPOINT_EVERY === 0) {
+    if ((newCount + rewalkCount) % CHECKPOINT_EVERY === 0) {
       saveCheckpoint(allRepos);
       log(`  [checkpoint] ${allRepos.length} repos saved`);
     }
@@ -637,7 +712,7 @@ async function main() {
   log('');
   log('=== summary ===');
   log(`discovered: ${discovered.length} repos`);
-  log(`processed:  ${allRepos.length} repos (${newCount} new this run)`);
+  log(`processed:  ${allRepos.length} repos (${newCount} new + ${rewalkCount} re-walked this run)`);
   log(`with plugin.json:   ${output.stats.with_plugin_json}`);
   log(`with marketplace:   ${output.stats.with_marketplace}`);
   log(`with skills:        ${output.stats.with_skills}`);
