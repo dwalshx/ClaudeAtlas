@@ -315,8 +315,39 @@ export function loadCheckpointFrom(path) {
   }
 }
 
+/**
+ * Phase 3.4 / Change A (RESEARCH §A / Pitfall 1): seed processedSet from the
+ * cached OUTPUT corpus, merging the same-job .partial checkpoint.
+ *
+ * THE BUG this fixes: loadCheckpoint() read ONLY PARTIAL_PATH
+ * (data/plugins-raw.ndjson.partial), but the GHA cache + bootstrap release
+ * persist ONLY the OUTPUT data/plugins-raw.ndjson. The .partial never survives
+ * between runs, so processedSet started empty every run, the line-363 skip
+ * never fired, and all ~7,300 repos were re-walked from cold (~24h → timeout).
+ *
+ * Fix: union OUTPUT (the cached, completed corpus) with PARTIAL (a mid-run,
+ * same-job checkpoint), keyed by repo_full_name. .partial wins per-repo because
+ * it is the fresher within-run write. processedSet = union of both files' names.
+ *
+ * Path-injectable + exported for unit tests
+ * (scripts/__tests__/scrape-plugins.test.js).
+ *
+ * @param {string} outputPath  cached + bootstrapped completed corpus
+ * @param {string} partialPath same-job mid-run checkpoint (may be absent)
+ * @returns {{ repos: any[], processedSet: Set<string> }}
+ */
+export function buildProcessedSeedFrom(outputPath, partialPath) {
+  const fromOutput = loadCheckpointFrom(outputPath);   // cached + bootstrapped corpus
+  const fromPartial = loadCheckpointFrom(partialPath); // same-job checkpoint, may be empty
+  const byName = new Map();
+  for (const r of fromOutput.repos) byName.set(r.repo_full_name, r);
+  for (const r of fromPartial.repos) byName.set(r.repo_full_name, r); // partial wins (newer)
+  const repos = [...byName.values()];
+  return { repos, processedSet: new Set(repos.map(r => r.repo_full_name)) };
+}
+
 function loadCheckpoint() {
-  return loadCheckpointFrom(PARTIAL_PATH);
+  return buildProcessedSeedFrom(OUTPUT_PATH, PARTIAL_PATH);
 }
 
 /**
@@ -355,6 +386,12 @@ async function main() {
   const { repos: existingRepos, processedSet } = loadCheckpoint();
   const allRepos = [...existingRepos];
   let newCount = 0;
+
+  // Phase 3.4 / Change A: on a warm run this should print near the full known
+  // corpus (~7,300), NOT 0. A count near 0 is the Pitfall-1 warning sign that
+  // the cached OUTPUT was not seeded (the original 24h-sweep bug). Plan 04's
+  // branch measurement reads this line to confirm the skip is wired.
+  log(`resume: ${processedSet.size} known repos seeded from OUTPUT+partial`);
 
   for (let i = 0; i < discovered.length; i++) {
     const disc = discovered[i];
