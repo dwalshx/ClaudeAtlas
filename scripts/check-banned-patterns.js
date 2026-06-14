@@ -123,8 +123,8 @@ const LINT_ALLOWLIST = [
   },
   {
     file: 'scripts/scrape-plugins.js',
-    line: 520,
-    reason: 'plugins-meta.json sidecar write (T6 migration done — bulk records went to plugins-raw.ndjson). Metadata is bounded ~1 KB at any catalog size. Line shifted by 3.3-01 D-02 (loadCheckpoint NDJSON fix + invoked-as-script guard) and 3.4-01 Change A (buildProcessedSeedFrom export + resume log line).',
+    line: 634,
+    reason: 'plugins-meta.json sidecar write (T6 migration done — bulk records went to plugins-raw.ndjson). Metadata is bounded ~1 KB at any catalog size. Line shifted by 3.3-01 D-02 (loadCheckpoint NDJSON fix + invoked-as-script guard), 3.4-01 Change A (buildProcessedSeedFrom export + resume log line), and 3.4-02 Change B (fetchRepoBatchGraphql import + refresh constants + applyFreshFields/refreshKnownRepos + main() refresh pass).',
   },
   {
     file: 'scripts/scrape.js',

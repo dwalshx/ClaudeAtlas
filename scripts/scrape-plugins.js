@@ -26,6 +26,7 @@ import { writeFileSync, existsSync, mkdirSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { writeNdjsonStreaming, readNdjsonRecords } from './lib/ndjson.js';
+import { fetchRepoBatchGraphql } from './lib/github-graphql.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..');
@@ -50,6 +51,14 @@ const HEADERS = {
 };
 
 const CHECKPOINT_EVERY = 50;
+
+// Phase 3.4 / Change B (RESEARCH §2): GraphQL engagement-refresh batch sizing,
+// mirroring scrape-pulse.js (BATCH_SIZE=50, BATCH_DELAY_MS=100). 50 repos/query
+// via aliases at ~1 GraphQL point/batch; the small inter-batch delay keeps the
+// sweep far under the 2,000-pts/min secondary GraphQL limit. ~146 batches for
+// ~7,300 repos ≈ ~2-4 min on GraphQL's SEPARATE 5,000-pts/hr budget.
+const REFRESH_BATCH_SIZE = 50;
+const REFRESH_BATCH_DELAY_MS = 100;
 
 function log(msg) {
   console.log(`[${new Date().toISOString()}] ${msg}`);
@@ -365,6 +374,96 @@ function saveCheckpoint(repos) {
   saveCheckpointTo(PARTIAL_PATH, repos);
 }
 
+// --- Phase 3.4 / Change B: GraphQL engagement-refresh of known plugin repos ---
+
+/**
+ * Pure: map fetchRepoBatchGraphql's repo_*-PREFIXED fields onto the BARE
+ * plugins-raw record shape (the fetchRepoMetadata keys: stars/forks/open_issues/
+ * pushed_at/...), IN-PLACE, for every record whose repo_full_name has an entry
+ * in freshByRepo.
+ *
+ * Miss = no-op: a record with no freshByRepo entry is left byte-for-byte
+ * unchanged (graceful staleness — a repo the GraphQL batch couldn't resolve
+ * keeps its prior cached values rather than being blanked). default_branch uses
+ * `?? existing` so a null/undefined fresh branch keeps the prior branch.
+ *
+ * NOTE: created_at, owner_type, owner_avatar, is_fork are NOT in the GraphQL
+ * freshness set (see github-graphql.js mapGraphqlRepoToFields) — left untouched.
+ *
+ * Exported (pure, network-free) for unit tests.
+ *
+ * @param {any[]} records — cached plugins-raw corpus (mutated in-place).
+ * @param {Map<string, object>} freshByRepo — repo_full_name → repo_*-prefixed fields.
+ */
+export function applyFreshFields(records, freshByRepo) {
+  for (const r of records) {
+    const f = freshByRepo.get(r.repo_full_name);
+    if (!f) continue; // miss = no-op (graceful staleness)
+    r.stars = f.repo_stars;
+    r.forks = f.repo_forks;
+    r.open_issues = f.repo_open_issues;
+    r.pushed_at = f.repo_pushed_at;
+    r.topics = f.repo_topics;
+    r.archived = f.repo_archived;
+    r.license = f.repo_license;
+    r.language = f.repo_language;
+    r.description = f.repo_description;
+    r.default_branch = f.repo_default_branch ?? r.default_branch;
+  }
+}
+
+/**
+ * Refresh known plugin repos' engagement signals via batched GraphQL, mirroring
+ * scrape-pulse.js's Track 1 sweep (RESEARCH §2). Runs on GraphQL's SEPARATE
+ * 5,000-pts/hr budget so skipping known repos' REST walk (Change A) doesn't
+ * freeze their stars/forks/issues/pushed_at. Operates on the in-memory `records`
+ * array (already loaded by loadCheckpoint) — does NOT re-read plugins-raw.ndjson
+ * (banned-pattern discipline). The fresh fields are applied in-place; the
+ * returned Map is consumed by Plan 03's pushed_at re-walk gate.
+ *
+ * AUTH (mirrors scrape-pulse.js): fetchRepoBatchGraphql reads
+ * process.env.GITHUB_TOKEN, which MUST be a CLASSIC PAT — the fine-grained
+ * SCRAPE_PAT is 403'd by GitHub's GraphQL API. The same process's REST
+ * discovery/walk needs the fine-grained SCRAPE_PAT, so we swap GITHUB_TOKEN to
+ * SCRAPE_PAT_CLASSIC for the GraphQL batch loop ONLY and restore the REST PAT
+ * in a finally. The workflow step passes both secrets.
+ *
+ * Graceful staleness (RESEARCH §Environment / Pitfall): a refresh failure does
+ * NOT throw — fetchRepoBatchGraphql returns failures as tolerated casualties
+ * (no throw on partial data), and applyFreshFields no-ops on missing repos.
+ *
+ * @param {any[]} records — cached plugins-raw corpus (mutated in-place).
+ * @returns {Promise<Map<string, object>>} repo_full_name → repo_*-prefixed fresh fields.
+ */
+async function refreshKnownRepos(records) {
+  const names = [...new Set(records.map(r => r.repo_full_name).filter(Boolean))];
+  const fresh = new Map();
+
+  // Swap to the CLASSIC PAT for GraphQL; restore the fine-grained REST PAT after.
+  const restPat = process.env.GITHUB_TOKEN;
+  process.env.GITHUB_TOKEN = process.env.SCRAPE_PAT_CLASSIC || restPat;
+  try {
+    const totalBatches = Math.ceil(names.length / REFRESH_BATCH_SIZE);
+    let bi = 0;
+    for (let i = 0; i < names.length; i += REFRESH_BATCH_SIZE) {
+      bi++;
+      const { freshByRepo } = await fetchRepoBatchGraphql(
+        names.slice(i, i + REFRESH_BATCH_SIZE),
+      );
+      for (const [n, f] of freshByRepo) fresh.set(n, f);
+      if (bi % 10 === 0 || bi === totalBatches) {
+        log(`  [refresh] batch ${bi}/${totalBatches} (${fresh.size} ok)`);
+      }
+      await sleep(REFRESH_BATCH_DELAY_MS); // stay under 2000 pts/min secondary cap
+    }
+  } finally {
+    process.env.GITHUB_TOKEN = restPat; // restore the fine-grained REST PAT
+  }
+
+  applyFreshFields(records, fresh);
+  return fresh; // returned so Plan 03's pushed_at re-walk gate can read fresh pushed_at
+}
+
 // --- Main ---
 
 async function main() {
@@ -392,6 +491,21 @@ async function main() {
   // the cached OUTPUT was not seeded (the original 24h-sweep bug). Plan 04's
   // branch measurement reads this line to confirm the skip is wired.
   log(`resume: ${processedSet.size} known repos seeded from OUTPUT+partial`);
+
+  // Phase 3.4 / Change B (RESEARCH §2): refresh known repos' engagement signals
+  // via batched GraphQL BEFORE the discovery walk. Seeding processedSet from
+  // OUTPUT (Change A) skips known repos' REST walk, which would otherwise freeze
+  // their stars/forks/issues/pushed_at — this pass keeps them fresh on GraphQL's
+  // separate budget. `fresh` stays in scope: Plan 03's pushed_at re-walk gate
+  // reads it to decide which known repos changed since last walk.
+  let fresh = new Map();
+  if (existingRepos.length) {
+    log(`[refresh] refreshing ${existingRepos.length} known repos via GraphQL...`);
+    fresh = await refreshKnownRepos(existingRepos);
+    log(`[refresh] done: ${fresh.size}/${existingRepos.length} repos refreshed`);
+  } else {
+    log('[refresh] no known repos yet, skipping');
+  }
 
   for (let i = 0; i < discovered.length; i++) {
     const disc = discovered[i];
