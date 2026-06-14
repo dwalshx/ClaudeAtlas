@@ -22,7 +22,11 @@ import assert from 'node:assert/strict';
 import { mkdtempSync, rmSync, appendFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { loadCheckpointFrom, saveCheckpointTo } from '../scrape-plugins.js';
+import {
+  loadCheckpointFrom,
+  saveCheckpointTo,
+  buildProcessedSeedFrom,
+} from '../scrape-plugins.js';
 import { writeNdjsonStreaming } from '../lib/ndjson.js';
 
 function tmpPartialDir() {
@@ -98,6 +102,112 @@ test('loadCheckpointFrom tolerates a truncated final line (crash-mid-write resum
     const { repos, processedSet } = loadCheckpointFrom(partial);
     assert.equal(repos.length, 1, 'complete lines survive, truncated line skipped');
     assert.deepEqual(processedSet, new Set(['a/b']));
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+// ---------------------------------------------------------------------------
+// Phase 3.4 Plan 01 (R-2): the cross-run skip-wiring fix.
+//
+// THE BUG (RESEARCH §A / Pitfall 1): loadCheckpoint() seeded processedSet from
+// PARTIAL_PATH (data/plugins-raw.ndjson.partial), but the GHA cache + bootstrap
+// release only persist the OUTPUT data/plugins-raw.ndjson. The .partial never
+// survives between runs, so processedSet started EMPTY every run, the skip never
+// fired, and all ~7,300 repos were re-walked from cold (~24h → timeout). The
+// restored OUTPUT corpus was silently ignored.
+//
+// buildProcessedSeedFrom(outputPath, partialPath) is the fix: seed from OUTPUT
+// (the cached, completed corpus), merging .partial for same-job resume with
+// .partial winning per-repo (fresher). processedSet = union of both files' names.
+// ---------------------------------------------------------------------------
+
+test('R-2: buildProcessedSeedFrom seeds processedSet from the cached OUTPUT (size === N)', () => {
+  const dir = tmpPartialDir();
+  const output = join(dir, 'plugins-raw.ndjson');
+  const partial = join(dir, 'plugins-raw.ndjson.partial'); // absent
+  try {
+    const records = [
+      { repo_full_name: 'a/one', stars: 1 },
+      { repo_full_name: 'b/two', stars: 2 },
+      { repo_full_name: 'c/three', stars: 3 },
+    ];
+    saveCheckpointTo(output, records);
+
+    const { repos, processedSet } = buildProcessedSeedFrom(output, partial);
+
+    // The bug-catching assertion: without the OUTPUT-aware seed, processedSet
+    // would be empty (size 0) because only .partial was read.
+    assert.equal(processedSet.size, records.length, 'processedSet seeded from OUTPUT');
+    assert.equal(repos.length, records.length, 'all OUTPUT records returned');
+    assert.deepEqual(
+      processedSet,
+      new Set(['a/one', 'b/two', 'c/three']),
+      'every OUTPUT repo name present in processedSet',
+    );
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test('R-2: buildProcessedSeedFrom merges OUTPUT + .partial, .partial wins on conflict', () => {
+  const dir = tmpPartialDir();
+  const output = join(dir, 'plugins-raw.ndjson');
+  const partial = join(dir, 'plugins-raw.ndjson.partial');
+  try {
+    // OUTPUT = the completed corpus from prior runs.
+    saveCheckpointTo(output, [
+      { repo_full_name: 'shared/repo', stars: 10, source: 'output' },
+      { repo_full_name: 'output/only', stars: 1, source: 'output' },
+    ]);
+    // .partial = a same-job mid-run checkpoint with a fresher 'shared/repo'
+    // payload plus a brand-new repo not yet in OUTPUT.
+    saveCheckpointTo(partial, [
+      { repo_full_name: 'shared/repo', stars: 99, source: 'partial' },
+      { repo_full_name: 'partial/only', stars: 2, source: 'partial' },
+    ]);
+
+    const { repos, processedSet } = buildProcessedSeedFrom(output, partial);
+
+    // processedSet = union of both files' names.
+    assert.deepEqual(
+      processedSet,
+      new Set(['shared/repo', 'output/only', 'partial/only']),
+      'processedSet is the union of OUTPUT and .partial repo names',
+    );
+    assert.equal(repos.length, 3, 'one record per unique repo name');
+
+    // .partial wins (newer) on the conflicting repo.
+    const byName = new Map(repos.map((r) => [r.repo_full_name, r]));
+    assert.equal(byName.get('shared/repo').stars, 99, '.partial payload wins on conflict');
+    assert.equal(byName.get('shared/repo').source, 'partial', '.partial record is the merged one');
+    assert.equal(byName.get('output/only').source, 'output', 'OUTPUT-only record preserved');
+    assert.equal(byName.get('partial/only').source, 'partial', '.partial-only record included');
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test('R-2: buildProcessedSeedFrom with OUTPUT present + .partial absent seeds the full set (warm-run case)', () => {
+  const dir = tmpPartialDir();
+  const output = join(dir, 'plugins-raw.ndjson');
+  const partial = join(dir, 'does-not-exist.ndjson.partial'); // the warm-run reality
+  try {
+    const records = [
+      { repo_full_name: 'warm/a' },
+      { repo_full_name: 'warm/b' },
+      { repo_full_name: 'warm/c' },
+      { repo_full_name: 'warm/d' },
+    ];
+    saveCheckpointTo(output, records);
+
+    const { repos, processedSet } = buildProcessedSeedFrom(output, partial);
+
+    // This is exactly the case the bug broke: cached OUTPUT restored, no
+    // .partial. The full corpus must still seed processedSet.
+    assert.equal(processedSet.size, records.length, 'warm OUTPUT fully seeds processedSet');
+    assert.equal(repos.length, records.length, 'all warm OUTPUT records returned');
+    assert.deepEqual(processedSet, new Set(['warm/a', 'warm/b', 'warm/c', 'warm/d']));
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }
