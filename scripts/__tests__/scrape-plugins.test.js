@@ -27,6 +27,7 @@ import {
   saveCheckpointTo,
   buildProcessedSeedFrom,
   applyFreshFields,
+  shouldRewalk,
 } from '../scrape-plugins.js';
 import { writeNdjsonStreaming } from '../lib/ndjson.js';
 
@@ -326,5 +327,92 @@ test('R-3: applyFreshFields keeps existing default_branch when fresh value is nu
     records[0].default_branch,
     'develop',
     'null fresh default_branch keeps the existing branch (?? existing)',
+  );
+});
+
+// ---------------------------------------------------------------------------
+// Phase 3.4 Plan 03 (R-4): the pushed_at re-walk completeness gate.
+//
+// Change C (RESEARCH §C / Code Examples §3): skip-fix (Plan 01) + refresh
+// (Plan 02) still won't catch a KNOWN repo that ADDS a component (new skill/
+// command/agent/MCP) — no new repo ID, so the bare processedSet skip misses it.
+// shouldRewalk(known, freshPushedAt, opts) is the repo-level change gate: a
+// known repo whose FRESH pushed_at (from Plan 02's GraphQL refresh) advanced
+// past its stored walked_pushed_at is re-walked; an unchanged known repo keeps
+// its cached components for free. This mirrors Track 2's blob-sha skip intent at
+// repo granularity (scrape-discover-repos.js).
+//
+// shouldRewalk is ONLY consulted for KNOWN repos — a brand-new repo (not in the
+// skip set) is handled by the caller and never reaches this helper.
+// ---------------------------------------------------------------------------
+
+test('R-4: shouldRewalk returns TRUE when freshPushedAt is newer than walked_pushed_at', () => {
+  const known = { repo_full_name: 'owner/repo', walked_pushed_at: '2026-01-01T00:00:00Z' };
+  // A component may have been added since the last walk → re-walk.
+  assert.equal(
+    shouldRewalk(known, '2026-06-14T00:00:00Z'),
+    true,
+    'newer fresh pushed_at → re-walk',
+  );
+});
+
+test('R-4: shouldRewalk returns FALSE when freshPushedAt is older-or-equal to walked_pushed_at', () => {
+  const known = { repo_full_name: 'owner/repo', walked_pushed_at: '2026-06-14T00:00:00Z' };
+  assert.equal(
+    shouldRewalk(known, '2026-06-14T00:00:00Z'),
+    false,
+    'equal pushed_at (unchanged) → keep cached, no re-walk',
+  );
+  assert.equal(
+    shouldRewalk(known, '2026-01-01T00:00:00Z'),
+    false,
+    'older fresh pushed_at → keep cached, no re-walk',
+  );
+});
+
+test('R-4: shouldRewalk returns TRUE when walked_pushed_at is missing/null (never stamped → backfill)', () => {
+  // A record walked before the stamp existed has no walked_pushed_at — re-walk
+  // it once to backfill the stamp so future runs can gate correctly.
+  assert.equal(
+    shouldRewalk({ repo_full_name: 'a/b' }, '2026-06-14T00:00:00Z'),
+    true,
+    'undefined walked_pushed_at → re-walk to backfill',
+  );
+  assert.equal(
+    shouldRewalk({ repo_full_name: 'a/b', walked_pushed_at: null }, '2026-06-14T00:00:00Z'),
+    true,
+    'null walked_pushed_at → re-walk to backfill',
+  );
+});
+
+test('R-4: shouldRewalk returns FALSE when stamped but freshPushedAt is missing (no fresh signal → keep cached)', () => {
+  // A refresh casualty (GraphQL couldn't resolve the repo) yields no fresh
+  // pushed_at. With a valid prior stamp, there's no signal to re-walk → keep
+  // the cached components rather than re-walking on every run.
+  const known = { repo_full_name: 'owner/repo', walked_pushed_at: '2026-01-01T00:00:00Z' };
+  assert.equal(shouldRewalk(known, undefined), false, 'undefined fresh + stamped → keep cached');
+  assert.equal(shouldRewalk(known, null), false, 'null fresh + stamped → keep cached');
+});
+
+test('R-4: shouldRewalk returns TRUE when opts.periodicFull is set, regardless of timestamps (safety-net shard)', () => {
+  // The weekly full re-walk safety net forces a re-walk even when pushed_at
+  // would otherwise gate it out (belt-and-suspenders for a repo whose pushed_at
+  // somehow didn't advance but components did).
+  const fresh = { repo_full_name: 'owner/repo', walked_pushed_at: '2026-06-14T00:00:00Z' };
+  assert.equal(
+    shouldRewalk(fresh, '2026-06-14T00:00:00Z', { periodicFull: true }),
+    true,
+    'periodicFull overrides an otherwise-unchanged (equal) repo',
+  );
+  assert.equal(
+    shouldRewalk(fresh, '2026-01-01T00:00:00Z', { periodicFull: true }),
+    true,
+    'periodicFull overrides an otherwise-older repo',
+  );
+  // periodicFull even forces a walk when there is no fresh signal at all.
+  assert.equal(
+    shouldRewalk(fresh, undefined, { periodicFull: true }),
+    true,
+    'periodicFull overrides a missing fresh signal',
   );
 });
