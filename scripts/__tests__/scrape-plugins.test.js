@@ -28,6 +28,7 @@ import {
   buildProcessedSeedFrom,
   applyFreshFields,
   shouldRewalk,
+  isFullRewalk,
 } from '../scrape-plugins.js';
 import { writeNdjsonStreaming } from '../lib/ndjson.js';
 
@@ -414,5 +415,43 @@ test('R-4: shouldRewalk returns TRUE when opts.periodicFull is set, regardless o
     shouldRewalk(fresh, undefined, { periodicFull: true }),
     true,
     'periodicFull overrides a missing fresh signal',
+  );
+});
+
+// ---------------------------------------------------------------------------
+// Phase 3.4 Plan 05 (R-1 / R-6): the full-rewalk trigger is ENV-ONLY.
+//
+// 3.4-04 MEASUREMENT: the daily cron's worst-case Sunday full re-walk (~205 min
+// for the component sweep) pushed the daily total to ~332 min (~28 min margin vs
+// the 360 cap) on a growing O(n²) skills catalog. The fix (Option B) moves the
+// full re-walk OUT of the daily cron into its own weekly workflow. As part of
+// that, the daily-path trigger `new Date().getUTCDay() === 0` is REMOVED so the
+// daily cron NEVER auto-triggers a full re-walk by day-of-week — the full
+// re-walk is driven SOLELY by PLUGINS_FULL_REWALK=1 (set by
+// weekly-plugin-rewalk.yml). isFullRewalk(env) is the tiny, day-of-week-free,
+// injectable helper this pins.
+// ---------------------------------------------------------------------------
+
+test('R-1/R-6: isFullRewalk returns TRUE only when PLUGINS_FULL_REWALK === "1"', () => {
+  assert.equal(
+    isFullRewalk({ PLUGINS_FULL_REWALK: '1' }),
+    true,
+    'PLUGINS_FULL_REWALK="1" → full re-walk',
+  );
+});
+
+test('R-1/R-6: isFullRewalk returns FALSE for an empty/absent env (no day-of-week trigger)', () => {
+  assert.equal(
+    isFullRewalk({}),
+    false,
+    'absent PLUGINS_FULL_REWALK → steady-state delta only (NOT day-gated)',
+  );
+});
+
+test('R-1/R-6: isFullRewalk returns FALSE for PLUGINS_FULL_REWALK="0" (only "1" enables it)', () => {
+  assert.equal(
+    isFullRewalk({ PLUGINS_FULL_REWALK: '0' }),
+    false,
+    'PLUGINS_FULL_REWALK="0" → steady-state delta only',
   );
 });
