@@ -436,6 +436,26 @@ export function shouldRewalk(known, freshPushedAt, opts = {}) {
 }
 
 /**
+ * Phase 3.4 Plan 05 (R-1 / R-6): the full-corpus re-walk trigger, ENV-ONLY.
+ *
+ * 3.4-04 MEASUREMENT: the daily cron's worst-case Sunday full re-walk (~205-min
+ * component sweep) left only ~28 min margin under the 360-min daily cap on a
+ * growing O(n²) skills catalog. Option B moved the full re-walk into its own
+ * weekly workflow (.github/workflows/weekly-plugin-rewalk.yml), which runs this
+ * scraper with PLUGINS_FULL_REWALK=1. The daily cron therefore does steady-state
+ * delta only and must NEVER auto-trigger a full re-walk by day-of-week — the old
+ * `new Date().getUTCDay() === 0` Sunday clause was removed. This helper is the
+ * single, injectable source of truth for the trigger (no Date dependency, so the
+ * gate is deterministic and unit-testable).
+ *
+ * @param {NodeJS.ProcessEnv} [env=process.env]
+ * @returns {boolean} true → run the full-corpus re-walk
+ */
+export function isFullRewalk(env = process.env) {
+  return env.PLUGINS_FULL_REWALK === '1';
+}
+
+/**
  * Path-injectable checkpoint writer (T6: streaming NDJSON — V8-string-limit
  * safe). Exported for unit tests.
  *
@@ -576,21 +596,25 @@ async function main() {
 
   // Phase 3.4 / Change C: periodic FULL re-walk safety net (RESEARCH §Q2,
   // CONTEXT "periodic full re-walk = Claude's discretion → weekly shard").
-  // The pushed_at gate (shouldRewalk) is the PRIMARY mechanism; this is
-  // belt-and-suspenders for the rare case where a repo's components changed but
-  // its pushed_at somehow didn't advance. Cadence: re-walk the ENTIRE known
-  // corpus once per week, gated on UTC day-of-week (Sundays = getUTCDay() === 0),
-  // matching the skills weekly-sweep convention (scrape-discover-repos.js). On
-  // the other 6 days only the pushed_at-changed delta walks, so steady-state
-  // cost stays single-digit minutes. Now that each re-walk is ONE recursive-tree
-  // call (Task 3), even the Sunday full sweep is bounded by the GraphQL refresh
-  // budget, not the old N-contents-calls blowup.
+  // The pushed_at gate (shouldRewalk) is the PRIMARY mechanism; the full re-walk
+  // is belt-and-suspenders for the rare case where a repo's components changed
+  // but its pushed_at somehow didn't advance.
   //
-  // PLUGINS_FULL_REWALK=1 forces the full re-walk regardless of day so Plan 04's
-  // branch measurement can take the worst-case full-sweep number on demand (and
-  // the cheap steady-state number on a non-Sunday).
-  const periodicFull = process.env.PLUGINS_FULL_REWALK === '1' || new Date().getUTCDay() === 0;
-  log(`[gate] periodicFull=${periodicFull} (UTC day ${new Date().getUTCDay()})`);
+  // Phase 3.4 Plan 05 (3.4-04 MEASUREMENT): the full re-walk NO LONGER auto-fires
+  // by day-of-week in the daily cron. The old `|| new Date().getUTCDay() === 0`
+  // Sunday clause pushed the daily total to ~332 min (~28 min margin vs the
+  // 360-min cap) on a growing O(n²) skills catalog. The full re-walk now lives in
+  // its OWN weekly workflow — .github/workflows/weekly-plugin-rewalk.yml — which
+  // runs this scraper with PLUGINS_FULL_REWALK=1 on its own 360-min budget
+  // (Sundays 02:00 UTC) and saves the refreshed corpus to the plugins-raw-ndjson-
+  // GHA cache that the daily cron then prefix-matches and publishes. The daily
+  // cron therefore only ever walks the pushed_at-changed delta (single-digit
+  // minutes), with comfortable margin every day.
+  //
+  // So: periodicFull is ENV-ONLY now (isFullRewalk → PLUGINS_FULL_REWALK==='1').
+  // The weekly workflow owns the full re-walk; day-of-week no longer triggers it.
+  const periodicFull = isFullRewalk();
+  log(`[gate] periodicFull=${periodicFull} (env PLUGINS_FULL_REWALK)`);
 
   // Phase 3.4 / Change A: on a warm run this should print near the full known
   // corpus (~7,300), NOT 0. A count near 0 is the Pitfall-1 warning sign that
