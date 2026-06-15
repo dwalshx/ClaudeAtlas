@@ -1,0 +1,92 @@
+name: Weekly Plugin Full Re-walk
+
+# Phase 3.4 Plan 05 — the weekly FULL plugin/MCP corpus re-walk, split out of the
+# daily cron (daily-scrape.yml).
+#
+# WHY (3.4-04 MEASUREMENT): the worst-case Sunday full re-walk (~205-min component
+# sweep) pushed the daily cron's total to ~332 min — only ~28 min margin under the
+# 360-min cap, shrinking as the O(n²) skills build/enrich grow on a growing
+# catalog. A future Sunday could breach 360 and die before the end-of-run
+# data/history/<today>.json commit (Pitfall 5 — unreplayable snapshot lost).
+# Fix (3.2-CRON-AUDIT "Option B"): move the full re-walk into THIS dedicated
+# weekly workflow with its own 360-min budget and zero competition. The daily cron
+# then only ever walks the cheap pushed_at-changed delta (~2h, comfortable margin).
+#
+# HOW IT FEEDS THE DAILY CRON (cache-prefix handoff):
+#   - This workflow restores + saves data/plugins-raw.ndjson to the GHA cache under
+#     a key with the `plugins-raw-ndjson-` PREFIX.
+#   - daily-scrape.yml's "Restore plugins-raw cache" step uses
+#     `restore-keys: plugins-raw-ndjson-` (prefix match), so the next daily cron
+#     picks up THIS run's refreshed full corpus and publishes it (filter → embed →
+#     enrich → build → deploy → KV publish are all owned by the DAILY cron).
+#   - Do NOT change the `plugins-raw-ndjson-` prefix without updating
+#     daily-scrape.yml + bootstrap-plugins-raw.yml in lockstep.
+#
+# LEAN BY DESIGN: this workflow only refreshes the corpus + saves the cache. It does
+# NOT run filter/embed/enrich/build/deploy/wrangler/publish — the daily cron owns
+# all publishing. Scheduled Sundays 02:00 UTC so it finishes well before the 06:30
+# UTC daily cron, which then prefix-matches the fresh corpus.
+#
+# Mirrors the lean checkout → restore-cache → run → save-cache shape of
+# bootstrap-plugins-raw.yml, but RUNS scrape-plugins.js with PLUGINS_FULL_REWALK=1
+# instead of downloading a release asset.
+
+on:
+  schedule:
+    # Sundays 02:00 UTC — finishes well before the 06:30 UTC daily cron, which
+    # then prefix-matches the freshly re-walked corpus and publishes it.
+    - cron: '0 2 * * 0'
+  workflow_dispatch: {}
+
+jobs:
+  rewalk:
+    runs-on: ubuntu-latest
+    # Own 360-min budget, separate from the daily cron. The full component
+    # re-walk (~205 min) + GraphQL refresh fits comfortably with no skills
+    # build/enrich competing for the same window.
+    timeout-minutes: 360
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - run: npm ci
+
+      # Restore the warm corpus so the re-walk resumes from the known set
+      # (Change A seeds processedSet from the cached OUTPUT). Prefix-match picks
+      # up whichever plugins-raw-ndjson-* entry the daily cron last saved.
+      - name: Restore plugins-raw cache
+        uses: actions/cache/restore@v4
+        with:
+          path: data/plugins-raw.ndjson
+          key: plugins-raw-ndjson-weekly-${{ github.run_number }}
+          restore-keys: |
+            plugins-raw-ndjson-
+
+      # The full re-walk. PLUGINS_FULL_REWALK=1 forces isFullRewalk() → true so
+      # every known repo's components are re-walked (belt-and-suspenders past the
+      # daily pushed_at gate). Secrets MUST match daily-scrape.yml's plugin step:
+      #   - GITHUB_TOKEN = SCRAPE_PAT (fine-grained, REST discovery/walk).
+      #   - SCRAPE_PAT_CLASSIC = classic PAT for the in-process GraphQL refresh
+      #     (refreshKnownRepos swaps to it — fine-grained PATs are 403'd by GraphQL).
+      - name: Full re-walk (scrape-plugins, PLUGINS_FULL_REWALK=1)
+        env:
+          GITHUB_TOKEN: ${{ secrets.SCRAPE_PAT }}
+          SCRAPE_PAT_CLASSIC: ${{ secrets.SCRAPE_PAT_CLASSIC }}
+          PLUGINS_FULL_REWALK: '1'
+        run: node scripts/scrape-plugins.js
+
+      # Save under the plugins-raw-ndjson- prefix even on timeout/failure (mirrors
+      # the daily cron's `if: always()` partial-corpus save). The daily cron's
+      # restore-keys prefix-match then picks this up and publishes it.
+      - name: Save plugins-raw cache
+        if: ${{ always() && hashFiles('data/plugins-raw.ndjson') != '' }}
+        uses: actions/cache/save@v4
+        with:
+          path: data/plugins-raw.ndjson
+          key: plugins-raw-ndjson-weekly-${{ github.run_number }}
