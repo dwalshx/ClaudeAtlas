@@ -2,10 +2,10 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: Phase complete — ready for verification
-stopped_at: Completed 3.4-incremental-plugin-discovery-05-PLAN.md
-last_updated: "2026-06-15T05:34:26.278Z"
-last_activity: 2026-06-15
+status: Phase 3.4 COMPLETE — plugins live
+stopped_at: "Phase 3.4 COMPLETE 2026-06-16 — plugins LIVE (6,317 indexed, 638 Featured). PLUGINS_ENABLED=true on main; first warm scheduled cron green ~2h35m; data/history/2026-06-16.json committed. Next: finish v3.0 milestone (3.5-3.9)."
+last_updated: "2026-06-16T14:30:00.000Z"
+last_activity: 2026-06-16
 progress:
   total_phases: 19
   completed_phases: 7
@@ -21,26 +21,28 @@ progress:
 See: `.planning/PROJECT.md` (last updated 2026-04-10)
 
 **Core value:** Users can find the best Claude skill for a given task in under 30 seconds, with visible signals for why it's trustworthy.
-**Current focus:** Phase 3.4 — incremental-plugin-discovery
+**Current focus:** v3.0 milestone — Phases 3.3 + 3.4 done (plugins LIVE); 3.5–3.9 remain
 **Milestone:** v3.0 — Comprehensive Agent Tooling Index (in progress)
 
 ## Current Position
 
-Phase: 3.4 (incremental-plugin-discovery) — EXECUTING
-Plan: 4 of 4
-Next phase: 3.4 (incremental plugin discovery) — NOT YET PLANNED
-Next action: **`/gsd:plan-phase 3.4`** — make `scripts/scrape-plugins.js` discovery incremental so the plugin pipeline fits the daily budget, then flip `PLUGINS_ENABLED='true'` (the one step left from 3.3). User flagged this as the immediate next priority.
+Phase: 3.4 (incremental-plugin-discovery) — ✅ COMPLETE 2026-06-16. Plugins LIVE on claudeatlas.com (6,317 indexed, 638 Featured). `PLUGINS_ENABLED=true` on main; first warm scheduled cron green ~2h35m; history snapshot intact.
+Next: **finish the v3.0 milestone — phases 3.5–3.9** (defined in `docs/PHASE-3.0-SPEC.md` lines 434-446, not yet broken into ROADMAP entries).
 
-**Why 3.4 exists / 3.3 re-enable NO-GO:** Plan 07 branch measurement (2026-06-13, run 27472968169) proved plugin discovery is rate-limit-bound — ~1,700 of ~7,300 repos in 5.5h, 403 wall every ~800-1,100 repos forcing ~44-min resets, full sweep ~24h. Flipping `PLUGINS_ENABLED` would break the daily cron (Pitfall 5). Full analysis + the three rework levers: `.planning/phases/3.3-plugin-pages/3.3-07-MEASUREMENT.md`.
+**Remaining v3.0 phases (all 1-3h; see PHASE-3.0-SPEC.md):**
+- **3.5** Homepage + nav redesign (Top Skills / Top Plugins sections, mixed search + type chips) — frontend
+- **3.6** Tier rename Featured→Top across codebase + UX — cross-cutting (do solo/first; conflicts with UI phases)
+- **3.7** Pipeline integration (cron handles both scrapes/embeds/registries) — **largely subsumed by 3.2+3.4**; residual likely just registries + verification
+- **3.8** Cross-entity enrichment (creator profiles show plugins, API graph includes plugins, mixed search) — backend + some frontend
+- **3.9** `/trends` page (surface rising/new from compounding snapshot data) — frontend, isolated
 
-**What's already in place for the re-enable (so 3.4 is just the sweep fix + a flag flip):**
+**Parallelization note (discussed 2026-06-15):** sequence 3.6 first (solo), then 2 worktrees — UX stream (3.5→3.9) + data stream (3.7→3.8); seams = nav links + mixed-search render (assign to UX stream). GSD `/gsd:new-workspace` + `/gsd:workstreams` for isolation.
 
-- `plugins-raw-ndjson-bootstrap` release (permanent, 7339 records) + warm GHA cache `plugins-raw-ndjson-bootstrap-1`
-- All plugin/MCP page code shipped + deployed (live-but-empty; `src/lib/plugins.js` degrades gracefully when data absent — commit b9f2ed7)
-- `bootstrap-plugins-raw.yml` workflow + daily-scrape gated plugin steps (AND `PLUGINS_ENABLED=='true'`)
-
-**READ FIRST for 3.4:** `3.3-plugin-pages/3.3-07-MEASUREMENT.md` (the NO-GO + levers), then `3.3-RESEARCH.md` §Q2d (sweep cost analysis). CLAUDE.md note #7 documents the Track 1 GraphQL-batch precedent — the same pattern applies to plugin discovery.
-Last activity: 2026-06-15
+**Operational notes for 3.4 maintenance:**
+- Steady-state daily cron ~2.5h (daily GraphQL refresh of ~7,339 repos ~35m is the recurring cost — future optimization candidate).
+- GHA cache is branch-scoped: a steady-state measurement branch can't see a stamped cache from another branch (restores unstamped bootstrap → one-time cold backfill ~324 min, still < 360). `weekly-plugin-rewalk.yml` seeds the stamped cache on main.
+- Re-disable: `PLUGINS_ENABLED='false'` (daily-scrape.yml line ~80).
+Last activity: 2026-06-16
 
 ### Quick Tasks Completed
 
