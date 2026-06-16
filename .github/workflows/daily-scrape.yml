@@ -58,23 +58,26 @@ jobs:
     # grew. 360 is the LAST stopgap — the durable fix is the HNSW/Vectorize
     # optimization for compute-similar (build) + enrich dedup, both O(n²) at 50k.
     timeout-minutes: 360
-    # quick-260603-e96 (2026-06-04): TEMPORARY plugin/MCP gate. The full
-    # plugin-discovery sweep (scrape-plugins.js) is a whole-ecosystem search
-    # throttled to GitHub's 5,000 REST/hr; it never finishes inside the
-    # 330-min timeout, so the run dies at "Run plugin discovery" BEFORE the
-    # commit/deploy/history-snapshot steps — losing the daily history snapshot
-    # and skipping the deploy. Plugin/MCP data also isn't rendered anywhere
-    # yet (plugin pages = Phase 3.3, unbuilt), so processing it buys nothing
-    # today. Setting PLUGINS_ENABLED='false' gates the entire plugin/MCP
-    # pipeline OFF (discovery → filter → link-bundles → embed → enrich) and
-    # restores a healthy skills-only daily cron (Track 1 history + skills +
-    # build + deploy + commit, ~244 min, under the 330 cap).
-    # REVERSIBLE: set PLUGINS_ENABLED='true' to re-enable once plugin
-    # discovery is made incremental + bootstrapped (mirrors the skills-raw
-    # GHA-cache + bootstrap-release pattern). The gated steps AND-combine this
-    # flag with their existing conditions, so the skill side is untouched.
+    # Phase 3.4 (2026-06-15): plugin/MCP pipeline RE-ENABLED. The pre-3.4 full
+    # ecosystem sweep never finished inside the timeout (3.3-07 measurement:
+    # ~1,700/7,300 repos in 5.5h → ~24h full sweep), so PLUGINS_ENABLED was
+    # gated 'false'. Phase 3.4 made discovery incremental:
+    #   A — scrape-plugins.js seeds processedSet from the cached OUTPUT corpus
+    #       (the .partial-vs-OUTPUT wiring bug fix) → warm runs skip known repos.
+    #   B — GraphQL batch engagement-refresh of known repos (separate 5k-pts/hr
+    #       budget), so skipping their REST walk doesn't freeze stars/metadata.
+    #   C — pushed_at re-walk gate + single recursive git/trees walk → only
+    #       CHANGED repos re-walk; the weekly FULL re-walk lives in its own
+    #       workflow (.github/workflows/weekly-plugin-rewalk.yml, own 360-min
+    #       budget) so the DAILY cron is steady-state only.
+    # Branch measurements (3.4-04-MEASUREMENT): cold-cache worst case ~324 min
+    # (< 360 cap); steady-state (stamped cache) ~90 min. Re-enabled after the
+    # measure-before-flip gate passed. Seed the stamped cache once via the
+    # weekly workflow so the first daily run is already steady-state.
+    # REVERSIBLE: set PLUGINS_ENABLED='false' to gate the plugin/MCP pipeline
+    # back off. The gated steps AND-combine this flag; the skill side is untouched.
     env:
-      PLUGINS_ENABLED: 'false'
+      PLUGINS_ENABLED: 'true'
     steps:
       - uses: actions/checkout@v4
 
