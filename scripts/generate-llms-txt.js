@@ -87,9 +87,10 @@ function renderTemplate(stats) {
 
 ${catalogLine}
 
-If you're an AI agent looking for Claude skills, **don't crawl the HTML pages**.
-Use the structured endpoints below — they're faster, cheaper, and return
-machine-readable JSON.
+If you're an AI agent looking for Claude skills, plugins, or MCP servers,
+**don't crawl the HTML pages**. Use the structured endpoints below — they're
+faster, cheaper, and return machine-readable JSON. Filter any search by
+\`type=skill|plugin|mcp_server\`.
 
 ## Citation
 
@@ -178,8 +179,9 @@ POST https://claudeatlas.com/api/v1/search
 - \`k\` (optional): number of results to return, default 20, max 50
 - \`tier\` (optional): filter by quality tier — "featured", "solid", or "listed"
 - \`category\` (optional): filter by category name
-- \`type\` (optional): filter by entity_type — currently "skill" only; "plugin",
-   "mcp_server", "command_lib", "agent_lib", "hook_lib" arrive in Phase 3.2+.
+- \`type\` (optional): filter by entity_type — "skill", "plugin", or
+   "mcp_server". Omit to search all types. (command_lib, agent_lib, hook_lib are
+   reserved for future phases.)
 
 **Response:**
 \`\`\`json
@@ -319,9 +321,13 @@ service IDs it references (e.g., \`["openai", "github", "docker"]\`).
 Browse the site at https://claudeatlas.com
 
 - Homepage with semantic search, charts, and featured skills
+- Skills: individual pages at /skills/{author}/{name}/, full A-Z at /browse/
+- Plugins: /plugins/ (curated landing + search), /plugins/browse/ (full A-Z),
+  individual plugin pages at /plugins/{owner}/{repo}/ (with install commands +
+  bundled skills/agents/commands/MCPs)
+- MCP servers: /mcp/ (full list), individual server pages at /mcp/{owner}/{name}/
 - Creator profiles at /creators/
 - API & service integration graph at /apis/
-- Individual skill pages at /skills/{author}/{name}/
 - Credits & citation guidance at /credits/
 
 ---
