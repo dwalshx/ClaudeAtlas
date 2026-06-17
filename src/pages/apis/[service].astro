@@ -17,15 +17,25 @@ const { serviceId } = Astro.props;
 const service = getServiceById(serviceId);
 
 // Get full skill records for the skills that reference this service
-const serviceSkills = service
+const allServiceSkills = service
   ? (service.skills || [])
       .map((slug) => allSkills.find(s => s.slug === slug))
       .filter(Boolean)
       .sort((a, b) => (b.quality_score || 0) - (a.quality_score || 0))
   : [];
 
-const featuredCount = serviceSkills.filter((s) => s.quality_tier === 'featured').length;
-const totalStars = serviceSkills.reduce((sum, s) => sum + (s.repo_stars || 0), 0);
+// Cap visible cards to top 100 by quality_score (mirrors category/[category].astro).
+// At the 60k-record catalog "anthropic" had ~60k integrating skills → 25 MiB HTML,
+// which exceeds Cloudflare's 25 MiB per-asset cap and FATALs check-asset-sizes
+// (blocking the ENTIRE deploy, plugins included). The cap renders identically for
+// every service. Full list is discoverable via /api/v1/search.
+const VISIBLE_LIMIT = 100;
+const serviceSkills = allServiceSkills.slice(0, VISIBLE_LIMIT);
+const hasMore = allServiceSkills.length > VISIBLE_LIMIT;
+
+// Stats are computed over the FULL set, not the capped slice.
+const featuredCount = allServiceSkills.filter((s) => s.quality_tier === 'featured').length;
+const totalStars = allServiceSkills.reduce((sum, s) => sum + (s.repo_stars || 0), 0);
 
 // Find other services that commonly co-occur with this one
 const coServices = new Map();
@@ -103,6 +113,20 @@ const description = `${svcSkillCount} Claude skills integrate with ${svcName}. B
           <SkillCard skill={skill} />
         ))}
       </div>
+
+      {hasMore && (
+        <div class="mt-10 text-center">
+          <p class="text-sm text-gray-500 mb-3">
+            Showing top {VISIBLE_LIMIT} of {allServiceSkills.length} skills using {svcName} by quality score.
+          </p>
+          <a
+            href={`/api/v1/search?q=${encodeURIComponent(svcName)}`}
+            class="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-gray-700 text-gray-300 hover:border-atlas-400 hover:text-atlas-400 transition-colors text-sm"
+          >
+            See all {allServiceSkills.length} skills via search →
+          </a>
+        </div>
+      )}
     </section>
 
     <p class="text-xs text-gray-600 mt-10 text-center">
