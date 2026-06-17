@@ -451,6 +451,25 @@ jobs:
           fi
           echo "Published $(wc -l < data/skills.ndjson) records to skills-latest"
 
+      # plugins-empty-deploy fix (B1): Publish current plugins.ndjson +
+      # mcp-servers.ndjson as `plugins-latest` release assets — mirrors the
+      # skills-latest publish above. WITHOUT this, push-event rebuilds had no
+      # plugin/MCP data to fetch → built 0 plugin pages → clobbered live data
+      # (the 2026-06-16 docs-commit regression that zeroed claudeatlas.com/plugins/).
+      # Same main-only gate as skills-latest (a branch publish would clobber prod shape).
+      - name: Publish plugins-latest release asset
+        if: github.event_name != 'push' && github.ref == 'refs/heads/main'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if gh release view plugins-latest >/dev/null 2>&1; then
+            gh release upload --clobber plugins-latest data/plugins.ndjson data/mcp-servers.ndjson
+          else
+            gh release create plugins-latest data/plugins.ndjson data/mcp-servers.ndjson \
+              --notes "Daily plugins + MCP NDJSON snapshot $(date -u +%Y-%m-%d)"
+          fi
+          echo "Published $(wc -l < data/plugins.ndjson) plugins and $(wc -l < data/mcp-servers.ndjson) MCP servers to plugins-latest"
+
       # T5 5e (Decision A): Publish per-slug records to Workers KV for
       # the Listed-tier dynamic render path in worker/index.js. Streams
       # data/skills.ndjson, computes content_sha per record, upserts only
@@ -491,6 +510,28 @@ jobs:
             echo "::error::Neither skills-latest nor skills-latest-prev release asset is available."
             echo "::error::Run daily-scrape.yml manually to produce one, or restore via scripts/migrate-raw-to-ndjson.js."
             exit 1
+          fi
+
+      # plugins-empty-deploy fix (B1): Push-event branch fetches
+      # plugins.ndjson + mcp-servers.ndjson from the `plugins-latest` release
+      # asset — mirrors the skills fetch above. Graceful fallback (echo +
+      # continue) when the asset doesn't exist yet: it won't until the first
+      # post-fix scheduled/dispatch run publishes plugins-latest. The build's
+      # plugin/MCP page loaders degrade to "no records" if the files are
+      # absent (same as a Track-1-only day), so a missing asset on the FIRST
+      # push after this fix is non-fatal — it just means that push rebuilds
+      # without plugin data until the next scheduled run publishes it.
+      - name: Fetch plugins-latest release asset (push-event path)
+        if: github.event_name == 'push'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          mkdir -p data
+          if gh release download plugins-latest --pattern 'plugins.ndjson' --output data/plugins.ndjson 2>/dev/null \
+             && gh release download plugins-latest --pattern 'mcp-servers.ndjson' --output data/mcp-servers.ndjson 2>/dev/null; then
+            echo "Fetched plugins.ndjson ($(wc -l < data/plugins.ndjson) records) and mcp-servers.ndjson ($(wc -l < data/mcp-servers.ndjson) records) from plugins-latest"
+          else
+            echo "::warning::plugins-latest release asset unavailable (expected before the first post-fix scheduled run). Building without plugin/MCP data this push."
           fi
 
       # T5 5e (Rev 2 B4): Regression guard. Rewritten from `JSON.parse(
