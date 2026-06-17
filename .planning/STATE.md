@@ -50,6 +50,7 @@ Last activity: 2026-06-16
 |---|-------------|------|--------|--------|-----------|
 | 260603-bug | Add agent-ping affordance endpoint + llms.txt invitation | 2026-06-03 | 098124f | Live (deployed + smoke-verified) | [260603-bug-add-agent-ping-affordance-endpoint-llms-](./quick/260603-bug-add-agent-ping-affordance-endpoint-llms-/) |
 | 260603-e96 | Fix failing daily-scrape Track 1 star pulse (retry-after stopgap + GraphQL batch migration) | 2026-06-03 | 921be94 | Needs Review (branch-CI dispatch) | [260603-e96-fix-failing-daily-scrape-track-1-star-pu](./quick/260603-e96-fix-failing-daily-scrape-track-1-star-pu/) |
+| 260617-heq | Add Skills \| Plugins \| MCP entity links to top + footer nav | 2026-06-17 | c505106 | Done (deploying) | [260617-heq-add-skills-plugins-mcp-entity-links-to-t](./quick/260617-heq-add-skills-plugins-mcp-entity-links-to-t/) |
 
 Progress: Phase 1.5 [██████████] 100% · v2.0 [██████████] 100% · 3.0.x trilogy [██████████] 100% · 3.1.1 F1 [██████████] 100% · 3.1 filter overhaul [██████████] 100% (shipped 2026-05-27) · 3.1.2 polymorphic envelope [██████████] 100% (shipped 2026-05-28) · 3.1.3 agent hub [██████████] 100% (shipped 2026-05-29) · 3.1.4 filter v2 writer [██████████] 100% (shipped 2026-05-30) · **3.2 plugin+MCP scoring [██████████] 100% (plan executed; branch-CI smoke pending)** · 3.3–3.9 [░░░░░░░░░░] 0%
 
