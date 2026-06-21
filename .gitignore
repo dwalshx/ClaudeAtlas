@@ -48,7 +48,9 @@ scripts/backfill-star-history.log
 data/skills.json.birth-partial
 scripts/backfill-skill-birth-dates.log
 
-# Generated badge SVGs (rebuilt each build via scripts/generate-badges.js)
+# Legacy static badge SVGs — generator removed in quick-260621-cvm (badges
+# now served per-request by worker/badge.js). Ignore kept so a stray local
+# run of an old checkout never accidentally commits ~18k SVGs.
 public/badge/
 # Generated registry (rebuilt each build via scripts/generate-registry.js)
 public/skills-registry.json

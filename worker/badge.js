@@ -255,7 +255,11 @@ export async function handleBadge(url, env, starHistory) {
     let events = [];
     const repo = skill.repo_full_name;
     if (repo && starHistory && Array.isArray(starHistory[repo])) {
-      events = starHistory[repo].map(([t, c]) => ({ t, c }));
+      // The bundle stores [tsMs, count] (ms-since-epoch number). The ported
+      // builder does Date.parse(e.t), which returns NaN for a numeric ms
+      // value — so convert ms back to the ISO string the builder expects
+      // (exactly the shape the old static generator fed it).
+      events = starHistory[repo].map(([t, c]) => ({ t: new Date(t).toISOString(), c }));
     }
     svg = buildStarHistoryChartSvg(events, skill);
   } else {

@@ -620,7 +620,7 @@ jobs:
         run: |
           git config user.name "ClaudeAtlas Bot"
           git config user.email "bot@claudeatlas.com"
-          git add data/pipeline-stats.json data/history/ data/kv-published.json || true
+          git add data/pipeline-stats.json data/history/ data/kv-published.json data/badge-star-history.json || true
           git diff --cached --quiet || git commit -m "chore: update skills data $(date -u +%Y-%m-%d)"
           # Fail loud on push errors. The prior `|| true` silently masked
           # permission failures for 5+ weeks — never again.
