@@ -4,8 +4,8 @@ milestone: v1.0
 milestone_name: milestone
 status: Phase 3.4 COMPLETE — plugins live
 stopped_at: "Phase 3.4 COMPLETE 2026-06-16 — plugins LIVE (6,317 indexed, 638 Featured). PLUGINS_ENABLED=true on main; first warm scheduled cron green ~2h35m; data/history/2026-06-16.json committed. Next: finish v3.0 milestone (3.5-3.9)."
-last_updated: "2026-06-16T14:30:00.000Z"
-last_activity: 2026-06-16
+last_updated: "2026-06-21T16:20:00.000Z"
+last_activity: 2026-06-21
 progress:
   total_phases: 19
   completed_phases: 7
@@ -42,7 +42,7 @@ Next: **finish the v3.0 milestone — phases 3.5–3.9** (defined in `docs/PHASE
 - Steady-state daily cron ~2.5h (daily GraphQL refresh of ~7,339 repos ~35m is the recurring cost — future optimization candidate).
 - GHA cache is branch-scoped: a steady-state measurement branch can't see a stamped cache from another branch (restores unstamped bootstrap → one-time cold backfill ~324 min, still < 360). `weekly-plugin-rewalk.yml` seeds the stamped cache on main.
 - Re-disable: `PLUGINS_ENABLED='false'` (daily-scrape.yml line ~80).
-Last activity: 2026-06-16
+Last activity: 2026-06-21 - Completed quick task 260621-cvm: Badge → Worker route migration (code merged to main; awaiting human wrangler-dev smoke before deploy)
 
 ### Quick Tasks Completed
 
@@ -51,7 +51,7 @@ Last activity: 2026-06-16
 | 260603-bug | Add agent-ping affordance endpoint + llms.txt invitation | 2026-06-03 | 098124f | Live (deployed + smoke-verified) | [260603-bug-add-agent-ping-affordance-endpoint-llms-](./quick/260603-bug-add-agent-ping-affordance-endpoint-llms-/) |
 | 260603-e96 | Fix failing daily-scrape Track 1 star pulse (retry-after stopgap + GraphQL batch migration) | 2026-06-03 | 921be94 | Needs Review (branch-CI dispatch) | [260603-e96-fix-failing-daily-scrape-track-1-star-pu](./quick/260603-e96-fix-failing-daily-scrape-track-1-star-pu/) |
 | 260617-heq | Add Skills \| Plugins \| MCP entity links to top + footer nav | 2026-06-17 | c505106 | Done (deploying) | [260617-heq-add-skills-plugins-mcp-entity-links-to-t](./quick/260617-heq-add-skills-plugins-mcp-entity-links-to-t/) |
-| 260621-cvm | Badge → Worker route migration (deletes ~18k static badge files; unblocks the assets-upload 504) | 2026-06-21 | 0d5670c | Awaiting human checkpoint (wrangler dev smoke); byte-diff zero, build clean | [260621-cvm-implement-the-badge-to-worker-route-migr](./quick/260621-cvm-implement-the-badge-to-worker-route-migr/) |
+| 260621-cvm | Badge → Worker route migration (deletes ~18k static badge files; unblocks the assets-upload 504) | 2026-06-21 | 0d5670c | Needs Review (human wrangler-dev smoke pending; byte-diff zero, build clean, check:patterns green) | [260621-cvm-implement-the-badge-to-worker-route-migr](./quick/260621-cvm-implement-the-badge-to-worker-route-migr/) |
 
 Progress: Phase 1.5 [██████████] 100% · v2.0 [██████████] 100% · 3.0.x trilogy [██████████] 100% · 3.1.1 F1 [██████████] 100% · 3.1 filter overhaul [██████████] 100% (shipped 2026-05-27) · 3.1.2 polymorphic envelope [██████████] 100% (shipped 2026-05-28) · 3.1.3 agent hub [██████████] 100% (shipped 2026-05-29) · 3.1.4 filter v2 writer [██████████] 100% (shipped 2026-05-30) · **3.2 plugin+MCP scoring [██████████] 100% (plan executed; branch-CI smoke pending)** · 3.3–3.9 [░░░░░░░░░░] 0%
 
