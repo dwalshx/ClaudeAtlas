@@ -28,7 +28,7 @@ binding = "ASSETS"
 # (2026-05-25): /api/v1/search returned Astro's 404 HTML for 2 days
 # but didn't surface until Phase 3.1.x wired the homepage search bar
 # to it.
-run_worker_first = ["/skills/*", "/api/*"]
+run_worker_first = ["/skills/*", "/api/*", "/badge/*"]
 
 # --- D1: search query log ---
 # Provisioned via Cloudflare dashboard. SALT_SECRET set as a Worker secret.
