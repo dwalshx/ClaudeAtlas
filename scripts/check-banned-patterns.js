@@ -142,6 +142,19 @@ const LINT_ALLOWLIST = [
     file: 'scripts/generate-feeds.js',
     reason: 'JSON Feed 1.1 generator — 3 bounded files (~1-5 KB each) capped at 25/50/100 items; history snapshot reads are bounded sidecars',
   },
+  // ---------------------------------------------------------------------------
+  // quick-260621-cvm — badge→Worker-route migration. The build-time bundle
+  // generator reads star-history.json + data/history/*.json snapshots
+  // (Banned A — each a bounded per-file sidecar; history snapshots ~225 KB,
+  // star-history.json bounded well under the V8 ceiling) and writes the
+  // ~177 KB badge-star-history.json bundle with JSON.stringify(map, null, 2)
+  // (Banned B — bounded ~158 repos × ≤61 pts). Whole-file exempt, like the
+  // generate-feeds.js entry above.
+  // ---------------------------------------------------------------------------
+  {
+    file: 'scripts/generate-badge-data.js',
+    reason: 'badge star-history bundle generator — history snapshot + star-history.json reads are bounded sidecars (Banned A); ~177 KB bundle write is bounded (Banned B)',
+  },
 ];
 
 // ---------------------------------------------------------------------------
