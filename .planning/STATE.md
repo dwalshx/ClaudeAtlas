@@ -42,7 +42,7 @@ Next: **finish the v3.0 milestone — phases 3.5–3.9** (defined in `docs/PHASE
 - Steady-state daily cron ~2.5h (daily GraphQL refresh of ~7,339 repos ~35m is the recurring cost — future optimization candidate).
 - GHA cache is branch-scoped: a steady-state measurement branch can't see a stamped cache from another branch (restores unstamped bootstrap → one-time cold backfill ~324 min, still < 360). `weekly-plugin-rewalk.yml` seeds the stamped cache on main.
 - Re-disable: `PLUGINS_ENABLED='false'` (daily-scrape.yml line ~80).
-Last activity: 2026-06-21 - Completed quick task 260621-cvm: Badge → Worker route migration (code merged to main; awaiting human wrangler-dev smoke before deploy)
+Last activity: 2026-06-23 - Quick task 260621-cvm Badge → Worker route migration DEPLOYED + live-smoked (no 504; badges now served per-request from worker/badge.js). NOTE: daily scheduled cron has been failing at "Upload vectors to Vectorize" for ≥3 runs (6-21/22/23) — SEPARATE pre-existing issue, site data stale since ~6-18; flagged as follow-up.
 
 ### Quick Tasks Completed
 
@@ -51,7 +51,7 @@ Last activity: 2026-06-21 - Completed quick task 260621-cvm: Badge → Worker ro
 | 260603-bug | Add agent-ping affordance endpoint + llms.txt invitation | 2026-06-03 | 098124f | Live (deployed + smoke-verified) | [260603-bug-add-agent-ping-affordance-endpoint-llms-](./quick/260603-bug-add-agent-ping-affordance-endpoint-llms-/) |
 | 260603-e96 | Fix failing daily-scrape Track 1 star pulse (retry-after stopgap + GraphQL batch migration) | 2026-06-03 | 921be94 | Needs Review (branch-CI dispatch) | [260603-e96-fix-failing-daily-scrape-track-1-star-pu](./quick/260603-e96-fix-failing-daily-scrape-track-1-star-pu/) |
 | 260617-heq | Add Skills \| Plugins \| MCP entity links to top + footer nav | 2026-06-17 | c505106 | Done (deploying) | [260617-heq-add-skills-plugins-mcp-entity-links-to-t](./quick/260617-heq-add-skills-plugins-mcp-entity-links-to-t/) |
-| 260621-cvm | Badge → Worker route migration (deletes ~18k static badge files; unblocks the assets-upload 504) | 2026-06-21 | 0d5670c | Needs Review (human wrangler-dev smoke pending; byte-diff zero, build clean, check:patterns green) | [260621-cvm-implement-the-badge-to-worker-route-migr](./quick/260621-cvm-implement-the-badge-to-worker-route-migr/) |
+| 260621-cvm | Badge → Worker route migration (deletes ~18k static badge files; unblocks the assets-upload 504) | 2026-06-21 | 0d5670c | LIVE (deployed 2026-06-23 run 28049807536 in 9m33s — no 504; edge smoke all 200s incl. multi-segment + unknown-slug; byte-diff zero. wrangler dev unrunnable on win32-arm64 — verified via direct handler smoke instead) | [260621-cvm-implement-the-badge-to-worker-route-migr](./quick/260621-cvm-implement-the-badge-to-worker-route-migr/) |
 
 Progress: Phase 1.5 [██████████] 100% · v2.0 [██████████] 100% · 3.0.x trilogy [██████████] 100% · 3.1.1 F1 [██████████] 100% · 3.1 filter overhaul [██████████] 100% (shipped 2026-05-27) · 3.1.2 polymorphic envelope [██████████] 100% (shipped 2026-05-28) · 3.1.3 agent hub [██████████] 100% (shipped 2026-05-29) · 3.1.4 filter v2 writer [██████████] 100% (shipped 2026-05-30) · **3.2 plugin+MCP scoring [██████████] 100% (plan executed; branch-CI smoke pending)** · 3.3–3.9 [░░░░░░░░░░] 0%
 
