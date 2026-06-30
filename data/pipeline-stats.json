@@ -1,38 +1,38 @@
 {
-  "timestamp": "2026-06-29T12:57:07.775Z",
-  "total_discovered": 93135,
-  "total_skills": 71959,
-  "unique_repos": 8597,
+  "timestamp": "2026-06-30T11:47:23.242Z",
+  "total_discovered": 94243,
+  "total_skills": 72814,
+  "unique_repos": 8723,
   "tiers": {
-    "featured": 7195,
-    "solid": 10805,
-    "listed": 53959
+    "featured": 7281,
+    "solid": 10719,
+    "listed": 54814
   },
   "categories": {
-    "AI & Automation": 45828,
-    "Web & Frontend": 5452,
-    "Testing & QA": 2332,
-    "Data & Documents": 7079,
-    "Code & Development": 6731,
-    "DevOps & Infrastructure": 2283,
-    "API & Backend": 2254
+    "AI & Automation": 46377,
+    "Web & Frontend": 5506,
+    "Testing & QA": 2373,
+    "Code & Development": 6833,
+    "API & Backend": 2270,
+    "DevOps & Infrastructure": 2303,
+    "Data & Documents": 7152
   },
   "content_flags": {
-    "flagged_records": 622,
+    "flagged_records": 626,
     "by_rule": {
-      "ignore_previous": 97,
+      "ignore_previous": 98,
       "override_system": 8,
-      "curl_pipe_sh": 404,
+      "curl_pipe_sh": 407,
       "env_secret_to_url": 84,
       "exfil_endpoints": 38,
       "wget_pipe_sh": 15,
       "reverse_shell": 11,
       "im_start_system": 2,
       "dan_mode": 7,
-      "base64_decode_exec": 3,
+      "base64_decode_exec": 4,
       "new_system_prompt": 1
     },
-    "multi_rule_records": 38
+    "multi_rule_records": 39
   },
   "filter_config": {
     "MIN_BODY_LENGTH": 200,
@@ -43,19 +43,19 @@
     "SOLID_THRESHOLD": 70
   },
   "plugin": {
-    "timestamp": "2026-06-29T12:57:09.717Z",
-    "total_raw_repos": 17285,
-    "total_plugins": 8692,
+    "timestamp": "2026-06-30T11:47:25.022Z",
+    "total_raw_repos": 17439,
+    "total_plugins": 8772,
     "tiers": {
-      "featured": 869,
-      "solid": 2607,
-      "listed": 5216
+      "featured": 877,
+      "solid": 2631,
+      "listed": 5264
     }
   },
   "mcp_server": {
-    "timestamp": "2026-06-29T12:57:10.438Z",
-    "total_raw_repos": 17285,
-    "mcp_repos": 56,
+    "timestamp": "2026-06-30T11:47:25.710Z",
+    "total_raw_repos": 17439,
+    "mcp_repos": 57,
     "total_mcp_servers": 97,
     "tiers": {
       "featured": 9,
