@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-07-10T12:03:43.344Z",
+  "timestamp": "2026-07-11T09:52:36.344Z",
   "total_discovered": 107436,
   "total_skills": 83617,
   "unique_repos": 10256,
@@ -12,10 +12,10 @@
     "AI & Automation": 52998,
     "Web & Frontend": 6420,
     "Testing & QA": 2731,
-    "Data & Documents": 8232,
     "Code & Development": 8095,
+    "API & Backend": 2585,
     "DevOps & Infrastructure": 2556,
-    "API & Backend": 2585
+    "Data & Documents": 8232
   },
   "content_flags": {
     "flagged_records": 707,
@@ -43,7 +43,7 @@
     "SOLID_THRESHOLD": 70
   },
   "plugin": {
-    "timestamp": "2026-07-10T12:03:45.336Z",
+    "timestamp": "2026-07-11T09:52:38.331Z",
     "total_raw_repos": 18635,
     "total_plugins": 9411,
     "tiers": {
@@ -53,7 +53,7 @@
     }
   },
   "mcp_server": {
-    "timestamp": "2026-07-10T12:03:46.124Z",
+    "timestamp": "2026-07-11T09:52:39.119Z",
     "total_raw_repos": 18635,
     "mcp_repos": 61,
     "total_mcp_servers": 124,
