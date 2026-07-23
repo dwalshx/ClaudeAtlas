@@ -21,7 +21,7 @@
  *   Call initPosthog() once per page load (handled in BaseLayout).
  */
 
-const POSTHOG_HOST = 'https://eu.i.posthog.com';
+const POSTHOG_HOST = import.meta.env.PUBLIC_POSTHOG_HOST || 'https://us.i.posthog.com';
 const POSTHOG_KEY = import.meta.env.PUBLIC_POSTHOG_KEY || '';
 const ENABLED = Boolean(POSTHOG_KEY);
 
