@@ -1,34 +1,34 @@
 {
-  "timestamp": "2026-07-25T10:23:57.513Z",
-  "total_discovered": 34373,
-  "total_skills": 29272,
-  "unique_repos": 3458,
+  "timestamp": "2026-07-26T12:59:42.413Z",
+  "total_discovered": 35649,
+  "total_skills": 30331,
+  "unique_repos": 3616,
   "tiers": {
-    "featured": 2927,
-    "solid": 8781,
-    "listed": 17564
+    "featured": 3033,
+    "solid": 9099,
+    "listed": 18199
   },
   "categories": {
-    "AI & Automation": 18763,
-    "Testing & QA": 929,
-    "Code & Development": 3389,
-    "Web & Frontend": 2145,
-    "Data & Documents": 2494,
-    "API & Backend": 849,
-    "DevOps & Infrastructure": 703
+    "AI & Automation": 19402,
+    "Testing & QA": 951,
+    "Code & Development": 3542,
+    "Web & Frontend": 2229,
+    "Data & Documents": 2598,
+    "API & Backend": 887,
+    "DevOps & Infrastructure": 722
   },
   "content_flags": {
-    "flagged_records": 226,
+    "flagged_records": 234,
     "by_rule": {
-      "curl_pipe_sh": 111,
+      "curl_pipe_sh": 116,
       "env_secret_to_url": 33,
-      "ignore_previous": 71,
+      "ignore_previous": 74,
       "dan_mode": 2,
       "exfil_endpoints": 12,
       "wget_pipe_sh": 3,
-      "override_system": 2
+      "override_system": 3
     },
-    "multi_rule_records": 8
+    "multi_rule_records": 9
   },
   "filter_config": {
     "MIN_BODY_LENGTH": 200,
@@ -39,18 +39,18 @@
     "SOLID_THRESHOLD": 70
   },
   "plugin": {
-    "timestamp": "2026-07-25T10:23:58.784Z",
-    "total_raw_repos": 21054,
-    "total_plugins": 10698,
+    "timestamp": "2026-07-26T12:59:44.410Z",
+    "total_raw_repos": 21173,
+    "total_plugins": 10753,
     "tiers": {
-      "featured": 1069,
-      "solid": 3209,
-      "listed": 6420
+      "featured": 1075,
+      "solid": 3225,
+      "listed": 6453
     }
   },
   "mcp_server": {
-    "timestamp": "2026-07-25T10:23:59.342Z",
-    "total_raw_repos": 21054,
+    "timestamp": "2026-07-26T12:59:45.268Z",
+    "total_raw_repos": 21173,
     "mcp_repos": 64,
     "total_mcp_servers": 128,
     "tiers": {
