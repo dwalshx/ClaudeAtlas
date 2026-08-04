@@ -189,6 +189,33 @@ function buildEmbeddingInput(record) {
   return buildEmbeddingInputRegistry(record);
 }
 
+// Drift decision (FIX A, quick-260804-dy2). The OLD guard bailed on overall
+// cache hit rate (kept.length / records.length), which false-positives
+// whenever the catalog GROWS or the vector cache is cold-seeded (e.g. a
+// 1,078-vector seed vs ~50k current records → ~2% hit → spurious abort).
+// The CORRECT drift signal is prior-overlap: of the vectors we already have,
+// how many still match a current record by content_sha? A LOW prior-match-rate
+// means buildEmbeddingInput()/content_sha drifted so the prior vectors are
+// stale — that is the only case worth a costly full re-embed abort. Growth
+// (lots of NEW records with nothing prior to match) is NOT drift.
+//
+// Thresholds (documented choices):
+//   MIN_PRIOR_FOR_DRIFT_CHECK = 50 — below this the prior set is an
+//     evicted/bootstrap remnant; the rate is statistically meaningless, so
+//     PROCEED (embed everything — correct, not a surprise).
+//   PRIOR_MATCH_BAIL_THRESHOLD = 0.5 — bail only when MOST prior vectors no
+//     longer match (true logic drift). 0.5 (not 0.90) because legitimate
+//     churn/removals routinely retire a chunk of prior vectors; only a
+//     majority-miss indicates a formula change.
+export const MIN_PRIOR_FOR_DRIFT_CHECK = 50;
+export const PRIOR_MATCH_BAIL_THRESHOLD = 0.5;
+export function shouldBailOnDrift({ priorCount, matchedFromPrior, forced }) {
+  if (forced) return false;
+  if (!priorCount || priorCount < MIN_PRIOR_FOR_DRIFT_CHECK) return false;
+  const priorMatchRate = matchedFromPrior / priorCount;
+  return priorMatchRate < PRIOR_MATCH_BAIL_THRESHOLD;
+}
+
 // --- Prior-run resume ---
 
 // Load prior vectors keyed by metadata.skill_id (the source-of-truth unique
@@ -302,20 +329,29 @@ async function main() {
   log(`unchanged: ${kept.length}`);
   log(`to embed:  ${todo.length}`);
 
-  // B-2 cache-hit pre-check: when re-embedding an EXISTING vector file, a low
-  // hit rate means the embedding-input (and therefore the content_sha) drifted
-  // from what produced the prior vectors — re-embedding the whole catalog
-  // would silently cost real money. Bail loudly unless explicitly forced.
+  // Drift pre-check (FIX A, quick-260804-dy2): when re-embedding against an
+  // EXISTING vector file, decide on PRIOR-OVERLAP, not overall cache hit rate.
+  // A low prior-match-rate means the embedding-input (and therefore the
+  // content_sha) drifted from what produced the prior vectors — re-embedding
+  // the whole catalog would silently cost real money. Bail loudly unless
+  // explicitly forced. Catalog GROWTH and cold-seed caches no longer
+  // false-positive (only true drift does — see shouldBailOnDrift).
   const FORCE_REEMBED = process.env.EMBED_FORCE_REEMBED === '1';
   if (prior.size > 0 && records.length > 0) {
-    const hitRate = kept.length / records.length;
-    log(`cache hit rate: ${(hitRate * 100).toFixed(3)}% (${kept.length}/${records.length})`);
-    if (hitRate < 0.90 && !FORCE_REEMBED) {
+    // kept.length === matchedFromPrior: `prior` is keyed by unique skill_id and
+    // each current rec.id is unique, so at most one prior vector is consumed per
+    // kept record → the count of reused priors equals kept.length.
+    const matchedFromPrior = kept.length;
+    const priorMatchRate = matchedFromPrior / prior.size;
+    log(`prior-overlap: ${(priorMatchRate * 100).toFixed(2)}% of prior vectors still match (${matchedFromPrior}/${prior.size} prior; ${kept.length}/${records.length} current kept)`);
+    if (shouldBailOnDrift({ priorCount: prior.size, matchedFromPrior, forced: FORCE_REEMBED })) {
       console.error(
-        `[embed-skills] DRIFT DETECTED: only ${(hitRate * 100).toFixed(2)}% cache hit ` +
-        `against prior ${outputPath}.\n` +
-        `This likely means buildEmbeddingInput() output diverged from the logic that\n` +
-        `produced the prior vectors. Cost of proceeding: a full re-embed of ${records.length} records.\n` +
+        `[embed-skills] DRIFT DETECTED: only ${(priorMatchRate * 100).toFixed(2)}% of the ` +
+        `${prior.size} PRIOR vectors in ${outputPath} still match a current record by content_sha.\n` +
+        `A majority-miss means buildEmbeddingInput()/content_sha diverged from the logic that\n` +
+        `produced those vectors — proceeding would silently re-embed the whole catalog.\n` +
+        `(NOTE: catalog GROWTH and cold-seed caches do NOT trip this guard anymore — only true drift does.)\n` +
+        `Cost of proceeding: a full re-embed of ${records.length} records.\n` +
         `Bailing out. Re-run with EMBED_FORCE_REEMBED=1 to override.`,
       );
       process.exit(1);
