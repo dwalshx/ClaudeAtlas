@@ -24,6 +24,11 @@ jobs:
     # needs explicit `contents: write` to push the daily data snapshot.
     permissions:
       contents: write
+      # quick-260804-dy2 (FIX B): gh CLI in the notify-on-failure job needs
+      # issues:write to open/comment the deduped cron-failure issue via
+      # GITHUB_TOKEN. Added here too so the whole workflow's default token
+      # scope is consistent; contents:write is UNCHANGED (data commit-back).
+      issues: write
     # Daily target: <30 min warm. 90-min cap is safety net; if hit,
     # something is wrong. Phase 3.0.1 architecture: Track 1 (Star Pulse,
     # cheap refresh of known repos) → Track 2 (Discovery via repo search,
@@ -641,3 +646,61 @@ jobs:
           # Fail loud on push errors. The prior `|| true` silently masked
           # permission failures for 5+ weeks — never again.
           git push
+
+  # quick-260804-dy2 (FIX B): surface a failed daily-scrape instead of it
+  # going silent. Runs ONLY when scrape-build-deploy fails, so the SUCCESS
+  # PATH IS COMPLETELY UNAFFECTED (the whole job + every step is skipped on
+  # success via `if: failure()`). Opens/comments a deduped GitHub Issue
+  # (label cron-failure) and optionally POSTs a webhook.
+  notify-on-failure:
+    needs: scrape-build-deploy
+    if: failure()
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      issues: write
+    steps:
+      # (2) OPTIONAL push first. NO step-level `if:` — the `secrets` context
+      # is INVALID in a step `if:` and would invalidate the WHOLE workflow
+      # file (GitHub rejects it at validation time → no jobs run, incl. the
+      # success path). Instead: continue-on-error so a broken/absent webhook
+      # can never mask the real failure or block the issue step, pass the
+      # secret via env:, and guard on emptiness INSIDE the run: script (a
+      # step's own env is also not available to its own if:, so the in-script
+      # check is the pattern).
+      - name: Push webhook alert (optional)
+        continue-on-error: true
+        env:
+          ALERT_WEBHOOK_URL: ${{ secrets.ALERT_WEBHOOK_URL }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          [ -n "$ALERT_WEBHOOK_URL" ] || { echo "no webhook configured; skipping"; exit 0; }
+          curl -sS -X POST -H 'Content-Type: application/json' \
+            -d "{\"content\": \"ClaudeAtlas daily-scrape FAILED — $RUN_URL\"}" \
+            "$ALERT_WEBHOOK_URL" || true
+
+      # (1) Zero-setup fallback: deduped GitHub Issue via gh/GITHUB_TOKEN.
+      - name: Open or update cron-failure issue
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          set -euo pipefail
+          # Ensure the label exists (idempotent).
+          gh label create cron-failure --color B60205 \
+            --description "Automated daily-scrape failure" 2>/dev/null || true
+          DATE=$(date -u +%Y-%m-%d)
+          BODY="daily-scrape run failed on ${DATE} (UTC).\n\nFailed run: ${RUN_URL}"
+          EXISTING=$(gh issue list --repo "$REPO" --label cron-failure \
+            --state open --json number --jq '.[0].number // empty')
+          if [ -n "$EXISTING" ]; then
+            printf '%b' "New failure: ${DATE}\n\n${RUN_URL}" \
+              | gh issue comment "$EXISTING" --repo "$REPO" --body-file -
+            echo "Commented existing cron-failure issue #$EXISTING"
+          else
+            printf '%b' "$BODY" \
+              | gh issue create --repo "$REPO" --label cron-failure \
+                --title "daily-scrape failed (${DATE})" --body-file -
+            echo "Created new cron-failure issue"
+          fi
