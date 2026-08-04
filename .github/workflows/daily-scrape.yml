@@ -687,8 +687,13 @@ jobs:
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         run: |
           set -euo pipefail
-          # Ensure the label exists (idempotent).
-          gh label create cron-failure --color B60205 \
+          # Ensure the label exists (idempotent). Must pass --repo: the notify job
+          # has no checkout, so gh cannot infer the repo from a git remote, and
+          # without it `gh label create` fails silently (|| true) — then the
+          # subsequent `gh issue create --label cron-failure` hard-fails with
+          # "label not found". --force makes it create-or-update idempotent.
+          # (Root-caused from run 30933629884, 2026-08-04.)
+          gh label create cron-failure --repo "$REPO" --force --color B60205 \
             --description "Automated daily-scrape failure" 2>/dev/null || true
           DATE=$(date -u +%Y-%m-%d)
           BODY="daily-scrape run failed on ${DATE} (UTC).\n\nFailed run: ${RUN_URL}"
