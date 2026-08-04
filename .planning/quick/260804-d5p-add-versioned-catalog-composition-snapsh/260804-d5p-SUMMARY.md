@@ -98,6 +98,25 @@ The `260804-d5p-PLAN.md` artifact was not present in the worktree, on `main`, in
 - First authoritative snapshot lands on the next scheduled (or dispatched) `daily-scrape.yml` run on `main`, committed alongside `data/history/<today>.json`.
 - `data/snapshots/` is intentionally NOT gitignored (committed like `data/history/`); the script `mkdir`s it on first run, so no `.gitkeep` is needed.
 
+## Gap closure (verifier follow-up)
+
+The wiring/infrastructure shipped correct, but the emitted PAYLOAD lagged the field spec. A surgical, additive extension of **only** `scripts/snapshot-catalog.js` + `scripts/snapshot-catalog.test.js` closed the gap (all existing behavior — the tiers-count-all vs indexed-excludes-duplicates decision, category derivation, atomic write, import guard — preserved).
+
+**3 field renames** (no consumers yet, so free): `totals.records` → `totals.analyzed`; top-level `categories` → `by_category`; `generated_at` → `timestamp`. Every reference updated (aggregate return, doc-comment header, console summary line, all test assertions).
+
+**4 new field groups added to the snapshot object:**
+
+- `new_last_7d` (int) — records whose `scraped_at` parses to within 7 days of the snapshot date, over ALL analyzed records (missing/unparseable → not counted). Documented as a BEST-EFFORT GROWTH PROXY (scraped_at = last-scrape time, not first-seen).
+- `maintenance: { active, abandoned }` — over INDEXED records only (consistent with `by_category`): active = `repo_pushed_at` within 90 days; abandoned = everything else (missing/unparseable pushed_at counts as abandoned, conservative).
+- `unique_creators` (int) — distinct `repo_full_name` owner (prefix before `/`) over INDEXED records; missing repo_full_name skipped.
+- `churn: { archived, duplicates }` — archived = `repo_archived === true` over ALL analyzed; duplicates = `is_duplicate === true` (mirrors `totals.duplicates`).
+
+**Determinism:** `aggregateSnapshot` gained an optional `nowMs` opt (defaults to `Date.parse(timestamp)`) so the 7d/90d windows never depend on real `Date.now()` in tests.
+
+**Test coverage:** 2 new `node:test` cases (fixture exercising every new field with a fixed reference date; `nowMs`-override case) plus updated assertions in the empty-catalog case. Total **9 pass, 0 fail**. `npm run check:patterns` → clean. Local dry run over the live 26,707-record catalog (skills + plugins + mcp) emitted a well-formed object with all new fields populated (active=2111 / abandoned=24596, unique_creators=5167, churn.archived=3; new_last_7d=0 is correct for the April-vintage `scraped_at` values in the committed catalog).
+
+Current snapshot shape: `{ schema_version, date, timestamp, totals{analyzed,indexed,duplicates,tiers}, by_entity_type, by_category, new_last_7d, maintenance{active,abandoned}, unique_creators, churn{archived,duplicates} }`.
+
 ## Self-Check: PASSED
 
 - FOUND: scripts/snapshot-catalog.js

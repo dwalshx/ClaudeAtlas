@@ -22,14 +22,35 @@
  * ── DECISION (documented for AEO trend consumers) ──────────────────────
  * `totals.tiers` counts ALL records, INCLUDING duplicates (is_duplicate).
  * `totals.indexed` EXCLUDES duplicates. Therefore the tier mix will NOT
- * sum to `indexed` — it sums to `records`. This is deliberate: the tier
+ * sum to `indexed` — it sums to `analyzed`. This is deliberate: the tier
  * assignment is computed over the full catalog (duplicates carry a tier
  * too), and consumers charting "tier composition of everything scored"
  * want the full denominator, while consumers charting "what a user can
  * actually browse" want `indexed`. Both are provided; do not assume
  * `featured + solid + listed === indexed`.
- * `categories` is counted over INDEXED records only (duplicates would
+ * `by_category` is counted over INDEXED records only (duplicates would
  * double-count a canonical's category).
+ *
+ * ── EXTRA COMPOSITION FIELDS (quick-260804-d5p gap closure) ─────────────
+ * `new_last_7d` counts records whose `scraped_at` parses to within 7 days
+ * of the snapshot date (missing/unparseable scraped_at → NOT counted).
+ * NOTE: `scraped_at` is the LAST-SCRAPE time, not a true first-seen
+ * timestamp — a record re-touched by the scraper refreshes it — so
+ * `new_last_7d` is a BEST-EFFORT GROWTH PROXY, not an exact "new records"
+ * count.
+ * `maintenance.{active,abandoned}` is computed over INDEXED records only
+ * (consistent with `by_category`): active = `repo_pushed_at` within 90
+ * days of the snapshot date; abandoned = everything else. A missing or
+ * unparseable `repo_pushed_at` counts as abandoned (conservative).
+ * `unique_creators` is the distinct-owner count (the `owner/…` prefix of
+ * `repo_full_name`) over INDEXED records; records with no repo_full_name
+ * are skipped.
+ * `churn.archived` counts `repo_archived === true` over ALL analyzed
+ * records; `churn.duplicates` counts `is_duplicate === true` and therefore
+ * MIRRORS `totals.duplicates` exactly (surfaced here for a self-contained
+ * churn view).
+ * The snapshot-date reference for the 7d/90d windows is derived from the
+ * `timestamp` opt (overridable via `opts.nowMs` for deterministic tests).
  * ───────────────────────────────────────────────────────────────────────
  *
  * Runs in the daily cron AFTER enrichment (so is_duplicate / tier values
@@ -83,15 +104,21 @@ function emptyTypeBucket() {
  *     total still increments)
  *
  * @param {Iterable<any>} records
- * @param {{ date?: string, generatedAt?: string }} [opts]
+ * @param {{ date?: string, generatedAt?: string, nowMs?: number }} [opts]
+ *   `nowMs` overrides the snapshot-date reference used for the 7d/90d
+ *   windows (defaults to Date.parse(generatedAt)) — pass it for
+ *   deterministic tests.
  * @returns {object} snapshot
  */
 export function aggregateSnapshot(records, opts = {}) {
   const generatedAt = opts.generatedAt || new Date().toISOString();
   const date = opts.date || generatedAt.slice(0, 10);
+  // Reference "now" for the growth (7d) / maintenance (90d) windows.
+  const nowMs = opts.nowMs != null ? opts.nowMs : Date.parse(generatedAt);
+  const DAY_MS = 86400000;
 
   const totals = {
-    records: 0,
+    analyzed: 0,
     indexed: 0,
     duplicates: 0,
     tiers: emptyTierCounts(), // ALL records incl. duplicates — see header DECISION
@@ -101,6 +128,13 @@ export function aggregateSnapshot(records, opts = {}) {
   for (const et of CANONICAL_ENTITY_TYPES) byType[et] = emptyTypeBucket();
 
   const categories = {}; // counted over INDEXED records only
+
+  // Extra composition accumulators (quick-260804-d5p gap closure).
+  let newLast7d = 0;                 // scraped_at within 7d (ALL records)
+  let maintActive = 0;               // repo_pushed_at within 90d (INDEXED only)
+  let maintAbandoned = 0;            // older / missing / unparseable (INDEXED only)
+  let archivedCount = 0;             // repo_archived === true (ALL records)
+  const creators = new Set();        // distinct repo owners (INDEXED only)
 
   for (const rec of records) {
     if (!rec || rec._header === true) continue;
@@ -112,7 +146,7 @@ export function aggregateSnapshot(records, opts = {}) {
     const isDup = rec.is_duplicate === true;
     const tier = rec.quality_tier;
 
-    totals.records += 1;
+    totals.analyzed += 1;
     bucket.records += 1;
 
     if (isDup) {
@@ -143,6 +177,31 @@ export function aggregateSnapshot(records, opts = {}) {
         }
       }
     }
+
+    // Churn: archived over ALL analyzed records.
+    if (rec.repo_archived === true) archivedCount += 1;
+
+    // Growth proxy: scraped_at within 7d over ALL analyzed records.
+    // Missing / unparseable scraped_at is not counted.
+    const scrapedMs = Date.parse(rec.scraped_at);
+    if (Number.isFinite(scrapedMs) && nowMs - scrapedMs <= 7 * DAY_MS) {
+      newLast7d += 1;
+    }
+
+    // Maintenance + creators over INDEXED (non-duplicate) records only.
+    if (!isDup) {
+      const pushedMs = Date.parse(rec.repo_pushed_at);
+      if (Number.isFinite(pushedMs) && nowMs - pushedMs <= 90 * DAY_MS) {
+        maintActive += 1;
+      } else {
+        // Missing / unparseable / >90d → abandoned (conservative).
+        maintAbandoned += 1;
+      }
+
+      const owner =
+        typeof rec.repo_full_name === 'string' ? rec.repo_full_name.split('/')[0] : '';
+      if (owner) creators.add(owner);
+    }
   }
 
   // Sort categories by count desc (then slug asc) for stable, readable output.
@@ -156,10 +215,14 @@ export function aggregateSnapshot(records, opts = {}) {
   return {
     schema_version: SCHEMA_VERSION,
     date,
-    generated_at: generatedAt,
+    timestamp: generatedAt,
     totals,
     by_entity_type: byType,
-    categories: sortedCategories,
+    by_category: sortedCategories,
+    new_last_7d: newLast7d,
+    maintenance: { active: maintActive, abandoned: maintAbandoned },
+    unique_creators: creators.size,
+    churn: { archived: archivedCount, duplicates: totals.duplicates },
   };
 }
 
@@ -246,7 +309,7 @@ export function buildAndWriteSnapshot(opts = {}) {
   writeJsonAtomic(outPath, snapshot);
 
   console.log(
-    `[snapshot-catalog] ${date}: ${snapshot.totals.records} records ` +
+    `[snapshot-catalog] ${date}: ${snapshot.totals.analyzed} analyzed ` +
     `(${snapshot.totals.indexed} indexed, ${snapshot.totals.duplicates} dup) → ` +
     `${join('data', 'snapshots', `${date}.json`)}`,
   );
