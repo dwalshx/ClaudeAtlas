@@ -4,8 +4,8 @@ milestone: v1.0
 milestone_name: milestone
 status: Phase 3.4 COMPLETE — plugins live
 stopped_at: "Phase 3.4 COMPLETE 2026-06-16 — plugins LIVE (6,317 indexed, 638 Featured). PLUGINS_ENABLED=true on main; first warm scheduled cron green ~2h35m; data/history/2026-06-16.json committed. Next: finish v3.0 milestone (3.5-3.9)."
-last_updated: "2026-06-21T16:20:00.000Z"
-last_activity: 2026-06-21
+last_updated: "2026-08-04T17:05:00.000Z"
+last_activity: 2026-08-04
 progress:
   total_phases: 19
   completed_phases: 7
@@ -42,7 +42,7 @@ Next: **finish the v3.0 milestone — phases 3.5–3.9** (defined in `docs/PHASE
 - Steady-state daily cron ~2.5h (daily GraphQL refresh of ~7,339 repos ~35m is the recurring cost — future optimization candidate).
 - GHA cache is branch-scoped: a steady-state measurement branch can't see a stamped cache from another branch (restores unstamped bootstrap → one-time cold backfill ~324 min, still < 360). `weekly-plugin-rewalk.yml` seeds the stamped cache on main.
 - Re-disable: `PLUGINS_ENABLED='false'` (daily-scrape.yml line ~80).
-Last activity: 2026-06-24 - Quick task 260624-nhk: hardened upload-vectors.js so one malformed embedding can't abort the daily pipeline (root cause of the 4-day cron freeze at "Upload vectors to Vectorize" / Vectorize 400 code 40023; site stale since 6-18). Pre-validation + 4xx bisection + graceful exit-0-on-partial-skip merged to main. NEXT: a full daily-scrape run must complete to carry it through publish→build→deploy and refresh the site (next schedule 06:30 UTC, or dispatch via Actions UI).
+Last activity: 2026-08-04 - Autonomous post-telemetry session (Dan away). Strategy locked after a telemetry deep-dive: traffic is ~99% crawlers/SEO/AI-training bots (RUM ~5k/day pageviews vs ~98k/day HTTP requests; agents barely touch /api or /llms.txt), so the direction is AEO ("be the cited measurement authority") + ranking credibility + reliability, NOT more features. 4-step sequence: (1) reliability+snapshots, (2) ranking credibility, (3) AEO content, (4) demand-test an "agent-traffic analytics" product idea. Step 1 in progress: quick task 260804-d5p (catalog-composition snapshots) DONE + verified; next drift-guard hardening + cron-failure alerting; ranking work will be staged as a PR (not auto-deployed). See aeo/claudeatlas-playbook.md (esp. §6 data requirements).
 
 ### Quick Tasks Completed
 
@@ -53,6 +53,7 @@ Last activity: 2026-06-24 - Quick task 260624-nhk: hardened upload-vectors.js so
 | 260617-heq | Add Skills \| Plugins \| MCP entity links to top + footer nav | 2026-06-17 | c505106 | Done (deploying) | [260617-heq-add-skills-plugins-mcp-entity-links-to-t](./quick/260617-heq-add-skills-plugins-mcp-entity-links-to-t/) |
 | 260621-cvm | Badge → Worker route migration (deletes ~18k static badge files; unblocks the assets-upload 504) | 2026-06-21 | 0d5670c | LIVE (deployed 2026-06-23 run 28049807536 in 9m33s — no 504; edge smoke all 200s incl. multi-segment + unknown-slug; byte-diff zero. wrangler dev unrunnable on win32-arm64 — verified via direct handler smoke instead) | [260621-cvm-implement-the-badge-to-worker-route-migr](./quick/260621-cvm-implement-the-badge-to-worker-route-migr/) |
 | 260624-nhk | Harden upload-vectors.js against malformed vectors (fix 4-day cron freeze at "Upload vectors to Vectorize"; site stale since 6-18) | 2026-06-24 | f5c6f85 | Verified (10/10 unit tests, check:patterns clean, dry-run on real data exit 0). Pre-validate drop NaN/wrong-dim/empty-id + 4xx bisection + exit-0 on partial skip / exit-1 on ≥50% or auth. AWAITING a full cron run to carry it through to a fresh deploy. | [260624-nhk-make-upload-vectors-js-resilient-to-malf](./quick/260624-nhk-make-upload-vectors-js-resilient-to-malf/) |
+| 260804-d5p | Add versioned catalog-composition snapshots (data/snapshots/) for AEO trend content — Step 1 of the post-telemetry AEO/reliability sequence | 2026-08-04 | 8c5d211 | Verified (9/9 tests, check:patterns clean); payload complete after 1 gap-close (tiers, by_entity_type, by_category, new_last_7d, maintenance active/abandoned, unique_creators, churn). Purely additive; step gated non-push, commits data/snapshots/<date>.json. First real snapshot lands on next scheduled/dispatched run. Local dry-run: 26,707 records (23,047 skill / 3,584 plugin / 76 mcp). | [260804-d5p-add-versioned-catalog-composition-snapsh](./quick/260804-d5p-add-versioned-catalog-composition-snapsh/) |
 
 Progress: Phase 1.5 [██████████] 100% · v2.0 [██████████] 100% · 3.0.x trilogy [██████████] 100% · 3.1.1 F1 [██████████] 100% · 3.1 filter overhaul [██████████] 100% (shipped 2026-05-27) · 3.1.2 polymorphic envelope [██████████] 100% (shipped 2026-05-28) · 3.1.3 agent hub [██████████] 100% (shipped 2026-05-29) · 3.1.4 filter v2 writer [██████████] 100% (shipped 2026-05-30) · **3.2 plugin+MCP scoring [██████████] 100% (plan executed; branch-CI smoke pending)** · 3.3–3.9 [░░░░░░░░░░] 0%
 
