@@ -388,6 +388,19 @@ jobs:
         if: ${{ env.PLUGINS_ENABLED == 'true' && github.event_name != 'push' }}
         run: node scripts/enrich.js --input data/plugin-vectors.ndjson --records data/plugins.ndjson --entity-type plugin
 
+      # quick-260804-d5p: versioned catalog composition snapshot. Runs AFTER
+      # enrichment (so is_duplicate / quality_tier are fresh) and BEFORE the
+      # Astro build. Writes one small committed file per day at
+      # data/snapshots/<today>.json (tier / entity-type / category counts) —
+      # the compounding substrate for the future /trends page + AEO trend
+      # consumers. Reads the catalog NDJSON via the chunked helper; missing
+      # plugin/MCP inputs contribute zero. Gated like enrich (skipped on
+      # push-event rebuilds, which don't re-enrich). The file is committed by
+      # the main-only "Commit skills data" step below.
+      - name: Snapshot catalog composition
+        if: github.event_name != 'push'
+        run: node scripts/snapshot-catalog.js
+
       # Phase 3.2 (Task 12): Upload vectors to Vectorize — extended to upsert all
       # three entity vector files (skills + plugins + MCPs). Each invocation logs
       # its metadata.entity_type distribution. Missing inputs are skipped gracefully
@@ -609,6 +622,9 @@ jobs:
       # above). The committed set narrowed to:
       #   - data/pipeline-stats.json: bounded summary; useful in git diff.
       #   - data/history/: daily snapshots, ~225 KB/day; compound time series.
+      #   - data/snapshots/: daily catalog composition (~few KB/day; tier /
+      #     entity-type / category counts) — quick-260804-d5p; compounding
+      #     substrate for the /trends page + AEO trend consumers.
       #   - data/kv-published.json: slug→sha sidecar (~4 MB at 50k slugs;
       #     bounded by catalog size). publish-kv.js skips records whose
       #     sidecar entry matches — committing this lets cron resume
@@ -620,7 +636,7 @@ jobs:
         run: |
           git config user.name "ClaudeAtlas Bot"
           git config user.email "bot@claudeatlas.com"
-          git add data/pipeline-stats.json data/history/ data/kv-published.json data/badge-star-history.json || true
+          git add data/pipeline-stats.json data/history/ data/kv-published.json data/badge-star-history.json data/snapshots/ || true
           git diff --cached --quiet || git commit -m "chore: update skills data $(date -u +%Y-%m-%d)"
           # Fail loud on push errors. The prior `|| true` silently masked
           # permission failures for 5+ weeks — never again.
