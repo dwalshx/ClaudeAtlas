@@ -3,7 +3,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 import SkillCard from '../components/SkillCard.astro';
 import CategoryChip from '../components/CategoryChip.astro';
 import JsonLd from '../components/JsonLd.astro';
-import { allSkills, getFeaturedSkills, getAllCategories, getStats, getPipelineStats } from '../lib/skills.js';
+import { allSkills, getFeaturedSkills, getAllCategories, getStats, getPipelineStats, capPerRepo } from '../lib/skills.js';
 import { buildNewSkillsWeekChart, buildMaintenanceChart } from '../lib/charts.js';
 
 const stats = getStats();
@@ -17,8 +17,12 @@ const categories = getAllCategories();
 // is delegated to /api/v1/search (semantic, via Vectorize). Full catalog
 // is browseable at /browse.
 const HOMEPAGE_LIMIT = 60;
+// Per-repo diversity cap (selection-only): allow at most this many cards from
+// any single repo in the Top-N grid so one mega-repo can't monopolise the
+// homepage. Full catalog remains fully browseable at /browse.
+const TOP_MAX_PER_REPO = 2;
 const allSorted = [...allSkills].sort((a, b) => b.quality_score - a.quality_score);
-const topSkills = allSorted.slice(0, HOMEPAGE_LIMIT);
+const topSkills = capPerRepo(allSorted, TOP_MAX_PER_REPO).slice(0, HOMEPAGE_LIMIT);
 
 // Build-time SVG charts (pure, cached across builds, no client JS)
 const newSkillsChartSvg = buildNewSkillsWeekChart(allSkills);
