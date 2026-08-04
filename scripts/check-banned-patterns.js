@@ -155,6 +155,19 @@ const LINT_ALLOWLIST = [
     file: 'scripts/generate-badge-data.js',
     reason: 'badge star-history bundle generator — history snapshot + star-history.json reads are bounded sidecars (Banned A); ~177 KB bundle write is bounded (Banned B)',
   },
+  // ---------------------------------------------------------------------------
+  // quick-260804-d5p — versioned catalog composition snapshot. Reads the
+  // large catalog NDJSON files via readNdjsonRecords (chunked helper, NOT a
+  // banned readFileSync) and writes one tiny per-day summary via
+  // JSON.stringify(snapshot, null, 2) (Banned B). The output is structurally
+  // bounded — tiers × 3, entity types × ~3, categories × ~20 = a few KB
+  // regardless of catalog size. Whole-file exempt, like generate-feeds.js /
+  // generate-badge-data.js above.
+  // ---------------------------------------------------------------------------
+  {
+    file: 'scripts/snapshot-catalog.js',
+    reason: 'catalog composition snapshot writer — bounded per-day summary (~few KB: tier/entity-type/category counters). Catalog reads use the chunked readNdjsonRecords helper.',
+  },
 ];
 
 // ---------------------------------------------------------------------------
