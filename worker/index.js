@@ -49,6 +49,14 @@ import badgeStarHistory from '../data/badge-star-history.json';
 import { handleBadge } from './badge.js';
 
 // ---------------------------------------------------------------------------
+// quick-260806-dn3 (E1): per-request D1 logging + classifier v0. Runs in
+// ctx.waitUntil AFTER the response is built — see the default export at the
+// bottom of this file. Pure module: index.js imports FROM it, never the
+// reverse.
+// ---------------------------------------------------------------------------
+import { logRequest } from './request-log.js';
+
+// ---------------------------------------------------------------------------
 // Shared helpers
 // ---------------------------------------------------------------------------
 
@@ -494,7 +502,7 @@ async function embedQuery(query, env) {
   return { vector, cached: false };
 }
 
-export async function semanticSearch(request, env) {
+export async function semanticSearch(request, env, ctx) {
   if (request.method === 'OPTIONS') return corsPreflightResponse();
 
   // Accept both GET (?q=) and POST ({query: "..."})
@@ -628,8 +636,13 @@ export async function semanticSearch(request, env) {
     }));
 
   // Fire-and-forget log to D1 if available. Don't block the response.
+  //
+  // quick-260806-dn3 drive-by fix: this detached promise was CANCELED by the
+  // Workers runtime the moment the response returned — which is why
+  // search_events only ever collected 3 rows. Registering it via
+  // ctx.waitUntil keeps the isolate alive until the insert settles.
   if (env && env.DB) {
-    hashedClientIp(request, env).then(ipHash => {
+    const logPromise = hashedClientIp(request, env).then(ipHash => {
       const country = (request.cf && request.cf.country) || null;
       return env.DB.prepare(
         'INSERT INTO search_events (timestamp, query, ip_hash, country) VALUES (?, ?, ?, ?)'
@@ -639,6 +652,9 @@ export async function semanticSearch(request, env) {
     }).catch(err => {
       console.error('D1 log error (semantic):', err && err.message);
     });
+    if (ctx && typeof ctx.waitUntil === 'function') {
+      ctx.waitUntil(logPromise);
+    }
   }
 
   return jsonResponse({
@@ -783,10 +799,14 @@ async function renderListedSkillPage(slug, env) {
 
 // ---------------------------------------------------------------------------
 // Worker entry point
+//
+// quick-260806-dn3 (E1): the former inline fetch body moved VERBATIM into
+// handleFetch (only change: semanticSearch now receives ctx for its D1
+// search_events waitUntil). The default export below wraps it with additive
+// request logging.
 // ---------------------------------------------------------------------------
 
-export default {
-  async fetch(request, env) {
+async function handleFetch(request, env, ctx) {
     const url = new URL(request.url);
 
     // CORS preflight for any /api/* route
@@ -799,7 +819,7 @@ export default {
       return logSearch(request, env);
     }
     if (url.pathname === '/api/v1/search') {
-      return semanticSearch(request, env);
+      return semanticSearch(request, env, ctx);
     }
     // Phase quick-260603 — experimental agent self-identification ping.
     // OPTIONS preflight for /api/* is already handled at the top of fetch().
@@ -893,5 +913,23 @@ export default {
     }
 
     return new Response('Not Found', { status: 404 });
+}
+
+export default {
+  async fetch(request, env, ctx) {
+    const response = await handleFetch(request, env, ctx);
+    // E1 (quick-260806-dn3): additive request logging. Response is
+    // computed FIRST and returned unconditionally — logging runs in
+    // waitUntil and can never delay or break a response.
+    try {
+      if (ctx && env && env.DB) {
+        ctx.waitUntil(logRequest(request, response, env, {
+          hashIp: () => hashedClientIp(request, env),
+        }));
+      }
+    } catch (err) {
+      console.error('request-log scheduling error:', err && err.message);
+    }
+    return response;
   },
 };

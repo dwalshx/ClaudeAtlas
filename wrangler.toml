@@ -28,7 +28,16 @@ binding = "ASSETS"
 # (2026-05-25): /api/v1/search returned Astro's 404 HTML for 2 days
 # but didn't surface until Phase 3.1.x wired the homepage search bar
 # to it.
-run_worker_first = ["/skills/*", "/api/*", "/badge/*"]
+#
+# quick-260806-dn3 (E1) extension: flipped from the path array
+# (["/skills/*", "/api/*", "/badge/*"]) to `true`. E1's request logging
+# needs the worker to see ALL traffic — with the array, static-asset
+# requests bypassed the worker entirely and never reached the logger.
+# The env.ASSETS.fetch fallthrough at the end of handleFetch still
+# serves every static path, so behavior is unchanged; cost is ~3M
+# invocations/mo, within the Workers Paid 10M included. Rollback =
+# restore the array above.
+run_worker_first = true
 
 # --- D1: search query log ---
 # Provisioned via Cloudflare dashboard. SALT_SECRET set as a Worker secret.
