@@ -49,6 +49,14 @@ import badgeStarHistory from '../data/badge-star-history.json';
 import { handleBadge } from './badge.js';
 
 // ---------------------------------------------------------------------------
+// quick-260806-dn3 (E1): per-request D1 logging + classifier v0. Runs in
+// ctx.waitUntil AFTER the response is built — see the default export at the
+// bottom of this file. Pure module: index.js imports FROM it, never the
+// reverse.
+// ---------------------------------------------------------------------------
+import { logRequest } from './request-log.js';
+
+// ---------------------------------------------------------------------------
 // Shared helpers
 // ---------------------------------------------------------------------------
 
@@ -104,36 +112,6 @@ function corsPreflightResponse() {
       'access-control-max-age': '86400',
     },
   });
-}
-
-// ---------------------------------------------------------------------------
-// Phase quick-260603: agent-ping body validation (pure + unit-testable)
-// ---------------------------------------------------------------------------
-
-// Max accepted agent-ping body. Tiny by design — {agent, purpose} only.
-const AGENT_PING_MAX_BODY_BYTES = 2048;
-
-// Parse an agent-ping body defensively. Returns { agent, purpose } with
-// string fields capped at 200 chars, OR { tooLarge: true } on oversized input.
-// Malformed JSON is tolerated (treated as an empty object → empty fields).
-// Pure + synchronous so it can be unit-tested without a Worker runtime.
-export function parseAgentPingBody(rawText, contentLength) {
-  // Reject by Content-Length when present, then by actual byte length.
-  if (contentLength != null && Number(contentLength) > AGENT_PING_MAX_BODY_BYTES) {
-    return { tooLarge: true };
-  }
-  if (typeof rawText === 'string' && new TextEncoder().encode(rawText).length > AGENT_PING_MAX_BODY_BYTES) {
-    return { tooLarge: true };
-  }
-  let obj;
-  try {
-    obj = rawText ? JSON.parse(rawText) : {};
-  } catch {
-    obj = {}; // tolerate malformed JSON — endpoint still acks
-  }
-  const agent = typeof obj?.agent === 'string' ? obj.agent.trim().slice(0, 200) : '';
-  const purpose = typeof obj?.purpose === 'string' ? obj.purpose.trim().slice(0, 200) : '';
-  return { agent, purpose };
 }
 
 // ---------------------------------------------------------------------------
@@ -195,66 +173,21 @@ const SOURCE_CITATION = {
 };
 
 // ---------------------------------------------------------------------------
-// POST /api/v1/agent-ping — experimental agent self-identification affordance
+// POST /api/v1/agent-ping — RETIRED (410 Gone)
 //
-// Low-stakes telemetry experiment (Phase quick-260603). A tool-using AI agent
-// can POST a tiny {agent, purpose} body to say "hi, I used you". The goal is to
-// learn whether agents will self-report at all, separating genuine agent usage
-// from generic crawlers. Expected low response rate.
-//
-// Design contract (see plan must_haves):
-//   - Oversized (>2 KB) bodies → 413, NO D1 write.
-//   - Malformed JSON tolerated → still acks 200, never 500s.
-//   - D1 logging is BEST-EFFORT: a logging failure NEVER throws or 500s the
-//     response (mirrors logSearch's try/catch, but unlike logSearch we return
-//     200 on catch instead of 500 — the ack is the product, the row is a bonus).
-//
-// TODO (Analytics Engine): migrate this to a Cloudflare Analytics Engine
-// binding for durable, high-volume UA/bot telemetry once we know agents will
-// actually ping. Decision: D1 now (cheap, already wired), Analytics Engine
-// later. This endpoint is a low-volume experiment to validate demand first;
-// D1 row-per-ping does not scale to crawler-grade volume.
+// E7 (quick-260806-dn3): agent-ping retired 2026-08-06. It was the
+// opt-in-with-no-carrot control group (n=1 over 2 months — the base
+// rate, per docs/agent-traffic-analytics-research.md §4). Historical
+// rows remain in the agent_pings D1 table. Replacement measurement
+// is E1's request_log.
 // ---------------------------------------------------------------------------
 
-export async function agentPing(request, env) {
-  if (request.method !== 'POST') {
-    return new Response('Method Not Allowed', { status: 405 });
-  }
-
-  // Single small body read, no buffering — keep the handler allocation-light.
-  const contentLength = request.headers.get('content-length');
-  const rawText = await request.text();
-  const parsed = parseAgentPingBody(rawText, contentLength);
-
-  if (parsed.tooLarge) {
-    // Reject without touching D1.
-    return jsonResponse(
-      { ok: false, error: 'body_too_large', max_bytes: AGENT_PING_MAX_BODY_BYTES },
-      413
-    );
-  }
-
-  const { agent, purpose } = parsed;
-  const userAgent = request.headers.get('user-agent') || null;
-  const botCategory = request.cf?.botManagement?.verifiedBotCategory ?? null;
-  const country = request.cf?.country ?? null;
-
-  // Best-effort logging. Skip silently if D1 isn't configured; the ack is the
-  // product. A DB error MUST NOT 500 — log and fall through to the ack.
-  if (env && env.DB) {
-    try {
-      await env.DB.prepare(
-        'INSERT INTO agent_pings (timestamp, agent, purpose, user_agent, bot_category, country) VALUES (?, ?, ?, ?, ?, ?)'
-      )
-        .bind(Date.now(), agent, purpose, userAgent, botCategory, country)
-        .run();
-    } catch (err) {
-      // Unlike logSearch, do NOT return 500 here — logging is best-effort.
-      console.error('agent-ping D1 insert error:', err && err.message);
-    }
-  }
-
-  return jsonResponse({ ok: true, citation: SOURCE_CITATION }, 200);
+export async function agentPing() {
+  return jsonResponse({
+    ok: false,
+    error: 'gone',
+    message: 'agent-ping has been retired. See https://claudeatlas.com for current agent endpoints.',
+  }, 410);
 }
 
 // ---------------------------------------------------------------------------
@@ -411,7 +344,7 @@ function queryCacheKey(query) {
 // a precise quota. FAIL-OPEN by design: any KV hiccup logs and PROCEEDS with
 // the search. The limiter is abuse mitigation, not a hard gate, and must
 // never break search. Applies ONLY here — the static-JSON feed proxies
-// (whats-new/trending/notable) and agent-ping don't hit OpenAI.
+// (whats-new/trending/notable) don't hit OpenAI.
 // ---------------------------------------------------------------------------
 const SEARCH_RL_MAX_PER_MIN = 30;
 const SEARCH_RL_TTL_SECONDS = 120; // 2 min — covers clock skew across buckets
@@ -494,7 +427,7 @@ async function embedQuery(query, env) {
   return { vector, cached: false };
 }
 
-export async function semanticSearch(request, env) {
+export async function semanticSearch(request, env, ctx) {
   if (request.method === 'OPTIONS') return corsPreflightResponse();
 
   // Accept both GET (?q=) and POST ({query: "..."})
@@ -628,8 +561,13 @@ export async function semanticSearch(request, env) {
     }));
 
   // Fire-and-forget log to D1 if available. Don't block the response.
+  //
+  // quick-260806-dn3 drive-by fix: this detached promise was CANCELED by the
+  // Workers runtime the moment the response returned — which is why
+  // search_events only ever collected 3 rows. Registering it via
+  // ctx.waitUntil keeps the isolate alive until the insert settles.
   if (env && env.DB) {
-    hashedClientIp(request, env).then(ipHash => {
+    const logPromise = hashedClientIp(request, env).then(ipHash => {
       const country = (request.cf && request.cf.country) || null;
       return env.DB.prepare(
         'INSERT INTO search_events (timestamp, query, ip_hash, country) VALUES (?, ?, ?, ?)'
@@ -639,6 +577,9 @@ export async function semanticSearch(request, env) {
     }).catch(err => {
       console.error('D1 log error (semantic):', err && err.message);
     });
+    if (ctx && typeof ctx.waitUntil === 'function') {
+      ctx.waitUntil(logPromise);
+    }
   }
 
   return jsonResponse({
@@ -783,10 +724,14 @@ async function renderListedSkillPage(slug, env) {
 
 // ---------------------------------------------------------------------------
 // Worker entry point
+//
+// quick-260806-dn3 (E1): the former inline fetch body moved VERBATIM into
+// handleFetch (only change: semanticSearch now receives ctx for its D1
+// search_events waitUntil). The default export below wraps it with additive
+// request logging.
 // ---------------------------------------------------------------------------
 
-export default {
-  async fetch(request, env) {
+async function handleFetch(request, env, ctx) {
     const url = new URL(request.url);
 
     // CORS preflight for any /api/* route
@@ -799,7 +744,7 @@ export default {
       return logSearch(request, env);
     }
     if (url.pathname === '/api/v1/search') {
-      return semanticSearch(request, env);
+      return semanticSearch(request, env, ctx);
     }
     // Phase quick-260603 — experimental agent self-identification ping.
     // OPTIONS preflight for /api/* is already handled at the top of fetch().
@@ -893,5 +838,23 @@ export default {
     }
 
     return new Response('Not Found', { status: 404 });
+}
+
+export default {
+  async fetch(request, env, ctx) {
+    const response = await handleFetch(request, env, ctx);
+    // E1 (quick-260806-dn3): additive request logging. Response is
+    // computed FIRST and returned unconditionally — logging runs in
+    // waitUntil and can never delay or break a response.
+    try {
+      if (ctx && env && env.DB) {
+        ctx.waitUntil(logRequest(request, response, env, {
+          hashIp: () => hashedClientIp(request, env),
+        }));
+      }
+    } catch (err) {
+      console.error('request-log scheduling error:', err && err.message);
+    }
+    return response;
   },
 };
