@@ -4,7 +4,11 @@
  * Design goals:
  *   - Zero bundle cost when PUBLIC_POSTHOG_KEY is unset (no-op export)
  *   - Six specific events, no autocapture, no session recording
- *   - EU PostHog cloud to minimize GDPR exposure
+ *   - US PostHog cloud — the project/org lives in the US region; ingesting to
+ *     EU (as this file did until 2026-08-06) silently dropped 100% of events
+ *     because the phc_ token belongs to a US project. Region must match the
+ *     project, not our GDPR preference. (Diagnosed via personal-API-key probe:
+ *     us.posthog.com recognizes the key, eu.posthog.com rejects it.)
  *   - Safe to import from client scripts — never throws, never blocks
  *
  * Events:
@@ -21,7 +25,7 @@
  *   Call initPosthog() once per page load (handled in BaseLayout).
  */
 
-const POSTHOG_HOST = 'https://eu.i.posthog.com';
+const POSTHOG_HOST = 'https://us.i.posthog.com';
 const POSTHOG_KEY = import.meta.env.PUBLIC_POSTHOG_KEY || '';
 const ENABLED = Boolean(POSTHOG_KEY);
 
