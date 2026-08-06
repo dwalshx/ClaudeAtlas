@@ -13,6 +13,7 @@ import {
   logRequest,
   REQUEST_LOG_COLUMNS,
   _resetMigrationAttempted,
+  _resetColumnMigrationAttempted,
 } from './request-log.js';
 
 // ---------------------------------------------------------------------------
@@ -77,7 +78,7 @@ function makeMockDb({ failFirstInsertWith = null, alwaysThrow = null } = {}) {
 // buildLogRow
 // ---------------------------------------------------------------------------
 
-test('buildLogRow covers all 18 request_log columns', () => {
+test('buildLogRow covers all 19 request_log columns', () => {
   const row = buildLogRow({
     path: '/skills/foo/',
     method: 'GET',
@@ -95,11 +96,11 @@ test('buildLogRow covers all 18 request_log columns', () => {
     ipHash: 'abc123',
   });
 
-  assert.equal(REQUEST_LOG_COLUMNS.length, 18);
+  assert.equal(REQUEST_LOG_COLUMNS.length, 19);
   for (const col of REQUEST_LOG_COLUMNS) {
     assert.ok(col in row, `row missing column ${col}`);
   }
-  assert.equal(Object.keys(row).length, 18);
+  assert.equal(Object.keys(row).length, 19);
   assert.equal(row.path, '/skills/foo/');
   assert.equal(row.class, 'crawler');
   assert.equal(row.operator, 'openai');
@@ -158,7 +159,7 @@ test('logRequest executes exactly one INSERT INTO request_log; path excludes que
   assert.equal(insertAttempts(), 1);
 
   const bind = inserts[0].bindArgs;
-  assert.equal(bind.length, 18);
+  assert.equal(bind.length, 19);
   // Column order: match REQUEST_LOG_COLUMNS positions.
   const byCol = Object.fromEntries(REQUEST_LOG_COLUMNS.map((c, i) => [c, bind[i]]));
   assert.equal(byCol.path, '/skills/foo/bar/', 'query string must be stripped');
@@ -260,11 +261,135 @@ test('migration attempted at most once per isolate', async () => {
 
 test('non-table insert errors do not trigger migration', async () => {
   _resetMigrationAttempted();
+  _resetColumnMigrationAttempted();
   const { db, calls } = makeMockDb({
     failFirstInsertWith: new Error('D1_ERROR: too many requests'),
   });
   await assert.doesNotReject(
     logRequest(makeRequest(), makeResponse(200), { DB: db }, { hashIp: async () => 'h' })
   );
-  assert.equal(calls.filter((c) => /^CREATE/i.test(c.sql)).length, 0);
+  assert.equal(calls.filter((c) => /^CREATE|^ALTER/i.test(c.sql)).length, 0);
+});
+
+// ---------------------------------------------------------------------------
+// E3 (quick-260806-ejd): agent_token capture + "no such column" lazy
+// ALTER TABLE migration. request_log already exists in production with the
+// v1 (18-column) shape by the time this deploys — the ALTER path is the
+// LIVE-DB migration.
+// ---------------------------------------------------------------------------
+
+test('buildLogRow captures x-claudeatlas-agent into agent_token (truncated to 256)', () => {
+  const row = buildLogRow({
+    path: '/',
+    method: 'GET',
+    status: 200,
+    headers: new Headers({
+      'user-agent': 'test',
+      'x-claudeatlas-agent': 'ca-0123456789abcdef0123456789abcdef; tool=verify-curl',
+    }),
+    cf: {},
+    classification: { class: 'agent', operator: 'verify-curl', confidence: 0.95, method: 'token_echo' },
+    wba: { status: 'absent', signer: null },
+    ipHash: null,
+  });
+  assert.equal(row.agent_token, 'ca-0123456789abcdef0123456789abcdef; tool=verify-curl');
+
+  const longToken = 'ca-' + 'x'.repeat(1000);
+  const long = buildLogRow({
+    path: '/',
+    method: 'GET',
+    status: 200,
+    headers: new Headers({ 'user-agent': 'test', 'x-claudeatlas-agent': longToken }),
+    cf: {},
+    classification: { class: 'agent', operator: null, confidence: 0.95, method: 'token_echo' },
+    wba: { status: 'absent', signer: null },
+    ipHash: null,
+  });
+  assert.equal(long.agent_token.length, 256);
+});
+
+test('buildLogRow: absent x-claudeatlas-agent header → agent_token null', () => {
+  const row = buildLogRow({
+    path: '/',
+    method: 'GET',
+    status: 200,
+    headers: new Headers({ 'user-agent': 'test' }),
+    cf: {},
+    classification: { class: 'unknown', operator: null, confidence: 0.3, method: 'default' },
+    wba: { status: 'absent', signer: null },
+    ipHash: null,
+  });
+  assert.equal(row.agent_token, null);
+});
+
+test('logRequest feeds the echoed token into the classifier (class=agent token_echo bound)', async () => {
+  _resetMigrationAttempted();
+  _resetColumnMigrationAttempted();
+  const { db, calls } = makeMockDb();
+  const request = makeRequest({
+    headers: new Headers({
+      'user-agent': 'python-requests/2.31',
+      'x-claudeatlas-agent': 'ca-abc; tool=my-agent',
+      'cf-connecting-ip': RAW_IP,
+    }),
+  });
+  await logRequest(request, makeResponse(200), { DB: db }, { hashIp: async () => 'h' });
+  const insert = calls.find((c) => /^INSERT INTO request_log/i.test(c.sql));
+  const byCol = Object.fromEntries(REQUEST_LOG_COLUMNS.map((c, i) => [c, insert.bindArgs[i]]));
+  assert.equal(byCol.class, 'agent');
+  assert.equal(byCol.classifier_method, 'token_echo');
+  assert.equal(byCol.operator, 'my-agent');
+  assert.equal(byCol.agent_token, 'ca-abc; tool=my-agent');
+});
+
+test('no such column agent_token → ALTER TABLE via env.DB, retries insert once, succeeds', async () => {
+  _resetMigrationAttempted();
+  _resetColumnMigrationAttempted();
+  const { db, calls, insertAttempts } = makeMockDb({
+    failFirstInsertWith: new Error('D1_ERROR: table request_log has no column named agent_token: no such column: agent_token'),
+  });
+  await logRequest(makeRequest(), makeResponse(200), { DB: db }, { hashIp: async () => 'h' });
+
+  const alters = calls.filter((c) => /^ALTER TABLE request_log ADD COLUMN agent_token/i.test(c.sql));
+  assert.equal(alters.length, 1, 'exactly one ALTER TABLE');
+  assert.equal(calls.filter((c) => /^CREATE/i.test(c.sql)).length, 0, 'table DDL must not run');
+  assert.equal(insertAttempts(), 2, 'insert retried exactly once');
+});
+
+test('column migration attempted at most once per isolate; repeat failure lands in outer catch', async () => {
+  _resetMigrationAttempted();
+  _resetColumnMigrationAttempted();
+  const err = new Error('no such column: agent_token');
+  const calls = [];
+  // DB that ALWAYS fails inserts with "no such column" — first call attempts
+  // ALTER + retry (retry fails → outer catch); second call must NOT re-ALTER.
+  const db = {
+    prepare(sql) {
+      const call = { sql };
+      calls.push(call);
+      return {
+        bind() {
+          return {
+            async run() {
+              if (/^INSERT/i.test(sql)) throw err;
+              return { success: true };
+            },
+          };
+        },
+        async run() {
+          return { success: true };
+        },
+      };
+    },
+  };
+  await assert.doesNotReject(
+    logRequest(makeRequest(), makeResponse(200), { DB: db }, { hashIp: async () => 'h' })
+  );
+  const altersAfterFirst = calls.filter((c) => /^ALTER/i.test(c.sql)).length;
+  assert.equal(altersAfterFirst, 1);
+  await assert.doesNotReject(
+    logRequest(makeRequest(), makeResponse(200), { DB: db }, { hashIp: async () => 'h' })
+  );
+  const altersAfterSecond = calls.filter((c) => /^ALTER/i.test(c.sql)).length;
+  assert.equal(altersAfterSecond, 1, 'ALTER must not run again');
 });

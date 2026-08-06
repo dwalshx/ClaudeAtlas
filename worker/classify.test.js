@@ -316,6 +316,46 @@ test('no arguments at all never throws', () => {
 });
 
 // ---------------------------------------------------------------------------
+// E3 token echo (quick-260806-ejd) — Tier-1 agent signal, checked BEFORE the
+// UA lists: an echoed X-ClaudeAtlas-Agent token proves instruction-following
+// regardless of what UA the client sends.
+// ---------------------------------------------------------------------------
+
+test('agentToken present → agent 0.95 token_echo, operator null without tool suffix', () => {
+  const v = classifyRequest({ userAgent: 'SomeRandomThing/1.0', agentToken: 'ca-abc' });
+  assert.deepEqual(v, {
+    class: 'agent',
+    operator: null,
+    confidence: 0.95,
+    method: 'token_echo',
+  });
+});
+
+test('agentToken wins over the UA lists (python-requests UA still class=agent)', () => {
+  const v = classifyRequest({ userAgent: 'python-requests/2.31', agentToken: 'ca-abc' });
+  assert.equal(v.class, 'agent');
+  assert.equal(v.method, 'token_echo');
+  // And over crawler UAs too.
+  const c = classifyRequest({ userAgent: 'GPTBot/1.0', agentToken: 'ca-abc' });
+  assert.equal(c.class, 'agent');
+  assert.equal(c.method, 'token_echo');
+});
+
+test('agentToken with "; tool=" suffix → operator parsed, trimmed, lowercased', () => {
+  const v = classifyRequest({ userAgent: 'x', agentToken: 'ca-abc; tool=My-Agent ' });
+  assert.equal(v.class, 'agent');
+  assert.equal(v.operator, 'my-agent');
+  assert.equal(v.method, 'token_echo');
+});
+
+test('empty/whitespace/non-string agentToken → existing verdicts unchanged', () => {
+  assert.equal(classifyRequest({ userAgent: 'GPTBot/1.0', agentToken: '' }).class, 'crawler');
+  assert.equal(classifyRequest({ userAgent: 'GPTBot/1.0', agentToken: '   ' }).class, 'crawler');
+  assert.equal(classifyRequest({ userAgent: 'GPTBot/1.0', agentToken: 42 }).class, 'crawler');
+  assert.equal(classifyRequest({ userAgent: 'GPTBot/1.0', agentToken: null }).class, 'crawler');
+});
+
+// ---------------------------------------------------------------------------
 // Exported tables
 // ---------------------------------------------------------------------------
 
