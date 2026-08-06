@@ -57,6 +57,26 @@ import { handleBadge } from './badge.js';
 import { logRequest } from './request-log.js';
 
 // ---------------------------------------------------------------------------
+// quick-260806-ejd (E2): markdown content negotiation. Skill detail pages
+// (and the root site index) serve a compact markdown rendition when the
+// Accept header EXPLICITLY prefers text/markdown. Rendered dynamically from
+// SKILLS_KV — no build-time .md siblings. Pure module: index.js imports FROM
+// it, never the reverse. Every markdown branch is fully try/caught — on ANY
+// error the request falls through to the normal HTML/asset path.
+// ---------------------------------------------------------------------------
+import { prefersMarkdown, renderSkillMarkdown, renderSiteIndexMarkdown } from './markdown.js';
+
+// Shared response headers for every markdown rendition. noindex keeps the
+// markdown twin out of search indexes (canonical is the HTML page); Vary
+// prevents the edge cache from cross-serving HTML/markdown for one URL.
+const MARKDOWN_HEADERS = {
+  'content-type': 'text/markdown; charset=utf-8',
+  'vary': 'Accept',
+  'x-robots-tag': 'noindex',
+  'cache-control': 'public, max-age=300',
+};
+
+// ---------------------------------------------------------------------------
 // Shared helpers
 // ---------------------------------------------------------------------------
 
@@ -718,6 +738,10 @@ async function renderListedSkillPage(slug, env) {
       // Edge-cache for 5 minutes. Subsequent requests for the same slug
       // serve from Cloudflare's edge without invoking the worker.
       'cache-control': 'public, max-age=300, s-maxage=300',
+      // E2 (quick-260806-ejd): the same URL can now serve markdown when the
+      // Accept header prefers it — Vary keeps the edge cache from
+      // cross-serving HTML/markdown for Listed slugs.
+      'vary': 'Accept',
     },
   });
 }
@@ -808,6 +832,27 @@ async function handleFetch(request, env, ctx) {
       url.pathname.endsWith('/') &&
       env && env.ASSETS
     ) {
+      // E2 (quick-260806-ejd): markdown content negotiation — BEFORE the
+      // asset probe. Explicit text/markdown Accept → render from SKILLS_KV.
+      // On KV miss / parse error / any throw, fall through to the normal
+      // asset-probe/HTML path unchanged (no 5xx ever introduced here).
+      if (prefersMarkdown(request.headers.get('accept'))) {
+        try {
+          const mdSlug = url.pathname.slice('/skills/'.length, -1);
+          if (mdSlug && env.SKILLS_KV) {
+            const raw = await env.SKILLS_KV.get(mdSlug);
+            if (raw) {
+              const record = JSON.parse(raw);
+              return new Response(renderSkillMarkdown(record), {
+                status: 200,
+                headers: MARKDOWN_HEADERS,
+              });
+            }
+          }
+        } catch (err) {
+          console.error('markdown skill render failed (falling through to HTML):', err && err.message);
+        }
+      }
       const assetRes = await env.ASSETS.fetch(request);
       // If assets returned 200 AND it's clearly a real skill page (not
       // the 404 fallback), serve it. The 404 page has `cf-aside` header
@@ -830,6 +875,34 @@ async function handleFetch(request, env, ctx) {
     // worker owns it. Tier from SKILLS_KV, star history from the bundle.
     if (url.pathname.startsWith('/badge/') && url.pathname.endsWith('.svg')) {
       return handleBadge(url, env, badgeStarHistory);
+    }
+
+    // E2 (quick-260806-ejd): root markdown site index. /index.md always
+    // serves markdown; GET / serves it only when the Accept header
+    // explicitly prefers text/markdown (browsers never trip this). Both
+    // branches run BEFORE the ASSETS fallthrough; any error falls through
+    // to the normal static path.
+    if (request.method === 'GET' && url.pathname === '/index.md') {
+      try {
+        return new Response(renderSiteIndexMarkdown(), {
+          status: 200,
+          headers: MARKDOWN_HEADERS,
+        });
+      } catch (err) {
+        console.error('site-index markdown render failed:', err && err.message);
+      }
+    }
+    if (request.method === 'GET' && url.pathname === '/') {
+      try {
+        if (prefersMarkdown(request.headers.get('accept'))) {
+          return new Response(renderSiteIndexMarkdown(), {
+            status: 200,
+            headers: MARKDOWN_HEADERS,
+          });
+        }
+      } catch (err) {
+        console.error('root markdown negotiation failed (falling through):', err && err.message);
+      }
     }
 
     // Fallthrough to static assets for everything else
