@@ -25,11 +25,11 @@
  *
  * Input signals (all nullable):
  *   { userAgent, asn, asOrg, accept, secFetchMode, secFetchSite,
- *     secFetchDest, secChUa, signatureAgent }
+ *     secFetchDest, secChUa, signatureAgent, agentToken }
  *
  * Output verdict:
  *   { class, operator, confidence, method }
- *   method ∈ ua_list | no_ua | asn_heuristic | coherence | default
+ *   method ∈ token_echo | ua_list | no_ua | asn_heuristic | coherence | default
  */
 
 // ---------------------------------------------------------------------------
@@ -152,6 +152,10 @@ function verdict(cls, operator, confidence, method) {
 // classifyRequest(signals) → { class, operator, confidence, method }
 //
 // Decision order (first match wins):
+//   0. X-ClaudeAtlas-Agent token echo → agent, 0.95 (token_echo) — E3,
+//      quick-260806-ejd. Checked BEFORE the UA lists: an echoed token
+//      proves instruction-following regardless of the client's UA (a
+//      python-requests UA echoing the token is still class=agent).
 //   1. agent UA list          → agent, 0.9
 //   2. crawler UA list        → crawler, 0.9
 //   3. automation UA list     → automated_unknown, 0.8
@@ -163,6 +167,17 @@ export function classifyRequest(signals = {}) {
   const s = signals || {};
   const rawUa = typeof s.userAgent === 'string' ? s.userAgent : '';
   const ua = rawUa.toLowerCase();
+
+  // 0. E3 token echo — Tier-1 agent signal. Optional '; tool=<name>' suffix
+  //    becomes the operator (trimmed, lowercased).
+  if (typeof s.agentToken === 'string' && s.agentToken.trim()) {
+    let toolOperator = null;
+    const toolMatch = s.agentToken.match(/;\s*tool=([^;]+)/i);
+    if (toolMatch && toolMatch[1].trim()) {
+      toolOperator = toolMatch[1].trim().toLowerCase();
+    }
+    return verdict('agent', toolOperator, 0.95, 'token_echo');
+  }
 
   // 1. User/task-triggered agents. Checked FIRST (Claude-User before any
   //    crawler token could shadow it).

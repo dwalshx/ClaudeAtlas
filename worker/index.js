@@ -66,6 +66,15 @@ import { logRequest } from './request-log.js';
 // ---------------------------------------------------------------------------
 import { prefersMarkdown, renderSkillMarkdown, renderSiteIndexMarkdown } from './markdown.js';
 
+// ---------------------------------------------------------------------------
+// quick-260806-ejd (E3): token handshake. GET /agent/index.json returns a
+// structured catalog index with a fresh random per-request token and the
+// natural-language X-ClaudeAtlas-Agent echo instruction. Echoes land in
+// request_log.agent_token and classify as agent/token_echo. Pure module:
+// index.js imports FROM it, never the reverse.
+// ---------------------------------------------------------------------------
+import { generateAgentToken, buildAgentIndex } from './agent-index.js';
+
 // Shared response headers for every markdown rendition. noindex keeps the
 // markdown twin out of search indexes (canonical is the HTML page); Vary
 // prevents the edge cache from cross-serving HTML/markdown for one URL.
@@ -784,6 +793,14 @@ async function handleFetch(request, env, ctx) {
     }
     if (url.pathname === '/api/v1/notable') {
       return serveFeed(request, env, 'notable');
+    }
+    // E3 (quick-260806-ejd): structured catalog index + per-request random
+    // identification token. Stateless — no auth, no state, no D1 write on
+    // this route (echoes are captured by the E1 request logging).
+    // jsonResponse already sets cache-control: no-store (token is
+    // per-request; two fetches MUST return different tokens).
+    if (url.pathname === '/agent/index.json' && request.method === 'GET') {
+      return jsonResponse(buildAgentIndex({ token: generateAgentToken() }));
     }
 
     // Phase 3.1: 301 redirect for pre-fix colliding slug URLs.

@@ -72,7 +72,12 @@ CREATE TABLE IF NOT EXISTS request_log (
   signature_agent TEXT,              -- raw Signature-Agent value (domain), if any
   wba_status TEXT,                   -- verified|failed|present_unverified|absent
   wba_signer TEXT,                   -- signer domain when parsed
-  ip_hash TEXT
+  ip_hash TEXT,
+  agent_token TEXT                   -- E3 (quick-260806-ejd): echoed X-ClaudeAtlas-Agent
+                                     -- value (random per-request token from
+                                     -- /agent/index.json + optional '; tool=<name>').
+                                     -- Live DB gains this via the lazy
+                                     -- ALTER TABLE in worker/request-log.js.
 );
 
 CREATE INDEX IF NOT EXISTS idx_request_log_timestamp ON request_log(timestamp);

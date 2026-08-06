@@ -44,6 +44,7 @@ export const REQUEST_LOG_COLUMNS = [
   'wba_status',
   'wba_signer',
   'ip_hash',
+  'agent_token', // E3 (quick-260806-ejd): echoed X-ClaudeAtlas-Agent value
 ];
 
 const INSERT_SQL = `INSERT INTO request_log (${REQUEST_LOG_COLUMNS.join(', ')}) VALUES (${REQUEST_LOG_COLUMNS.map(() => '?').join(', ')})`;
@@ -81,18 +82,36 @@ export const REQUEST_LOG_DDL = [
   signature_agent TEXT,
   wba_status TEXT,
   wba_signer TEXT,
-  ip_hash TEXT
+  ip_hash TEXT,
+  agent_token TEXT
 )`,
   'CREATE INDEX IF NOT EXISTS idx_request_log_timestamp ON request_log(timestamp)',
   'CREATE INDEX IF NOT EXISTS idx_request_log_class ON request_log(class)',
 ];
 
+// E3 (quick-260806-ejd): lazy column migration for the LIVE database.
+// request_log already exists in production with the v1 (18-column) shape by
+// the time this ships, so the "no such table" path never fires there — the
+// first insert instead fails with "no such column: agent_token", and we
+// ALTER the live table via the Worker's own DB binding, then retry once.
+const AGENT_TOKEN_MIGRATION_SQL =
+  'ALTER TABLE request_log ADD COLUMN agent_token TEXT';
+
 // At-most-once-per-isolate guard for the DDL path.
 let migrationAttempted = false;
+
+// At-most-once-per-isolate guard for the agent_token column migration
+// (separate flag — mirrors migrationAttempted).
+let columnMigrationAttempted = false;
 
 // Test hook — resets the module-level migration flag between test cases.
 export function _resetMigrationAttempted() {
   migrationAttempted = false;
+}
+
+// Test hook — resets the column-migration flag between test cases.
+export function _resetColumnMigrationAttempted() {
+  columnMigrationAttempted = false;
 }
 
 function truncate(value, max = 256) {
@@ -133,6 +152,9 @@ export function buildLogRow({ path, method, status, headers, cf, classification,
     wba_status: w.status || 'absent',
     wba_signer: w.signer ?? null,
     ip_hash: ipHash ?? null,
+    // E3: echoed X-ClaudeAtlas-Agent value (random per-request token +
+    // optional '; tool=<name>' suffix). Carries no PII by construction.
+    agent_token: truncate(get('x-claudeatlas-agent')),
   };
 }
 
@@ -161,6 +183,7 @@ export async function logRequest(request, response, env, deps = {}) {
       secFetchDest: get('sec-fetch-dest'),
       secChUa: get('sec-ch-ua'),
       signatureAgent: get('signature-agent'),
+      agentToken: get('x-claudeatlas-agent'), // E3 token echo → rule 0
     };
 
     const verdict = classifyRequest(signals);
@@ -202,6 +225,14 @@ export async function logRequest(request, response, env, deps = {}) {
         for (const stmt of REQUEST_LOG_DDL) {
           await env.DB.prepare(stmt).run();
         }
+        await env.DB.prepare(INSERT_SQL).bind(...values).run();
+      } else if (!columnMigrationAttempted && /no such column/i.test(message)) {
+        // E3 lazy column migration (the LIVE-DB path): the pre-existing
+        // request_log table lacks agent_token — ALTER it in place via the
+        // Worker's own DB binding, then retry the insert exactly once. A
+        // failing retry throws to the outer catch (logged, never rethrown).
+        columnMigrationAttempted = true;
+        await env.DB.prepare(AGENT_TOKEN_MIGRATION_SQL).run();
         await env.DB.prepare(INSERT_SQL).bind(...values).run();
       } else {
         throw err; // handed to the outer catch — logged, never rethrown
