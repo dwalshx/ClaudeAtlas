@@ -43,3 +43,37 @@ CREATE TABLE IF NOT EXISTS agent_pings (
 );
 
 CREATE INDEX IF NOT EXISTS idx_agent_pings_timestamp ON agent_pings(timestamp);
+
+-- quick-260806-dn3 (E1): per-request log + classifier v0 verdicts.
+-- 1 row/request via ctx.waitUntil (~98k/day; within D1 paid row-write limits).
+-- Retention purge deliberately deferred to a follow-up task.
+-- ip_hash = daily-salted SHA-256, same convention as search_events.
+--
+-- OPERATOR STEP: applied to the REMOTE database via the CF D1 REST API
+-- (wrangler cannot run on this win32-arm64 machine):
+--   node --env-file=.env scripts/apply-d1-schema.js
+-- IF NOT EXISTS makes re-applying the whole file safe (other tables untouched).
+CREATE TABLE IF NOT EXISTS request_log (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  timestamp INTEGER NOT NULL,
+  path TEXT,
+  method TEXT,
+  status INTEGER,
+  user_agent TEXT,
+  asn INTEGER,
+  as_org TEXT,
+  country TEXT,
+  accept_header TEXT,
+  sec_fetch_coherent INTEGER,        -- 1 coherent / 0 contradiction / NULL n-a
+  class TEXT NOT NULL,               -- human|agent|crawler|automated_unknown|unknown
+  operator TEXT,
+  confidence REAL,
+  classifier_method TEXT,
+  signature_agent TEXT,              -- raw Signature-Agent value (domain), if any
+  wba_status TEXT,                   -- verified|failed|present_unverified|absent
+  wba_signer TEXT,                   -- signer domain when parsed
+  ip_hash TEXT
+);
+
+CREATE INDEX IF NOT EXISTS idx_request_log_timestamp ON request_log(timestamp);
+CREATE INDEX IF NOT EXISTS idx_request_log_class ON request_log(class);
