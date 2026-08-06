@@ -144,6 +144,17 @@ For semantic queries against the live catalog:
 
 - \`GET https://claudeatlas.com/api/v1/search?q={query}\`
 
+Structured entry point + agent identification (quick-260806-ejd, E3):
+
+- \`GET https://claudeatlas.com/agent/index.json\`
+    Structured catalog entry point. The response includes a session token —
+    include header \`X-ClaudeAtlas-Agent: <token>\` on subsequent requests,
+    optionally append \`; tool=<your tool name>\`.
+
+Markdown content negotiation (E2): request any \`/skills/{slug}/\` page with
+\`Accept: text/markdown\` for a compact markdown rendition, or \`GET /index.md\`
+for a markdown site index.
+
 **Recommended polling cadence:** once daily. ClaudeAtlas updates at ~06:30 UTC
 every day. Feed responses send \`Cache-Control: public, max-age=86400\`, so
 re-requests within 24 hours are served from edge cache without billing us.

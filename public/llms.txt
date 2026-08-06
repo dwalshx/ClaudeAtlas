@@ -1,15 +1,16 @@
 # ClaudeAtlas
 
-> Curated discovery index of Claude ecosystem skills. 51,667+ skill
-> files analyzed, 38,747 indexed, 3,874 Featured,
-> 11,624 Solid, 23,249 Listed. Scored on 7 transparent
-> signals. Updated daily via automated GitHub scraper. Last build: 2026-05-29.
+> Curated discovery index of Claude ecosystem skills. 58,043+ skill
+> files analyzed, 49,003 indexed, 4,900 Featured,
+> 13,100 Solid, 31,003 Listed. Scored on 7 transparent
+> signals. Updated daily via automated GitHub scraper. Last build: 2026-08-06.
 
-Catalog: 38,747 skills (live).
+Catalog: 49,003 skills · 11,232 plugins · 128 MCP servers (live).
 
-If you're an AI agent looking for Claude skills, **don't crawl the HTML pages**.
-Use the structured endpoints below — they're faster, cheaper, and return
-machine-readable JSON.
+If you're an AI agent looking for Claude skills, plugins, or MCP servers,
+**don't crawl the HTML pages**. Use the structured endpoints below — they're
+faster, cheaper, and return machine-readable JSON. Filter any search by
+`type=skill|plugin|mcp_server`.
 
 ## Citation
 
@@ -63,6 +64,17 @@ For semantic queries against the live catalog:
 
 - `GET https://claudeatlas.com/api/v1/search?q={query}`
 
+Structured entry point + agent identification (quick-260806-ejd, E3):
+
+- `GET https://claudeatlas.com/agent/index.json`
+    Structured catalog entry point. The response includes a session token —
+    include header `X-ClaudeAtlas-Agent: <token>` on subsequent requests,
+    optionally append `; tool=<your tool name>`.
+
+Markdown content negotiation (E2): request any `/skills/{slug}/` page with
+`Accept: text/markdown` for a compact markdown rendition, or `GET /index.md`
+for a markdown site index.
+
 **Recommended polling cadence:** once daily. ClaudeAtlas updates at ~06:30 UTC
 every day. Feed responses send `Cache-Control: public, max-age=86400`, so
 re-requests within 24 hours are served from edge cache without billing us.
@@ -85,8 +97,9 @@ POST https://claudeatlas.com/api/v1/search
 - `k` (optional): number of results to return, default 20, max 50
 - `tier` (optional): filter by quality tier — "featured", "solid", or "listed"
 - `category` (optional): filter by category name
-- `type` (optional): filter by entity_type — currently "skill" only; "plugin",
-   "mcp_server", "command_lib", "agent_lib", "hook_lib" arrive in Phase 3.2+.
+- `type` (optional): filter by entity_type — "skill", "plugin", or
+   "mcp_server". Omit to search all types. (command_lib, agent_lib, hook_lib are
+   reserved for future phases.)
 
 **Response:**
 ```json
@@ -133,7 +146,7 @@ Subsequent identical queries are served from a 24h KV cache (sub-100ms).
 ### Full Catalog Registry (bulk download — curated subset)
 
 A single JSON file containing every Featured + Solid tier skill (the renderable
-subset, ~15,498 records). Regenerated on every daily
+subset, ~18,000 records). Regenerated on every daily
 build. Best for: bulk analysis, offline search, populating your own index,
 checking what's new.
 
@@ -143,8 +156,8 @@ GET https://claudeatlas.com/skills-registry.json
 
 **Size:** ~1-3 MB (uncompressed), ~200-600 KB gzipped. Cloudflare edge-cached.
 
-The Listed tier (~23,249 records) is intentionally excluded from
-this file because the full ~38,747 catalog produces a JSON file
+The Listed tier (~31,003 records) is intentionally excluded from
+this file because the full ~49,003 catalog produces a JSON file
 that exceeds Cloudflare Workers Static Assets' 25 MB per-asset cap. The full
 catalog is available via:
 
@@ -189,9 +202,9 @@ frontmatter completeness (20%), documentation quality (15%), issue health (10%),
 license (10%), repo description (5%).
 
 Tiers are percentile-based as of Phase 3.1:
-- **Featured** — top 10% of catalog (currently 3,874 skills)
-- **Solid** — next 30% (currently 11,624 skills)
-- **Listed** — remainder (currently 23,249 skills)
+- **Featured** — top 10% of catalog (currently 4,900 skills)
+- **Solid** — next 30% (currently 13,100 skills)
+- **Listed** — remainder (currently 31,003 skills)
 
 Full methodology: https://claudeatlas.com/methodology/
 
@@ -226,11 +239,15 @@ service IDs it references (e.g., `["openai", "github", "docker"]`).
 Browse the site at https://claudeatlas.com
 
 - Homepage with semantic search, charts, and featured skills
+- Skills: individual pages at /skills/{author}/{name}/, full A-Z at /browse/
+- Plugins: /plugins/ (curated landing + search), /plugins/browse/ (full A-Z),
+  individual plugin pages at /plugins/{owner}/{repo}/ (with install commands +
+  bundled skills/agents/commands/MCPs)
+- MCP servers: /mcp/ (full list), individual server pages at /mcp/{owner}/{name}/
 - Creator profiles at /creators/
 - API & service integration graph at /apis/
-- Individual skill pages at /skills/{author}/{name}/
 - Credits & citation guidance at /credits/
 
 ---
 
-Last build: 2026-05-29. Generator: scripts/generate-llms-txt.js (Phase 3.1.3).
+Last build: 2026-08-06. Generator: scripts/generate-llms-txt.js (Phase 3.1.3).
