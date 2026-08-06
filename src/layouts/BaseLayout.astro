@@ -1,6 +1,7 @@
 ---
 import { getPipelineStats } from '../lib/skills.js';
 import { buildPosthogSnippet, ANALYTICS_ENABLED } from '../lib/analytics.js';
+import PostHog from '../components/posthog.astro';
 
 const pstats = getPipelineStats();
 const defaultDescription = `Discover the best Claude skills — ${pstats.total_discovered.toLocaleString()}+ analyzed, ${pstats.total_indexed.toLocaleString()} indexed, ${pstats.total_featured} Featured. Auto-updated daily.`;
@@ -33,7 +34,7 @@ const updatedIso = updatedDate.toISOString().slice(0, 10);
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
-  {ANALYTICS_ENABLED && <script is:inline set:html={posthogSnippet} />}
+  <PostHog />
 </head>
 <body class="min-h-screen flex flex-col font-[Inter,system-ui,sans-serif]">
   <!-- Nav -->

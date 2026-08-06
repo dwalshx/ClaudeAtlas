@@ -75,3 +75,7 @@ const categories = getAllCategories();
     )}
   </div>
 </BaseLayout>
+
+<script is:inline define:vars={{ categoryName, count }}>
+  window.posthog?.capture('view_category', { category: categoryName, skill_count: count });
+</script>

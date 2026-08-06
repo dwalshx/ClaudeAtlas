@@ -471,6 +471,14 @@ const homeJsonLd = {
   // Initialize state on page load
   showEmptyState();
 
+  // search_result_click: fired when a user clicks a card from semantic search results
+  searchResults?.addEventListener('click', (e) => {
+    const card = (e.target as HTMLElement).closest('a[href]') as HTMLAnchorElement | null;
+    if (!card) return;
+    const slug = card.getAttribute('href')?.replace(/^\/skills\//, '').replace(/\/$/, '') || '';
+    (window as any).posthog?.capture?.('search_result_click', { slug, query: lastQuery });
+  });
+
   // --- Ecosystem Pulse chart tooltips ---
   const tooltipEl = document.getElementById('chart-tooltip');
   if (tooltipEl) {

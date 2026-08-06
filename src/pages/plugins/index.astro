@@ -399,6 +399,7 @@ const pageDescription = `Discover ${totalPlugins.toLocaleString()} Claude Code p
 
     if (searchClear) searchClear.classList.remove('hidden');
     debounceTimer = window.setTimeout(() => {
+      (window as any).posthog?.capture?.('plugin_search_query', { query: val });
       runSemanticSearch(val);
     }, 250);
   });
