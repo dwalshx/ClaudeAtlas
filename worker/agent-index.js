@@ -32,7 +32,9 @@ const SOURCE_CITATION = {
 };
 
 // The 8 keyword-assigned catalog categories (see scripts/categorize.js).
-const CATEGORIES = [
+// Exported for worker/mcp.js's get_categories tool (E4, quick-260806-f00) —
+// pure→pure import, so the index.js→pure-modules direction is preserved.
+export const CATEGORIES = [
   'AI & Automation',
   'API & Backend',
   'Code & Development',
