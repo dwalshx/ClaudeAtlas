@@ -25,11 +25,12 @@
  *
  * Input signals (all nullable):
  *   { userAgent, asn, asOrg, accept, secFetchMode, secFetchSite,
- *     secFetchDest, secChUa, signatureAgent, agentToken }
+ *     secFetchDest, secChUa, signatureAgent, agentToken, mcpValid,
+ *     mcpClient }
  *
  * Output verdict:
  *   { class, operator, confidence, method }
- *   method ∈ token_echo | ua_list | no_ua | asn_heuristic | coherence | default
+ *   method ∈ token_echo | mcp | ua_list | no_ua | asn_heuristic | coherence | default
  */
 
 // ---------------------------------------------------------------------------
@@ -156,6 +157,10 @@ function verdict(cls, operator, confidence, method) {
 //      quick-260806-ejd. Checked BEFORE the UA lists: an echoed token
 //      proves instruction-following regardless of the client's UA (a
 //      python-requests UA echoing the token is still class=agent).
+//   0.5. valid MCP POST → agent, 0.95 (mcp) — E4, quick-260806-f00. After
+//      token_echo (an echoed token remains the strongest instruction-
+//      following proof), before the UA lists (an MCP POST is
+//      definitionally an agent regardless of UA).
 //   1. agent UA list          → agent, 0.9
 //   2. crawler UA list        → crawler, 0.9
 //   3. automation UA list     → automated_unknown, 0.8
@@ -177,6 +182,19 @@ export function classifyRequest(signals = {}) {
       toolOperator = toolMatch[1].trim().toLowerCase();
     }
     return verdict('agent', toolOperator, 0.95, 'token_echo');
+  }
+
+  // 0.5. E4 MCP front door — a structurally valid JSON-RPC POST to /mcp is
+  //      by definition an agent (no SEO tool speaks MCP; research report 6
+  //      §6). signals.mcpValid is derived in request-log.js from the
+  //      x-ca-mcp response marker set by worker/mcp.js; mcpClient is
+  //      initialize's clientInfo (x-ca-mcp-client marker).
+  if (s.mcpValid === true) {
+    let op = null;
+    if (typeof s.mcpClient === 'string' && s.mcpClient.trim()) {
+      op = s.mcpClient.trim().toLowerCase();
+    }
+    return verdict('agent', op, 0.95, 'mcp');
   }
 
   // 1. User/task-triggered agents. Checked FIRST (Claude-User before any

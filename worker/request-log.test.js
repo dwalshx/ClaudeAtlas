@@ -78,7 +78,7 @@ function makeMockDb({ failFirstInsertWith = null, alwaysThrow = null } = {}) {
 // buildLogRow
 // ---------------------------------------------------------------------------
 
-test('buildLogRow covers all 19 request_log columns', () => {
+test('buildLogRow covers all 20 request_log columns', () => {
   const row = buildLogRow({
     path: '/skills/foo/',
     method: 'GET',
@@ -96,11 +96,16 @@ test('buildLogRow covers all 19 request_log columns', () => {
     ipHash: 'abc123',
   });
 
-  assert.equal(REQUEST_LOG_COLUMNS.length, 19);
+  assert.equal(REQUEST_LOG_COLUMNS.length, 20);
+  assert.equal(
+    REQUEST_LOG_COLUMNS[REQUEST_LOG_COLUMNS.length - 1],
+    'mcp_client',
+    'mcp_client must be the 20th (last) column',
+  );
   for (const col of REQUEST_LOG_COLUMNS) {
     assert.ok(col in row, `row missing column ${col}`);
   }
-  assert.equal(Object.keys(row).length, 19);
+  assert.equal(Object.keys(row).length, 20);
   assert.equal(row.path, '/skills/foo/');
   assert.equal(row.class, 'crawler');
   assert.equal(row.operator, 'openai');
@@ -159,7 +164,7 @@ test('logRequest executes exactly one INSERT INTO request_log; path excludes que
   assert.equal(insertAttempts(), 1);
 
   const bind = inserts[0].bindArgs;
-  assert.equal(bind.length, 19);
+  assert.equal(bind.length, 20);
   // Column order: match REQUEST_LOG_COLUMNS positions.
   const byCol = Object.fromEntries(REQUEST_LOG_COLUMNS.map((c, i) => [c, bind[i]]));
   assert.equal(byCol.path, '/skills/foo/bar/', 'query string must be stripped');
@@ -386,10 +391,176 @@ test('column migration attempted at most once per isolate; repeat failure lands 
     logRequest(makeRequest(), makeResponse(200), { DB: db }, { hashIp: async () => 'h' })
   );
   const altersAfterFirst = calls.filter((c) => /^ALTER/i.test(c.sql)).length;
-  assert.equal(altersAfterFirst, 1);
+  // E4 (quick-260806-f00) generalized the single ALTER into the
+  // COLUMN_MIGRATIONS loop — one attempt now runs BOTH pending ALTERs
+  // (agent_token + mcp_client), still guarded by one flag.
+  assert.equal(altersAfterFirst, 2);
   await assert.doesNotReject(
     logRequest(makeRequest(), makeResponse(200), { DB: db }, { hashIp: async () => 'h' })
   );
   const altersAfterSecond = calls.filter((c) => /^ALTER/i.test(c.sql)).length;
-  assert.equal(altersAfterSecond, 1, 'ALTER must not run again');
+  assert.equal(altersAfterSecond, 2, 'ALTERs must not run again');
+});
+
+// ---------------------------------------------------------------------------
+// E4 (quick-260806-f00): mcp_client capture + the generalized
+// COLUMN_MIGRATIONS lazy ALTER path. The live DB already has agent_token
+// (E3 deploy) — its duplicate-column error must be swallowed while the
+// mcp_client ALTER lands.
+// ---------------------------------------------------------------------------
+
+test('buildLogRow carries mcp_client from the new input (truncated to 256)', () => {
+  const row = buildLogRow({
+    path: '/mcp',
+    method: 'POST',
+    status: 200,
+    headers: new Headers({ 'user-agent': 'node' }),
+    cf: {},
+    classification: { class: 'agent', operator: 'claude-code/2.1.0', confidence: 0.95, method: 'mcp' },
+    wba: { status: 'absent', signer: null },
+    ipHash: null,
+    mcpClient: 'claude-code/2.1.0',
+  });
+  assert.equal(row.mcp_client, 'claude-code/2.1.0');
+
+  const long = buildLogRow({
+    path: '/mcp',
+    method: 'POST',
+    status: 200,
+    headers: new Headers({ 'user-agent': 'node' }),
+    cf: {},
+    classification: { class: 'agent', operator: null, confidence: 0.95, method: 'mcp' },
+    wba: { status: 'absent', signer: null },
+    ipHash: null,
+    mcpClient: 'c'.repeat(1000),
+  });
+  assert.equal(long.mcp_client.length, 256);
+
+  const absent = buildLogRow({
+    path: '/',
+    method: 'GET',
+    status: 200,
+    headers: new Headers({ 'user-agent': 'test' }),
+    cf: {},
+    classification: { class: 'unknown', operator: null, confidence: 0.3, method: 'default' },
+    wba: { status: 'absent', signer: null },
+    ipHash: null,
+  });
+  assert.equal(absent.mcp_client, null);
+});
+
+test('logRequest reads x-ca-mcp markers off the RESPONSE → class agent/mcp, mcp_client bound', async () => {
+  _resetMigrationAttempted();
+  _resetColumnMigrationAttempted();
+  const { db, calls } = makeMockDb();
+  const request = makeRequest({
+    url: 'https://claudeatlas.com/mcp',
+    method: 'POST',
+    headers: new Headers({
+      'user-agent': 'node', // no agent UA — the MCP markers must do the work
+      'cf-connecting-ip': RAW_IP,
+    }),
+  });
+  const response = {
+    status: 200,
+    headers: new Headers({
+      'x-ca-mcp': '1',
+      'x-ca-mcp-client': 'claude-code/2.1.0',
+    }),
+  };
+  await logRequest(request, response, { DB: db }, { hashIp: async () => 'h' });
+  const insert = calls.find((c) => /^INSERT INTO request_log/i.test(c.sql));
+  const byCol = Object.fromEntries(REQUEST_LOG_COLUMNS.map((c, i) => [c, insert.bindArgs[i]]));
+  assert.equal(byCol.class, 'agent');
+  assert.equal(byCol.classifier_method, 'mcp');
+  assert.equal(byCol.operator, 'claude-code/2.1.0');
+  assert.equal(byCol.mcp_client, 'claude-code/2.1.0');
+  assert.equal(byCol.path, '/mcp');
+});
+
+test('response without markers → mcpValid false, existing classification unchanged', async () => {
+  _resetMigrationAttempted();
+  _resetColumnMigrationAttempted();
+  const { db, calls } = makeMockDb();
+  await logRequest(makeRequest(), makeResponse(200), { DB: db }, { hashIp: async () => 'h' });
+  const insert = calls.find((c) => /^INSERT INTO request_log/i.test(c.sql));
+  const byCol = Object.fromEntries(REQUEST_LOG_COLUMNS.map((c, i) => [c, insert.bindArgs[i]]));
+  assert.equal(byCol.class, 'crawler', 'GPTBot UA still classifies via ua_list');
+  assert.equal(byCol.mcp_client, null);
+});
+
+test('no such column mcp_client → BOTH ALTERs attempted, duplicate-column on agent_token swallowed, insert retried once', async () => {
+  _resetMigrationAttempted();
+  _resetColumnMigrationAttempted();
+  const calls = [];
+  let insertAttempts = 0;
+  const db = {
+    prepare(sql) {
+      const call = { sql, bindArgs: null };
+      calls.push(call);
+      return {
+        bind(...args) {
+          call.bindArgs = args;
+          return {
+            async run() {
+              if (/^INSERT INTO request_log/i.test(sql)) {
+                insertAttempts += 1;
+                if (insertAttempts === 1) {
+                  throw new Error('D1_ERROR: table request_log has no column named mcp_client: no such column: mcp_client');
+                }
+              }
+              return { success: true };
+            },
+          };
+        },
+        async run() {
+          // The LIVE DB already has agent_token (E3 deploy): its ALTER
+          // fails with duplicate column and MUST be swallowed.
+          if (/ADD COLUMN agent_token/i.test(sql)) {
+            throw new Error('D1_ERROR: duplicate column name: agent_token');
+          }
+          return { success: true };
+        },
+      };
+    },
+  };
+  await assert.doesNotReject(
+    logRequest(makeRequest(), makeResponse(200), { DB: db }, { hashIp: async () => 'h' })
+  );
+  const alters = calls.filter((c) => /^ALTER TABLE request_log ADD COLUMN/i.test(c.sql));
+  assert.equal(alters.length, 2, 'both column migrations attempted');
+  assert.ok(alters.some((c) => /agent_token/i.test(c.sql)));
+  assert.ok(alters.some((c) => /mcp_client/i.test(c.sql)));
+  assert.equal(calls.filter((c) => /^CREATE/i.test(c.sql)).length, 0, 'table DDL must not run');
+  assert.equal(insertAttempts, 2, 'insert retried exactly once and succeeded');
+});
+
+test('_resetColumnMigrationAttempted still resets the guard (ALTERs can run again after reset)', async () => {
+  _resetMigrationAttempted();
+  _resetColumnMigrationAttempted();
+  const err = new Error('no such column: mcp_client');
+  const calls = [];
+  const db = {
+    prepare(sql) {
+      calls.push({ sql });
+      return {
+        bind() {
+          return {
+            async run() {
+              if (/^INSERT/i.test(sql)) throw err;
+              return { success: true };
+            },
+          };
+        },
+        async run() {
+          return { success: true };
+        },
+      };
+    },
+  };
+  await logRequest(makeRequest(), makeResponse(200), { DB: db }, { hashIp: async () => 'h' });
+  assert.equal(calls.filter((c) => /^ALTER/i.test(c.sql)).length, 2);
+  _resetColumnMigrationAttempted();
+  await logRequest(makeRequest(), makeResponse(200), { DB: db }, { hashIp: async () => 'h' });
+  assert.equal(calls.filter((c) => /^ALTER/i.test(c.sql)).length, 4, 'guard reset → ALTERs ran again');
 });

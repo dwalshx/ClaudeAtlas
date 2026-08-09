@@ -73,11 +73,16 @@ CREATE TABLE IF NOT EXISTS request_log (
   wba_status TEXT,                   -- verified|failed|present_unverified|absent
   wba_signer TEXT,                   -- signer domain when parsed
   ip_hash TEXT,
-  agent_token TEXT                   -- E3 (quick-260806-ejd): echoed X-ClaudeAtlas-Agent
+  agent_token TEXT,                  -- E3 (quick-260806-ejd): echoed X-ClaudeAtlas-Agent
                                      -- value (random per-request token from
                                      -- /agent/index.json + optional '; tool=<name>').
                                      -- Live DB gains this via the lazy
                                      -- ALTER TABLE in worker/request-log.js.
+  mcp_client TEXT                    -- E4 (quick-260806-f00): MCP initialize clientInfo
+                                     -- ('<name>/<version>', from the x-ca-mcp-client
+                                     -- response marker set by worker/mcp.js). Live DB
+                                     -- gains this via the same lazy COLUMN_MIGRATIONS
+                                     -- loop in worker/request-log.js.
 );
 
 CREATE INDEX IF NOT EXISTS idx_request_log_timestamp ON request_log(timestamp);

@@ -45,6 +45,7 @@ export const REQUEST_LOG_COLUMNS = [
   'wba_signer',
   'ip_hash',
   'agent_token', // E3 (quick-260806-ejd): echoed X-ClaudeAtlas-Agent value
+  'mcp_client', // E4 (quick-260806-f00): MCP initialize clientInfo (x-ca-mcp-client marker)
 ];
 
 const INSERT_SQL = `INSERT INTO request_log (${REQUEST_LOG_COLUMNS.join(', ')}) VALUES (${REQUEST_LOG_COLUMNS.map(() => '?').join(', ')})`;
@@ -83,7 +84,8 @@ export const REQUEST_LOG_DDL = [
   wba_status TEXT,
   wba_signer TEXT,
   ip_hash TEXT,
-  agent_token TEXT
+  agent_token TEXT,
+  mcp_client TEXT
 )`,
   'CREATE INDEX IF NOT EXISTS idx_request_log_timestamp ON request_log(timestamp)',
   'CREATE INDEX IF NOT EXISTS idx_request_log_class ON request_log(class)',
@@ -96,6 +98,16 @@ export const REQUEST_LOG_DDL = [
 // ALTER the live table via the Worker's own DB binding, then retry once.
 const AGENT_TOKEN_MIGRATION_SQL =
   'ALTER TABLE request_log ADD COLUMN agent_token TEXT';
+
+// E4 (quick-260806-f00): generalized column-migration list. On the FIRST
+// "no such column" insert error we attempt EVERY pending ALTER — columns
+// the live table already has fail with "duplicate column", which is
+// swallowed (and ONLY that) so the loop is idempotent against any prior
+// live-DB shape (e.g. agent_token already added by the E3 deploy).
+const COLUMN_MIGRATIONS = [
+  AGENT_TOKEN_MIGRATION_SQL,
+  'ALTER TABLE request_log ADD COLUMN mcp_client TEXT',
+];
 
 // At-most-once-per-isolate guard for the DDL path.
 let migrationAttempted = false;
@@ -126,7 +138,7 @@ function truncate(value, max = 256) {
  * (computed from the same signals). `wba` is the verifyWebBotAuth outcome.
  * NO raw IP ever enters the row — only the injected ipHash.
  */
-export function buildLogRow({ path, method, status, headers, cf, classification, wba, ipHash }) {
+export function buildLogRow({ path, method, status, headers, cf, classification, wba, ipHash, mcpClient }) {
   const get = (name) =>
     headers && typeof headers.get === 'function' ? headers.get(name) : null;
   const c = classification || {};
@@ -155,6 +167,10 @@ export function buildLogRow({ path, method, status, headers, cf, classification,
     // E3: echoed X-ClaudeAtlas-Agent value (random per-request token +
     // optional '; tool=<name>' suffix). Carries no PII by construction.
     agent_token: truncate(get('x-claudeatlas-agent')),
+    // E4: MCP initialize clientInfo ('<name>/<version>', read off the
+    // RESPONSE's x-ca-mcp-client marker in logRequest). Nullable, no PII —
+    // the client volunteered it.
+    mcp_client: truncate(mcpClient),
   };
 }
 
@@ -173,6 +189,16 @@ export async function logRequest(request, response, env, deps = {}) {
     const cf = request.cf || {};
     const url = new URL(request.url);
 
+    // E4: MCP marker headers live on the RESPONSE (worker/mcp.js sets
+    // x-ca-mcp / x-ca-mcp-client only for structurally valid JSON-RPC
+    // bodies) — the in-band channel from the response path to this
+    // waitUntil logger.
+    const respGet = (name) =>
+      response && response.headers && typeof response.headers.get === 'function'
+        ? response.headers.get(name)
+        : null;
+    const mcpClient = respGet('x-ca-mcp-client');
+
     const signals = {
       userAgent: get('user-agent'),
       asn: typeof cf.asn === 'number' ? cf.asn : null,
@@ -184,6 +210,8 @@ export async function logRequest(request, response, env, deps = {}) {
       secChUa: get('sec-ch-ua'),
       signatureAgent: get('signature-agent'),
       agentToken: get('x-claudeatlas-agent'), // E3 token echo → rule 0
+      mcpValid: respGet('x-ca-mcp') === '1', // E4 MCP front door → rule 0.5
+      mcpClient,
     };
 
     const verdict = classifyRequest(signals);
@@ -211,6 +239,7 @@ export async function logRequest(request, response, env, deps = {}) {
       classification: { ...verdict, secFetchCoherent },
       wba,
       ipHash,
+      mcpClient,
     });
     const values = REQUEST_LOG_COLUMNS.map((col) => row[col]);
 
@@ -227,12 +256,22 @@ export async function logRequest(request, response, env, deps = {}) {
         }
         await env.DB.prepare(INSERT_SQL).bind(...values).run();
       } else if (!columnMigrationAttempted && /no such column/i.test(message)) {
-        // E3 lazy column migration (the LIVE-DB path): the pre-existing
-        // request_log table lacks agent_token — ALTER it in place via the
-        // Worker's own DB binding, then retry the insert exactly once. A
-        // failing retry throws to the outer catch (logged, never rethrown).
+        // E3/E4 lazy column migration (the LIVE-DB path): the pre-existing
+        // request_log table lacks one or more of the newer columns — run
+        // EVERY pending ALTER via the Worker's own DB binding (swallowing
+        // ONLY "duplicate column" for columns the live table already has,
+        // e.g. agent_token after the E3 deploy), then retry the insert
+        // exactly once. A failing retry throws to the outer catch (logged,
+        // never rethrown).
         columnMigrationAttempted = true;
-        await env.DB.prepare(AGENT_TOKEN_MIGRATION_SQL).run();
+        for (const migrationSql of COLUMN_MIGRATIONS) {
+          try {
+            await env.DB.prepare(migrationSql).run();
+          } catch (migErr) {
+            const migMessage = String((migErr && migErr.message) || '');
+            if (!/duplicate column/i.test(migMessage)) throw migErr;
+          }
+        }
         await env.DB.prepare(INSERT_SQL).bind(...values).run();
       } else {
         throw err; // handed to the outer catch — logged, never rethrown

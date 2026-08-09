@@ -366,3 +366,61 @@ test('pattern tables are exported and non-empty', () => {
   assert.ok(DATACENTER_ASNS.has(16509));
   assert.ok(DATACENTER_ASNS.has(24940));
 });
+
+// ---------------------------------------------------------------------------
+// E4 MCP front door (quick-260806-f00) — rule 0.5: a structurally valid
+// JSON-RPC POST to /mcp is definitionally an agent. Sits AFTER token_echo
+// (an echoed token is the strongest instruction-following proof) and BEFORE
+// the UA lists (a python-requests UA speaking JSON-RPC is still an agent).
+// ---------------------------------------------------------------------------
+
+test('mcpValid → agent 0.95 mcp, operator null without mcpClient', () => {
+  const v = classifyRequest({ userAgent: 'SomeRandomThing/1.0', mcpValid: true });
+  assert.deepEqual(v, {
+    class: 'agent',
+    operator: null,
+    confidence: 0.95,
+    method: 'mcp',
+  });
+});
+
+test('mcpValid with mcpClient → operator trimmed + lowercased', () => {
+  const v = classifyRequest({ mcpValid: true, mcpClient: ' Claude-Code/2.1.0 ' });
+  assert.equal(v.class, 'agent');
+  assert.equal(v.operator, 'claude-code/2.1.0');
+  assert.equal(v.method, 'mcp');
+  assert.equal(v.confidence, 0.95);
+});
+
+test('mcpValid beats a crawler UA (rule sits ahead of the UA lists)', () => {
+  const v = classifyRequest({ userAgent: 'GPTBot/1.0', mcpValid: true });
+  assert.equal(v.class, 'agent');
+  assert.equal(v.method, 'mcp');
+});
+
+test('agentToken present AND mcpValid → token_echo still wins (rule 0 unchanged)', () => {
+  const v = classifyRequest({
+    userAgent: 'x',
+    agentToken: 'ca-abc; tool=my-agent',
+    mcpValid: true,
+    mcpClient: 'claude-code/2.1.0',
+  });
+  assert.equal(v.method, 'token_echo');
+  assert.equal(v.operator, 'my-agent');
+});
+
+test('mcpValid absent/false/truthy-non-true → existing verdicts byte-identical', () => {
+  assert.deepEqual(
+    classifyRequest({ userAgent: 'GPTBot/1.0' }),
+    { class: 'crawler', operator: 'openai', confidence: 0.9, method: 'ua_list' },
+  );
+  assert.deepEqual(
+    classifyRequest({ userAgent: 'GPTBot/1.0', mcpValid: false }),
+    { class: 'crawler', operator: 'openai', confidence: 0.9, method: 'ua_list' },
+  );
+  // Strict === true gate: a truthy string must NOT trip the rule.
+  assert.deepEqual(
+    classifyRequest({ userAgent: 'GPTBot/1.0', mcpValid: '1' }),
+    { class: 'crawler', operator: 'openai', confidence: 0.9, method: 'ua_list' },
+  );
+});

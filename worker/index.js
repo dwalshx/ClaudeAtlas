@@ -75,6 +75,15 @@ import { prefersMarkdown, renderSkillMarkdown, renderSiteIndexMarkdown } from '.
 // ---------------------------------------------------------------------------
 import { generateAgentToken, buildAgentIndex } from './agent-index.js';
 
+// ---------------------------------------------------------------------------
+// quick-260806-f00 (E4): MCP front door. POST /mcp is a minimal stateless
+// Streamable HTTP MCP server (JSON-RPC 2.0 subset, 3 tools) and
+// /.well-known/mcp/server-card.json serves the discovery card.
+// semanticSearch is INJECTED into handleMcpRequest so mcp.js never imports
+// from index.js. Pure module: index.js imports FROM it, never the reverse.
+// ---------------------------------------------------------------------------
+import { handleMcpRequest, buildServerCard } from './mcp.js';
+
 // Shared response headers for every markdown rendition. noindex keeps the
 // markdown twin out of search indexes (canonical is the HTML page); Vary
 // prevents the edge cache from cross-serving HTML/markdown for one URL.
@@ -137,7 +146,11 @@ function corsPreflightResponse() {
     headers: {
       'access-control-allow-origin': '*',
       'access-control-allow-methods': 'GET, POST, OPTIONS',
-      'access-control-allow-headers': 'content-type',
+      // E4 (quick-260806-f00): additive widening — MCP clients send
+      // MCP-Protocol-Version on Streamable HTTP requests (accepted and
+      // ignored in stateless mode); x-claudeatlas-agent is the E3/E6
+      // identification header. Existing /api behavior unchanged.
+      'access-control-allow-headers': 'content-type, mcp-protocol-version, x-claudeatlas-agent',
       'access-control-max-age': '86400',
     },
   });
@@ -767,8 +780,13 @@ async function renderListedSkillPage(slug, env) {
 async function handleFetch(request, env, ctx) {
     const url = new URL(request.url);
 
-    // CORS preflight for any /api/* route
-    if (request.method === 'OPTIONS' && url.pathname.startsWith('/api/')) {
+    // CORS preflight for any /api/* route + the E4 MCP paths
+    if (
+      request.method === 'OPTIONS' &&
+      (url.pathname.startsWith('/api/') ||
+        url.pathname === '/mcp' ||
+        url.pathname.startsWith('/.well-known/mcp/'))
+    ) {
       return corsPreflightResponse();
     }
 
@@ -801,6 +819,25 @@ async function handleFetch(request, env, ctx) {
     // per-request; two fetches MUST return different tokens).
     if (url.pathname === '/agent/index.json' && request.method === 'GET') {
       return jsonResponse(buildAgentIndex({ token: generateAgentToken() }));
+    }
+
+    // E4 (quick-260806-f00): MCP front door. Stateless Streamable HTTP —
+    // POST-only JSON-RPC; GET 405s (no SSE). semanticSearch is injected so
+    // mcp.js never imports from index.js (pure-module direction, Wave 1).
+    if (url.pathname === '/mcp') {
+      try {
+        return await handleMcpRequest(request, env, ctx, { semanticSearch });
+      } catch (err) {
+        console.error('mcp handler error:', err && err.message);
+        return jsonResponse({ jsonrpc: '2.0', id: null, error: { code: -32603, message: 'internal error' } }, 500);
+      }
+    }
+    if (url.pathname === '/.well-known/mcp/server-card.json' && request.method === 'GET') {
+      try {
+        return jsonResponse(buildServerCard(), 200, { 'cache-control': 'public, max-age=3600' });
+      } catch (err) {
+        console.error('server-card error (falling through):', err && err.message);
+      }
     }
 
     // Phase 3.1: 301 redirect for pre-fix colliding slug URLs.
