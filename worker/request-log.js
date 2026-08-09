@@ -100,7 +100,7 @@ const AGENT_TOKEN_MIGRATION_SQL =
   'ALTER TABLE request_log ADD COLUMN agent_token TEXT';
 
 // E4 (quick-260806-f00): generalized column-migration list. On the FIRST
-// "no such column" insert error we attempt EVERY pending ALTER — columns
+// missing-column insert error we attempt EVERY pending ALTER — columns
 // the live table already has fail with "duplicate column", which is
 // swallowed (and ONLY that) so the loop is idempotent against any prior
 // live-DB shape (e.g. agent_token already added by the E3 deploy).
@@ -108,6 +108,15 @@ const COLUMN_MIGRATIONS = [
   AGENT_TOKEN_MIGRATION_SQL,
   'ALTER TABLE request_log ADD COLUMN mcp_client TEXT',
 ];
+
+// INCIDENT FIX (2026-08-09): SQLite reports a missing column differently by
+// context. A SELECT/WHERE against a missing column says "no such column: X",
+// but an INSERT naming a missing column says "table request_log has no column
+// named X". The lazy column-migration guard originally matched only the
+// former, so the E3/E4 INSERT error never triggered the ALTER — every insert
+// fell through to the rethrow and was dropped, silently killing request
+// logging for ~20 min after the Wave 2 deploy. Match BOTH phrasings.
+const MISSING_COLUMN_RE = /no such column|has no column named/i;
 
 // At-most-once-per-isolate guard for the DDL path.
 let migrationAttempted = false;
@@ -255,7 +264,7 @@ export async function logRequest(request, response, env, deps = {}) {
           await env.DB.prepare(stmt).run();
         }
         await env.DB.prepare(INSERT_SQL).bind(...values).run();
-      } else if (!columnMigrationAttempted && /no such column/i.test(message)) {
+      } else if (!columnMigrationAttempted && MISSING_COLUMN_RE.test(message)) {
         // E3/E4 lazy column migration (the LIVE-DB path): the pre-existing
         // request_log table lacks one or more of the newer columns — run
         // EVERY pending ALTER via the Worker's own DB binding (swallowing

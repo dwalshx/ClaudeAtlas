@@ -361,6 +361,26 @@ test('no such column agent_token → ALTER TABLE via env.DB, retries insert once
   assert.equal(insertAttempts(), 2, 'insert retried exactly once');
 });
 
+// INCIDENT REGRESSION (2026-08-09): the real production D1 INSERT error for a
+// missing column is ONLY "table request_log has no column named agent_token"
+// — it does NOT contain the substring "no such column" (that phrasing is the
+// SELECT/WHERE-context error). The prior tests baked both phrasings into one
+// mock string, so they passed under the too-narrow /no such column/ guard
+// while production dropped every row. This case uses the INSERT-only phrasing
+// so the guard must match "has no column named" to pass.
+test('missing-column INSERT error uses only "has no column named" phrasing → still migrates and retries', async () => {
+  _resetMigrationAttempted();
+  _resetColumnMigrationAttempted();
+  const { db, calls, insertAttempts } = makeMockDb({
+    failFirstInsertWith: new Error('D1_ERROR: table request_log has no column named agent_token: SQLITE_ERROR'),
+  });
+  await logRequest(makeRequest(), makeResponse(200), { DB: db }, { hashIp: async () => 'h' });
+
+  const alters = calls.filter((c) => /^ALTER TABLE request_log ADD COLUMN/i.test(c.sql));
+  assert.ok(alters.length >= 1, 'at least one ALTER TABLE fired on the INSERT-only phrasing');
+  assert.equal(insertAttempts(), 2, 'insert retried exactly once after the ALTER');
+});
+
 test('column migration attempted at most once per isolate; repeat failure lands in outer catch', async () => {
   _resetMigrationAttempted();
   _resetColumnMigrationAttempted();
