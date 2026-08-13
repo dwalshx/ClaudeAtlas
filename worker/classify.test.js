@@ -224,7 +224,7 @@ test('Chrome UA + NO sec-fetch headers → automated_unknown via coherence (neve
   assert.equal(v.confidence, 0.6);
 });
 
-test('Chrome UA + coherent sec-fetch + AWS ASN 16509 → automated_unknown via asn_heuristic', () => {
+test('Chrome UA + coherent sec-fetch + AWS ASN 16509 → automated_unknown via coherent_datacenter', () => {
   const v = classifyRequest({
     userAgent: CHROME_UA,
     asn: 16509,
@@ -232,11 +232,11 @@ test('Chrome UA + coherent sec-fetch + AWS ASN 16509 → automated_unknown via a
     ...COHERENT_SEC_FETCH,
   });
   assert.equal(v.class, 'automated_unknown');
-  assert.equal(v.method, 'asn_heuristic');
+  assert.equal(v.method, 'coherent_datacenter');
   assert.equal(v.confidence, 0.7);
 });
 
-test('Chrome UA + Hetzner asOrg → automated_unknown', () => {
+test('Chrome UA + Hetzner asOrg → automated_unknown via coherent_datacenter', () => {
   const v = classifyRequest({
     userAgent: CHROME_UA,
     asn: 24940,
@@ -244,7 +244,7 @@ test('Chrome UA + Hetzner asOrg → automated_unknown', () => {
     ...COHERENT_SEC_FETCH,
   });
   assert.equal(v.class, 'automated_unknown');
-  assert.equal(v.method, 'asn_heuristic');
+  assert.equal(v.method, 'coherent_datacenter');
 });
 
 test('Chrome UA + "Google Cloud" asOrg → automated_unknown; plain "Google" org must NOT match', () => {
@@ -423,4 +423,158 @@ test('mcpValid absent/false/truthy-non-true → existing verdicts byte-identical
     classifyRequest({ userAgent: 'GPTBot/1.0', mcpValid: '1' }),
     { class: 'crawler', operator: 'openai', confidence: 0.9, method: 'ua_list' },
   );
+});
+
+// ---------------------------------------------------------------------------
+// L1 network-aware classification (quick-260812-p3b) — a known-agent/crawler
+// UA arriving from a HOSTING ASN that does NOT match the claimed operator's
+// published network is flagged impersonation_suspected. A network that DOES
+// match, an unknown/residential ASN, or a WBA-verified signer are NOT flagged.
+// ---------------------------------------------------------------------------
+
+test('L1: ChatGPT-User from Google Cloud → impersonation_suspected/openai (ua_asn_mismatch)', () => {
+  const v = classifyRequest({
+    userAgent: 'ChatGPT-User/1.0',
+    asn: 396982,
+    asOrg: 'GOOGLE-CLOUD-PLATFORM',
+  });
+  assert.equal(v.class, 'impersonation_suspected');
+  assert.equal(v.operator, 'openai');
+  assert.equal(v.confidence, 0.8);
+  assert.equal(v.method, 'ua_asn_mismatch');
+});
+
+test('L1: GPTBot (crawler UA) from Google Cloud → impersonation_suspected/openai', () => {
+  const v = classifyRequest({
+    userAgent: 'GPTBot/1.0',
+    asn: 396982,
+    asOrg: 'GOOGLE-CLOUD-PLATFORM',
+  });
+  assert.equal(v.class, 'impersonation_suspected');
+  assert.equal(v.operator, 'openai');
+  assert.equal(v.method, 'ua_asn_mismatch');
+});
+
+test('L1: MistralAI-User from Cloudflare ASN → impersonation_suspected/mistral', () => {
+  const v = classifyRequest({
+    userAgent: 'MistralAI-User/1.0',
+    asn: 13335,
+    asOrg: 'CLOUDFLARENET',
+  });
+  assert.equal(v.class, 'impersonation_suspected');
+  assert.equal(v.operator, 'mistral');
+});
+
+test('L1: ChatGPT-User from Azure (network MATCHES) → agent/openai (not flagged)', () => {
+  const v = classifyRequest({
+    userAgent: 'ChatGPT-User/1.0',
+    asn: 8075,
+    asOrg: 'MICROSOFT-CORP-MSN-AS-BLOCK',
+  });
+  assert.equal(v.class, 'agent');
+  assert.equal(v.operator, 'openai');
+  assert.equal(v.method, 'ua_list');
+});
+
+test('L1: ClaudeBot from GCP → crawler/anthropic (Anthropic runs on GCP, not flagged)', () => {
+  const v = classifyRequest({
+    userAgent: 'Mozilla/5.0 (compatible; ClaudeBot/1.0; +claudebot@anthropic.com)',
+    asn: 15169,
+    asOrg: 'GOOGLE',
+  });
+  assert.equal(v.class, 'crawler');
+  assert.equal(v.operator, 'anthropic');
+});
+
+test('L1: bare GPTBot with no asn/asOrg → crawler/openai (unknown ASN never flags)', () => {
+  const v = ua('GPTBot/1.0');
+  assert.equal(v.class, 'crawler');
+  assert.equal(v.operator, 'openai');
+  assert.equal(v.method, 'ua_list');
+});
+
+test('L1: ChatGPT-User from residential COMCAST → agent/openai (residential never flags)', () => {
+  const v = classifyRequest({
+    userAgent: 'ChatGPT-User/1.0',
+    asn: 7922,
+    asOrg: 'COMCAST',
+  });
+  assert.equal(v.class, 'agent');
+  assert.equal(v.operator, 'openai');
+});
+
+// ---------------------------------------------------------------------------
+// WBA override — a cryptographically verified signer is NEVER flagged
+// impersonation, even from a mismatched hosting ASN.
+// ---------------------------------------------------------------------------
+
+test('WBA verified overrides ASN mismatch → agent/openai (not impersonation)', () => {
+  const v = classifyRequest({
+    userAgent: 'ChatGPT-User/1.0',
+    asn: 396982,
+    asOrg: 'GOOGLE-CLOUD-PLATFORM',
+    wbaStatus: 'verified',
+  });
+  assert.equal(v.class, 'agent');
+  assert.equal(v.operator, 'openai');
+  assert.equal(v.method, 'ua_list');
+});
+
+test('WBA present_unverified does NOT override → still impersonation_suspected', () => {
+  const v = classifyRequest({
+    userAgent: 'ChatGPT-User/1.0',
+    asn: 396982,
+    asOrg: 'GOOGLE-CLOUD-PLATFORM',
+    wbaStatus: 'present_unverified',
+  });
+  assert.equal(v.class, 'impersonation_suspected');
+  assert.equal(v.method, 'ua_asn_mismatch');
+});
+
+// ---------------------------------------------------------------------------
+// L2 human downgrade — a coherent browser UA from a hosting/datacenter ASN is
+// automated_unknown (coherent_datacenter), never human. Real residential and
+// plain-GOOGLE browsers still classify human.
+// ---------------------------------------------------------------------------
+
+test('L2: coherent Chrome from Kingsoft Cloud → automated_unknown/coherent_datacenter (the Singapore farm)', () => {
+  const v = classifyRequest({
+    userAgent: CHROME_UA,
+    asOrg: 'Kingsoft Cloud',
+    ...COHERENT_SEC_FETCH,
+  });
+  assert.equal(v.class, 'automated_unknown');
+  assert.equal(v.method, 'coherent_datacenter');
+});
+
+test('L2: coherent Chrome from AWS 16509 → automated_unknown/coherent_datacenter', () => {
+  const v = classifyRequest({
+    userAgent: CHROME_UA,
+    asn: 16509,
+    asOrg: 'AMAZON-02',
+    ...COHERENT_SEC_FETCH,
+  });
+  assert.equal(v.class, 'automated_unknown');
+  assert.equal(v.method, 'coherent_datacenter');
+});
+
+test('L2: coherent Chrome from residential COMCAST → human 0.7 (unchanged)', () => {
+  const v = classifyRequest({
+    userAgent: CHROME_UA,
+    asn: 7922,
+    asOrg: 'COMCAST',
+    ...COHERENT_SEC_FETCH,
+  });
+  assert.equal(v.class, 'human');
+  assert.equal(v.confidence, 0.7);
+});
+
+test('L2: coherent Chrome from plain GOOGLE org → human (plain GOOGLE not hosting)', () => {
+  const v = classifyRequest({
+    userAgent: CHROME_UA,
+    asn: 15169,
+    asOrg: 'GOOGLE',
+    ...COHERENT_SEC_FETCH,
+  });
+  assert.equal(v.class, 'human');
 });
