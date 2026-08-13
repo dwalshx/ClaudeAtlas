@@ -65,10 +65,15 @@ CREATE TABLE IF NOT EXISTS request_log (
   country TEXT,
   accept_header TEXT,
   sec_fetch_coherent INTEGER,        -- 1 coherent / 0 contradiction / NULL n-a
-  class TEXT NOT NULL,               -- human|agent|crawler|automated_unknown|unknown
+  class TEXT NOT NULL,               -- human|agent|crawler|automated_unknown|
+                                     -- impersonation_suspected|unknown (no DB
+                                     -- CHECK constraint; enum is app-enforced)
   operator TEXT,
   confidence REAL,
-  classifier_method TEXT,
+  classifier_method TEXT,            -- token_echo|mcp|ua_list|ua_asn_mismatch|
+                                     -- no_ua|coherent_datacenter|coherence|default
+                                     -- (ua_asn_mismatch + coherent_datacenter added
+                                     -- quick-260812-p3b; no DB CHECK constraint)
   signature_agent TEXT,              -- raw Signature-Agent value (domain), if any
   wba_status TEXT,                   -- verified|failed|present_unverified|absent
   wba_signer TEXT,                   -- signer domain when parsed
@@ -78,11 +83,16 @@ CREATE TABLE IF NOT EXISTS request_log (
                                      -- /agent/index.json + optional '; tool=<name>').
                                      -- Live DB gains this via the lazy
                                      -- ALTER TABLE in worker/request-log.js.
-  mcp_client TEXT                    -- E4 (quick-260806-f00): MCP initialize clientInfo
+  mcp_client TEXT,                   -- E4 (quick-260806-f00): MCP initialize clientInfo
                                      -- ('<name>/<version>', from the x-ca-mcp-client
                                      -- response marker set by worker/mcp.js). Live DB
                                      -- gains this via the same lazy COLUMN_MIGRATIONS
                                      -- loop in worker/request-log.js.
+  asn_class TEXT                     -- quick-260812-p3b (L1): network bucket
+                                     -- (hosting|isp_residential|unknown) from
+                                     -- worker/asn-class.js classifyAsn(asn, asOrg).
+                                     -- Analytics column; live DB gains it via the
+                                     -- same lazy COLUMN_MIGRATIONS loop.
 );
 
 CREATE INDEX IF NOT EXISTS idx_request_log_timestamp ON request_log(timestamp);

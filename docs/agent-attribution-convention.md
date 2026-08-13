@@ -90,7 +90,7 @@ Per `docs/agent-traffic-analytics-research.md` §5:
 
 | Exp | What | Status |
 |---|---|---|
-| E1 | Request logging + classifier v0 (`request_log`, never-default-to-human) | **VERIFIED LIVE** — deployed via daily cron 2026-08-07, verified 2026-08-09. First data: ~143k classified requests. |
+| E1 | Request logging + classifier v0 (`request_log`, never-default-to-human) | **VERIFIED LIVE** — deployed via daily cron 2026-08-07, verified 2026-08-09. First data: ~143k classified requests. **Upgraded to L1 network-aware v1 (2026-08-12, quick-260812-p3b):** ASN-based impersonation_suspected + datacenter-human downgrade + WBA-verified override + `asn_class` column — see `docs/classifier-v1-notes.md`. |
 | E2 | Markdown content negotiation (`Accept: text/markdown` on skill pages + `/index.md`) | Merged; deploy in progress 2026-08-09. |
 | E3 | Token handshake `GET /agent/index.json` (echo → `agent_token` + `token_echo` rule) | Merged; deploy in progress 2026-08-09. 60-day gate: ≥5% bot sessions echo, ≥10 distinct clients. |
 | E4 | MCP front door (`POST /mcp` + server card + `mcp_client` logging) | Built 2026-08-09 — registry publish pending (Dan); `mcp/server.json` ready. |

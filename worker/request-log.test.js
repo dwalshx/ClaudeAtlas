@@ -78,7 +78,7 @@ function makeMockDb({ failFirstInsertWith = null, alwaysThrow = null } = {}) {
 // buildLogRow
 // ---------------------------------------------------------------------------
 
-test('buildLogRow covers all 20 request_log columns', () => {
+test('buildLogRow covers all 21 request_log columns', () => {
   const row = buildLogRow({
     path: '/skills/foo/',
     method: 'GET',
@@ -94,23 +94,30 @@ test('buildLogRow covers all 20 request_log columns', () => {
     },
     wba: { status: 'absent', signer: null },
     ipHash: 'abc123',
+    asnClass: 'hosting',
   });
 
-  assert.equal(REQUEST_LOG_COLUMNS.length, 20);
+  assert.equal(REQUEST_LOG_COLUMNS.length, 21);
   assert.equal(
     REQUEST_LOG_COLUMNS[REQUEST_LOG_COLUMNS.length - 1],
+    'asn_class',
+    'asn_class must be the 21st (last) column',
+  );
+  assert.equal(
+    REQUEST_LOG_COLUMNS[REQUEST_LOG_COLUMNS.length - 2],
     'mcp_client',
-    'mcp_client must be the 20th (last) column',
+    'mcp_client is now 2nd-to-last',
   );
   for (const col of REQUEST_LOG_COLUMNS) {
     assert.ok(col in row, `row missing column ${col}`);
   }
-  assert.equal(Object.keys(row).length, 20);
+  assert.equal(Object.keys(row).length, 21);
   assert.equal(row.path, '/skills/foo/');
   assert.equal(row.class, 'crawler');
   assert.equal(row.operator, 'openai');
   assert.equal(row.wba_status, 'absent');
   assert.equal(row.ip_hash, 'abc123');
+  assert.equal(row.asn_class, 'hosting');
   assert.equal(typeof row.timestamp, 'number');
 });
 
@@ -155,7 +162,12 @@ test('buildLogRow never contains a raw IP anywhere', () => {
 test('logRequest executes exactly one INSERT INTO request_log; path excludes query string', async () => {
   _resetMigrationAttempted();
   const { db, calls, insertAttempts } = makeMockDb();
-  await logRequest(makeRequest(), makeResponse(200), { DB: db }, {
+  // GPTBot (openai) from Azure — a hosting ASN that MATCHES OpenAI's published
+  // network, so L1 keeps the crawler verdict while asn_class stays 'hosting'.
+  const request = makeRequest({
+    cf: { asn: 8075, asOrganization: 'MICROSOFT-CORP-MSN-AS-BLOCK', country: 'US' },
+  });
+  await logRequest(request, makeResponse(200), { DB: db }, {
     hashIp: async () => 'hashed-ip',
   });
 
@@ -164,20 +176,22 @@ test('logRequest executes exactly one INSERT INTO request_log; path excludes que
   assert.equal(insertAttempts(), 1);
 
   const bind = inserts[0].bindArgs;
-  assert.equal(bind.length, 20);
+  assert.equal(bind.length, 21);
   // Column order: match REQUEST_LOG_COLUMNS positions.
   const byCol = Object.fromEntries(REQUEST_LOG_COLUMNS.map((c, i) => [c, bind[i]]));
   assert.equal(byCol.path, '/skills/foo/bar/', 'query string must be stripped');
   assert.equal(byCol.method, 'GET');
   assert.equal(byCol.status, 200);
   assert.equal(byCol.user_agent, 'GPTBot/1.0');
-  assert.equal(byCol.asn, 16509);
-  assert.equal(byCol.as_org, 'AMAZON-02');
+  assert.equal(byCol.asn, 8075);
+  assert.equal(byCol.as_org, 'MICROSOFT-CORP-MSN-AS-BLOCK');
   assert.equal(byCol.country, 'US');
   assert.equal(byCol.class, 'crawler');
   assert.equal(byCol.operator, 'openai');
   assert.equal(byCol.wba_status, 'absent');
   assert.equal(byCol.ip_hash, 'hashed-ip');
+  // Azure (AS8075) → hosting network bucket.
+  assert.equal(byCol.asn_class, 'hosting');
   assert.ok(!bind.includes(RAW_IP), 'raw IP must never be bound');
 });
 
@@ -412,14 +426,15 @@ test('column migration attempted at most once per isolate; repeat failure lands 
   );
   const altersAfterFirst = calls.filter((c) => /^ALTER/i.test(c.sql)).length;
   // E4 (quick-260806-f00) generalized the single ALTER into the
-  // COLUMN_MIGRATIONS loop — one attempt now runs BOTH pending ALTERs
-  // (agent_token + mcp_client), still guarded by one flag.
-  assert.equal(altersAfterFirst, 2);
+  // COLUMN_MIGRATIONS loop — one attempt now runs ALL pending ALTERs
+  // (agent_token + mcp_client + asn_class as of quick-260812-p3b), still
+  // guarded by one flag.
+  assert.equal(altersAfterFirst, 3);
   await assert.doesNotReject(
     logRequest(makeRequest(), makeResponse(200), { DB: db }, { hashIp: async () => 'h' })
   );
   const altersAfterSecond = calls.filter((c) => /^ALTER/i.test(c.sql)).length;
-  assert.equal(altersAfterSecond, 2, 'ALTERs must not run again');
+  assert.equal(altersAfterSecond, 3, 'ALTERs must not run again');
 });
 
 // ---------------------------------------------------------------------------
@@ -502,7 +517,13 @@ test('response without markers → mcpValid false, existing classification uncha
   _resetMigrationAttempted();
   _resetColumnMigrationAttempted();
   const { db, calls } = makeMockDb();
-  await logRequest(makeRequest(), makeResponse(200), { DB: db }, { hashIp: async () => 'h' });
+  // Residential ASN so the UA path (not L1 impersonation) decides — isolates
+  // the "no MCP markers → UA classification stands" intent from the network layer.
+  const request = makeRequest({
+    cf: { asn: 7922, asOrganization: 'COMCAST', country: 'US' },
+    headers: new Headers({ 'user-agent': 'GPTBot/1.0', 'cf-connecting-ip': RAW_IP }),
+  });
+  await logRequest(request, makeResponse(200), { DB: db }, { hashIp: async () => 'h' });
   const insert = calls.find((c) => /^INSERT INTO request_log/i.test(c.sql));
   const byCol = Object.fromEntries(REQUEST_LOG_COLUMNS.map((c, i) => [c, insert.bindArgs[i]]));
   assert.equal(byCol.class, 'crawler', 'GPTBot UA still classifies via ua_list');
@@ -548,11 +569,57 @@ test('no such column mcp_client → BOTH ALTERs attempted, duplicate-column on a
     logRequest(makeRequest(), makeResponse(200), { DB: db }, { hashIp: async () => 'h' })
   );
   const alters = calls.filter((c) => /^ALTER TABLE request_log ADD COLUMN/i.test(c.sql));
-  assert.equal(alters.length, 2, 'both column migrations attempted');
+  assert.equal(alters.length, 3, 'all column migrations attempted');
   assert.ok(alters.some((c) => /agent_token/i.test(c.sql)));
   assert.ok(alters.some((c) => /mcp_client/i.test(c.sql)));
+  assert.ok(alters.some((c) => /asn_class/i.test(c.sql)));
   assert.equal(calls.filter((c) => /^CREATE/i.test(c.sql)).length, 0, 'table DDL must not run');
   assert.equal(insertAttempts, 2, 'insert retried exactly once and succeeded');
+});
+
+// ---------------------------------------------------------------------------
+// quick-260812-p3b (L1): asn_class column — the network bucket computed by
+// classifyAsn(cf.asn, cf.asOrganization) is bound into request_log for
+// analytics. Also verifies wbaStatus reaches the classifier (wba resolves
+// before classifyRequest now).
+// ---------------------------------------------------------------------------
+
+test('logRequest binds asn_class=hosting for an AWS request', async () => {
+  _resetMigrationAttempted();
+  _resetColumnMigrationAttempted();
+  const { db, calls } = makeMockDb();
+  await logRequest(makeRequest(), makeResponse(200), { DB: db }, { hashIp: async () => 'h' });
+  const insert = calls.find((c) => /^INSERT INTO request_log/i.test(c.sql));
+  const byCol = Object.fromEntries(REQUEST_LOG_COLUMNS.map((c, i) => [c, insert.bindArgs[i]]));
+  assert.equal(byCol.asn_class, 'hosting');
+});
+
+test('logRequest binds asn_class=isp_residential for a COMCAST request', async () => {
+  _resetMigrationAttempted();
+  _resetColumnMigrationAttempted();
+  const { db, calls } = makeMockDb();
+  const request = makeRequest({
+    cf: { asn: 7922, asOrganization: 'COMCAST', country: 'US' },
+    headers: new Headers({ 'user-agent': 'GPTBot/1.0', 'cf-connecting-ip': RAW_IP }),
+  });
+  await logRequest(request, makeResponse(200), { DB: db }, { hashIp: async () => 'h' });
+  const insert = calls.find((c) => /^INSERT INTO request_log/i.test(c.sql));
+  const byCol = Object.fromEntries(REQUEST_LOG_COLUMNS.map((c, i) => [c, insert.bindArgs[i]]));
+  assert.equal(byCol.asn_class, 'isp_residential');
+});
+
+test('buildLogRow: absent asnClass → asn_class null', () => {
+  const row = buildLogRow({
+    path: '/',
+    method: 'GET',
+    status: 200,
+    headers: new Headers({ 'user-agent': 'test' }),
+    cf: {},
+    classification: { class: 'unknown', operator: null, confidence: 0.3, method: 'default' },
+    wba: { status: 'absent', signer: null },
+    ipHash: null,
+  });
+  assert.equal(row.asn_class, null);
 });
 
 test('_resetColumnMigrationAttempted still resets the guard (ALTERs can run again after reset)', async () => {
@@ -579,8 +646,8 @@ test('_resetColumnMigrationAttempted still resets the guard (ALTERs can run agai
     },
   };
   await logRequest(makeRequest(), makeResponse(200), { DB: db }, { hashIp: async () => 'h' });
-  assert.equal(calls.filter((c) => /^ALTER/i.test(c.sql)).length, 2);
+  assert.equal(calls.filter((c) => /^ALTER/i.test(c.sql)).length, 3);
   _resetColumnMigrationAttempted();
   await logRequest(makeRequest(), makeResponse(200), { DB: db }, { hashIp: async () => 'h' });
-  assert.equal(calls.filter((c) => /^ALTER/i.test(c.sql)).length, 4, 'guard reset → ALTERs ran again');
+  assert.equal(calls.filter((c) => /^ALTER/i.test(c.sql)).length, 6, 'guard reset → ALTERs ran again');
 });

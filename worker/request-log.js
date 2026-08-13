@@ -1,7 +1,7 @@
 /**
  * worker/request-log.js — per-request D1 logging (quick-260806-dn3, E1).
  *
- * buildLogRow: pure assembly of one request_log row (18 columns).
+ * buildLogRow: pure assembly of one request_log row (21 columns).
  * logRequest:  orchestrator — classify (worker/classify.js), Web Bot Auth
  *              (worker/web-bot-auth.js), hash IP via injected closure, one
  *              D1 INSERT.
@@ -21,6 +21,7 @@
  */
 
 import { classifyRequest, computeSecFetchCoherence } from './classify.js';
+import { classifyAsn } from './asn-class.js';
 import { verifyWebBotAuth } from './web-bot-auth.js';
 
 // Column order for INSERT binds. Mirrors worker/schema.sql (minus the
@@ -46,6 +47,7 @@ export const REQUEST_LOG_COLUMNS = [
   'ip_hash',
   'agent_token', // E3 (quick-260806-ejd): echoed X-ClaudeAtlas-Agent value
   'mcp_client', // E4 (quick-260806-f00): MCP initialize clientInfo (x-ca-mcp-client marker)
+  'asn_class', // quick-260812-p3b (L1): hosting|isp_residential|unknown from classifyAsn
 ];
 
 const INSERT_SQL = `INSERT INTO request_log (${REQUEST_LOG_COLUMNS.join(', ')}) VALUES (${REQUEST_LOG_COLUMNS.map(() => '?').join(', ')})`;
@@ -85,7 +87,8 @@ export const REQUEST_LOG_DDL = [
   wba_signer TEXT,
   ip_hash TEXT,
   agent_token TEXT,
-  mcp_client TEXT
+  mcp_client TEXT,
+  asn_class TEXT
 )`,
   'CREATE INDEX IF NOT EXISTS idx_request_log_timestamp ON request_log(timestamp)',
   'CREATE INDEX IF NOT EXISTS idx_request_log_class ON request_log(class)',
@@ -107,6 +110,8 @@ const AGENT_TOKEN_MIGRATION_SQL =
 const COLUMN_MIGRATIONS = [
   AGENT_TOKEN_MIGRATION_SQL,
   'ALTER TABLE request_log ADD COLUMN mcp_client TEXT',
+  // quick-260812-p3b (L1): asn_class analytics column joins the same lazy loop.
+  'ALTER TABLE request_log ADD COLUMN asn_class TEXT',
 ];
 
 // INCIDENT FIX (2026-08-09): SQLite reports a missing column differently by
@@ -141,13 +146,14 @@ function truncate(value, max = 256) {
 
 /**
  * buildLogRow({ path, method, status, headers, cf, classification, wba,
- * ipHash }) → plain object mirroring the 18 request_log columns.
+ * ipHash, mcpClient, asnClass }) → plain object mirroring the 21
+ * request_log columns.
  *
  * `classification` is the classifyRequest verdict plus `secFetchCoherent`
  * (computed from the same signals). `wba` is the verifyWebBotAuth outcome.
  * NO raw IP ever enters the row — only the injected ipHash.
  */
-export function buildLogRow({ path, method, status, headers, cf, classification, wba, ipHash, mcpClient }) {
+export function buildLogRow({ path, method, status, headers, cf, classification, wba, ipHash, mcpClient, asnClass }) {
   const get = (name) =>
     headers && typeof headers.get === 'function' ? headers.get(name) : null;
   const c = classification || {};
@@ -180,6 +186,11 @@ export function buildLogRow({ path, method, status, headers, cf, classification,
     // RESPONSE's x-ca-mcp-client marker in logRequest). Nullable, no PII —
     // the client volunteered it.
     mcp_client: truncate(mcpClient),
+    // quick-260812-p3b (L1): network bucket for this request's ASN/asOrg
+    // (hosting | isp_residential | unknown), computed by classifyAsn in
+    // logRequest. Analytics-only; separates spoofed agents / datacenter
+    // "browsers" from real actors.
+    asn_class: asnClass ?? null,
   };
 }
 
@@ -208,6 +219,12 @@ export async function logRequest(request, response, env, deps = {}) {
         : null;
     const mcpClient = respGet('x-ca-mcp-client');
 
+    // E5: Web Bot Auth check — INSIDE the waitUntil path, never the response
+    // path. Zero network when no signature headers are present. RESOLVED
+    // BEFORE classification (quick-260812-p3b) so a cryptographically
+    // verified signer can override the L1 ASN heuristic (wbaStatus below).
+    const wba = await verifyWebBotAuth(headers, deps.wbaOpts);
+
     const signals = {
       userAgent: get('user-agent'),
       asn: typeof cf.asn === 'number' ? cf.asn : null,
@@ -221,14 +238,13 @@ export async function logRequest(request, response, env, deps = {}) {
       agentToken: get('x-claudeatlas-agent'), // E3 token echo → rule 0
       mcpValid: respGet('x-ca-mcp') === '1', // E4 MCP front door → rule 0.5
       mcpClient,
+      wbaStatus: wba.status, // L1: 'verified' overrides ASN impersonation flag
     };
 
     const verdict = classifyRequest(signals);
     const secFetchCoherent = computeSecFetchCoherence(signals);
-
-    // E5: Web Bot Auth check — INSIDE the waitUntil path, never the
-    // response path. Zero network when no signature headers are present.
-    const wba = await verifyWebBotAuth(headers, deps.wbaOpts);
+    // L1: network bucket for the analytics column (hosting|isp_residential|unknown).
+    const asnClass = classifyAsn(signals.asn, signals.asOrg);
 
     let ipHash = null;
     if (typeof deps.hashIp === 'function') {
@@ -249,6 +265,7 @@ export async function logRequest(request, response, env, deps = {}) {
       wba,
       ipHash,
       mcpClient,
+      asnClass,
     });
     const values = REQUEST_LOG_COLUMNS.map((col) => row[col]);
 
