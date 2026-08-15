@@ -1,35 +1,36 @@
 {
-  "timestamp": "2026-08-14T09:39:43.460Z",
-  "total_discovered": 68409,
-  "total_skills": 57478,
-  "unique_repos": 7312,
+  "timestamp": "2026-08-15T09:13:41.977Z",
+  "total_discovered": 69655,
+  "total_skills": 58515,
+  "unique_repos": 7452,
   "tiers": {
-    "featured": 5747,
-    "solid": 12253,
-    "listed": 39478
+    "featured": 5851,
+    "solid": 12149,
+    "listed": 40515
   },
   "categories": {
-    "AI & Automation": 36557,
-    "Testing & QA": 1947,
-    "Code & Development": 6871,
-    "Web & Frontend": 4177,
-    "Data & Documents": 4990,
-    "API & Backend": 1635,
-    "DevOps & Infrastructure": 1301
+    "AI & Automation": 37218,
+    "Testing & QA": 1988,
+    "Code & Development": 7028,
+    "Web & Frontend": 4229,
+    "Data & Documents": 5072,
+    "API & Backend": 1662,
+    "DevOps & Infrastructure": 1318
   },
   "content_flags": {
-    "flagged_records": 460,
+    "flagged_records": 475,
     "by_rule": {
-      "curl_pipe_sh": 256,
-      "env_secret_to_url": 56,
-      "ignore_previous": 137,
+      "curl_pipe_sh": 267,
+      "env_secret_to_url": 58,
+      "ignore_previous": 139,
       "exfil_endpoints": 16,
       "dan_mode": 2,
       "wget_pipe_sh": 8,
       "override_system": 5,
+      "new_system_prompt": 1,
       "base64_decode_exec": 4
     },
-    "multi_rule_records": 22
+    "multi_rule_records": 23
   },
   "filter_config": {
     "MIN_BODY_LENGTH": 200,
@@ -40,18 +41,18 @@
     "SOLID_THRESHOLD": 70
   },
   "plugin": {
-    "timestamp": "2026-08-14T09:39:45.544Z",
-    "total_raw_repos": 22748,
-    "total_plugins": 11587,
+    "timestamp": "2026-08-15T09:13:44.235Z",
+    "total_raw_repos": 22804,
+    "total_plugins": 11624,
     "tiers": {
-      "featured": 1158,
-      "solid": 3476,
-      "listed": 6953
+      "featured": 1162,
+      "solid": 3487,
+      "listed": 6975
     }
   },
   "mcp_server": {
-    "timestamp": "2026-08-14T09:39:46.471Z",
-    "total_raw_repos": 22748,
+    "timestamp": "2026-08-15T09:13:45.207Z",
+    "total_raw_repos": 22804,
     "mcp_repos": 65,
     "total_mcp_servers": 155,
     "tiers": {
