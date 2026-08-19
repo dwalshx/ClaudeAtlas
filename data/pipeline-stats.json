@@ -1,32 +1,32 @@
 {
-  "timestamp": "2026-08-17T10:50:17.077Z",
-  "total_discovered": 72187,
-  "total_skills": 60571,
-  "unique_repos": 7765,
+  "timestamp": "2026-08-19T09:01:19.814Z",
+  "total_discovered": 74432,
+  "total_skills": 62472,
+  "unique_repos": 8056,
   "tiers": {
-    "featured": 6057,
-    "solid": 11943,
-    "listed": 42571
+    "featured": 6247,
+    "solid": 11753,
+    "listed": 44472
   },
   "categories": {
-    "AI & Automation": 38490,
-    "Testing & QA": 2049,
-    "Data & Documents": 5286,
-    "Code & Development": 7332,
-    "API & Backend": 1691,
-    "Web & Frontend": 4359,
-    "DevOps & Infrastructure": 1364
+    "AI & Automation": 39706,
+    "Testing & QA": 2122,
+    "Code & Development": 7521,
+    "Web & Frontend": 4495,
+    "Data & Documents": 5466,
+    "API & Backend": 1724,
+    "DevOps & Infrastructure": 1438
   },
   "content_flags": {
-    "flagged_records": 484,
+    "flagged_records": 507,
     "by_rule": {
-      "curl_pipe_sh": 272,
-      "env_secret_to_url": 58,
-      "ignore_previous": 142,
+      "curl_pipe_sh": 286,
+      "env_secret_to_url": 64,
+      "ignore_previous": 143,
       "exfil_endpoints": 17,
       "dan_mode": 2,
       "wget_pipe_sh": 8,
-      "override_system": 5,
+      "override_system": 7,
       "new_system_prompt": 1,
       "base64_decode_exec": 4
     },
@@ -41,18 +41,18 @@
     "SOLID_THRESHOLD": 70
   },
   "plugin": {
-    "timestamp": "2026-08-17T10:50:19.186Z",
-    "total_raw_repos": 22866,
-    "total_plugins": 11658,
+    "timestamp": "2026-08-19T09:01:22.110Z",
+    "total_raw_repos": 23055,
+    "total_plugins": 11769,
     "tiers": {
-      "featured": 1165,
-      "solid": 3497,
-      "listed": 6996
+      "featured": 1176,
+      "solid": 3530,
+      "listed": 7063
     }
   },
   "mcp_server": {
-    "timestamp": "2026-08-17T10:50:20.070Z",
-    "total_raw_repos": 22866,
+    "timestamp": "2026-08-19T09:01:23.106Z",
+    "total_raw_repos": 23055,
     "mcp_repos": 65,
     "total_mcp_servers": 155,
     "tiers": {
