@@ -406,6 +406,21 @@ jobs:
         if: github.event_name != 'push'
         run: node scripts/snapshot-catalog.js
 
+      # quick-260818-ohb: daily traffic-analytics snapshot. Read-only rollup of
+      # the D1 request_log table into data/traffic-snapshot.json (one small,
+      # committed per-day time series). Runs after enrich alongside the catalog
+      # snapshot; gated non-push like it. continue-on-error so a transient D1
+      # blip never fails the run — the script itself already exits 0 on any
+      # failure and leaves the existing file untouched. The file is committed by
+      # the main-only "Commit skills data" step below.
+      - name: Snapshot traffic analytics
+        if: github.event_name != 'push'
+        continue-on-error: true
+        run: node scripts/snapshot-traffic.js
+        env:
+          CF_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
+          CF_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
+
       # Phase 3.2 (Task 12): Upload vectors to Vectorize — extended to upsert all
       # three entity vector files (skills + plugins + MCPs). Each invocation logs
       # its metadata.entity_type distribution. Missing inputs are skipped gracefully
@@ -641,7 +656,7 @@ jobs:
         run: |
           git config user.name "ClaudeAtlas Bot"
           git config user.email "bot@claudeatlas.com"
-          git add data/pipeline-stats.json data/history/ data/kv-published.json data/badge-star-history.json data/snapshots/ || true
+          git add data/pipeline-stats.json data/history/ data/kv-published.json data/badge-star-history.json data/snapshots/ data/traffic-snapshot.json || true
           git diff --cached --quiet || git commit -m "chore: update skills data $(date -u +%Y-%m-%d)"
           # Fail loud on push errors. The prior `|| true` silently masked
           # permission failures for 5+ weeks — never again.

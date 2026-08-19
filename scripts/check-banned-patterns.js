@@ -168,6 +168,18 @@ const LINT_ALLOWLIST = [
     file: 'scripts/snapshot-catalog.js',
     reason: 'catalog composition snapshot writer — bounded per-day summary (~few KB: tier/entity-type/category counters). Catalog reads use the chunked readNdjsonRecords helper.',
   },
+  // ---------------------------------------------------------------------------
+  // quick-260818-ohb — daily traffic-analytics snapshot. Reads Cloudflare D1
+  // over the HTTP /query REST endpoint (NOT a readFileSync on a data/ file) and
+  // writes one tiny per-day time series via JSON.stringify(obj, null, 2)
+  // (Banned B). The output is structurally bounded — ~11-12 days × a few hundred
+  // bytes each — regardless of request_log size. Whole-file exempt, like the
+  // snapshot-catalog.js entry above.
+  // ---------------------------------------------------------------------------
+  {
+    file: 'scripts/snapshot-traffic.js',
+    reason: 'traffic snapshot writer — bounded per-day D1 aggregate summary (~11-12 days × a few hundred bytes; JSON.stringify(x,null,2) Banned B on a bounded sidecar). No unbounded data/ reads (D1 REST, not readFileSync).',
+  },
 ];
 
 // ---------------------------------------------------------------------------
