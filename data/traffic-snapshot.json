@@ -1,0 +1,407 @@
+{
+  "generated_at": "2026-08-19T00:44:48.270Z",
+  "cutover": "2026-08-12",
+  "days": [
+    {
+      "date": "2026-08-07",
+      "classifier_version": "v0",
+      "total": 40107,
+      "class": {
+        "crawler": 12599,
+        "automated_unknown": 14487,
+        "human": 11973,
+        "unknown": 929,
+        "impersonation_suspected": 0,
+        "agent": 119
+      },
+      "coherent_datacenter": 0,
+      "human_corrected": {
+        "v1_human": 11973,
+        "would_be_human_v0": 11973
+      },
+      "agents": {
+        "genuine": 119,
+        "impersonation": 0,
+        "ratio": 0
+      },
+      "impersonation_by_operator": {},
+      "verified_signers": {
+        "ahrefs.com": 422
+      },
+      "probes": 595
+    },
+    {
+      "date": "2026-08-08",
+      "classifier_version": "v0",
+      "total": 71175,
+      "class": {
+        "crawler": 23473,
+        "automated_unknown": 16634,
+        "human": 28228,
+        "unknown": 2825,
+        "impersonation_suspected": 0,
+        "agent": 15
+      },
+      "coherent_datacenter": 0,
+      "human_corrected": {
+        "v1_human": 28228,
+        "would_be_human_v0": 28228
+      },
+      "agents": {
+        "genuine": 15,
+        "impersonation": 0,
+        "ratio": 0
+      },
+      "impersonation_by_operator": {},
+      "verified_signers": {
+        "ahrefs.com": 535,
+        "bot.duckduckgo.com": 3,
+        "assistbot.duckduckgo.com": 1
+      },
+      "probes": 364
+    },
+    {
+      "date": "2026-08-09",
+      "classifier_version": "v0",
+      "total": 42714,
+      "class": {
+        "crawler": 15966,
+        "automated_unknown": 14106,
+        "human": 9452,
+        "unknown": 3164,
+        "impersonation_suspected": 0,
+        "agent": 26
+      },
+      "coherent_datacenter": 0,
+      "human_corrected": {
+        "v1_human": 9452,
+        "would_be_human_v0": 9452
+      },
+      "agents": {
+        "genuine": 26,
+        "impersonation": 0,
+        "ratio": 0
+      },
+      "impersonation_by_operator": {},
+      "verified_signers": {
+        "ahrefs.com": 596,
+        "assistbot.duckduckgo.com": 2,
+        "crawler.exa.ai": 2
+      },
+      "probes": 335
+    },
+    {
+      "date": "2026-08-10",
+      "classifier_version": "v0",
+      "total": 44047,
+      "class": {
+        "crawler": 18699,
+        "automated_unknown": 12615,
+        "human": 6921,
+        "unknown": 5720,
+        "impersonation_suspected": 0,
+        "agent": 92
+      },
+      "coherent_datacenter": 0,
+      "human_corrected": {
+        "v1_human": 6921,
+        "would_be_human_v0": 6921
+      },
+      "agents": {
+        "genuine": 92,
+        "impersonation": 0,
+        "ratio": 0
+      },
+      "impersonation_by_operator": {},
+      "verified_signers": {
+        "ahrefs.com": 673
+      },
+      "probes": 836
+    },
+    {
+      "date": "2026-08-11",
+      "classifier_version": "v0",
+      "total": 48889,
+      "class": {
+        "crawler": 16653,
+        "automated_unknown": 23986,
+        "human": 5377,
+        "unknown": 2862,
+        "impersonation_suspected": 0,
+        "agent": 11
+      },
+      "coherent_datacenter": 0,
+      "human_corrected": {
+        "v1_human": 5377,
+        "would_be_human_v0": 5377
+      },
+      "agents": {
+        "genuine": 11,
+        "impersonation": 0,
+        "ratio": 0
+      },
+      "impersonation_by_operator": {},
+      "verified_signers": {
+        "ahrefs.com": 1181,
+        "crawler.exa.ai": 2
+      },
+      "probes": 385
+    },
+    {
+      "date": "2026-08-12",
+      "classifier_version": "mixed",
+      "total": 96254,
+      "class": {
+        "crawler": 42208,
+        "automated_unknown": 44874,
+        "human": 6043,
+        "unknown": 3068,
+        "impersonation_suspected": 0,
+        "agent": 61
+      },
+      "coherent_datacenter": 0,
+      "human_corrected": {
+        "v1_human": 6043,
+        "would_be_human_v0": 6043
+      },
+      "agents": {
+        "genuine": 61,
+        "impersonation": 0,
+        "ratio": 0
+      },
+      "impersonation_by_operator": {},
+      "verified_signers": {
+        "ahrefs.com": 2442,
+        "crawler.exa.ai": 1
+      },
+      "probes": 327
+    },
+    {
+      "date": "2026-08-13",
+      "classifier_version": "v1",
+      "total": 84235,
+      "class": {
+        "crawler": 52992,
+        "automated_unknown": 27058,
+        "human": 918,
+        "unknown": 3064,
+        "impersonation_suspected": 190,
+        "agent": 13
+      },
+      "coherent_datacenter": 23479,
+      "human_corrected": {
+        "v1_human": 918,
+        "would_be_human_v0": 24397
+      },
+      "agents": {
+        "genuine": 13,
+        "impersonation": 190,
+        "ratio": 14.6
+      },
+      "impersonation_by_operator": {
+        "bytedance": 187,
+        "google": 2,
+        "anthropic": 1
+      },
+      "verified_signers": {
+        "ahrefs.com": 2121
+      },
+      "probes": 191
+    },
+    {
+      "date": "2026-08-14",
+      "classifier_version": "v1",
+      "total": 34502,
+      "class": {
+        "crawler": 16236,
+        "automated_unknown": 13612,
+        "human": 1534,
+        "unknown": 2549,
+        "impersonation_suspected": 557,
+        "agent": 14
+      },
+      "coherent_datacenter": 12260,
+      "human_corrected": {
+        "v1_human": 1534,
+        "would_be_human_v0": 13794
+      },
+      "agents": {
+        "genuine": 14,
+        "impersonation": 557,
+        "ratio": 39.8
+      },
+      "impersonation_by_operator": {
+        "amazon": 314,
+        "bytedance": 241,
+        "google": 2
+      },
+      "verified_signers": {
+        "ahrefs.com": 698,
+        "crawler.exa.ai": 1
+      },
+      "probes": 673
+    },
+    {
+      "date": "2026-08-15",
+      "classifier_version": "v1",
+      "total": 91349,
+      "class": {
+        "crawler": 50512,
+        "automated_unknown": 28156,
+        "human": 9754,
+        "unknown": 2000,
+        "impersonation_suspected": 917,
+        "agent": 10
+      },
+      "coherent_datacenter": 27406,
+      "human_corrected": {
+        "v1_human": 9754,
+        "would_be_human_v0": 37160
+      },
+      "agents": {
+        "genuine": 10,
+        "impersonation": 917,
+        "ratio": 91.7
+      },
+      "impersonation_by_operator": {
+        "bytedance": 372,
+        "openai": 266,
+        "amazon": 231,
+        "perplexity": 47,
+        "google": 1
+      },
+      "verified_signers": {
+        "ahrefs.com": 560,
+        "crawler.exa.ai": 1
+      },
+      "probes": 524
+    },
+    {
+      "date": "2026-08-16",
+      "classifier_version": "v1",
+      "total": 55836,
+      "class": {
+        "crawler": 23531,
+        "automated_unknown": 25817,
+        "human": 1999,
+        "unknown": 3926,
+        "impersonation_suspected": 546,
+        "agent": 17
+      },
+      "coherent_datacenter": 23416,
+      "human_corrected": {
+        "v1_human": 1999,
+        "would_be_human_v0": 25415
+      },
+      "agents": {
+        "genuine": 17,
+        "impersonation": 546,
+        "ratio": 32.1
+      },
+      "impersonation_by_operator": {
+        "bytedance": 377,
+        "amazon": 164,
+        "google": 5
+      },
+      "verified_signers": {
+        "ahrefs.com": 456,
+        "crawler.exa.ai": 4
+      },
+      "probes": 1066
+    },
+    {
+      "date": "2026-08-17",
+      "classifier_version": "v1",
+      "total": 55327,
+      "class": {
+        "crawler": 23784,
+        "automated_unknown": 27173,
+        "human": 557,
+        "unknown": 3348,
+        "impersonation_suspected": 447,
+        "agent": 18
+      },
+      "coherent_datacenter": 25296,
+      "human_corrected": {
+        "v1_human": 557,
+        "would_be_human_v0": 25853
+      },
+      "agents": {
+        "genuine": 18,
+        "impersonation": 447,
+        "ratio": 24.8
+      },
+      "impersonation_by_operator": {
+        "bytedance": 445,
+        "google": 2
+      },
+      "verified_signers": {
+        "ahrefs.com": 1017
+      },
+      "probes": 504
+    },
+    {
+      "date": "2026-08-18",
+      "classifier_version": "v1",
+      "total": 90473,
+      "class": {
+        "crawler": 52173,
+        "automated_unknown": 34557,
+        "human": 660,
+        "unknown": 2368,
+        "impersonation_suspected": 705,
+        "agent": 10
+      },
+      "coherent_datacenter": 29974,
+      "human_corrected": {
+        "v1_human": 660,
+        "would_be_human_v0": 30634
+      },
+      "agents": {
+        "genuine": 10,
+        "impersonation": 705,
+        "ratio": 70.5
+      },
+      "impersonation_by_operator": {
+        "bytedance": 535,
+        "amazon": 164,
+        "anthropic": 6
+      },
+      "verified_signers": {
+        "ahrefs.com": 22355,
+        "crawler.exa.ai": 1
+      },
+      "probes": 729
+    },
+    {
+      "date": "2026-08-19",
+      "classifier_version": "v1",
+      "total": 2772,
+      "class": {
+        "crawler": 1458,
+        "automated_unknown": 1012,
+        "human": 14,
+        "unknown": 171,
+        "impersonation_suspected": 117,
+        "agent": 0
+      },
+      "coherent_datacenter": 858,
+      "human_corrected": {
+        "v1_human": 14,
+        "would_be_human_v0": 872
+      },
+      "agents": {
+        "genuine": 0,
+        "impersonation": 117,
+        "ratio": null
+      },
+      "impersonation_by_operator": {
+        "bytedance": 117
+      },
+      "verified_signers": {
+        "ahrefs.com": 617
+      },
+      "probes": 3
+    }
+  ]
+}
