@@ -1,0 +1,67 @@
+{
+  "schema_version": 1,
+  "date": "2026-08-24",
+  "timestamp": "2026-08-24T09:47:34.486Z",
+  "totals": {
+    "analyzed": 79087,
+    "indexed": 72297,
+    "duplicates": 6790,
+    "tiers": {
+      "featured": 7908,
+      "solid": 14949,
+      "listed": 56230
+    }
+  },
+  "by_entity_type": {
+    "skill": {
+      "records": 66940,
+      "indexed": 60482,
+      "duplicates": 6458,
+      "tiers": {
+        "featured": 6694,
+        "solid": 11306,
+        "listed": 48940
+      }
+    },
+    "plugin": {
+      "records": 11992,
+      "indexed": 11660,
+      "duplicates": 332,
+      "tiers": {
+        "featured": 1199,
+        "solid": 3597,
+        "listed": 7196
+      }
+    },
+    "mcp_server": {
+      "records": 155,
+      "indexed": 155,
+      "duplicates": 0,
+      "tiers": {
+        "featured": 15,
+        "solid": 46,
+        "listed": 94
+      }
+    }
+  },
+  "by_category": {
+    "ai-and-automation": 46136,
+    "code-and-development": 8723,
+    "data-and-documents": 5984,
+    "web-and-frontend": 5027,
+    "testing-and-qa": 2236,
+    "api-and-backend": 2047,
+    "devops-and-infrastructure": 1948,
+    "productivity-and-other": 196
+  },
+  "new_last_7d": 11480,
+  "maintenance": {
+    "active": 68413,
+    "abandoned": 3884
+  },
+  "unique_creators": 15703,
+  "churn": {
+    "archived": 239,
+    "duplicates": 6790
+  }
+}
