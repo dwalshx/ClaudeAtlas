@@ -1,28 +1,28 @@
 {
-  "timestamp": "2026-08-27T19:54:36.217Z",
-  "total_discovered": 84320,
-  "total_skills": 70730,
-  "unique_repos": 9176,
+  "timestamp": "2026-08-28T20:51:54.381Z",
+  "total_discovered": 85738,
+  "total_skills": 71922,
+  "unique_repos": 9338,
   "tiers": {
-    "featured": 7073,
-    "solid": 10927,
-    "listed": 52730
+    "featured": 7192,
+    "solid": 10808,
+    "listed": 53922
   },
   "categories": {
-    "AI & Automation": 44756,
-    "Testing & QA": 2383,
-    "Code & Development": 8559,
-    "Web & Frontend": 5067,
-    "API & Backend": 1982,
-    "Data & Documents": 6284,
-    "DevOps & Infrastructure": 1699
+    "AI & Automation": 45526,
+    "Testing & QA": 2425,
+    "Code & Development": 8697,
+    "Web & Frontend": 5129,
+    "API & Backend": 2008,
+    "Data & Documents": 6401,
+    "DevOps & Infrastructure": 1736
   },
   "content_flags": {
-    "flagged_records": 569,
+    "flagged_records": 583,
     "by_rule": {
-      "curl_pipe_sh": 325,
+      "curl_pipe_sh": 336,
       "exfil_endpoints": 23,
-      "ignore_previous": 156,
+      "ignore_previous": 159,
       "env_secret_to_url": 70,
       "dan_mode": 4,
       "wget_pipe_sh": 8,
@@ -41,24 +41,24 @@
     "SOLID_THRESHOLD": 70
   },
   "plugin": {
-    "timestamp": "2026-08-27T19:54:38.552Z",
-    "total_raw_repos": 23734,
-    "total_plugins": 12179,
+    "timestamp": "2026-08-28T20:51:56.483Z",
+    "total_raw_repos": 23802,
+    "total_plugins": 12222,
     "tiers": {
-      "featured": 1217,
-      "solid": 3653,
-      "listed": 7309
+      "featured": 1222,
+      "solid": 3666,
+      "listed": 7334
     }
   },
   "mcp_server": {
-    "timestamp": "2026-08-27T19:54:39.487Z",
-    "total_raw_repos": 23734,
-    "mcp_repos": 65,
-    "total_mcp_servers": 155,
+    "timestamp": "2026-08-28T20:51:57.406Z",
+    "total_raw_repos": 23802,
+    "mcp_repos": 66,
+    "total_mcp_servers": 162,
     "tiers": {
-      "featured": 15,
-      "solid": 46,
-      "listed": 94
+      "featured": 16,
+      "solid": 48,
+      "listed": 98
     }
   }
 }
