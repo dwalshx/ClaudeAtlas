@@ -1,33 +1,33 @@
 {
-  "timestamp": "2026-08-31T16:26:10.905Z",
-  "total_discovered": 88669,
-  "total_skills": 74427,
-  "unique_repos": 9707,
+  "timestamp": "2026-09-01T13:57:20.023Z",
+  "total_discovered": 90320,
+  "total_skills": 75678,
+  "unique_repos": 9866,
   "tiers": {
-    "featured": 7442,
-    "solid": 10558,
-    "listed": 56427
+    "featured": 7567,
+    "solid": 10433,
+    "listed": 57678
   },
   "categories": {
-    "AI & Automation": 47234,
-    "Testing & QA": 2479,
-    "Code & Development": 9013,
-    "Web & Frontend": 5270,
-    "Data & Documents": 6615,
-    "API & Backend": 2051,
-    "DevOps & Infrastructure": 1765
+    "AI & Automation": 48042,
+    "Testing & QA": 2513,
+    "Code & Development": 9173,
+    "Web & Frontend": 5359,
+    "Data & Documents": 6724,
+    "API & Backend": 2076,
+    "DevOps & Infrastructure": 1791
   },
   "content_flags": {
-    "flagged_records": 600,
+    "flagged_records": 655,
     "by_rule": {
-      "curl_pipe_sh": 343,
+      "curl_pipe_sh": 395,
       "exfil_endpoints": 24,
-      "ignore_previous": 166,
+      "ignore_previous": 167,
       "env_secret_to_url": 70,
-      "dan_mode": 4,
+      "dan_mode": 5,
       "wget_pipe_sh": 8,
       "reverse_shell": 1,
-      "override_system": 9,
+      "override_system": 10,
       "new_system_prompt": 2,
       "base64_decode_exec": 4
     },
@@ -42,18 +42,18 @@
     "SOLID_THRESHOLD": 70
   },
   "plugin": {
-    "timestamp": "2026-08-31T16:26:13.275Z",
-    "total_raw_repos": 25499,
-    "total_plugins": 13187,
+    "timestamp": "2026-09-01T13:57:22.546Z",
+    "total_raw_repos": 25545,
+    "total_plugins": 13214,
     "tiers": {
-      "featured": 1318,
-      "solid": 3956,
-      "listed": 7913
+      "featured": 1321,
+      "solid": 3964,
+      "listed": 7929
     }
   },
   "mcp_server": {
-    "timestamp": "2026-08-31T16:26:14.317Z",
-    "total_raw_repos": 25499,
+    "timestamp": "2026-09-01T13:57:23.525Z",
+    "total_raw_repos": 25545,
     "mcp_repos": 66,
     "total_mcp_servers": 162,
     "tiers": {
