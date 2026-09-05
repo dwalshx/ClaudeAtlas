@@ -1,0 +1,68 @@
+{
+  "generated_at": "2026-09-05T17:51:54.337Z",
+  "window": {
+    "from": "2026-08-29",
+    "to": "2026-09-05",
+    "days": 7
+  },
+  "total_sessions": 199299,
+  "ambiguous_pool": {
+    "count": 116048,
+    "bands": {
+      "agent-shaped": 2194,
+      "uncertain": 110746,
+      "human-shaped": 3108
+    },
+    "pct": {
+      "agent-shaped": 1.9,
+      "uncertain": 95.4,
+      "human-shaped": 2.7
+    }
+  },
+  "component_breakdown": {
+    "count": 116048,
+    "markdown": {
+      "n": 432,
+      "pct": 0.4
+    },
+    "endpoint": {
+      "n": 22,
+      "pct": 0
+    },
+    "asset_ratio_low": {
+      "n": 112934,
+      "pct": 97.3
+    },
+    "incoherent": {
+      "n": 45,
+      "pct": 0
+    },
+    "one_fetch_each": {
+      "n": 1565,
+      "pct": 1.3
+    }
+  },
+  "calibration": {
+    "definite_agent": {
+      "count": 1,
+      "bands": {
+        "agent-shaped": 1,
+        "uncertain": 0,
+        "human-shaped": 0
+      }
+    },
+    "clearly_human": {
+      "count": 1843,
+      "bands": {
+        "agent-shaped": 0,
+        "uncertain": 0,
+        "human-shaped": 1843
+      }
+    }
+  },
+  "estimated_hidden_agents": {
+    "agent_shaped": 2194,
+    "range_low": 2194,
+    "range_high": 57567
+  }
+}

@@ -180,6 +180,19 @@ const LINT_ALLOWLIST = [
     file: 'scripts/snapshot-traffic.js',
     reason: 'traffic snapshot writer — bounded per-day D1 aggregate summary (~11-12 days × a few hundred bytes; JSON.stringify(x,null,2) Banned B on a bounded sidecar). No unbounded data/ reads (D1 REST, not readFileSync).',
   },
+  // ---------------------------------------------------------------------------
+  // quick-260905-esm — log-based hidden-agent band. Reads Cloudflare D1 over the
+  // HTTP /query REST endpoint (NOT a readFileSync on a data/ file); all
+  // per-session aggregation happens IN SQL. Writes one tiny bounded aggregate
+  // sidecar data/agent-band.json via JSON.stringify(obj, null, 2) (Banned B).
+  // Output is structurally bounded — band distribution + component breakdown +
+  // calibration counters — a few KB regardless of request_log size (no
+  // per-session rows). Whole-file exempt, like the snapshot-traffic.js entry.
+  // ---------------------------------------------------------------------------
+  {
+    file: 'scripts/agent-band.js',
+    reason: 'hidden-agent band writer — bounded per-day D1 aggregate summary (band dist + component breakdown + calibration; JSON.stringify(x,null,2) Banned B on a bounded sidecar). No unbounded data/ reads (D1 REST, not readFileSync); no per-session rows.',
+  },
 ];
 
 // ---------------------------------------------------------------------------

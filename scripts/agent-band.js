@@ -44,10 +44,12 @@ const OUT_PATH = join(ROOT, 'data', 'agent-band.json');
 // break every query, which would then just warn + exit 0 with no report).
 const DATABASE_ID = 'd4e341fa-17d6-4069-8a00-3b6a8d698ab9';
 
-// D1 caps rows per response (~10k). If a query returns exactly this many rows
-// the result may be truncated — we warn (a follow-up would add LIMIT/OFFSET
-// paging). Acceptable for a look-at-data first pass.
-const D1_PAGE_CAP = 10000;
+// Empirically the D1 REST /query endpoint returns complete large result sets
+// (verified 2026-09-05: ~199k session rows returned in one response) and throws
+// on oversize responses rather than silently truncating (d1Query already treats
+// a non-success response as an error). This is a soft high-water FYI only — a
+// follow-up could add LIMIT/OFFSET paging if response byte limits are ever hit.
+const D1_ROW_FYI = 250000;
 
 // ---------------------------------------------------------------------------
 // D1 REST helper (verbatim from scripts/snapshot-traffic.js).
@@ -344,10 +346,11 @@ export async function main() {
     const json = await d1Query(url, CF_API_TOKEN, buildSessionQuery(sinceMs));
     const rows = rowsOf(json);
 
-    if (rows.length >= D1_PAGE_CAP) {
+    if (rows.length >= D1_ROW_FYI) {
       console.warn(
-        `[agent-band] query returned ${rows.length} rows (>= D1 page cap ${D1_PAGE_CAP}); ` +
-          'results may be truncated — consider adding LIMIT/OFFSET paging as a follow-up.',
+        `[agent-band] query returned ${rows.length} session rows (>= ${D1_ROW_FYI}); ` +
+          'if D1 response byte limits are ever hit this would throw — consider ' +
+          'adding LIMIT/OFFSET paging as a follow-up.',
       );
     }
 
