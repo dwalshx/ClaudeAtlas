@@ -40,7 +40,7 @@
     "check:sitemap-stability": "node scripts/check-sitemap-stability.js",
     "check:tier-budget": "node scripts/check-tier-budget.js",
     "check:asset-sizes": "node scripts/check-asset-sizes.js",
-    "test": "node --test \"scripts/**/*.test.js\" \"worker/**/*.test.js\""
+    "test": "node --test \"scripts/**/*.test.js\" \"worker/**/*.test.js\" \"src/lib/**/*.test.js\""
   },
   "keywords": [
     "claude",
