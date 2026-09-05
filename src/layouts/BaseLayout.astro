@@ -144,6 +144,188 @@ const updatedIso = updatedDate.toISOString().slice(0, 10);
     })();
   </script>
 
+  <!--
+    Behavioral beacon (quick-260905-fib, L4). A BUNDLED module script (NOT
+    is:inline) so Astro/Vite bundles the scoreBehavior import. Captures ONLY
+    structural interaction AGGREGATES in the browser, scores an automation band
+    IN THE BROWSER, and POSTs ~10 numbers + score + band via sendBeacon.
+
+    Privacy invariants (hard blockers):
+      PRIV-01  Only aggregate numbers + score + band + path leave the browser;
+               no coordinate stream, no key identities, no per-event sequence.
+               Raw/transient state is discarded after the single send.
+      PRIV-02  EU/EEA/UK is NEVER instrumented — we fetch /api/v1/beh/activate
+               FIRST and attach NO listeners / send NOTHING unless activate:true.
+      PRIV-03  Stateless per pageview — no cookie/localStorage/identifier.
+      PRIV-04  keydown increments a COUNT only — event.key/event.code and any
+               per-key timing are NEVER read.
+
+    The beacon must NEVER block, slow, or break the page: passive listeners,
+    navigator.sendBeacon, everything inside one top-level try/catch, and the
+    activate fetch failing is a silent no-op.
+  -->
+  <script>
+    import { scoreBehavior } from '../lib/beh-score.js';
+
+    (function () {
+      try {
+        // Aggregate accumulators — NEVER raw streams.
+        var mousemoveCount = 0;
+        var pointerMoveCount = 0;
+        var wheelCount = 0;
+        var hasWheel = false;
+        var clickCount = 0;
+        var keydownCount = 0;
+        var teleportCount = 0;
+
+        // Transient teleport state: only the LAST move's time + coords, kept to
+        // decide the NEXT click. Overwritten on every move — never a stream.
+        var lastMoveTime = 0;
+        var lastMoveX = 0;
+        var lastMoveY = 0;
+        var haveLastMove = false;
+
+        // Transient click-duration accumulator (Welford-ish sum/sumsq) for the
+        // aggregate std only — individual durations are never retained.
+        var pendingDownTime = 0;
+        var durN = 0;
+        var durSum = 0;
+        var durSumSq = 0;
+
+        var startTime = Date.now();
+        var sent = false;
+
+        function stdOf(n, sum, sumsq) {
+          if (n < 2) return 0;
+          var mean = sum / n;
+          var variance = sumsq / n - mean * mean;
+          return variance > 0 ? Math.sqrt(variance) : 0;
+        }
+
+        function send() {
+          if (sent) return;
+          sent = true;
+          try {
+            var sessionMs = Date.now() - startTime;
+            var seconds = sessionMs > 0 ? sessionMs / 1000 : 1;
+            var interactionTotal =
+              mousemoveCount + wheelCount + clickCount + pointerMoveCount + keydownCount;
+
+            var features = {
+              mouse_event_rate: mousemoveCount / seconds,
+              has_wheel: hasWheel,
+              wheel_count: wheelCount,
+              teleport_click_ratio: teleportCount / Math.max(clickCount, 1),
+              click_count: clickCount,
+              pointer_move_count: pointerMoveCount,
+              keydown_count: keydownCount, // COUNT ONLY (PRIV-04)
+              session_ms: sessionMs,
+              click_duration_spread: stdOf(durN, durSum, durSumSq),
+              interaction_total: interactionTotal,
+            };
+
+            var result = scoreBehavior(features);
+            var payload = JSON.stringify({
+              features: features,
+              score: result.score,
+              band: result.band,
+              path: (window.location && window.location.pathname) || '/',
+            });
+
+            if (navigator && typeof navigator.sendBeacon === 'function') {
+              navigator.sendBeacon('/api/v1/beh', payload);
+            }
+          } catch (e) {
+            /* noop — the beacon must never surface an error */
+          }
+
+          // Discard all transient/raw data after the single send (PRIV-01).
+          haveLastMove = false;
+        }
+
+        function attachListeners() {
+          try {
+            window.addEventListener('mousemove', function (e) {
+              mousemoveCount++;
+              lastMoveTime = Date.now();
+              lastMoveX = e.clientX;
+              lastMoveY = e.clientY;
+              haveLastMove = true;
+            }, { passive: true });
+
+            window.addEventListener('pointermove', function () {
+              pointerMoveCount++;
+            }, { passive: true });
+
+            window.addEventListener('wheel', function () {
+              hasWheel = true;
+              wheelCount++;
+            }, { passive: true });
+
+            window.addEventListener('mousedown', function () {
+              pendingDownTime = Date.now();
+            }, { passive: true });
+
+            window.addEventListener('mouseup', function () {
+              if (pendingDownTime) {
+                var d = Date.now() - pendingDownTime;
+                if (d >= 0 && d < 60000) {
+                  durN++;
+                  durSum += d;
+                  durSumSq += d * d;
+                }
+                pendingDownTime = 0;
+              }
+            }, { passive: true });
+
+            window.addEventListener('click', function (e) {
+              clickCount++;
+              // Teleport: a click with no QUALIFYING approach movement in the
+              // ~500ms / ~100px before it (Playwright/CDP clicks materialize
+              // with no mouse path). Uses only the transient last-move state.
+              var now = Date.now();
+              var qualifies = false;
+              if (haveLastMove && now - lastMoveTime <= 500) {
+                var dx = e.clientX - lastMoveX;
+                var dy = e.clientY - lastMoveY;
+                if (dx * dx + dy * dy <= 100 * 100) qualifies = true;
+              }
+              if (!qualifies) teleportCount++;
+            }, { passive: true });
+
+            // keydown → COUNT ONLY. event.key / event.code / timing are NEVER
+            // read (PRIV-04, the biometric tripwire).
+            window.addEventListener('keydown', function () {
+              keydownCount++;
+            }, { passive: true });
+
+            // Send once, on the first of: pagehide, tab hidden, or a cap.
+            window.addEventListener('pagehide', send, { passive: true });
+            document.addEventListener('visibilitychange', function () {
+              if (document.visibilityState === 'hidden') send();
+            }, { passive: true });
+            // Cap window (~180s per §04-detection-sota §7 L4).
+            setTimeout(send, 180000);
+          } catch (e) {
+            /* noop */
+          }
+        }
+
+        // PRIV-02: check the geo/feature gate BEFORE attaching ANY listener.
+        // Any failure (network error, non-200, non-JSON, activate:false) is a
+        // silent no-op — no listeners, no capture, no POST.
+        fetch('/api/v1/beh/activate')
+          .then(function (r) { return r.json(); })
+          .then(function (d) {
+            if (d && d.activate === true) attachListeners();
+          })
+          .catch(function () { /* silent no-op */ });
+      } catch (e) {
+        /* noop — never affect page rendering or perceived performance */
+      }
+    })();
+  </script>
+
   <!-- Footer -->
   <footer class="border-t border-gray-800 py-8 mt-16">
     <div class="max-w-6xl mx-auto px-4">
