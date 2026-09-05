@@ -1,26 +1,28 @@
 {
-  "generated_at": "2026-09-05T17:51:54.337Z",
+  "generated_at": "2026-09-05T18:05:13.082Z",
   "window": {
     "from": "2026-08-29",
     "to": "2026-09-05",
     "days": 7
   },
-  "total_sessions": 199299,
+  "total_sessions": 199225,
   "ambiguous_pool": {
-    "count": 116048,
+    "count": 115954,
     "bands": {
       "agent-shaped": 2194,
-      "uncertain": 110746,
-      "human-shaped": 3108
+      "single_fetch_no_asset": 110074,
+      "uncertain": 110655,
+      "human-shaped": 3105
     },
     "pct": {
       "agent-shaped": 1.9,
+      "single_fetch_no_asset": 94.9,
       "uncertain": 95.4,
       "human-shaped": 2.7
     }
   },
   "component_breakdown": {
-    "count": 116048,
+    "count": 115954,
     "markdown": {
       "n": 432,
       "pct": 0.4
@@ -30,7 +32,7 @@
       "pct": 0
     },
     "asset_ratio_low": {
-      "n": 112934,
+      "n": 112843,
       "pct": 97.3
     },
     "incoherent": {
@@ -38,7 +40,7 @@
       "pct": 0
     },
     "one_fetch_each": {
-      "n": 1565,
+      "n": 1563,
       "pct": 1.3
     }
   },
@@ -52,17 +54,17 @@
       }
     },
     "clearly_human": {
-      "count": 1843,
+      "count": 1840,
       "bands": {
         "agent-shaped": 0,
         "uncertain": 0,
-        "human-shaped": 1843
+        "human-shaped": 1840
       }
     }
   },
   "estimated_hidden_agents": {
     "agent_shaped": 2194,
     "range_low": 2194,
-    "range_high": 57567
+    "range_high": 57522
   }
 }

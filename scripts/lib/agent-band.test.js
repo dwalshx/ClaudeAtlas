@@ -122,6 +122,60 @@ test('signals object exposes derived evidence features', () => {
   assert.equal(r.signals.total_requests, 4);
 });
 
+test('single-fetch-no-asset flag: 1 req / 0 assets / no tell → flagged, band uncertain', () => {
+  const r = scoreSession(
+    agg({
+      total_requests: 1,
+      distinct_paths: 1,
+      content_requests: 1,
+      asset_requests: 0,
+      markdown_accept: 0,
+      agent_endpoint: 0,
+    }),
+  );
+  assert.equal(r.single_fetch_no_asset, true);
+  assert.equal(r.band, 'uncertain'); // still scored as uncertain, not agent-shaped
+});
+
+test('single-fetch-no-asset flag: NOT set when the lone request is a strong tell', () => {
+  // A single markdown-Accept fetch lands agent-shaped → not a no-tell single fetch.
+  const r = scoreSession(
+    agg({
+      total_requests: 1,
+      distinct_paths: 1,
+      content_requests: 1,
+      asset_requests: 0,
+      markdown_accept: 1,
+    }),
+  );
+  assert.equal(r.band, 'agent-shaped');
+  assert.equal(r.single_fetch_no_asset, false);
+});
+
+test('single-fetch-no-asset flag: NOT set for multi-request sessions', () => {
+  const r = scoreSession(
+    agg({
+      total_requests: 4,
+      distinct_paths: 4,
+      content_requests: 4,
+      asset_requests: 0,
+    }),
+  );
+  assert.equal(r.single_fetch_no_asset, false);
+});
+
+test('single-fetch-no-asset flag: NOT set when the lone request is an asset', () => {
+  const r = scoreSession(
+    agg({
+      total_requests: 1,
+      distinct_paths: 1,
+      content_requests: 0,
+      asset_requests: 1,
+    }),
+  );
+  assert.equal(r.single_fetch_no_asset, false);
+});
+
 test('div0 guard: zero content+asset requests → asset_ratio 0, no NaN', () => {
   const r = scoreSession(
     agg({ total_requests: 1, content_requests: 0, asset_requests: 0 }),

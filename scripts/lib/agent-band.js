@@ -71,7 +71,15 @@ function clamp01(x) {
  *   markdown_accept, agent_endpoint, sec_fetch_incoherent,
  *   has_token_echo (0|1), has_mcp (0|1), asn_class (string)
  * @returns {{ score:number, band:'human-shaped'|'uncertain'|'agent-shaped',
- *             method:'cooperative'|'session_shape', signals:object }}
+ *             method:'cooperative'|'session_shape', single_fetch_no_asset:boolean,
+ *             signals:object }}
+ *
+ * `single_fetch_no_asset` is a REPORTING sub-segment, not a scoring change: a
+ * session that fetched exactly one content page and pulled zero assets and did
+ * NOT already land 'agent-shaped'. A real browser first-paint pulls its CSS/JS/
+ * favicon in the same session, so this pattern is likely mostly non-human — but
+ * it is unprovable per-session from logs, so it stays scored as 'uncertain' and
+ * is only SURFACED as a named sub-segment (held out of the agent count).
  */
 export function scoreSession(agg = {}) {
   const total_requests = num(agg.total_requests);
@@ -103,7 +111,13 @@ export function scoreSession(agg = {}) {
 
   // 1. GROUND TRUTH — cooperative agents self-identify. Definite, unconditional.
   if (has_token_echo > 0 || has_mcp > 0) {
-    return { score: 1, band: 'agent-shaped', method: 'cooperative', signals };
+    return {
+      score: 1,
+      band: 'agent-shaped',
+      method: 'cooperative',
+      single_fetch_no_asset: false,
+      signals,
+    };
   }
 
   // 2/3. Weighted session-shape score.
@@ -141,5 +155,14 @@ export function scoreSession(agg = {}) {
     band = 'uncertain';
   }
 
-  return { score, band, method: 'session_shape', signals };
+  // REPORTING sub-segment (NOT a scoring change): one content page, zero assets,
+  // and not already agent-shaped. Surfaced separately so the internet's biggest
+  // ambiguous pattern is visible/trackable rather than buried in 'uncertain'.
+  const single_fetch_no_asset =
+    total_requests === 1 &&
+    asset_requests === 0 &&
+    content_requests >= 1 &&
+    band !== 'agent-shaped';
+
+  return { score, band, method: 'session_shape', single_fetch_no_asset, signals };
 }

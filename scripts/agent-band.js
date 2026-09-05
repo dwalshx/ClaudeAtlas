@@ -144,6 +144,8 @@ export function assembleReport(scored) {
 
   const ambiguous = emptyBands();
   let ambiguousCount = 0;
+  // REPORTING sub-segment of the uncertain band — surfaced, not scored separately.
+  let singleFetchNoAsset = 0;
   const component = {
     markdown: 0,
     endpoint: 0,
@@ -165,6 +167,7 @@ export function assembleReport(scored) {
     if (AMBIGUOUS_CLASSES.has(cls)) {
       ambiguousCount++;
       ambiguous[res.band] = (ambiguous[res.band] || 0) + 1;
+      if (res.single_fetch_no_asset) singleFetchNoAsset++;
       if (s.markdown_rate > 0) component.markdown++;
       if (s.endpoint_rate > 0) component.endpoint++;
       if (s.asset_ratio < 0.1 && agg.content_requests >= 1) component.asset_ratio_low++;
@@ -198,9 +201,18 @@ export function assembleReport(scored) {
     total_sessions,
     ambiguous_pool: {
       count: ambiguousCount,
-      bands: ambiguous,
+      // `uncertain` stays the FULL uncertain total (single_fetch_no_asset is a
+      // subset of it, still scored as uncertain). `single_fetch_no_asset` is an
+      // additional breakout key; existing keys keep their meaning.
+      bands: {
+        'agent-shaped': ambiguous['agent-shaped'],
+        single_fetch_no_asset: singleFetchNoAsset,
+        uncertain: ambiguous.uncertain,
+        'human-shaped': ambiguous['human-shaped'],
+      },
       pct: {
         'agent-shaped': pct(ambiguous['agent-shaped'], ambiguousCount),
+        single_fetch_no_asset: pct(singleFetchNoAsset, ambiguousCount),
         uncertain: pct(ambiguous.uncertain, ambiguousCount),
         'human-shaped': pct(ambiguous['human-shaped'], ambiguousCount),
       },
@@ -238,14 +250,21 @@ function printReport(report, window) {
   L(`[1] Window: ${from} → ${to}  (${days} day${days === 1 ? '' : 's'})`);
   L(`    Total sessions scored: ${report.total_sessions}`);
 
-  // Section 2 — band distribution over the ambiguous pool.
+  // Section 2 — band distribution over the ambiguous pool. Four lines:
+  // single_fetch_no_asset is broken OUT of the uncertain total for visibility.
   const ap = report.ambiguous_pool;
+  const uncertainOther = ap.bands.uncertain - ap.bands.single_fetch_no_asset;
+  const uncertainOtherPct = ap.count > 0 ? Math.round((uncertainOther / ap.count) * 1000) / 10 : 0;
   L('');
   L(`[2] Band distribution over the AMBIGUOUS POOL (class ∈ {human, unknown})`);
   L(`    Pool size: ${ap.count} sessions`);
-  L(`    agent-shaped : ${ap.bands['agent-shaped']}  (${ap.pct['agent-shaped']}%)   ← "hidden in the human bucket"`);
-  L(`    uncertain    : ${ap.bands.uncertain}  (${ap.pct.uncertain}%)`);
-  L(`    human-shaped : ${ap.bands['human-shaped']}  (${ap.pct['human-shaped']}%)`);
+  L(`    agent-shaped          : ${ap.bands['agent-shaped']}  (${ap.pct['agent-shaped']}%)   ← "hidden in the human bucket"`);
+  L(`    single-fetch-no-asset : ${ap.bands.single_fetch_no_asset}  (${ap.pct.single_fetch_no_asset}%)`);
+  L(`    uncertain (other)     : ${uncertainOther}  (${uncertainOtherPct}%)`);
+  L(`    human-shaped          : ${ap.bands['human-shaped']}  (${ap.pct['human-shaped']}%)`);
+  L(`    note: single-fetch-no-asset is likely mostly non-human (a real browser`);
+  L(`          pulls its assets) but unprovable per-session from logs — held out`);
+  L(`          of the agent count deliberately (still scored 'uncertain').`);
 
   // Section 3 — component-signal breakdown.
   const cb = report.component_breakdown;

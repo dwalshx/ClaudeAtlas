@@ -46,7 +46,7 @@ quantify "agents hiding in the human bucket" without any live-worker change or P
 
 ## What shipped
 
-- **`scripts/lib/agent-band.js`** — pure, zero-I/O `scoreSession(agg) → {score, band, method, signals}`. Ground-truth shortcut (token_echo/mcp → score 1, agent-shaped, cooperative), documented CALIBRATE weight set, single-request no-tell cap. 9/9 unit tests.
+- **`scripts/lib/agent-band.js`** — pure, zero-I/O `scoreSession(agg) → {score, band, method, single_fetch_no_asset, signals}`. Ground-truth shortcut (token_echo/mcp → score 1, agent-shaped, cooperative), documented CALIBRATE weight set, single-request no-tell cap, and a `single_fetch_no_asset` reporting flag (1 content req / 0 assets / no strong tell; still scored `uncertain`). 13/13 unit tests.
 - **`scripts/agent-band.js`** — D1 REST read-only aggregator. ONE per-session `GROUP BY (day, ip_hash, user_agent)` conditional-SUM query; prints the 5-section console report and writes the bounded `data/agent-band.json` sidecar. Env-check-first + try/catch → warn+exit(0); invoked-as-script guard.
 - **`data/agent-band.json`** — bounded aggregate sidecar (band dist + component breakdown + calibration + hidden-agent range). No per-session rows, no ip_hash, no user_agent.
 - **Housekeeping** — allowlist entry for `scripts/agent-band.js` (Banned B on a bounded sidecar); `npm run agent-band` script.
@@ -57,36 +57,48 @@ Command: `node --env-file=.env scripts/agent-band.js`
 
 ```
 [1] Window: 2026-08-29 → 2026-09-05  (7 days)
-    Total sessions scored: 199299
+    Total sessions scored: 199225
 
 [2] Band distribution over the AMBIGUOUS POOL (class ∈ {human, unknown})
-    Pool size: 116048 sessions
-    agent-shaped : 2194  (1.9%)   ← "hidden in the human bucket"
-    uncertain    : 110746  (95.4%)
-    human-shaped : 3108  (2.7%)
+    Pool size: 115954 sessions
+    agent-shaped          : 2194  (1.9%)   ← "hidden in the human bucket"
+    single-fetch-no-asset : 110074  (94.9%)
+    uncertain (other)     : 581  (0.5%)
+    human-shaped          : 3105  (2.7%)
+    note: single-fetch-no-asset is likely mostly non-human (a real browser
+          pulls its assets) but unprovable per-session from logs — held out
+          of the agent count deliberately (still scored 'uncertain').
 
-[3] Component-signal breakdown of the ambiguous pool (116048 sessions)
+[3] Component-signal breakdown of the ambiguous pool (115954 sessions)
     markdown Accept > 0        : 432  (0.4%)
     agent-endpoint hits        : 22  (0%)
-    asset_ratio < 0.1 w/content: 112934  (97.3%)
+    asset_ratio < 0.1 w/content: 112843  (97.3%)
     incoherent Sec-Fetch       : 45  (0%)
-    one-fetch-each sweep       : 1565  (1.3%)
+    one-fetch-each sweep       : 1563  (1.3%)
 
 [4] Calibration check
     DEFINITE agents (token_echo OR mcp) — MUST be agent-shaped:
       count 1  →  agent-shaped 1, uncertain 0, human-shaped 0
     CLEARLY-human (asset_ratio≥0.5, coherent, residential) — should be human-shaped:
-      count 1843  →  agent-shaped 0, uncertain 0, human-shaped 1843
+      count 1840  →  agent-shaped 0, uncertain 0, human-shaped 1840
 
 [5] Estimated hidden agents in the human bucket
     agent-shaped: 2194
-    range (incl. half the uncertain bucket): 2194–57567 sessions
+    range (incl. half the uncertain bucket): 2194–57522 sessions
 ```
+
+> **Reporting update (coordinator-approved, 2026-09-05):** the single-fetch-no-asset
+> pattern is now broken out as its own named line in section 2 (and as a
+> `single_fetch_no_asset` key in `data/agent-band.json`) instead of being buried
+> in `uncertain`. This is a VISIBILITY split only — scoring weights and band
+> thresholds are unchanged; these sessions still score as `uncertain`. Breaking
+> it out shows that the "95.4% uncertain" is almost entirely this one pattern
+> (94.9%), leaving genuine `uncertain (other)` at just 0.5% (581 sessions).
 
 ## Reading the numbers (calibration is sane, but the pool is dominated by unknowns)
 
 - **Calibration passes on both anchors:** the sole cooperative-ground-truth session (token_echo/mcp) lands agent-shaped, and all 1,843 clearly-browser sessions (asset-heavy + coherent + residential) land human-shaped. Weights did not need adjusting to hit either anchor.
-- **The headline is honest, not blunt:** 95.4% of the ambiguous pool is `uncertain`. The driver (section 3) is that **97.3% of ambiguous sessions are single content-page fetches with essentially no asset requests** (`asset_ratio < 0.1` with content). A real browser first-paint pulls `_astro/*.css`, JS, favicon in the same session, so a lone content request with zero assets is somewhat agent-leaning — but the single-request no-tell **cap deliberately holds these at `uncertain`** rather than agent-shaped, to protect cached-asset / low-interaction / assistive-tech humans and because the daily-salt session boundary can split a real visit. Log signals alone cannot disambiguate a single pageview, and the report says so honestly via the wide range.
+- **The headline is honest, not blunt:** the ambiguous pool is **94.9% single-fetch-no-asset** (110,074 sessions) — now broken out as its own named line rather than buried in `uncertain` (which drops to just 0.5% / 581 "other"). A real browser first-paint pulls `_astro/*.css`, JS, favicon in the same session, so a lone content request with zero assets is likely mostly non-human — but it is unprovable per-session from logs, so the single-request no-tell **cap deliberately holds these as `uncertain` (held out of the agent count)** to protect cached-asset / low-interaction / assistive-tech humans and because the daily-salt session boundary can split a real visit. This is the internet's biggest ambiguous pattern; surfacing it as a tracked segment is the point.
 - **Confident agent-shaped in the human bucket: 2,194 sessions (1.9%)** — these cleared the cap (markdown Accept, agent endpoints, multi-page no-asset sweeps, or incoherent Sec-Fetch). The estimated range including half the uncertain bucket is **2,194–57,567 sessions/7 days**.
 - **Strong tells are rare but clean:** markdown Accept 0.4%, agent-endpoint hits ~0%, incoherent Sec-Fetch ~0%. Cooperative ground truth is tiny (1 session in 7 days), consistent with the telemetry finding that agents barely touch /api or /llms.txt.
 
@@ -94,10 +106,10 @@ Command: `node --env-file=.env scripts/agent-band.js`
 
 ## Verification
 
-- `node --test scripts/lib/agent-band.test.js` → 9 pass / 0 fail (ground truth, browser→human, markdown/ratio0→agent, single-req→uncertain cap, signals evidence, div0 guard).
-- `node --env-file=.env scripts/agent-band.js` → all 5 sections render; token_echo/mcp → agent-shaped; clearly-browser → human-shaped; sidecar written.
+- `node --test scripts/lib/agent-band.test.js` → 13 pass / 0 fail (ground truth, browser→human, markdown/ratio0→agent, single-req→uncertain cap, single-fetch-no-asset flag set/not-set cases, signals evidence, div0 guard).
+- `node --env-file=.env scripts/agent-band.js` → all 5 sections render (section 2 now four lines incl. single-fetch-no-asset); token_echo/mcp → agent-shaped; clearly-browser → human-shaped; sidecar written.
 - `npm run check:patterns` → clean (0 baselined, 0 new; `scripts/agent-band.js` allowlisted).
-- `npm test` → 377 tests, 369 pass, **2 fail** (both pre-existing embed-skills `Task 9: B-2` fails — unchanged), 6 skipped. My 9 new tests are among the passing.
+- `npm test` → 381 tests, 373 pass, **2 fail** (both pre-existing embed-skills `Task 9: B-2` fails — unchanged), 6 skipped. My 13 new tests are among the passing.
 - `git check-ignore data/agent-band.json` → no output (exit 1 = committable).
 - No-env path → `[agent-band] ... not set — skipping` + exit 0.
 - PII check: `grep -iE "ip_hash|user_agent" data/agent-band.json` → none. Report/sidecar carry aggregates only.
