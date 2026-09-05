@@ -1,31 +1,31 @@
 {
-  "timestamp": "2026-09-04T13:53:02.537Z",
-  "total_discovered": 94284,
-  "total_skills": 78845,
-  "unique_repos": 10313,
+  "timestamp": "2026-09-05T12:39:16.000Z",
+  "total_discovered": 96020,
+  "total_skills": 80289,
+  "unique_repos": 10457,
   "tiers": {
-    "featured": 7884,
-    "solid": 10116,
-    "listed": 60845
+    "featured": 8028,
+    "solid": 9972,
+    "listed": 62289
   },
   "categories": {
-    "AI & Automation": 50109,
-    "Testing & QA": 2628,
-    "Code & Development": 9546,
-    "Web & Frontend": 5576,
-    "Data & Documents": 6987,
-    "API & Backend": 2145,
-    "DevOps & Infrastructure": 1854
+    "AI & Automation": 51058,
+    "Testing & QA": 2648,
+    "Code & Development": 9701,
+    "Web & Frontend": 5713,
+    "Data & Documents": 7067,
+    "API & Backend": 2185,
+    "DevOps & Infrastructure": 1917
   },
   "content_flags": {
-    "flagged_records": 677,
+    "flagged_records": 682,
     "by_rule": {
-      "curl_pipe_sh": 410,
+      "curl_pipe_sh": 413,
       "exfil_endpoints": 25,
       "ignore_previous": 172,
       "env_secret_to_url": 71,
-      "dan_mode": 5,
-      "wget_pipe_sh": 8,
+      "dan_mode": 6,
+      "wget_pipe_sh": 9,
       "reverse_shell": 1,
       "override_system": 10,
       "new_system_prompt": 2,
@@ -42,24 +42,24 @@
     "SOLID_THRESHOLD": 70
   },
   "plugin": {
-    "timestamp": "2026-09-04T13:53:04.978Z",
-    "total_raw_repos": 25787,
-    "total_plugins": 13332,
+    "timestamp": "2026-09-05T12:39:18.522Z",
+    "total_raw_repos": 25848,
+    "total_plugins": 13374,
     "tiers": {
-      "featured": 1333,
-      "solid": 3999,
-      "listed": 8000
+      "featured": 1337,
+      "solid": 4012,
+      "listed": 8025
     }
   },
   "mcp_server": {
-    "timestamp": "2026-09-04T13:53:05.939Z",
-    "total_raw_repos": 25787,
+    "timestamp": "2026-09-05T12:39:19.496Z",
+    "total_raw_repos": 25848,
     "mcp_repos": 67,
-    "total_mcp_servers": 164,
+    "total_mcp_servers": 165,
     "tiers": {
       "featured": 16,
       "solid": 49,
-      "listed": 99
+      "listed": 100
     }
   }
 }
