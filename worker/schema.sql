@@ -97,3 +97,47 @@ CREATE TABLE IF NOT EXISTS request_log (
 
 CREATE INDEX IF NOT EXISTS idx_request_log_timestamp ON request_log(timestamp);
 CREATE INDEX IF NOT EXISTS idx_request_log_class ON request_log(class);
+
+-- quick-260905-fib (L4): behavioral beacon aggregates. One row per non-EU
+-- pageview that produced interaction. The client (src/layouts/BaseLayout.astro)
+-- computes ~10 STRUCTURAL aggregates + scores an automation band IN THE BROWSER
+-- (src/lib/beh-score.js) and POSTs only those numbers + score + band. This
+-- catches agentic browsers (ChatGPT Atlas, Claude-in-Chrome, Perplexity Comet)
+-- that run real Chrome from residential IPs but execute JS — their input-event
+-- STRUCTURE betrays automation where logs cannot. Complements request_log.
+--
+-- PRIVACY (hard invariants, PRIV-01..04):
+--   * NO ip_hash, NO cookie, NO nonce, NO device identifier of ANY kind. The
+--     beacon is stateless per pageview — there is deliberately no identifier
+--     column here (PRIV-03).
+--   * Only aggregate NUMBERS + score + band + path are stored; no coordinate
+--     stream, no key identities, no per-key timing (PRIV-01, PRIV-04).
+--   * EU/EEA/UK is never instrumented (client activate-gate + worker re-drop);
+--     rows only ever land for non-EU visitors (PRIV-02).
+--
+-- OPERATOR STEP (wrangler CANNOT run on this win32-arm64 machine — workerd has
+-- no win32-arm64 build): the LIVE table is created LAZILY on the first insert
+-- via the Worker's own DB binding (BEHAVIOR_LOG_DDL in worker/beh.js). This
+-- block is the source of truth; IF NOT EXISTS makes re-applying safe.
+--   node --env-file=.env scripts/apply-d1-schema.js   (once a D1-Edit token exists)
+CREATE TABLE IF NOT EXISTS behavior_log (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  timestamp INTEGER NOT NULL,
+  path TEXT,
+  country TEXT,
+  mouse_event_rate REAL,             -- mousemove events / second over the session
+  has_wheel INTEGER,                 -- 0/1; wheel absence is a strong automation tell
+  wheel_count INTEGER,
+  teleport_click_ratio REAL,         -- 0..1; clicks with no approach movement ÷ clicks
+  click_count INTEGER,
+  pointer_move_count INTEGER,
+  keydown_count INTEGER,             -- COUNT ONLY — never key identities/timing (PRIV-04)
+  session_ms INTEGER,
+  click_duration_spread REAL,        -- std of mousedown->mouseup ms (aggregate only)
+  interaction_total INTEGER,
+  score REAL,                        -- 0..1 automation-likelihood (scored client-side)
+  band TEXT                          -- human-shaped|uncertain|automation-signature
+  -- NO ip_hash / cookie / nonce / identifier column, BY DESIGN (PRIV-03).
+);
+
+CREATE INDEX IF NOT EXISTS idx_behavior_log_timestamp ON behavior_log(timestamp);

@@ -84,6 +84,16 @@ import { generateAgentToken, buildAgentIndex } from './agent-index.js';
 // ---------------------------------------------------------------------------
 import { handleMcpRequest, buildServerCard } from './mcp.js';
 
+// ---------------------------------------------------------------------------
+// quick-260905-fib (L4): behavioral beacon. GET /api/v1/beh/activate is the
+// per-country geo gate (EU/EEA/UK → activate:false, never cached); POST
+// /api/v1/beh ingests ONLY ~10 structural aggregates + score + band into the
+// identifier-free behavior_log D1 table (ctx.waitUntil, non-blocking). Pure
+// module: index.js imports FROM it, never the reverse. Privacy invariants
+// (PRIV-01..04) are enforced inside beh.js.
+// ---------------------------------------------------------------------------
+import { handleBehActivate, handleBehIngest } from './beh.js';
+
 // Shared response headers for every markdown rendition. noindex keeps the
 // markdown twin out of search indexes (canonical is the HTML page); Vary
 // prevents the edge cache from cross-serving HTML/markdown for one URL.
@@ -801,6 +811,15 @@ async function handleFetch(request, env, ctx) {
     // OPTIONS preflight for /api/* is already handled at the top of fetch().
     if (url.pathname === '/api/v1/agent-ping') {
       return agentPing(request, env);
+    }
+    // quick-260905-fib (L4): behavioral beacon routes. BOTH run BEFORE the
+    // env.ASSETS fallthrough. activate is the geo gate (no-store, per-country);
+    // ingest is the identifier-free aggregate sink (waitUntil insert, fast 204).
+    if (url.pathname === '/api/v1/beh/activate') {
+      return handleBehActivate(request, env);
+    }
+    if (url.pathname === '/api/v1/beh') {
+      return handleBehIngest(request, env, ctx);
     }
     // Phase 3.1.3 — Agent Hub feed routes.
     if (url.pathname === '/api/v1/whats-new') {
