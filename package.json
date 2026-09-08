@@ -25,6 +25,7 @@
     "generate:feeds": "node scripts/generate-feeds.js",
     "check:patterns": "node scripts/check-banned-patterns.js",
     "agent-band": "node scripts/agent-band.js",
+    "reciprocal-pass": "node scripts/reciprocal-pass.js",
     "lint:legacy-shape": "node scripts/lint-no-legacy-skill-shape.js",
     "check:size": "node scripts/check-skills-size.js",
     "test:lib": "node --test scripts/lib/__tests__/ndjson.test.js",

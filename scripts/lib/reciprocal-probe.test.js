@@ -519,3 +519,15 @@ test('renderReport: headline, one row per target, standards matrix header', () =
   assert.ok(md.includes('control_passes'), 'control line');
   assert.equal(typeof renderReport(null), 'string');
 });
+
+test('renderReport: standards matrix distinguishes 404 (✗) from network error / robots-disallowed (—)', () => {
+  const t = target({ domain: 'matrix.example' });
+  t.well_known['/llms.txt'] = { result: 'allowed', status: 200, content_type: 'text/plain', bytes: 10, plausible: true };
+  t.well_known['/llms-full.txt'] = { result: 'error', status: 404, content_type: 'text/html', bytes: 10, plausible: false };
+  t.well_known['/.well-known/agents.json'] = { result: 'error', status: null, content_type: null, bytes: null, plausible: false, error: 'timeout' };
+  t.well_known['/.well-known/mcp/server-card.json'] = { result: 'robots_disallowed', status: null, content_type: null, bytes: null, plausible: false };
+  t.well_known['/.well-known/http-message-signatures-directory'] = { result: 'allowed', status: 200, content_type: 'text/html', bytes: 10, plausible: false };
+  t.well_known['/ai.txt'] = { result: 'blocked', status: 403, content_type: null, bytes: 10, plausible: false };
+  const md = renderReport({ run_at: 'x', targets: [t] });
+  assert.ok(md.includes('| matrix.example | ✓ | ✗ | — | — | ✗ | ✗ |'), md);
+});

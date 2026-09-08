@@ -193,6 +193,18 @@ const LINT_ALLOWLIST = [
     file: 'scripts/agent-band.js',
     reason: 'hidden-agent band writer — bounded per-day D1 aggregate summary (band dist + component breakdown + calibration; JSON.stringify(x,null,2) Banned B on a bounded sidecar). No unbounded data/ reads (D1 REST, not readFileSync); no per-session rows.',
   },
+  // ---------------------------------------------------------------------------
+  // quick-260908-045 — Reciprocal Pass v1 runner. Reads the tiny committed
+  // target list data/reciprocal-targets.json (~27 entries, Banned A) and
+  // writes the bounded sidecar data/reciprocal-pass.json via
+  // JSON.stringify(obj, null, 2) (Banned B). Output is structurally bounded —
+  // one record per target × a fixed probe set (~27 × few KB) regardless of
+  // anything else. Whole-file exempt, like the agent-band.js entry.
+  // ---------------------------------------------------------------------------
+  {
+    file: 'scripts/reciprocal-pass.js',
+    reason: 'reciprocal-pass runner — bounded target-list read (~27 entries) + bounded per-target sidecar write (~27 × few KB; JSON.stringify(x,null,2) Banned B). No unbounded data/ reads.',
+  },
 ];
 
 // ---------------------------------------------------------------------------

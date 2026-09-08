@@ -584,10 +584,14 @@ function fmtBytes(b) {
   return b + ' B';
 }
 
+// ✓ = 200 + plausible body; — = never fetched (robots-disallowed) or no HTTP
+// answer at all (network error, status null); ✗ = the site answered with
+// anything else (404 / 403 / HTML shell / …).
 function matrixMark(t, path) {
   const w = t && t.well_known && t.well_known[path];
   if (!w) return '—';
-  if (w.result === 'robots_disallowed' || w.result === 'error') return '—';
+  if (w.result === 'robots_disallowed') return '—';
+  if (w.result === 'error' && !Number.isFinite(w.status)) return '—';
   return w.result === 'allowed' && w.plausible === true ? '✓' : '✗';
 }
 
@@ -652,7 +656,7 @@ export function renderReport(pass) {
 
   lines.push('## Agent-web standards matrix');
   lines.push('');
-  lines.push('✓ = 200 with a plausible body · ✗ = anything else · — = not fetched (robots-disallowed) or network error');
+  lines.push('✓ = 200 with a plausible body · ✗ = the site answered with anything else (404, 403, HTML shell…) · — = not fetched (robots-disallowed) or no HTTP answer (network error)');
   lines.push('');
   lines.push(`| domain | ${probePaths.map((x) => `\`${x}\``).join(' | ')} |`);
   lines.push(`| --- | ${probePaths.map(() => ':-:').join(' | ')} |`);

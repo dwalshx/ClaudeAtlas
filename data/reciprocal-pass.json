@@ -1,0 +1,217 @@
+{
+  "schema_version": 1,
+  "run_at": "2026-09-08T07:22:35.950Z",
+  "agent": {
+    "ua": "ClaudeAtlasBot/1.0 (+https://claudeatlas.com/bot)",
+    "policy": {
+      "min_host_spacing_ms": 3000,
+      "concurrency": 3,
+      "timeout_ms": 15000,
+      "max_redirects": 5,
+      "retry_on_network_error": 1,
+      "method": "GET"
+    },
+    "probe_paths": [
+      "/llms.txt",
+      "/llms-full.txt",
+      "/.well-known/agents.json",
+      "/.well-known/mcp/server-card.json",
+      "/.well-known/http-message-signatures-directory",
+      "/ai.txt"
+    ]
+  },
+  "targets": [
+    {
+      "domain": "claudeatlas.com",
+      "operator": "ClaudeAtlas",
+      "tier": "control",
+      "source": "self",
+      "note": "we probe ourselves; aggregate.control_passes reports whether we pass our own probe",
+      "robots": {
+        "present": true,
+        "status": 200,
+        "policy": "parsed",
+        "groups_count": 8,
+        "sitemap_count": 1,
+        "content_signal": "search=yes,ai-input=yes,ai-train=no",
+        "ai_bots_named": [
+          "GPTBot",
+          "ClaudeBot",
+          "Google-Extended",
+          "Applebot-Extended",
+          "CCBot",
+          "meta-externalagent",
+          "Amazonbot"
+        ],
+        "ai_bots_disallowed_all": [],
+        "disallows_all_bots": false,
+        "disallows_us": false,
+        "mentions_claudeatlasbot": false,
+        "redirect_count": 0,
+        "final_host": "claudeatlas.com"
+      },
+      "homepage": {
+        "result": "allowed",
+        "status": 200,
+        "server": "cloudflare",
+        "cf_ray": true,
+        "x_robots_tag": null,
+        "content_signal": null,
+        "content_type": "text/html",
+        "bytes": 150737,
+        "bytes_truncated": false,
+        "redirect_count": 0,
+        "final_url": "https://claudeatlas.com/",
+        "final_host": "claudeatlas.com",
+        "error": null,
+        "bytes_basis": "read",
+        "jsonld_count": 1,
+        "has_schema_org": true
+      },
+      "markdown": {
+        "result": "allowed",
+        "status": 200,
+        "content_type": "text/markdown; charset=utf-8",
+        "negotiated": true,
+        "bytes": 1267
+      },
+      "browser": {
+        "result": "allowed",
+        "status": 200,
+        "bytes": 150737
+      },
+      "cloaking": {
+        "differs": false,
+        "status_differs": false,
+        "size_ratio": 1,
+        "reason": null
+      },
+      "well_known": {
+        "/llms.txt": {
+          "result": "allowed",
+          "status": 200,
+          "content_type": "text/plain",
+          "bytes": 9722,
+          "plausible": true
+        },
+        "/llms-full.txt": {
+          "result": "error",
+          "status": 404,
+          "content_type": "text/html",
+          "bytes": 13906,
+          "plausible": false
+        },
+        "/.well-known/agents.json": {
+          "result": "error",
+          "status": 404,
+          "content_type": "text/html",
+          "bytes": 13906,
+          "plausible": false
+        },
+        "/.well-known/mcp/server-card.json": {
+          "result": "allowed",
+          "status": 200,
+          "content_type": "application/json",
+          "bytes": 644,
+          "plausible": true
+        },
+        "/.well-known/http-message-signatures-directory": {
+          "result": "error",
+          "status": 404,
+          "content_type": "text/html",
+          "bytes": 13906,
+          "plausible": false
+        },
+        "/ai.txt": {
+          "result": "error",
+          "status": 404,
+          "content_type": "text/html",
+          "bytes": 13906,
+          "plausible": false
+        }
+      },
+      "toll": false,
+      "signs_requests": false,
+      "requests_made": 10,
+      "duration_ms": 27113
+    }
+  ],
+  "aggregate": {
+    "targets_total": 1,
+    "by_result": {
+      "allowed": 1,
+      "blocked": 0,
+      "challenged": 0,
+      "toll": 0,
+      "error": 0,
+      "robots_disallowed": 0
+    },
+    "non_error_count": 1,
+    "block_rate": 0,
+    "allowed_rate": 1,
+    "challenged_count": 0,
+    "toll_count": 0,
+    "markdown_negotiation_rate": 1,
+    "cloaking_count": 0,
+    "jsonld_present_count": 1,
+    "signers_count": 0,
+    "standards": {
+      "/llms.txt": {
+        "ok_count": 1,
+        "rate": 1
+      },
+      "/llms-full.txt": {
+        "ok_count": 0,
+        "rate": 0
+      },
+      "/.well-known/agents.json": {
+        "ok_count": 0,
+        "rate": 0
+      },
+      "/.well-known/mcp/server-card.json": {
+        "ok_count": 1,
+        "rate": 1
+      },
+      "/.well-known/http-message-signatures-directory": {
+        "ok_count": 0,
+        "rate": 0
+      },
+      "/ai.txt": {
+        "ok_count": 0,
+        "rate": 0
+      }
+    },
+    "robots": {
+      "present_count": 1,
+      "names_ai_bots_count": 1,
+      "disallows_all_bots_count": 0,
+      "disallows_us_count": 0,
+      "content_signal_count": 1,
+      "has_sitemap_count": 1
+    },
+    "size_bytes": {
+      "min": 150737,
+      "median": 150737,
+      "max": 150737
+    },
+    "by_tier": {
+      "control": {
+        "n": 1,
+        "allowed": 1,
+        "blocked": 0,
+        "challenged": 0,
+        "toll": 0,
+        "error": 0,
+        "robots_disallowed": 0,
+        "markdown_negotiated": 1
+      }
+    },
+    "control": {
+      "domain": "claudeatlas.com",
+      "allowed": true,
+      "markdown_negotiated": true,
+      "llms_txt_ok": true
+    },
+    "control_passes": true
+  }
+}

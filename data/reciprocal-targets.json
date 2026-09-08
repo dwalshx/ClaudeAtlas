@@ -1,0 +1,32 @@
+{
+  "_comment": "Hand-editable. tier ∈ named-operator|infrastructure|control|seed. source = where the domain came from. Domains are bare hosts; scripts/reciprocal-pass.js builds https://<domain> URLs. To remove a domain from the pass, delete its entry.",
+  "targets": [
+    { "domain": "semrush.com", "operator": "Semrush", "tier": "named-operator", "source": "request_log operator", "note": "SemrushBot — highest-volume named crawler in our log" },
+    { "domain": "amazon.com", "operator": "Amazon", "tier": "named-operator", "source": "request_log operator", "note": "Amazonbot" },
+    { "domain": "apple.com", "operator": "Apple", "tier": "named-operator", "source": "request_log operator", "note": "Applebot / Applebot-Extended" },
+    { "domain": "ahrefs.com", "operator": "Ahrefs", "tier": "named-operator", "source": "request_log operator", "note": "AhrefsBot — the 'be Ahrefs' politeness benchmark" },
+    { "domain": "openai.com", "operator": "OpenAI", "tier": "named-operator", "source": "request_log operator", "note": "GPTBot / OAI-SearchBot / ChatGPT-User" },
+    { "domain": "dataforseo.com", "operator": "DataForSEO", "tier": "named-operator", "source": "request_log operator", "note": "DataForSeoBot" },
+    { "domain": "bytedance.com", "operator": "ByteDance", "tier": "named-operator", "source": "request_log operator", "note": "Bytespider — mostly impersonation_suspected in our log" },
+    { "domain": "huawei.com", "operator": "Huawei", "tier": "named-operator", "source": "request_log operator", "note": "PetalBot" },
+    { "domain": "microsoft.com", "operator": "Microsoft", "tier": "named-operator", "source": "request_log operator", "note": "bingbot" },
+    { "domain": "anthropic.com", "operator": "Anthropic", "tier": "named-operator", "source": "request_log operator", "note": "ClaudeBot / Claude-User / Claude-SearchBot" },
+    { "domain": "google.com", "operator": "Google", "tier": "named-operator", "source": "request_log operator", "note": "Googlebot / Google-Extended" },
+    { "domain": "meta.com", "operator": "Meta", "tier": "named-operator", "source": "request_log operator", "note": "meta-externalagent / facebookexternalhit" },
+    { "domain": "perplexity.ai", "operator": "Perplexity", "tier": "named-operator", "source": "request_log operator", "note": "PerplexityBot / Perplexity-User" },
+    { "domain": "mistral.ai", "operator": "Mistral", "tier": "named-operator", "source": "request_log operator", "note": "MistralAI-User" },
+    { "domain": "aws.amazon.com", "operator": "Amazon Web Services", "tier": "infrastructure", "source": "request_log as_org", "note": "AS16509 — cloud vendor marketing site, not the scraping farm itself" },
+    { "domain": "azure.microsoft.com", "operator": "Microsoft Azure", "tier": "infrastructure", "source": "request_log as_org", "note": "AS8075" },
+    { "domain": "alibabacloud.com", "operator": "Alibaba Cloud", "tier": "infrastructure", "source": "request_log as_org", "note": "AS45102 — largest datacenter source of unnamed traffic" },
+    { "domain": "cloud.tencent.com", "operator": "Tencent Cloud", "tier": "infrastructure", "source": "request_log as_org", "note": "AS132203" },
+    { "domain": "ksyun.com", "operator": "Kingsoft Cloud", "tier": "infrastructure", "source": "request_log as_org", "note": "AS135377" },
+    { "domain": "ovhcloud.com", "operator": "OVHcloud", "tier": "infrastructure", "source": "request_log as_org", "note": "AS16276" },
+    { "domain": "hetzner.com", "operator": "Hetzner", "tier": "infrastructure", "source": "request_log as_org", "note": "AS24940" },
+    { "domain": "oracle.com", "operator": "Oracle Cloud", "tier": "infrastructure", "source": "request_log as_org", "note": "AS31898" },
+    { "domain": "cloudflare.com", "operator": "Cloudflare", "tier": "infrastructure", "source": "request_log as_org", "note": "AS13335 — also the Web Bot Auth spec author; do they sign?" },
+    { "domain": "digitalocean.com", "operator": "DigitalOcean", "tier": "infrastructure", "source": "request_log as_org", "note": "AS14061" },
+    { "domain": "contabo.com", "operator": "Contabo", "tier": "infrastructure", "source": "request_log as_org", "note": "AS51167" },
+    { "domain": "claudeatlas.com", "operator": "ClaudeAtlas", "tier": "control", "source": "self", "note": "we probe ourselves; aggregate.control_passes reports whether we pass our own probe" },
+    { "domain": "commoncrawl.org", "operator": "Common Crawl", "tier": "seed", "source": "scope doc", "note": "in scope doc; not yet in request_log — Dan to confirm" }
+  ]
+}
