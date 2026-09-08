@@ -1,0 +1,155 @@
+---
+/**
+ * src/pages/bot.astro — ClaudeAtlasBot transparency page (quick-260908-045, RP-06)
+ *
+ * Public identity page for the Reciprocal Pass crawler, at /bot/ — the URL
+ * embedded in the bot's User-Agent string. Linked from the site footer.
+ *
+ * The UA string, the rate policy and the probe path list are IMPORTED from the
+ * pure probe module the runner itself uses (scripts/lib/reciprocal-probe.js —
+ * zero imports, zero I/O, safe to evaluate in Astro's build-time frontmatter),
+ * so this page can never drift from what the crawler actually does.
+ */
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { AGENT_UA, AGENT_TOKEN, WELL_KNOWN_PATHS, POLICY, BODY_CAP_BYTES } from '../../scripts/lib/reciprocal-probe.js';
+
+const spacingSeconds = POLICY.min_host_spacing_ms / 1000;
+const timeoutSeconds = POLICY.timeout_ms / 1000;
+const bodyCapKb = Math.round(BODY_CAP_BYTES / 1024);
+const robotsBlock = `User-agent: ${AGENT_TOKEN}\nDisallow: /`;
+const description = 'What ClaudeAtlasBot is, what it does, exactly what it fetches, and how to block it.';
+---
+
+<BaseLayout title="ClaudeAtlasBot" description={description}>
+  <div class="max-w-3xl mx-auto px-4 py-16 text-gray-300">
+    <h1 class="text-4xl font-bold text-white mb-4">ClaudeAtlasBot</h1>
+    <p class="text-gray-500 text-sm mb-8 font-mono">{AGENT_UA}</p>
+
+    <p class="text-lg text-gray-300 leading-relaxed mb-8">
+      If you found this page from a User-Agent string in your server logs:
+      that was us, and this page explains exactly what we did, why, and how
+      to opt out.
+    </p>
+
+    <h2 class="text-2xl font-semibold text-white mt-12 mb-4">Who we are</h2>
+    <p class="mb-4">
+      <a class="text-atlas-400 hover:underline" href="/">ClaudeAtlas</a> is an
+      independently maintained, open-source index of Claude ecosystem skills,
+      plugins and MCP servers. Most of our own traffic is automated — crawlers,
+      SEO tools and AI agents — so we run a small research crawler to measure
+      the reciprocal question: <em>how does the public web treat a polite,
+      declared AI agent?</em> The rationale and scope are public:
+      <a class="text-atlas-400 hover:underline" href="https://github.com/dwalshx/ClaudeAtlas/blob/main/docs/reciprocal-agent-pass-scope.md">docs/reciprocal-agent-pass-scope.md</a>.
+    </p>
+
+    <h2 class="text-2xl font-semibold text-white mt-12 mb-4">What the bot does</h2>
+    <ul class="list-disc pl-6 space-y-2 mb-6">
+      <li><strong class="text-white">Read-only, meta-only.</strong> It records status codes, a few response headers, robots.txt directives, response sizes and whether structured data is present. It does <strong class="text-white">not</strong> keep page content for reuse and does not collect personal data.</li>
+      <li><strong class="text-white">{POLICY.method} only.</strong> No POST, no forms, no logins, nothing behind authentication.</li>
+      <li><strong class="text-white">A fixed probe set.</strong> The exact list is below. It does not crawl beyond it — no link following, no site walk.</li>
+      <li><strong class="text-white">At most one request every {spacingSeconds} seconds per host</strong> (redirect hops included), at most {POLICY.concurrency} hosts in flight at a time, a {timeoutSeconds}-second timeout per request, at most {POLICY.max_redirects} redirects, and at most {bodyCapKb} KB read per response.</li>
+      <li><strong class="text-white">Fetches and honors <code class="text-gray-400">robots.txt</code> first</strong> — both a <code class="text-gray-400">User-agent: {AGENT_TOKEN}</code> group and <code class="text-gray-400">User-agent: *</code>. A path you disallow is never requested. If robots.txt is unreachable (5xx / timeout) we treat the whole site as disallowed.</li>
+      <li><strong class="text-white">Never retries a 4xx or 5xx.</strong> A single retry only on a dropped connection.</li>
+      <li><strong class="text-white">Single pass, run manually.</strong> Not continuous. The current target list is about thirty domains — the operators whose bots appear in our own logs.</li>
+    </ul>
+
+    <h2 class="text-2xl font-semibold text-white mt-12 mb-4">How to identify it</h2>
+    <p class="mb-4">The exact User-Agent string on every request:</p>
+    <pre class="bg-gray-900 border border-gray-800 rounded-lg p-4 mb-4 overflow-x-auto text-sm"><code class="text-atlas-300">{AGENT_UA}</code></pre>
+    <p class="mb-4 text-gray-400">
+      In this first version requests are <strong class="text-white">not</strong>
+      cryptographically signed, so anyone can spoof the string above. A later
+      version will sign every request per RFC 9421 / Web Bot Auth, with a
+      public key directory at
+      <code class="text-gray-400">https://claudeatlas.com/.well-known/http-message-signatures-directory</code>
+      — the same mechanism ClaudeAtlas already verifies on inbound traffic.
+      Until then, a request claiming to be ClaudeAtlasBot that ignores the
+      limits above is not us.
+    </p>
+
+    <h2 class="text-2xl font-semibold text-white mt-12 mb-4">What we fetch</h2>
+    <p class="mb-4">Per site, in this order, each step gated by robots.txt:</p>
+    <ol class="list-decimal pl-6 space-y-2 mb-6">
+      <li><code class="text-atlas-300 bg-gray-900 px-2 py-0.5 rounded">/robots.txt</code></li>
+      <li>
+        <code class="text-atlas-300 bg-gray-900 px-2 py-0.5 rounded">/</code> — three times:
+        with our User-Agent and an HTML <code class="text-gray-400">Accept</code>;
+        with our User-Agent and <code class="text-gray-400">Accept: text/markdown, text/html;q=0.9</code>
+        (does the site offer a markdown rendition to agents?);
+        and once with a standard desktop-browser User-Agent for a lightweight
+        cloaking comparison — status and size only.
+      </li>
+      {WELL_KNOWN_PATHS.map((p) => (
+        <li><code class="text-atlas-300 bg-gray-900 px-2 py-0.5 rounded">{p.path}</code></li>
+      ))}
+    </ol>
+    <p class="mb-4 text-gray-400">
+      That is {WELL_KNOWN_PATHS.length + 4} requests per site at most, spread over roughly
+      {(WELL_KNOWN_PATHS.length + 3) * spacingSeconds} seconds.
+    </p>
+
+    <h2 class="text-2xl font-semibold text-white mt-12 mb-4">What we record — and what we don't</h2>
+    <div class="grid sm:grid-cols-2 gap-6 mb-6">
+      <div>
+        <h3 class="text-white font-semibold mb-2">Recorded</h3>
+        <ul class="list-disc pl-6 space-y-1 text-sm">
+          <li>HTTP status codes</li>
+          <li>Headers: <code class="text-gray-400">server</code>, <code class="text-gray-400">content-type</code>, <code class="text-gray-400">x-robots-tag</code>, <code class="text-gray-400">content-signal</code>, <code class="text-gray-400">cf-mitigated</code>, presence of <code class="text-gray-400">cf-ray</code></li>
+          <li>Byte counts and redirect counts</li>
+          <li>robots.txt directives (which bots are named, what is disallowed, Sitemap, Content-Signal)</li>
+          <li>Number of JSON-LD blocks on the homepage</li>
+          <li>Whether a markdown rendition is offered</li>
+          <li>Whether each well-known path exists and looks plausible</li>
+        </ul>
+      </div>
+      <div>
+        <h3 class="text-white font-semibold mb-2">Not recorded</h3>
+        <ul class="list-disc pl-6 space-y-1 text-sm">
+          <li>Page text or HTML</li>
+          <li>Images, scripts, stylesheets (never requested)</li>
+          <li>Forms, cookies, session state</li>
+          <li>Anything behind authentication</li>
+          <li>Any personal data</li>
+        </ul>
+      </div>
+    </div>
+
+    <h2 class="text-2xl font-semibold text-white mt-12 mb-4">How to block it</h2>
+    <p class="mb-4">Add this to your <code class="text-gray-400">robots.txt</code>:</p>
+    <pre class="bg-gray-900 border border-gray-800 rounded-lg p-4 mb-4 overflow-x-auto text-sm"><code class="text-atlas-300">{robotsBlock}</code></pre>
+    <ul class="list-disc pl-6 space-y-2 mb-6">
+      <li>A <code class="text-gray-400">User-agent: *</code> disallow is honored too.</li>
+      <li>It takes effect on the next pass — robots.txt is the first thing we fetch, every time.</li>
+      <li>A blocked or challenged response is itself recorded as data. We never work around it, never switch User-Agents to get past it, and never retry it.</li>
+      <li>Prefer not to appear at all? Ask (below) and we will add your domain to an exclusion list.</li>
+    </ul>
+
+    <h2 class="text-2xl font-semibold text-white mt-12 mb-4">The resulting dataset</h2>
+    <p class="mb-4">
+      Every pass writes one small JSON file and one report, both public:
+      <a class="text-atlas-400 hover:underline" href="https://github.com/dwalshx/ClaudeAtlas/blob/main/data/reciprocal-pass.json"><code>data/reciprocal-pass.json</code></a>
+      and
+      <a class="text-atlas-400 hover:underline" href="https://github.com/dwalshx/ClaudeAtlas/blob/main/docs/reciprocal-pass-report.md"><code>docs/reciprocal-pass-report.md</code></a>.
+      Methodology in one sentence: a fixed target list of operators whose bots
+      appear in our own request log, a fixed probe set, one pass, and aggregate
+      block / challenge / toll rates alongside robots.txt posture, markdown
+      negotiation and agent-web standards adoption. Being blocked is a data
+      point, not a complaint.
+    </p>
+
+    <h2 class="text-2xl font-semibold text-white mt-12 mb-4">Contact</h2>
+    <p class="mb-4">
+      Open an issue at
+      <a class="text-atlas-400 hover:underline" href="https://github.com/dwalshx/ClaudeAtlas/issues">github.com/dwalshx/ClaudeAtlas/issues</a>
+      and mention <strong class="text-white">ClaudeAtlasBot</strong> in the title.
+      We respond within a few days and will add your domain to an exclusion
+      list on request.
+    </p>
+
+    <p class="text-sm text-gray-500 mt-12">
+      Source for the crawler: <a class="text-atlas-400 hover:underline" href="https://github.com/dwalshx/ClaudeAtlas/blob/main/scripts/reciprocal-pass.js">scripts/reciprocal-pass.js</a>
+      (scheduling) and <a class="text-atlas-400 hover:underline" href="https://github.com/dwalshx/ClaudeAtlas/blob/main/scripts/lib/reciprocal-probe.js">scripts/lib/reciprocal-probe.js</a>
+      (the policy constants this page is rendered from).
+    </p>
+  </div>
+</BaseLayout>

@@ -1,34 +1,63 @@
 # Reciprocal Pass v1 — how the web treats a declared agent
 
-Run: `2026-09-08T07:22:35.950Z` · Agent: `ClaudeAtlasBot/1.0 (+https://claudeatlas.com/bot)`
+Run: `2026-09-08T07:25:37.779Z` · Agent: `ClaudeAtlasBot/1.0 (+https://claudeatlas.com/bot)`
 
 One polite, read-only, meta-only pass by a declared AI agent over the operators whose bots appear in the ClaudeAtlas request log. Getting blocked is data, not failure. Details of the agent and how to block it: https://claudeatlas.com/bot/
 
 ## Headline
 
-- Targets probed: **1** (1 answered; 0 error, 0 robots-disallowed)
-- Block rate (blocked + challenged, of those that answered): **0.0%**
-- Allowed rate: **100.0%** (1 allowed · 0 blocked · 0 challenged)
-- Challenge pages (Cloudflare / Akamai / captcha): 0
+- Targets probed: **27** (26 answered; 0 error, 1 robots-disallowed)
+- Block rate (blocked + challenged, of those that answered): **11.5%**
+- Allowed rate: **88.5%** (23 allowed · 2 blocked · 1 challenged)
+- Challenge pages (Cloudflare / Akamai / captcha): 1
 - Toll (HTTP 402 anywhere on the target): 0
-- Markdown negotiation (`Accept: text/markdown` honoured): **100.0%**
-- Publish a Web Bot Auth key directory (they sign their own requests): 0
-- JSON-LD on the homepage: 1
-- Cloaking incidence (agent vs browser UA differs by status or >30% size): 0
-- Homepage size to an agent: min 147 KB · median 147 KB · max 147 KB
+- Markdown negotiation (`Accept: text/markdown` honoured): **7.7%**
+- Publish a Web Bot Auth key directory (they sign their own requests): 2
+- JSON-LD on the homepage: 9
+- Cloaking incidence (agent vs browser UA differs by status or >30% size): 1
+- Homepage size to an agent: min 368 B · median 202 KB · max 512 KB
 - control_passes (claudeatlas.com passes its own probe): **yes**
 
 ## By tier
 
 | tier | n | allowed | blocked | challenged | toll | error | robots_disallowed | md-neg |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| named-operator | 14 | 12 | 1 | 1 | 0 | 0 | 0 | 0 |
+| infrastructure | 11 | 9 | 1 | 0 | 0 | 0 | 1 | 1 |
 | control | 1 | 1 | 0 | 0 | 0 | 0 | 0 | 1 |
+| seed | 1 | 1 | 0 | 0 | 0 | 0 | 0 | 0 |
 
 ## Per target
 
 | domain | tier | result | status | server | md-neg | llms.txt | signs | cloak | bytes |
 | --- | --- | --- | ---: | --- | --- | --- | --- | --- | ---: |
+| semrush.com | named-operator | allowed | 200 | nginx | no | ✓ | no | no | 193 KB |
+| amazon.com | named-operator | allowed | 200 | Server | no | ✗ | no | yes (status) | 512 KB |
+| apple.com | named-operator | allowed | 200 | Apple | no | ✗ | no | no | 249 KB |
+| ahrefs.com | named-operator | allowed | 200 | cloudflare | no | ✗ | yes | no | 512 KB |
+| openai.com | named-operator | allowed | 200 | cloudflare | no | ✗ | no | no | 438 KB |
+| dataforseo.com | named-operator | allowed | 200 | cloudflare | no | ✓ | no | no | 512 KB |
+| bytedance.com | named-operator | allowed | 200 | TLB | no | ✗ | no | no | 197 KB |
+| huawei.com | named-operator | blocked | 403 | AkamaiGHost | no | ✗ | no | no | 368 B |
+| microsoft.com | named-operator | allowed | 200 | — | no | ✗ | no | no | 33 KB |
+| anthropic.com | named-operator | allowed | 200 | cloudflare | no | ✗ | no | no | 173 KB |
+| google.com | named-operator | allowed | 200 | gws | no | ✗ | no | no | 81 KB |
+| meta.com | named-operator | allowed | 200 | — | no | ✗ | yes | — | 512 KB |
+| perplexity.ai | named-operator | challenged | 403 | cloudflare | no | ✗ | no | no | 5 KB |
+| mistral.ai | named-operator | allowed | 200 | cloudflare | no | ✓ | no | no | 468 KB |
+| aws.amazon.com | infrastructure | allowed | 200 | Server | no | ✗ | no | no | 510 KB |
+| azure.microsoft.com | infrastructure | allowed | 200 | — | no | ✓ | no | no | 50 KB |
+| alibabacloud.com | infrastructure | allowed | 200 | Tengine | no | ✗ | no | no | 23 KB |
+| cloud.tencent.com | infrastructure | allowed | 200 | nginx | no | ✓ | no | no | 208 KB |
+| ksyun.com | infrastructure | allowed | 200 | openresty | no | ✗ | no | no | 208 KB |
+| ovhcloud.com | infrastructure | robots_disallowed | — | — | no | — | no | — | — |
+| hetzner.com | infrastructure | allowed | 200 | HeRay | no | ✗ | no | no | 15 KB |
+| oracle.com | infrastructure | blocked | 403 | AkamaiGHost | no | ✗ | no | no | 1 KB |
+| cloudflare.com | infrastructure | allowed | 200 | cloudflare | yes | ✓ | no | no | 512 KB |
+| digitalocean.com | infrastructure | allowed | 200 | cloudflare | no | ✗ | no | no | 284 KB |
+| contabo.com | infrastructure | allowed | 200 | cloudflare | no | ✓ | no | no | 512 KB |
 | claudeatlas.com | control | allowed | 200 | cloudflare | yes | ✓ | no | no | 147 KB |
+| commoncrawl.org | seed | allowed | 200 | cloudflare | no | ✗ | no | no | 26 KB |
 
 ## Agent-web standards matrix
 
@@ -36,15 +65,67 @@ One polite, read-only, meta-only pass by a declared AI agent over the operators 
 
 | domain | `/llms.txt` | `/llms-full.txt` | `/.well-known/agents.json` | `/.well-known/mcp/server-card.json` | `/.well-known/http-message-signatures-directory` | `/ai.txt` |
 | --- | :-: | :-: | :-: | :-: | :-: | :-: |
+| semrush.com | ✓ | ✗ | ✗ | ✗ | ✗ | ✗ |
+| amazon.com | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ |
+| apple.com | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ |
+| ahrefs.com | ✗ | ✗ | ✗ | ✗ | ✓ | ✗ |
+| openai.com | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ |
+| dataforseo.com | ✓ | ✗ | ✗ | ✗ | ✗ | ✗ |
+| bytedance.com | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ |
+| huawei.com | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ |
+| microsoft.com | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ |
+| anthropic.com | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ |
+| google.com | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ |
+| meta.com | ✗ | ✗ | ✗ | ✗ | ✓ | ✗ |
+| perplexity.ai | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ |
+| mistral.ai | ✓ | ✗ | ✗ | ✗ | ✗ | ✗ |
+| aws.amazon.com | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ |
+| azure.microsoft.com | ✓ | ✗ | ✗ | ✗ | ✗ | ✗ |
+| alibabacloud.com | ✗ | ✗ | — | — | ✗ | ✗ |
+| cloud.tencent.com | ✓ | ✓ | ✗ | ✗ | ✗ | ✗ |
+| ksyun.com | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ |
+| ovhcloud.com | — | — | — | — | — | — |
+| hetzner.com | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ |
+| oracle.com | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ |
+| cloudflare.com | ✓ | ✓ | ✓ | ✗ | ✗ | ✗ |
+| digitalocean.com | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ |
+| contabo.com | ✓ | ✗ | ✗ | ✗ | ✗ | ✗ |
 | claudeatlas.com | ✓ | ✗ | ✗ | ✓ | ✗ | ✗ |
-| **adoption** | 1 (100.0%) | 0 (0.0%) | 0 (0.0%) | 1 (100.0%) | 0 (0.0%) | 0 (0.0%) |
+| commoncrawl.org | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ |
+| **adoption** | 8 (30.8%) | 2 (7.7%) | 1 (3.8%) | 1 (3.8%) | 2 (7.7%) | 0 (0.0%) |
 
 ## robots.txt posture
 
 | domain | present | policy | names AI bots | disallows all bots | disallows us | content-signal | sitemap |
 | --- | --- | --- | --- | --- | --- | --- | --- |
+| semrush.com | yes | parsed | no | no | no | no | yes |
+| amazon.com | yes | parsed | 12 (12 disallowed) | no | no | no | no |
+| apple.com | yes | parsed | no | no | no | no | yes |
+| ahrefs.com | yes | parsed | no | no | no | no | no |
+| openai.com | yes | parsed | no | no | no | no | yes |
+| dataforseo.com | yes | parsed | no | no | no | no | yes |
+| bytedance.com | yes | parsed | no | no | no | no | no |
+| huawei.com | no | allow_all | no | no | no | no | no |
+| microsoft.com | yes | parsed | no | no | no | no | yes |
+| anthropic.com | yes | parsed | no | no | no | no | yes |
+| google.com | yes | parsed | no | no | no | no | yes |
+| meta.com | yes | parsed | no | no | no | no | yes |
+| perplexity.ai | yes | parsed | no | no | no | no | yes |
+| mistral.ai | yes | parsed | no | no | no | no | yes |
+| aws.amazon.com | yes | parsed | no | no | no | no | yes |
+| azure.microsoft.com | yes | parsed | no | no | no | no | yes |
+| alibabacloud.com | yes | parsed | no | no | no | no | yes |
+| cloud.tencent.com | yes | parsed | no | no | no | no | yes |
+| ksyun.com | yes | parsed | no | no | no | no | yes |
+| ovhcloud.com | no | disallow_all | no | yes | yes | no | no |
+| hetzner.com | yes | parsed | no | no | no | no | yes |
+| oracle.com | no | allow_all | no | no | no | no | no |
+| cloudflare.com | yes | parsed | 7 (0 disallowed) | no | no | `ai-train=yes, search=yes, ai-input=yes` | yes |
+| digitalocean.com | yes | parsed | no | no | no | no | yes |
+| contabo.com | yes | parsed | no | no | no | no | yes |
 | claudeatlas.com | yes | parsed | 7 (0 disallowed) | no | no | `search=yes,ai-input=yes,ai-train=no` | yes |
-| **totals** | 1 | | 1 | 0 | 0 | 1 | 1 |
+| commoncrawl.org | yes | parsed | no | no | no | no | yes |
+| **totals** | 24 | | 3 | 1 | 1 | 2 | 21 |
 
 ## Method
 
