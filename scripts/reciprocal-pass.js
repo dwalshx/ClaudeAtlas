@@ -3,9 +3,11 @@
  * scripts/reciprocal-pass.js — Reciprocal Pass v1 polite runner
  * (quick-260908-045, RP-03/RP-04/RP-05).
  *
- * A declared-UA "good agent" that makes ONE read-only, meta-only pass over the
+ * A declared-UA "good bot" (a fixed-probe crawler — no model in the loop; the
+ * scope doc's "good-agent" framing refers to what the web sees, i.e. a declared
+ * automated client) that makes ONE read-only, meta-only pass over the
  * domains in data/reciprocal-targets.json and records how each site treats a
- * polite declared AI agent: block / challenge / toll behaviour, robots.txt
+ * polite self-declared bot: block / challenge / toll behaviour, robots.txt
  * posture toward AI bots, markdown negotiation, agent-web standards adoption
  * (/llms.txt etc.), homepage bloat, JSON-LD presence, a light cloaking diff and
  * whether THEY publish a Web Bot Auth key directory. Scope + rationale:

@@ -608,12 +608,12 @@ export function renderReport(pass) {
   const byResult = agg.by_result || emptyCounts();
   const lines = [];
 
-  lines.push(`# Reciprocal Pass v1 — how the web treats a declared agent`);
+  lines.push(`# Reciprocal Pass v1 — how the web treats a declared bot`);
   lines.push('');
   lines.push(`Run: \`${runAt}\` · Agent: \`${ua}\``);
   lines.push('');
   lines.push(
-    'One polite, read-only, meta-only pass by a declared AI agent over the operators whose bots appear in the ClaudeAtlas request log. Getting blocked is data, not failure. Details of the agent and how to block it: https://claudeatlas.com/bot/',
+    'One polite, read-only, meta-only pass by a self-declared bot (a fixed-probe crawler, no model in the loop) over the operators whose bots appear in the ClaudeAtlas request log. Servers see the declaration, not what sits behind it, so this is the treatment any declared automated client — agent or crawler — receives. Getting blocked is data, not failure. Details of the bot and how to block it: https://claudeatlas.com/bot/',
   );
   lines.push('');
 
