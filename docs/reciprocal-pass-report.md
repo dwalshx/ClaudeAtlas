@@ -1,29 +1,29 @@
 # Reciprocal Pass v1 — how the web treats a declared bot
 
-Run: `2026-09-08T07:25:37.779Z` · Agent: `ClaudeAtlasBot/1.0 (+https://claudeatlas.com/bot)`
+Run: `2026-09-10T17:34:10.482Z` · Agent: `ClaudeAtlasBot/1.0 (+https://claudeatlas.com/bot)`
 
 One polite, read-only, meta-only pass by a self-declared bot (a fixed-probe crawler, no model in the loop) over the operators whose bots appear in the ClaudeAtlas request log. Servers see the declaration, not what sits behind it, so this is the treatment any declared automated client — agent or crawler — receives. Getting blocked is data, not failure. Details of the bot and how to block it: https://claudeatlas.com/bot/
 
 ## Headline
 
-- Targets probed: **27** (26 answered; 0 error, 1 robots-disallowed)
-- Block rate (blocked + challenged, of those that answered): **11.5%**
-- Allowed rate: **88.5%** (23 allowed · 2 blocked · 1 challenged)
-- Challenge pages (Cloudflare / Akamai / captcha): 1
+- Targets probed: **27** (27 answered; 0 error, 0 robots-disallowed)
+- Block rate (blocked + challenged, of those that answered): **18.5%**
+- Allowed rate: **81.5%** (22 allowed · 2 blocked · 3 challenged)
+- Challenge pages (Cloudflare / Akamai / captcha): 3
 - Toll (HTTP 402 anywhere on the target): 0
-- Markdown negotiation (`Accept: text/markdown` honoured): **7.7%**
+- Markdown negotiation (`Accept: text/markdown` honoured): **7.4%**
 - Publish a Web Bot Auth key directory (they sign their own requests): 2
-- JSON-LD on the homepage: 9
-- Cloaking incidence (agent vs browser UA differs by status or >30% size): 1
-- Homepage size to an agent: min 368 B · median 202 KB · max 512 KB
+- JSON-LD on the homepage: 10
+- Cloaking incidence (agent vs browser UA differs by status or >30% size): 6
+- Homepage size to an agent: min 366 B · median 173 KB · max 512 KB
 - control_passes (claudeatlas.com passes its own probe): **yes**
 
 ## By tier
 
 | tier | n | allowed | blocked | challenged | toll | error | robots_disallowed | md-neg |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| named-operator | 14 | 12 | 1 | 1 | 0 | 0 | 0 | 0 |
-| infrastructure | 11 | 9 | 1 | 0 | 0 | 0 | 1 | 1 |
+| named-operator | 14 | 10 | 1 | 3 | 0 | 0 | 0 | 0 |
+| infrastructure | 11 | 10 | 1 | 0 | 0 | 0 | 0 | 1 |
 | control | 1 | 1 | 0 | 0 | 0 | 0 | 0 | 1 |
 | seed | 1 | 1 | 0 | 0 | 0 | 0 | 0 | 0 |
 
@@ -31,30 +31,30 @@ One polite, read-only, meta-only pass by a self-declared bot (a fixed-probe craw
 
 | domain | tier | result | status | server | md-neg | llms.txt | signs | cloak | bytes |
 | --- | --- | --- | ---: | --- | --- | --- | --- | --- | ---: |
-| semrush.com | named-operator | allowed | 200 | nginx | no | ✓ | no | no | 193 KB |
-| amazon.com | named-operator | allowed | 200 | Server | no | ✗ | no | yes (status) | 512 KB |
-| apple.com | named-operator | allowed | 200 | Apple | no | ✗ | no | no | 249 KB |
+| semrush.com | named-operator | allowed | 200 | nginx | no | ✓ | no | no | 192 KB |
+| amazon.com | named-operator | challenged | 503 | Server | no | ✗ | no | yes (status) | 4 KB |
+| apple.com | named-operator | allowed | 200 | Apple | no | ✗ | no | no | 31 KB |
 | ahrefs.com | named-operator | allowed | 200 | cloudflare | no | ✗ | yes | no | 512 KB |
-| openai.com | named-operator | allowed | 200 | cloudflare | no | ✗ | no | no | 438 KB |
+| openai.com | named-operator | challenged | 403 | cloudflare | no | ✗ | no | yes (status) | 10 KB |
 | dataforseo.com | named-operator | allowed | 200 | cloudflare | no | ✓ | no | no | 512 KB |
-| bytedance.com | named-operator | allowed | 200 | TLB | no | ✗ | no | no | 197 KB |
-| huawei.com | named-operator | blocked | 403 | AkamaiGHost | no | ✗ | no | no | 368 B |
-| microsoft.com | named-operator | allowed | 200 | — | no | ✗ | no | no | 33 KB |
+| bytedance.com | named-operator | allowed | 200 | TLB | no | ✗ | no | yes (size) | 100 KB |
+| huawei.com | named-operator | blocked | 403 | AkamaiGHost | no | ✗ | no | no | 366 B |
+| microsoft.com | named-operator | allowed | 200 | — | no | ✗ | no | yes (size) | 33 KB |
 | anthropic.com | named-operator | allowed | 200 | cloudflare | no | ✗ | no | no | 173 KB |
-| google.com | named-operator | allowed | 200 | gws | no | ✗ | no | no | 81 KB |
+| google.com | named-operator | allowed | 200 | gws | no | ✗ | no | no | 82 KB |
 | meta.com | named-operator | allowed | 200 | — | no | ✗ | yes | — | 512 KB |
 | perplexity.ai | named-operator | challenged | 403 | cloudflare | no | ✗ | no | no | 5 KB |
-| mistral.ai | named-operator | allowed | 200 | cloudflare | no | ✓ | no | no | 468 KB |
+| mistral.ai | named-operator | allowed | 200 | cloudflare | no | ✓ | no | no | 463 KB |
 | aws.amazon.com | infrastructure | allowed | 200 | Server | no | ✗ | no | no | 510 KB |
-| azure.microsoft.com | infrastructure | allowed | 200 | — | no | ✓ | no | no | 50 KB |
+| azure.microsoft.com | infrastructure | allowed | 200 | — | no | ✓ | no | yes (size) | 457 KB |
 | alibabacloud.com | infrastructure | allowed | 200 | Tengine | no | ✗ | no | no | 23 KB |
 | cloud.tencent.com | infrastructure | allowed | 200 | nginx | no | ✓ | no | no | 208 KB |
 | ksyun.com | infrastructure | allowed | 200 | openresty | no | ✗ | no | no | 208 KB |
-| ovhcloud.com | infrastructure | robots_disallowed | — | — | no | — | no | — | — |
+| ovhcloud.com | infrastructure | allowed | 200 | — | no | ✗ | no | yes (size) | 366 KB |
 | hetzner.com | infrastructure | allowed | 200 | HeRay | no | ✗ | no | no | 15 KB |
 | oracle.com | infrastructure | blocked | 403 | AkamaiGHost | no | ✗ | no | no | 1 KB |
 | cloudflare.com | infrastructure | allowed | 200 | cloudflare | yes | ✓ | no | no | 512 KB |
-| digitalocean.com | infrastructure | allowed | 200 | cloudflare | no | ✗ | no | no | 284 KB |
+| digitalocean.com | infrastructure | allowed | 200 | cloudflare | no | ✗ | no | no | 281 KB |
 | contabo.com | infrastructure | allowed | 200 | cloudflare | no | ✓ | no | no | 512 KB |
 | claudeatlas.com | control | allowed | 200 | cloudflare | yes | ✓ | no | no | 147 KB |
 | commoncrawl.org | seed | allowed | 200 | cloudflare | no | ✗ | no | no | 26 KB |
@@ -84,7 +84,7 @@ One polite, read-only, meta-only pass by a self-declared bot (a fixed-probe craw
 | alibabacloud.com | ✗ | ✗ | — | — | ✗ | ✗ |
 | cloud.tencent.com | ✓ | ✓ | ✗ | ✗ | ✗ | ✗ |
 | ksyun.com | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ |
-| ovhcloud.com | — | — | — | — | — | — |
+| ovhcloud.com | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ |
 | hetzner.com | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ |
 | oracle.com | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ |
 | cloudflare.com | ✓ | ✓ | ✓ | ✗ | ✗ | ✗ |
@@ -92,7 +92,7 @@ One polite, read-only, meta-only pass by a self-declared bot (a fixed-probe craw
 | contabo.com | ✓ | ✗ | ✗ | ✗ | ✗ | ✗ |
 | claudeatlas.com | ✓ | ✗ | ✗ | ✓ | ✗ | ✗ |
 | commoncrawl.org | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ |
-| **adoption** | 8 (30.8%) | 2 (7.7%) | 1 (3.8%) | 1 (3.8%) | 2 (7.7%) | 0 (0.0%) |
+| **adoption** | 8 (29.6%) | 2 (7.4%) | 1 (3.7%) | 1 (3.7%) | 2 (7.4%) | 0 (0.0%) |
 
 ## robots.txt posture
 
@@ -117,7 +117,7 @@ One polite, read-only, meta-only pass by a self-declared bot (a fixed-probe craw
 | alibabacloud.com | yes | parsed | no | no | no | no | yes |
 | cloud.tencent.com | yes | parsed | no | no | no | no | yes |
 | ksyun.com | yes | parsed | no | no | no | no | yes |
-| ovhcloud.com | no | disallow_all | no | yes | yes | no | no |
+| ovhcloud.com | yes | parsed | no | no | no | no | yes |
 | hetzner.com | yes | parsed | no | no | no | no | yes |
 | oracle.com | no | allow_all | no | no | no | no | no |
 | cloudflare.com | yes | parsed | 7 (0 disallowed) | no | no | `ai-train=yes, search=yes, ai-input=yes` | yes |
@@ -125,7 +125,7 @@ One polite, read-only, meta-only pass by a self-declared bot (a fixed-probe craw
 | contabo.com | yes | parsed | no | no | no | no | yes |
 | claudeatlas.com | yes | parsed | 7 (0 disallowed) | no | no | `search=yes,ai-input=yes,ai-train=no` | yes |
 | commoncrawl.org | yes | parsed | no | no | no | no | yes |
-| **totals** | 24 | | 3 | 1 | 1 | 2 | 21 |
+| **totals** | 25 | | 3 | 0 | 0 | 2 | 22 |
 
 ## Method
 

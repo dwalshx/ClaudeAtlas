@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "run_at": "2026-09-08T07:25:37.779Z",
+  "run_at": "2026-09-10T17:34:10.482Z",
   "agent": {
     "ua": "ClaudeAtlasBot/1.0 (+https://claudeatlas.com/bot)",
     "policy": {
@@ -50,7 +50,7 @@
         "x_robots_tag": null,
         "content_signal": null,
         "content_type": "text/html; charset=utf-8",
-        "bytes": 197634,
+        "bytes": 196864,
         "bytes_truncated": false,
         "redirect_count": 1,
         "final_url": "https://www.semrush.com/",
@@ -65,17 +65,17 @@
         "status": 200,
         "content_type": "text/html; charset=utf-8",
         "negotiated": false,
-        "bytes": 197634
+        "bytes": 197512
       },
       "browser": {
         "result": "allowed",
         "status": 200,
-        "bytes": 196986
+        "bytes": 197512
       },
       "cloaking": {
         "differs": false,
         "status_differs": false,
-        "size_ratio": 1.003,
+        "size_ratio": 0.997,
         "reason": null
       },
       "well_known": {
@@ -125,7 +125,7 @@
       "toll": false,
       "signs_requests": false,
       "requests_made": 20,
-      "duration_ms": 27588
+      "duration_ms": 27609
     },
     {
       "domain": "amazon.com",
@@ -175,15 +175,15 @@
         "final_host": "www.amazon.com"
       },
       "homepage": {
-        "result": "allowed",
-        "status": 200,
+        "result": "challenged",
+        "status": 503,
         "server": "Server",
         "cf_ray": false,
         "x_robots_tag": null,
         "content_signal": null,
-        "content_type": "text/html;charset=UTF-8",
-        "bytes": 524288,
-        "bytes_truncated": true,
+        "content_type": "text/html",
+        "bytes": 3781,
+        "bytes_truncated": false,
         "redirect_count": 1,
         "final_url": "https://www.amazon.com/",
         "final_host": "www.amazon.com",
@@ -193,21 +193,21 @@
         "has_schema_org": false
       },
       "markdown": {
-        "result": "allowed",
-        "status": 200,
-        "content_type": "text/html;charset=UTF-8",
+        "result": "challenged",
+        "status": 503,
+        "content_type": "text/html",
         "negotiated": false,
-        "bytes": 524288
+        "bytes": 3781
       },
       "browser": {
         "result": "allowed",
-        "status": 202,
-        "bytes": 2007
+        "status": 200,
+        "bytes": 3781
       },
       "cloaking": {
         "differs": true,
         "status_differs": true,
-        "size_ratio": 261.23,
+        "size_ratio": 1,
         "reason": "status"
       },
       "well_known": {
@@ -257,7 +257,7 @@
       "toll": false,
       "signs_requests": false,
       "requests_made": 20,
-      "duration_ms": 27590
+      "duration_ms": 27708
     },
     {
       "domain": "apple.com",
@@ -288,13 +288,13 @@
         "x_robots_tag": null,
         "content_signal": null,
         "content_type": "text/html; charset=utf-8",
-        "bytes": 254738,
+        "bytes": 31614,
         "bytes_truncated": false,
         "redirect_count": 1,
         "final_url": "https://www.apple.com/",
         "final_host": "www.apple.com",
         "error": null,
-        "bytes_basis": "read",
+        "bytes_basis": "content-length",
         "jsonld_count": 0,
         "has_schema_org": false
       },
@@ -303,12 +303,12 @@
         "status": 200,
         "content_type": "text/html; charset=utf-8",
         "negotiated": false,
-        "bytes": 254738
+        "bytes": 31614
       },
       "browser": {
         "result": "allowed",
         "status": 200,
-        "bytes": 254738
+        "bytes": 31614
       },
       "cloaking": {
         "differs": false,
@@ -362,8 +362,8 @@
       },
       "toll": false,
       "signs_requests": false,
-      "requests_made": 20,
-      "duration_ms": 27634
+      "requests_made": 21,
+      "duration_ms": 30302
     },
     {
       "domain": "ahrefs.com",
@@ -469,7 +469,7 @@
       "toll": false,
       "signs_requests": true,
       "requests_made": 10,
-      "duration_ms": 27189
+      "duration_ms": 27223
     },
     {
       "domain": "openai.com",
@@ -493,14 +493,14 @@
         "final_host": "openai.com"
       },
       "homepage": {
-        "result": "allowed",
-        "status": 200,
+        "result": "challenged",
+        "status": 403,
         "server": "cloudflare",
         "cf_ray": true,
         "x_robots_tag": null,
         "content_signal": null,
-        "content_type": "text/html; charset=utf-8",
-        "bytes": 449007,
+        "content_type": "text/html; charset=UTF-8",
+        "bytes": 9829,
         "bytes_truncated": false,
         "redirect_count": 0,
         "final_url": "https://openai.com/",
@@ -511,22 +511,22 @@
         "has_schema_org": false
       },
       "markdown": {
-        "result": "allowed",
-        "status": 200,
-        "content_type": "text/html; charset=utf-8",
+        "result": "challenged",
+        "status": 403,
+        "content_type": "text/html; charset=UTF-8",
         "negotiated": false,
-        "bytes": 448958
+        "bytes": 9829
       },
       "browser": {
         "result": "allowed",
         "status": 200,
-        "bytes": 449005
+        "bytes": 447100
       },
       "cloaking": {
-        "differs": false,
-        "status_differs": false,
-        "size_ratio": 1,
-        "reason": null
+        "differs": true,
+        "status_differs": true,
+        "size_ratio": 0.022,
+        "reason": "status"
       },
       "well_known": {
         "/llms.txt": {
@@ -547,21 +547,21 @@
           "result": "error",
           "status": 404,
           "content_type": "text/html; charset=utf-8",
-          "bytes": 136703,
+          "bytes": 137515,
           "plausible": false
         },
         "/.well-known/mcp/server-card.json": {
           "result": "error",
           "status": 404,
           "content_type": "text/html; charset=utf-8",
-          "bytes": 136728,
+          "bytes": 137543,
           "plausible": false
         },
         "/.well-known/http-message-signatures-directory": {
           "result": "error",
           "status": 404,
           "content_type": "text/html; charset=utf-8",
-          "bytes": 136784,
+          "bytes": 137632,
           "plausible": false
         },
         "/ai.txt": {
@@ -575,7 +575,7 @@
       "toll": false,
       "signs_requests": false,
       "requests_made": 10,
-      "duration_ms": 27119
+      "duration_ms": 27080
     },
     {
       "domain": "dataforseo.com",
@@ -646,7 +646,7 @@
           "result": "error",
           "status": 404,
           "content_type": "text/html; charset=UTF-8",
-          "bytes": 472040,
+          "bytes": 472045,
           "plausible": false
         },
         "/.well-known/agents.json": {
@@ -674,14 +674,14 @@
           "result": "error",
           "status": 404,
           "content_type": "text/html; charset=UTF-8",
-          "bytes": 472040,
+          "bytes": 472045,
           "plausible": false
         }
       },
       "toll": false,
       "signs_requests": false,
       "requests_made": 10,
-      "duration_ms": 27471
+      "duration_ms": 27492
     },
     {
       "domain": "bytedance.com",
@@ -712,13 +712,13 @@
         "x_robots_tag": null,
         "content_signal": null,
         "content_type": "text/html; charset=utf-8",
-        "bytes": 201288,
+        "bytes": 102289,
         "bytes_truncated": false,
         "redirect_count": 1,
         "final_url": "https://www.bytedance.com/",
         "final_host": "www.bytedance.com",
         "error": null,
-        "bytes_basis": "read",
+        "bytes_basis": "content-length",
         "jsonld_count": 0,
         "has_schema_org": false
       },
@@ -735,17 +735,17 @@
         "bytes": 201288
       },
       "cloaking": {
-        "differs": false,
+        "differs": true,
         "status_differs": false,
-        "size_ratio": 1,
-        "reason": null
+        "size_ratio": 0.508,
+        "reason": "size"
       },
       "well_known": {
         "/llms.txt": {
           "result": "allowed",
           "status": 200,
           "content_type": "text/html; charset=utf-8",
-          "bytes": 102566,
+          "bytes": 201307,
           "plausible": false
         },
         "/llms-full.txt": {
@@ -766,14 +766,14 @@
           "result": "allowed",
           "status": 200,
           "content_type": "text/html; charset=utf-8",
-          "bytes": 15243,
+          "bytes": 15362,
           "plausible": false
         },
         "/.well-known/http-message-signatures-directory": {
           "result": "allowed",
           "status": 200,
           "content_type": "text/html; charset=utf-8",
-          "bytes": 15238,
+          "bytes": 15569,
           "plausible": false
         },
         "/ai.txt": {
@@ -787,7 +787,7 @@
       "toll": false,
       "signs_requests": false,
       "requests_made": 19,
-      "duration_ms": 27915
+      "duration_ms": 27675
     },
     {
       "domain": "huawei.com",
@@ -818,7 +818,7 @@
         "x_robots_tag": null,
         "content_signal": null,
         "content_type": "text/html",
-        "bytes": 368,
+        "bytes": 366,
         "bytes_truncated": false,
         "redirect_count": 1,
         "final_url": "https://www.huawei.com/",
@@ -833,12 +833,12 @@
         "status": 403,
         "content_type": "text/html",
         "negotiated": false,
-        "bytes": 368
+        "bytes": 366
       },
       "browser": {
         "result": "blocked",
         "status": 403,
-        "bytes": 368
+        "bytes": 366
       },
       "cloaking": {
         "differs": false,
@@ -851,49 +851,49 @@
           "result": "blocked",
           "status": 403,
           "content_type": "text/html",
-          "bytes": 380,
+          "bytes": 378,
           "plausible": false
         },
         "/llms-full.txt": {
           "result": "blocked",
           "status": 403,
           "content_type": "text/html",
-          "bytes": 389,
+          "bytes": 387,
           "plausible": false
         },
         "/.well-known/agents.json": {
           "result": "blocked",
           "status": 403,
           "content_type": "text/html",
-          "bytes": 407,
+          "bytes": 405,
           "plausible": false
         },
         "/.well-known/mcp/server-card.json": {
           "result": "blocked",
           "status": 403,
           "content_type": "text/html",
-          "bytes": 424,
+          "bytes": 422,
           "plausible": false
         },
         "/.well-known/http-message-signatures-directory": {
           "result": "blocked",
           "status": 403,
           "content_type": "text/html",
-          "bytes": 437,
+          "bytes": 435,
           "plausible": false
         },
         "/ai.txt": {
           "result": "blocked",
           "status": 403,
           "content_type": "text/html",
-          "bytes": 378,
+          "bytes": 376,
           "plausible": false
         }
       },
       "toll": false,
       "signs_requests": false,
       "requests_made": 20,
-      "duration_ms": 28365
+      "duration_ms": 27825
     },
     {
       "domain": "microsoft.com",
@@ -924,7 +924,7 @@
         "x_robots_tag": null,
         "content_signal": null,
         "content_type": "text/html; charset=utf-8",
-        "bytes": 33630,
+        "bytes": 33311,
         "bytes_truncated": false,
         "redirect_count": 2,
         "final_url": "https://www.microsoft.com/en-us",
@@ -939,18 +939,18 @@
         "status": 200,
         "content_type": "text/html; charset=utf-8",
         "negotiated": false,
-        "bytes": 33630
+        "bytes": 33310
       },
       "browser": {
         "result": "allowed",
         "status": 200,
-        "bytes": 33630
+        "bytes": 12623
       },
       "cloaking": {
-        "differs": false,
+        "differs": true,
         "status_differs": false,
-        "size_ratio": 1,
-        "reason": null
+        "size_ratio": 2.639,
+        "reason": "size"
       },
       "well_known": {
         "/llms.txt": {
@@ -998,8 +998,8 @@
       },
       "toll": false,
       "signs_requests": false,
-      "requests_made": 23,
-      "duration_ms": 36440
+      "requests_made": 22,
+      "duration_ms": 33829
     },
     {
       "domain": "anthropic.com",
@@ -1030,7 +1030,7 @@
         "x_robots_tag": null,
         "content_signal": null,
         "content_type": "text/html; charset=utf-8",
-        "bytes": 176945,
+        "bytes": 177119,
         "bytes_truncated": false,
         "redirect_count": 1,
         "final_url": "https://www.anthropic.com/",
@@ -1045,12 +1045,12 @@
         "status": 200,
         "content_type": "text/html; charset=utf-8",
         "negotiated": false,
-        "bytes": 176945
+        "bytes": 177119
       },
       "browser": {
         "result": "allowed",
         "status": 200,
-        "bytes": 176945
+        "bytes": 177119
       },
       "cloaking": {
         "differs": false,
@@ -1063,49 +1063,49 @@
           "result": "error",
           "status": 404,
           "content_type": "text/html; charset=utf-8",
-          "bytes": 59696,
+          "bytes": 60080,
           "plausible": false
         },
         "/llms-full.txt": {
           "result": "error",
           "status": 404,
           "content_type": "text/html; charset=utf-8",
-          "bytes": 59749,
+          "bytes": 60176,
           "plausible": false
         },
         "/.well-known/agents.json": {
           "result": "error",
           "status": 404,
           "content_type": "text/html; charset=utf-8",
-          "bytes": 59816,
+          "bytes": 60200,
           "plausible": false
         },
         "/.well-known/mcp/server-card.json": {
           "result": "error",
           "status": 404,
           "content_type": "text/html; charset=utf-8",
-          "bytes": 59838,
+          "bytes": 60179,
           "plausible": false
         },
         "/.well-known/http-message-signatures-directory": {
           "result": "error",
           "status": 404,
           "content_type": "text/html; charset=utf-8",
-          "bytes": 59817,
+          "bytes": 60201,
           "plausible": false
         },
         "/ai.txt": {
           "result": "error",
           "status": 404,
           "content_type": "text/html; charset=utf-8",
-          "bytes": 59735,
+          "bytes": 60119,
           "plausible": false
         }
       },
       "toll": false,
       "signs_requests": false,
       "requests_made": 20,
-      "duration_ms": 27421
+      "duration_ms": 27372
     },
     {
       "domain": "google.com",
@@ -1136,7 +1136,7 @@
         "x_robots_tag": null,
         "content_signal": null,
         "content_type": "text/html; charset=ISO-8859-1",
-        "bytes": 83455,
+        "bytes": 83690,
         "bytes_truncated": false,
         "redirect_count": 1,
         "final_url": "https://www.google.com/",
@@ -1151,17 +1151,17 @@
         "status": 200,
         "content_type": "text/html; charset=ISO-8859-1",
         "negotiated": false,
-        "bytes": 83717
+        "bytes": 83711
       },
       "browser": {
         "result": "allowed",
         "status": 200,
-        "bytes": 67842
+        "bytes": 67896
       },
       "cloaking": {
         "differs": false,
         "status_differs": false,
-        "size_ratio": 1.23,
+        "size_ratio": 1.233,
         "reason": null
       },
       "well_known": {
@@ -1211,7 +1211,7 @@
       "toll": false,
       "signs_requests": false,
       "requests_made": 14,
-      "duration_ms": 27255
+      "duration_ms": 27199
     },
     {
       "domain": "meta.com",
@@ -1262,7 +1262,7 @@
       "browser": {
         "result": "error",
         "status": 400,
-        "bytes": 253024
+        "bytes": 255145
       },
       "cloaking": {
         "differs": false,
@@ -1275,28 +1275,28 @@
           "result": "error",
           "status": 404,
           "content_type": "text/html; charset=\"utf-8\"",
-          "bytes": 253064,
+          "bytes": 255184,
           "plausible": false
         },
         "/llms-full.txt": {
           "result": "error",
           "status": 404,
           "content_type": "text/html; charset=\"utf-8\"",
-          "bytes": 253080,
+          "bytes": 255202,
           "plausible": false
         },
         "/.well-known/agents.json": {
           "result": "error",
           "status": 404,
           "content_type": "text/html; charset=\"utf-8\"",
-          "bytes": 252846,
+          "bytes": 254975,
           "plausible": false
         },
         "/.well-known/mcp/server-card.json": {
           "result": "error",
           "status": 404,
           "content_type": "text/html; charset=\"utf-8\"",
-          "bytes": 252876,
+          "bytes": 254995,
           "plausible": false
         },
         "/.well-known/http-message-signatures-directory": {
@@ -1310,14 +1310,14 @@
           "result": "error",
           "status": 404,
           "content_type": "text/html; charset=\"utf-8\"",
-          "bytes": 252997,
+          "bytes": 255183,
           "plausible": false
         }
       },
       "toll": false,
       "signs_requests": true,
       "requests_made": 20,
-      "duration_ms": 27519
+      "duration_ms": 27684
     },
     {
       "domain": "perplexity.ai",
@@ -1368,62 +1368,62 @@
       "browser": {
         "result": "challenged",
         "status": 403,
-        "bytes": 5727
+        "bytes": 5749
       },
       "cloaking": {
         "differs": false,
         "status_differs": false,
-        "size_ratio": 0.967,
+        "size_ratio": 0.963,
         "reason": null
       },
       "well_known": {
         "/llms.txt": {
-          "result": "error",
-          "status": 404,
+          "result": "challenged",
+          "status": 403,
           "content_type": "text/html; charset=UTF-8",
-          "bytes": 12429,
+          "bytes": 5581,
           "plausible": false
         },
         "/llms-full.txt": {
-          "result": "error",
-          "status": 404,
+          "result": "challenged",
+          "status": 403,
           "content_type": "text/html; charset=UTF-8",
-          "bytes": 12439,
+          "bytes": 5617,
           "plausible": false
         },
         "/.well-known/agents.json": {
           "result": "error",
           "status": 404,
           "content_type": "text/html; charset=UTF-8",
-          "bytes": 12459,
+          "bytes": 12596,
           "plausible": false
         },
         "/.well-known/mcp/server-card.json": {
           "result": "error",
           "status": 404,
           "content_type": "text/html; charset=UTF-8",
-          "bytes": 12477,
+          "bytes": 12614,
           "plausible": false
         },
         "/.well-known/http-message-signatures-directory": {
           "result": "error",
           "status": 404,
           "content_type": "text/html; charset=UTF-8",
-          "bytes": 12503,
+          "bytes": 12640,
           "plausible": false
         },
         "/ai.txt": {
-          "result": "error",
-          "status": 404,
+          "result": "challenged",
+          "status": 403,
           "content_type": "text/html; charset=UTF-8",
-          "bytes": 12425,
+          "bytes": 5575,
           "plausible": false
         }
       },
       "toll": false,
       "signs_requests": false,
       "requests_made": 20,
-      "duration_ms": 27600
+      "duration_ms": 27399
     },
     {
       "domain": "mistral.ai",
@@ -1454,7 +1454,7 @@
         "x_robots_tag": null,
         "content_signal": null,
         "content_type": "text/html; charset=UTF-8",
-        "bytes": 478755,
+        "bytes": 473715,
         "bytes_truncated": false,
         "redirect_count": 0,
         "final_url": "https://mistral.ai/",
@@ -1469,12 +1469,12 @@
         "status": 200,
         "content_type": "text/html; charset=UTF-8",
         "negotiated": false,
-        "bytes": 478755
+        "bytes": 473715
       },
       "browser": {
         "result": "allowed",
         "status": 200,
-        "bytes": 478755
+        "bytes": 473715
       },
       "cloaking": {
         "differs": false,
@@ -1494,42 +1494,42 @@
           "result": "error",
           "status": 404,
           "content_type": "text/html; charset=utf-8",
-          "bytes": 241624,
+          "bytes": 241765,
           "plausible": false
         },
         "/.well-known/agents.json": {
           "result": "error",
           "status": 404,
           "content_type": "text/html; charset=utf-8",
-          "bytes": 241624,
+          "bytes": 241765,
           "plausible": false
         },
         "/.well-known/mcp/server-card.json": {
           "result": "error",
           "status": 404,
           "content_type": "text/html; charset=utf-8",
-          "bytes": 241624,
+          "bytes": 241765,
           "plausible": false
         },
         "/.well-known/http-message-signatures-directory": {
           "result": "error",
           "status": 404,
           "content_type": "text/html; charset=utf-8",
-          "bytes": 241624,
+          "bytes": 241765,
           "plausible": false
         },
         "/ai.txt": {
           "result": "error",
           "status": 404,
           "content_type": "text/html; charset=utf-8",
-          "bytes": 241624,
+          "bytes": 241765,
           "plausible": false
         }
       },
       "toll": false,
       "signs_requests": false,
       "requests_made": 10,
-      "duration_ms": 27975
+      "duration_ms": 27617
     },
     {
       "domain": "aws.amazon.com",
@@ -1560,7 +1560,7 @@
         "x_robots_tag": null,
         "content_signal": null,
         "content_type": "text/html;charset=utf-8",
-        "bytes": 522426,
+        "bytes": 522448,
         "bytes_truncated": false,
         "redirect_count": 0,
         "final_url": "https://aws.amazon.com/",
@@ -1575,12 +1575,12 @@
         "status": 200,
         "content_type": "text/html;charset=utf-8",
         "negotiated": false,
-        "bytes": 522426
+        "bytes": 522448
       },
       "browser": {
         "result": "allowed",
         "status": 200,
-        "bytes": 522426
+        "bytes": 522448
       },
       "cloaking": {
         "differs": false,
@@ -1635,7 +1635,7 @@
       "toll": false,
       "signs_requests": false,
       "requests_made": 13,
-      "duration_ms": 36186
+      "duration_ms": 36174
     },
     {
       "domain": "azure.microsoft.com",
@@ -1666,13 +1666,13 @@
         "x_robots_tag": null,
         "content_signal": null,
         "content_type": "text/html; charset=utf-8",
-        "bytes": 50718,
+        "bytes": 468311,
         "bytes_truncated": false,
         "redirect_count": 1,
         "final_url": "https://azure.microsoft.com/en-us",
         "final_host": "azure.microsoft.com",
         "error": null,
-        "bytes_basis": "content-length",
+        "bytes_basis": "read",
         "jsonld_count": 0,
         "has_schema_org": false
       },
@@ -1681,18 +1681,18 @@
         "status": 200,
         "content_type": "text/html; charset=utf-8",
         "negotiated": false,
-        "bytes": 50722
+        "bytes": 51306
       },
       "browser": {
         "result": "allowed",
         "status": 200,
-        "bytes": 50728
+        "bytes": 51309
       },
       "cloaking": {
-        "differs": false,
+        "differs": true,
         "status_differs": false,
-        "size_ratio": 1,
-        "reason": null
+        "size_ratio": 9.127,
+        "reason": "size"
       },
       "well_known": {
         "/llms.txt": {
@@ -1706,42 +1706,42 @@
           "result": "error",
           "status": 404,
           "content_type": "text/html; charset=utf-8",
-          "bytes": 17731,
+          "bytes": 18383,
           "plausible": false
         },
         "/.well-known/agents.json": {
           "result": "error",
           "status": 404,
           "content_type": "text/html; charset=utf-8",
-          "bytes": 17728,
+          "bytes": 18385,
           "plausible": false
         },
         "/.well-known/mcp/server-card.json": {
           "result": "error",
           "status": 404,
           "content_type": "text/html; charset=utf-8",
-          "bytes": 17725,
+          "bytes": 18384,
           "plausible": false
         },
         "/.well-known/http-message-signatures-directory": {
           "result": "error",
           "status": 404,
           "content_type": "text/html; charset=utf-8",
-          "bytes": 17724,
+          "bytes": 18378,
           "plausible": false
         },
         "/ai.txt": {
           "result": "error",
           "status": 404,
           "content_type": "text/html; charset=utf-8",
-          "bytes": 17730,
+          "bytes": 18381,
           "plausible": false
         }
       },
       "toll": false,
       "signs_requests": false,
       "requests_made": 18,
-      "duration_ms": 51847
+      "duration_ms": 61839
     },
     {
       "domain": "alibabacloud.com",
@@ -1847,7 +1847,7 @@
       "toll": false,
       "signs_requests": false,
       "requests_made": 31,
-      "duration_ms": 67314
+      "duration_ms": 67267
     },
     {
       "domain": "cloud.tencent.com",
@@ -1878,7 +1878,7 @@
         "x_robots_tag": null,
         "content_signal": null,
         "content_type": "text/html; charset=utf-8",
-        "bytes": 212608,
+        "bytes": 212640,
         "bytes_truncated": false,
         "redirect_count": 0,
         "final_url": "https://cloud.tencent.com/",
@@ -1893,12 +1893,12 @@
         "status": 200,
         "content_type": "text/html; charset=utf-8",
         "negotiated": false,
-        "bytes": 212608
+        "bytes": 212640
       },
       "browser": {
         "result": "allowed",
         "status": 200,
-        "bytes": 212608
+        "bytes": 212640
       },
       "cloaking": {
         "differs": false,
@@ -1953,7 +1953,7 @@
       "toll": false,
       "signs_requests": false,
       "requests_made": 10,
-      "duration_ms": 27604
+      "duration_ms": 27650
     },
     {
       "domain": "ksyun.com",
@@ -2059,7 +2059,7 @@
       "toll": false,
       "signs_requests": false,
       "requests_made": 20,
-      "duration_ms": 29247
+      "duration_ms": 28564
     },
     {
       "domain": "ovhcloud.com",
@@ -2068,104 +2068,104 @@
       "source": "request_log as_org",
       "note": "AS16276",
       "robots": {
-        "present": false,
-        "status": 307,
-        "policy": "disallow_all",
+        "present": true,
+        "status": 200,
+        "policy": "parsed",
         "groups_count": 1,
-        "sitemap_count": 0,
+        "sitemap_count": 20,
         "content_signal": null,
         "ai_bots_named": [],
         "ai_bots_disallowed_all": [],
-        "disallows_all_bots": true,
-        "disallows_us": true,
+        "disallows_all_bots": false,
+        "disallows_us": false,
         "mentions_claudeatlasbot": false,
-        "redirect_count": 5,
-        "final_host": "ovhcloud.com"
+        "redirect_count": 1,
+        "final_host": "www.ovhcloud.com"
       },
       "homepage": {
-        "result": "robots_disallowed",
-        "status": null,
+        "result": "allowed",
+        "status": 200,
         "server": null,
         "cf_ray": false,
         "x_robots_tag": null,
         "content_signal": null,
-        "content_type": null,
-        "bytes": null,
+        "content_type": "text/html",
+        "bytes": 374429,
         "bytes_truncated": false,
-        "redirect_count": 0,
-        "final_url": null,
-        "final_host": null,
+        "redirect_count": 1,
+        "final_url": "https://us.ovhcloud.com/",
+        "final_host": "us.ovhcloud.com",
         "error": null,
-        "bytes_basis": null,
-        "jsonld_count": 0,
-        "has_schema_org": false
+        "bytes_basis": "read",
+        "jsonld_count": 1,
+        "has_schema_org": true
       },
       "markdown": {
-        "result": "robots_disallowed",
-        "status": null,
-        "content_type": null,
+        "result": "allowed",
+        "status": 200,
+        "content_type": "text/html",
         "negotiated": false,
-        "bytes": null
+        "bytes": 42618
       },
       "browser": {
-        "result": "robots_disallowed",
-        "status": null,
-        "bytes": null
+        "result": "allowed",
+        "status": 200,
+        "bytes": 42618
       },
       "cloaking": {
-        "differs": false,
+        "differs": true,
         "status_differs": false,
-        "size_ratio": null,
-        "reason": "insufficient"
+        "size_ratio": 8.786,
+        "reason": "size"
       },
       "well_known": {
         "/llms.txt": {
-          "result": "robots_disallowed",
-          "status": null,
-          "content_type": null,
-          "bytes": null,
+          "result": "error",
+          "status": 404,
+          "content_type": "text/html",
+          "bytes": 524288,
           "plausible": false
         },
         "/llms-full.txt": {
-          "result": "robots_disallowed",
-          "status": null,
-          "content_type": null,
-          "bytes": null,
+          "result": "error",
+          "status": 404,
+          "content_type": "text/html",
+          "bytes": 524288,
           "plausible": false
         },
         "/.well-known/agents.json": {
-          "result": "robots_disallowed",
-          "status": null,
-          "content_type": null,
-          "bytes": null,
+          "result": "error",
+          "status": 404,
+          "content_type": "text/html",
+          "bytes": 524288,
           "plausible": false
         },
         "/.well-known/mcp/server-card.json": {
-          "result": "robots_disallowed",
-          "status": null,
-          "content_type": null,
-          "bytes": null,
+          "result": "error",
+          "status": 404,
+          "content_type": "text/html",
+          "bytes": 524288,
           "plausible": false
         },
         "/.well-known/http-message-signatures-directory": {
-          "result": "robots_disallowed",
-          "status": null,
-          "content_type": null,
-          "bytes": null,
+          "result": "error",
+          "status": 404,
+          "content_type": "text/html",
+          "bytes": 524288,
           "plausible": false
         },
         "/ai.txt": {
-          "result": "robots_disallowed",
-          "status": null,
-          "content_type": null,
-          "bytes": null,
+          "result": "error",
+          "status": 404,
+          "content_type": "text/html",
+          "bytes": 524288,
           "plausible": false
         }
       },
       "toll": false,
       "signs_requests": false,
-      "requests_made": 6,
-      "duration_ms": 15070
+      "requests_made": 20,
+      "duration_ms": 27419
     },
     {
       "domain": "hetzner.com",
@@ -2229,49 +2229,49 @@
           "result": "error",
           "status": 404,
           "content_type": "text/html; charset=utf-8",
-          "bytes": 118362,
+          "bytes": 118839,
           "plausible": false
         },
         "/llms-full.txt": {
           "result": "error",
           "status": 404,
           "content_type": "text/html; charset=utf-8",
-          "bytes": 118372,
+          "bytes": 118849,
           "plausible": false
         },
         "/.well-known/agents.json": {
           "result": "error",
           "status": 404,
           "content_type": "text/html; charset=utf-8",
-          "bytes": 118392,
+          "bytes": 118869,
           "plausible": false
         },
         "/.well-known/mcp/server-card.json": {
           "result": "error",
           "status": 404,
           "content_type": "text/html; charset=utf-8",
-          "bytes": 118410,
+          "bytes": 118887,
           "plausible": false
         },
         "/.well-known/http-message-signatures-directory": {
           "result": "error",
           "status": 404,
           "content_type": "text/html; charset=utf-8",
-          "bytes": 118438,
+          "bytes": 118915,
           "plausible": false
         },
         "/ai.txt": {
           "result": "error",
           "status": 404,
           "content_type": "text/html; charset=utf-8",
-          "bytes": 118358,
+          "bytes": 118835,
           "plausible": false
         }
       },
       "toll": false,
       "signs_requests": false,
       "requests_made": 21,
-      "duration_ms": 31656
+      "duration_ms": 31290
     },
     {
       "domain": "oracle.com",
@@ -2302,7 +2302,7 @@
         "x_robots_tag": null,
         "content_signal": null,
         "content_type": "text/html",
-        "bytes": 1449,
+        "bytes": 1450,
         "bytes_truncated": false,
         "redirect_count": 1,
         "final_url": "https://www.oracle.com/",
@@ -2317,12 +2317,12 @@
         "status": 403,
         "content_type": "text/html",
         "negotiated": false,
-        "bytes": 1449
+        "bytes": 1450
       },
       "browser": {
         "result": "blocked",
         "status": 403,
-        "bytes": 1449
+        "bytes": 1450
       },
       "cloaking": {
         "differs": false,
@@ -2335,49 +2335,49 @@
           "result": "blocked",
           "status": 403,
           "content_type": "text/html",
-          "bytes": 1449,
+          "bytes": 1450,
           "plausible": false
         },
         "/llms-full.txt": {
           "result": "blocked",
           "status": 403,
           "content_type": "text/html",
-          "bytes": 1449,
+          "bytes": 1450,
           "plausible": false
         },
         "/.well-known/agents.json": {
           "result": "blocked",
           "status": 403,
           "content_type": "text/html",
-          "bytes": 1449,
+          "bytes": 1450,
           "plausible": false
         },
         "/.well-known/mcp/server-card.json": {
           "result": "blocked",
           "status": 403,
           "content_type": "text/html",
-          "bytes": 1449,
+          "bytes": 1450,
           "plausible": false
         },
         "/.well-known/http-message-signatures-directory": {
           "result": "blocked",
           "status": 403,
           "content_type": "text/html",
-          "bytes": 1449,
+          "bytes": 1450,
           "plausible": false
         },
         "/ai.txt": {
           "result": "blocked",
           "status": 403,
           "content_type": "text/html",
-          "bytes": 1449,
+          "bytes": 1450,
           "plausible": false
         }
       },
       "toll": false,
       "signs_requests": false,
       "requests_made": 20,
-      "duration_ms": 27477
+      "duration_ms": 27313
     },
     {
       "domain": "cloudflare.com",
@@ -2491,7 +2491,7 @@
       "toll": false,
       "signs_requests": false,
       "requests_made": 21,
-      "duration_ms": 30483
+      "duration_ms": 30458
     },
     {
       "domain": "digitalocean.com",
@@ -2522,7 +2522,7 @@
         "x_robots_tag": null,
         "content_signal": null,
         "content_type": "text/html; charset=utf-8",
-        "bytes": 290316,
+        "bytes": 287963,
         "bytes_truncated": false,
         "redirect_count": 1,
         "final_url": "https://www.digitalocean.com/",
@@ -2537,12 +2537,12 @@
         "status": 200,
         "content_type": "text/html; charset=utf-8",
         "negotiated": false,
-        "bytes": 290316
+        "bytes": 287963
       },
       "browser": {
         "result": "allowed",
         "status": 200,
-        "bytes": 290316
+        "bytes": 287963
       },
       "cloaking": {
         "differs": false,
@@ -2555,49 +2555,49 @@
           "result": "error",
           "status": 404,
           "content_type": "text/html; charset=utf-8",
-          "bytes": 136917,
+          "bytes": 137085,
           "plausible": false
         },
         "/llms-full.txt": {
           "result": "error",
           "status": 404,
           "content_type": "text/html; charset=utf-8",
-          "bytes": 136917,
+          "bytes": 137085,
           "plausible": false
         },
         "/.well-known/agents.json": {
           "result": "error",
           "status": 404,
           "content_type": "text/html; charset=utf-8",
-          "bytes": 136917,
+          "bytes": 137085,
           "plausible": false
         },
         "/.well-known/mcp/server-card.json": {
           "result": "error",
           "status": 404,
           "content_type": "text/html; charset=utf-8",
-          "bytes": 136917,
+          "bytes": 137085,
           "plausible": false
         },
         "/.well-known/http-message-signatures-directory": {
           "result": "error",
           "status": 404,
           "content_type": "text/html; charset=utf-8",
-          "bytes": 136917,
+          "bytes": 137085,
           "plausible": false
         },
         "/ai.txt": {
           "result": "error",
           "status": 404,
           "content_type": "text/html; charset=utf-8",
-          "bytes": 136917,
+          "bytes": 137085,
           "plausible": false
         }
       },
       "toll": false,
       "signs_requests": false,
       "requests_made": 20,
-      "duration_ms": 27443
+      "duration_ms": 27528
     },
     {
       "domain": "contabo.com",
@@ -2703,7 +2703,7 @@
       "toll": false,
       "signs_requests": false,
       "requests_made": 20,
-      "duration_ms": 57701
+      "duration_ms": 57710
     },
     {
       "domain": "claudeatlas.com",
@@ -2742,7 +2742,7 @@
         "x_robots_tag": null,
         "content_signal": null,
         "content_type": "text/html",
-        "bytes": 150737,
+        "bytes": 150961,
         "bytes_truncated": false,
         "redirect_count": 0,
         "final_url": "https://claudeatlas.com/",
@@ -2762,7 +2762,7 @@
       "browser": {
         "result": "allowed",
         "status": 200,
-        "bytes": 150737
+        "bytes": 150961
       },
       "cloaking": {
         "differs": false,
@@ -2775,21 +2775,21 @@
           "result": "allowed",
           "status": 200,
           "content_type": "text/plain",
-          "bytes": 9722,
+          "bytes": 9723,
           "plausible": true
         },
         "/llms-full.txt": {
           "result": "error",
           "status": 404,
           "content_type": "text/html",
-          "bytes": 13906,
+          "bytes": 14014,
           "plausible": false
         },
         "/.well-known/agents.json": {
           "result": "error",
           "status": 404,
           "content_type": "text/html",
-          "bytes": 13906,
+          "bytes": 14014,
           "plausible": false
         },
         "/.well-known/mcp/server-card.json": {
@@ -2803,21 +2803,21 @@
           "result": "error",
           "status": 404,
           "content_type": "text/html",
-          "bytes": 13906,
+          "bytes": 14014,
           "plausible": false
         },
         "/ai.txt": {
           "result": "error",
           "status": 404,
           "content_type": "text/html",
-          "bytes": 13906,
+          "bytes": 14014,
           "plausible": false
         }
       },
       "toll": false,
       "signs_requests": false,
       "requests_made": 10,
-      "duration_ms": 27116
+      "duration_ms": 27172
     },
     {
       "domain": "commoncrawl.org",
@@ -2848,7 +2848,7 @@
         "x_robots_tag": null,
         "content_signal": null,
         "content_type": "text/html; charset=utf-8",
-        "bytes": 26694,
+        "bytes": 26525,
         "bytes_truncated": false,
         "redirect_count": 0,
         "final_url": "https://commoncrawl.org/",
@@ -2863,12 +2863,12 @@
         "status": 200,
         "content_type": "text/html; charset=utf-8",
         "negotiated": false,
-        "bytes": 26694
+        "bytes": 26525
       },
       "browser": {
         "result": "allowed",
         "status": 200,
-        "bytes": 26694
+        "bytes": 26525
       },
       "cloaking": {
         "differs": false,
@@ -2923,48 +2923,48 @@
       "toll": false,
       "signs_requests": false,
       "requests_made": 10,
-      "duration_ms": 27295
+      "duration_ms": 27330
     }
   ],
   "aggregate": {
     "targets_total": 27,
     "by_result": {
-      "allowed": 23,
+      "allowed": 22,
       "blocked": 2,
-      "challenged": 1,
+      "challenged": 3,
       "toll": 0,
       "error": 0,
-      "robots_disallowed": 1
+      "robots_disallowed": 0
     },
-    "non_error_count": 26,
-    "block_rate": 0.115,
-    "allowed_rate": 0.885,
-    "challenged_count": 1,
+    "non_error_count": 27,
+    "block_rate": 0.185,
+    "allowed_rate": 0.815,
+    "challenged_count": 3,
     "toll_count": 0,
-    "markdown_negotiation_rate": 0.077,
-    "cloaking_count": 1,
-    "jsonld_present_count": 9,
+    "markdown_negotiation_rate": 0.074,
+    "cloaking_count": 6,
+    "jsonld_present_count": 10,
     "signers_count": 2,
     "standards": {
       "/llms.txt": {
         "ok_count": 8,
-        "rate": 0.308
+        "rate": 0.296
       },
       "/llms-full.txt": {
         "ok_count": 2,
-        "rate": 0.077
+        "rate": 0.074
       },
       "/.well-known/agents.json": {
         "ok_count": 1,
-        "rate": 0.038
+        "rate": 0.037
       },
       "/.well-known/mcp/server-card.json": {
         "ok_count": 1,
-        "rate": 0.038
+        "rate": 0.037
       },
       "/.well-known/http-message-signatures-directory": {
         "ok_count": 2,
-        "rate": 0.077
+        "rate": 0.074
       },
       "/ai.txt": {
         "ok_count": 0,
@@ -2972,24 +2972,24 @@
       }
     },
     "robots": {
-      "present_count": 24,
+      "present_count": 25,
       "names_ai_bots_count": 3,
-      "disallows_all_bots_count": 1,
-      "disallows_us_count": 1,
+      "disallows_all_bots_count": 0,
+      "disallows_us_count": 0,
       "content_signal_count": 2,
-      "has_sitemap_count": 21
+      "has_sitemap_count": 22
     },
     "size_bytes": {
-      "min": 368,
-      "median": 206948,
+      "min": 366,
+      "median": 177119,
       "max": 524288
     },
     "by_tier": {
       "named-operator": {
         "n": 14,
-        "allowed": 12,
+        "allowed": 10,
         "blocked": 1,
-        "challenged": 1,
+        "challenged": 3,
         "toll": 0,
         "error": 0,
         "robots_disallowed": 0,
@@ -2997,12 +2997,12 @@
       },
       "infrastructure": {
         "n": 11,
-        "allowed": 9,
+        "allowed": 10,
         "blocked": 1,
         "challenged": 0,
         "toll": 0,
         "error": 0,
-        "robots_disallowed": 1,
+        "robots_disallowed": 0,
         "markdown_negotiated": 1
       },
       "control": {
