@@ -73,6 +73,7 @@ import {
   POLICY,
   analyzeRobots,
   isAllowed,
+  fmtDuration,
   summarizeResponse,
   analyzeHtml,
   cloakingDiff,
@@ -556,6 +557,7 @@ function printSummary(pass, outPath) {
   console.log(`${LOG} markdown_negotiation_rate: ${pct(a.markdown_negotiation_rate)}  signers: ${a.signers_count}`);
   console.log(`${LOG} llms.txt: ${a.standards['/llms.txt'].ok_count}  robots present: ${a.robots.present_count}  names AI bots: ${a.robots.names_ai_bots_count}  disallows us: ${a.robots.disallows_us_count}`);
   console.log(`${LOG} control_passes: ${a.control_passes}`);
+  console.log(`${LOG} wall-clock: ${fmtDuration(pass.duration_ms)}  requests: ${a.requests_total}  finished: ${pass.finished_at}`);
   console.log(`${LOG} wrote ${outPath}`);
   console.log(`${LOG} wrote ${REPORT_PATH}`);
 }
@@ -590,12 +592,16 @@ export async function main(argv = process.argv.slice(2)) {
         `concurrency ${POLICY.concurrency} · ${POLICY.timeout_ms}ms timeout · ≤${POLICY.max_redirects} redirects · ` +
         `≤${Math.round(BODY_CAP_BYTES / 1024)}KB read · GET only`,
     );
-    const runAt = new Date().toISOString();
+    const startMs = Date.now();
+    const runAt = new Date(startMs).toISOString();
     const results = await runPool(targets, POLICY.concurrency, probeTarget);
+    const endMs = Date.now();
 
     const pass = {
       schema_version: SCHEMA_VERSION,
       run_at: runAt,
+      finished_at: new Date(endMs).toISOString(),
+      duration_ms: endMs - startMs,
       agent: {
         ua: AGENT_UA,
         policy: POLICY,

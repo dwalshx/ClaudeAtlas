@@ -539,10 +539,15 @@ export function aggregate(targets) {
       }
     : null;
 
+  const requestsTotal = list.reduce((n, t) => n + (Number.isFinite(t && t.requests_made) ? t.requests_made : 0), 0);
+  const targetTimeMs = list.reduce((n, t) => n + (Number.isFinite(t && t.duration_ms) ? t.duration_ms : 0), 0);
+
   return {
     targets_total: total,
     by_result: byResult,
     non_error_count: nonError,
+    requests_total: requestsTotal,
+    target_time_ms_sum: targetTimeMs,
     block_rate: rate(byResult.blocked + byResult.challenged, nonError),
     allowed_rate: rate(byResult.allowed, nonError),
     challenged_count: byResult.challenged,
@@ -575,6 +580,15 @@ function yn(v) {
 function cell(v) {
   if (v === null || v === undefined) return '—';
   return String(v).replace(/\|/g, '\\|').replace(/\r?\n/g, ' ');
+}
+
+export function fmtDuration(ms) {
+  if (!Number.isFinite(ms) || ms < 0) return 'unknown';
+  const sec = Math.round(ms / 1000);
+  if (sec < 60) return sec + 's';
+  const min = Math.floor(sec / 60);
+  const rem = sec % 60;
+  return rem ? min + 'm ' + rem + 's' : min + 'm';
 }
 
 function fmtBytes(b) {
@@ -610,7 +624,19 @@ export function renderReport(pass) {
 
   lines.push(`# Reciprocal Pass v1 — how the web treats a declared bot`);
   lines.push('');
+  // Older datasets predate requests_total / target_time_ms_sum in the stored
+  // aggregate — fall back to summing the per-target fields so re-renders work.
+  const sumField = (k) => targets.reduce((n, t) => n + (Number.isFinite(t && t[k]) ? t[k] : 0), 0);
+  const requestsTotal = Number.isFinite(agg.requests_total) ? agg.requests_total : sumField('requests_made');
+  const targetTimeSum = Number.isFinite(agg.target_time_ms_sum) ? agg.target_time_ms_sum : sumField('duration_ms');
+  const finishedAt = isStr(p.finished_at) ? p.finished_at : null;
+  const durationMs = Number.isFinite(p.duration_ms) ? p.duration_ms : null;
   lines.push(`Run: \`${runAt}\` · Agent: \`${ua}\``);
+  lines.push('');
+  lines.push(
+    'Finished: `' + (finishedAt ?? 'unknown') + '` · Wall-clock: **' + (durationMs == null ? 'unknown' : fmtDuration(durationMs)) + '** · Requests: **' + requestsTotal + '** · ' +
+      'Sum of per-target time: ' + fmtDuration(targetTimeSum) + ' (' + (p.agent && p.agent.policy ? p.agent.policy.concurrency : '?') + ' hosts in flight)',
+  );
   lines.push('');
   lines.push(
     'One polite, read-only, meta-only pass by a self-declared bot (a fixed-probe crawler, no model in the loop) over the operators whose bots appear in the ClaudeAtlas request log. Servers see the declaration, not what sits behind it, so this is the treatment any declared automated client — agent or crawler — receives. Getting blocked is data, not failure. Details of the bot and how to block it: https://claudeatlas.com/bot/',

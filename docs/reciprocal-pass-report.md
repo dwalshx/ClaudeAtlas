@@ -2,6 +2,8 @@
 
 Run: `2026-09-10T17:34:10.482Z` · Agent: `ClaudeAtlasBot/1.0 (+https://claudeatlas.com/bot)`
 
+Finished: `unknown` · Wall-clock: **unknown** · Requests: **470** · Sum of per-target time: 14m 32s (3 hosts in flight)
+
 One polite, read-only, meta-only pass by a self-declared bot (a fixed-probe crawler, no model in the loop) over the operators whose bots appear in the ClaudeAtlas request log. Servers see the declaration, not what sits behind it, so this is the treatment any declared automated client — agent or crawler — receives. Getting blocked is data, not failure. Details of the bot and how to block it: https://claudeatlas.com/bot/
 
 ## Headline

@@ -451,6 +451,8 @@ test('aggregate: four synthetic targets', () => {
   assert.equal(a.targets_total, 4);
   assert.deepEqual(a.by_result, { allowed: 1, blocked: 1, challenged: 1, toll: 0, error: 1, robots_disallowed: 0 });
   assert.equal(a.non_error_count, 3);
+  assert.equal(a.requests_total, 40, 'requests_total sums requests_made across all targets');
+  assert.equal(a.target_time_ms_sum, 120000, 'target_time_ms_sum sums duration_ms across all targets');
   assert.equal(a.block_rate, 0.667);
   assert.equal(a.allowed_rate, 0.333);
   assert.equal(a.challenged_count, 1);
