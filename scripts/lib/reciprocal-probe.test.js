@@ -147,6 +147,47 @@ function fourTargets(controlLlmsOk = true) {
   ];
 }
 
+// fourTargets(true) + a 5th citation-tier target, with `cited: true` on both
+// the new target and blocked.example (mutated on the returned copy, so the
+// fourTargets() counts asserted elsewhere are untouched). Cohort: n 2,
+// allowed 1 / blocked 1, block_rate 0.5, md-neg 0, llms.txt 1, signers 0.
+function fiveTargets() {
+  const list = fourTargets(true);
+  list[1].cited = true; // blocked.example
+  const c = target({
+    domain: 'cited.example', operator: 'Cited', tier: 'citation', cited: true,
+    homepage: { result: 'allowed', status: 200, server: 'nginx', bytes: 40000, jsonld_count: 0, has_schema_org: false },
+    markdown: { result: 'allowed', status: 200, content_type: 'text/html', negotiated: false, bytes: 40000 },
+  });
+  c.well_known['/llms.txt'] = { result: 'allowed', status: 200, content_type: 'text/plain', bytes: 500, plausible: true };
+  list.push(c);
+  return list;
+}
+
+const ZERO_CITED = {
+  n: 0,
+  by_result: { allowed: 0, blocked: 0, challenged: 0, toll: 0, error: 0, robots_disallowed: 0 },
+  non_error_count: 0,
+  block_rate: null,
+  allowed_rate: null,
+  markdown_negotiation_rate: null,
+  llms_txt_ok_count: 0,
+  signers_count: 0,
+};
+
+const TIERS_MAP = {
+  citation: { question: 'Q-cite', order: 13 },
+  control: { question: 'Q-control', order: 3 },
+  'named-operator': { question: 'Q-named', order: 1 },
+  infrastructure: { question: 'Q-infra', order: 2 },
+  // seed deliberately OMITTED — unknown tiers sort last, alphabetical
+};
+
+function rowFor(md, tier) {
+  const m = md.match(new RegExp('^\\| ' + tier + ' \\|.*$', 'm'));
+  return m ? m[0] : null;
+}
+
 // ---------------------------------------------------------------------------
 // Constants
 // ---------------------------------------------------------------------------
@@ -159,10 +200,13 @@ test('constants: UA strings, token, probe set, policy', () => {
   assert.equal(WELL_KNOWN_PATHS[0].path, '/llms.txt');
   assert.ok(WELL_KNOWN_PATHS.some((p) => p.path === '/.well-known/http-message-signatures-directory'));
   assert.ok(AI_BOT_NAMES.includes('GPTBot') && AI_BOT_NAMES.includes('ClaudeBot'));
+  // v1.1: concurrency is CROSS-HOST only (6 distinct hosts in flight); every
+  // per-host politeness constant is pinned unchanged from v1.
   assert.equal(POLICY.min_host_spacing_ms, 3000);
-  assert.equal(POLICY.concurrency, 3);
+  assert.equal(POLICY.concurrency, 6);
   assert.equal(POLICY.timeout_ms, 15000);
   assert.equal(POLICY.max_redirects, 5);
+  assert.equal(POLICY.retry_on_network_error, 1);
   assert.equal(POLICY.method, 'GET');
 });
 
@@ -496,6 +540,33 @@ test('aggregate: empty / null input does not throw', () => {
   assert.equal(a.control_passes, false);
   assert.deepEqual(a.size_bytes, { min: null, median: null, max: null });
   assert.equal(aggregate(null).targets_total, 0);
+  assert.equal(a.cited.n, 0, 'cited block present on empty input');
+  assert.doesNotThrow(() => aggregate(null).cited);
+});
+
+test('aggregate: cited cohort block over fiveTargets()', () => {
+  const a = aggregate(fiveTargets());
+  assert.equal(a.targets_total, 5);
+  assert.deepEqual(a.cited, {
+    n: 2,
+    by_result: { allowed: 1, blocked: 1, challenged: 0, toll: 0, error: 0, robots_disallowed: 0 },
+    non_error_count: 2,
+    block_rate: 0.5,
+    allowed_rate: 0.5,
+    markdown_negotiation_rate: 0,
+    llms_txt_ok_count: 1,
+    signers_count: 0,
+  });
+  // by_tier shape unchanged — the new tier just shows up as another key
+  assert.equal(a.by_tier.citation.n, 1);
+  assert.equal(a.by_tier.citation.allowed, 1);
+  assert.equal(a.by_tier.citation.markdown_negotiated, 0);
+});
+
+test('aggregate: cited block is always present — zeros/nulls when nothing is cited', () => {
+  const a = aggregate(fourTargets(true));
+  assert.deepEqual(a.cited, ZERO_CITED);
+  assert.deepEqual(aggregate([]).cited, ZERO_CITED);
 });
 
 // ---------------------------------------------------------------------------
@@ -532,4 +603,70 @@ test('renderReport: standards matrix distinguishes 404 (✗) from network error 
   t.well_known['/ai.txt'] = { result: 'blocked', status: 403, content_type: null, bytes: 10, plausible: false };
   const md = renderReport({ run_at: 'x', targets: [t] });
   assert.ok(md.includes('| matrix.example | ✓ | ✗ | — | — | ✗ | ✗ |'), md);
+});
+
+function fivePass() {
+  const targets = fiveTargets();
+  return {
+    schema_version: 1,
+    run_at: '2026-09-10T00:00:00.000Z',
+    agent: { ua: AGENT_UA, policy: POLICY, probe_paths: WELL_KNOWN_PATHS.map((p) => p.path) },
+    tiers: TIERS_MAP,
+    targets,
+    aggregate: aggregate(targets),
+  };
+}
+
+test('renderReport: By-tier rows follow tiers.order, unknown tiers last, question column present', () => {
+  const md = renderReport(fivePass());
+  const iNamed = md.indexOf('| named-operator |');
+  const iInfra = md.indexOf('| infrastructure |');
+  const iControl = md.indexOf('| control |');
+  const iCite = md.indexOf('| citation |');
+  const iSeed = md.indexOf('| seed |');
+  for (const [k, v] of Object.entries({ iNamed, iInfra, iControl, iCite, iSeed })) assert.ok(v >= 0, `${k} row present`);
+  assert.ok(iNamed < iInfra && iInfra < iControl && iControl < iCite && iCite < iSeed, 'By-tier order: named-operator < infrastructure < control < citation < seed');
+  assert.ok(md.includes('| question |'), 'By-tier header has a question column');
+  const seedRow = rowFor(md, 'seed');
+  assert.ok(seedRow && seedRow.endsWith('| — |'), 'seed (not in tiers map) renders — as its question: ' + seedRow);
+  const namedRow = rowFor(md, 'named-operator');
+  assert.ok(namedRow && namedRow.includes('Q-named'), 'named-operator row shows its question: ' + namedRow);
+});
+
+test('renderReport: Cited cohort section + per-target cited column', () => {
+  const md = renderReport(fivePass());
+  assert.ok(md.includes('## Cited cohort'), 'section header');
+  assert.ok(md.indexOf('## By tier') < md.indexOf('## Cited cohort') && md.indexOf('## Cited cohort') < md.indexOf('## Per target'), 'section sits between By tier and Per target');
+  assert.ok(md.includes('**2**'), 'cohort sentence states n');
+  assert.ok(md.includes('| 50.0% |'), 'cohort table row carries the 50% block rate');
+  assert.ok(md.includes('| cited.example | citation | ✓ |'), 'cited.example row ticked');
+  assert.ok(md.includes('| blocked.example | named-operator | ✓ |'), 'blocked.example row ticked');
+  assert.ok(md.includes('| claudeatlas.com | control |  |'), 'control row cited cell blank');
+  assert.ok(md.includes('| cited |'), 'Per-target header has a cited column');
+});
+
+test('renderReport: v1-shaped pass (no tiers map, no cited flags, aggregate without cited) still renders', () => {
+  const targets = fourTargets(true);
+  const a = aggregate(targets);
+  delete a.cited;
+  const md = renderReport({
+    schema_version: 1,
+    run_at: 'x',
+    agent: { ua: AGENT_UA, policy: POLICY, probe_paths: WELL_KNOWN_PATHS.map((p) => p.path) },
+    targets,
+    aggregate: a,
+  });
+  assert.equal(typeof md, 'string');
+  assert.ok(md.includes('## By tier'));
+  assert.ok(md.includes('## Cited cohort'));
+  assert.ok(md.includes('No targets flagged'), 'v1 path prints the no-cited line');
+  const iControl = md.indexOf('| control |');
+  const iInfra = md.indexOf('| infrastructure |');
+  const iNamed = md.indexOf('| named-operator |');
+  const iSeed = md.indexOf('| seed |');
+  assert.ok(iControl < iInfra && iInfra < iNamed && iNamed < iSeed, 'no tiers map → alphabetical By-tier order');
+  // garbage tiers values are tolerated
+  assert.equal(typeof renderReport({ run_at: 'x', tiers: [1, 2], targets }), 'string');
+  assert.equal(typeof renderReport({ run_at: 'x', tiers: 'nope', targets }), 'string');
+  assert.equal(typeof renderReport(null), 'string');
 });

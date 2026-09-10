@@ -61,9 +61,10 @@ export const AI_BOT_NAMES = [
 
 export const BODY_CAP_BYTES = 512 * 1024;
 
+// concurrency is CROSS-HOST only (distinct hosts in flight); per-host spacing stays min_host_spacing_ms.
 export const POLICY = {
   min_host_spacing_ms: 3000,
-  concurrency: 3,
+  concurrency: 6,
   timeout_ms: 15000,
   max_redirects: 5,
   retry_on_network_error: 1,
@@ -481,6 +482,14 @@ export function aggregate(targets) {
   for (const { path } of WELL_KNOWN_PATHS) standardsOk[path] = 0;
   const sizes = [];
 
+  // Cited cohort (targets flagged `cited: true` — the AEO top-cited slice).
+  // Always emitted, even when nothing is cited (n 0, rates null).
+  const citedCounts = emptyCounts();
+  let citedN = 0;
+  let citedMd = 0;
+  let citedLlms = 0;
+  let citedSigners = 0;
+
   for (const t of list) {
     const res = resultOf(t);
     byResult[res] += 1;
@@ -510,10 +519,30 @@ export function aggregate(targets) {
     if (Number.isFinite(rb.sitemap_count) && rb.sitemap_count > 0) robots.has_sitemap_count += 1;
 
     for (const { path } of WELL_KNOWN_PATHS) if (wkOk(t, path)) standardsOk[path] += 1;
+
+    if (t.cited === true) {
+      citedN += 1;
+      citedCounts[res] += 1;
+      if (md) citedMd += 1;
+      if (wkOk(t, '/llms.txt')) citedLlms += 1;
+      if (t.signs_requests === true) citedSigners += 1;
+    }
   }
 
   const total = list.length;
   const nonError = total - byResult.error - byResult.robots_disallowed;
+
+  const citedNonError = citedN - citedCounts.error - citedCounts.robots_disallowed;
+  const cited = {
+    n: citedN,
+    by_result: citedCounts,
+    non_error_count: citedNonError,
+    block_rate: rate(citedCounts.blocked + citedCounts.challenged, citedNonError),
+    allowed_rate: rate(citedCounts.allowed, citedNonError),
+    markdown_negotiation_rate: rate(citedMd, citedNonError),
+    llms_txt_ok_count: citedLlms,
+    signers_count: citedSigners,
+  };
 
   const standards = {};
   for (const { path } of WELL_KNOWN_PATHS) {
@@ -560,6 +589,7 @@ export function aggregate(targets) {
     robots,
     size_bytes: sizeBytes,
     by_tier: byTier,
+    cited,
     control,
     control_passes: !!(control && control.allowed && control.markdown_negotiated && control.llms_txt_ok),
   };
@@ -620,6 +650,13 @@ export function renderReport(pass) {
   const policy = agent.policy && typeof agent.policy === 'object' ? agent.policy : POLICY;
   const probePaths = Array.isArray(agent.probe_paths) ? agent.probe_paths : WELL_KNOWN_PATHS.map((w) => w.path);
   const byResult = agg.by_result || emptyCounts();
+  // Tier map {tier: {question, order}} — optional (v1 datasets have none).
+  const tiers = p.tiers && typeof p.tiers === 'object' && !Array.isArray(p.tiers) ? p.tiers : {};
+  const orderOf = (name) => {
+    const o = tiers[name] && typeof tiers[name] === 'object' ? tiers[name].order : undefined;
+    return Number.isFinite(o) ? o : Number.POSITIVE_INFINITY;
+  };
+  const questionOf = (name) => (tiers[name] && typeof tiers[name] === 'object' && isStr(tiers[name].question) ? tiers[name].question : null);
   const lines = [];
 
   lines.push(`# Reciprocal Pass v1 — how the web treats a declared bot`);
@@ -661,21 +698,47 @@ export function renderReport(pass) {
 
   lines.push('## By tier');
   lines.push('');
-  lines.push('| tier | n | allowed | blocked | challenged | toll | error | robots_disallowed | md-neg |');
-  lines.push('| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |');
-  for (const [tier, c] of Object.entries(agg.by_tier || {})) {
-    lines.push(`| ${cell(tier)} | ${c.n} | ${c.allowed} | ${c.blocked} | ${c.challenged} | ${c.toll} | ${c.error} | ${c.robots_disallowed} | ${c.markdown_negotiated} |`);
+  lines.push('| tier | n | allowed | blocked | challenged | toll | error | robots_disallowed | md-neg | question |');
+  lines.push('| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | --- |');
+  // Known tiers by tiers[tier].order asc; unknown tiers after them, alphabetical.
+  // Compared explicitly (not `oa - ob`): Infinity - Infinity is NaN.
+  const tierRows = Object.entries(agg.by_tier || {}).sort(([a], [b]) => {
+    const oa = orderOf(a);
+    const ob = orderOf(b);
+    return (oa === ob ? 0 : oa < ob ? -1 : 1) || a.localeCompare(b);
+  });
+  for (const [tier, c] of tierRows) {
+    lines.push(`| ${cell(tier)} | ${c.n} | ${c.allowed} | ${c.blocked} | ${c.challenged} | ${c.toll} | ${c.error} | ${c.robots_disallowed} | ${c.markdown_negotiated} | ${cell(questionOf(tier))} |`);
+  }
+  lines.push('');
+
+  lines.push('## Cited cohort');
+  lines.push('');
+  const cited = agg.cited && typeof agg.cited === 'object' ? agg.cited : null;
+  if (!cited || !cited.n) {
+    lines.push('No targets flagged `cited` in this pass.');
+  } else {
+    const cb = cited.by_result || emptyCounts();
+    lines.push(
+      `The **${cited.n}** targets flagged \`cited\` are the top-cited slice of the 2,000+ unique domains AI assistants cited across the ClaudeAtlas AEO probe runs — the sites assistants send people to, probed exactly like everything else.`,
+    );
+    lines.push('');
+    lines.push('| n | answered | allowed | blocked | challenged | error | robots_disallowed | block_rate | allowed_rate | md-neg rate | llms.txt | signers |');
+    lines.push('| ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |');
+    lines.push(
+      `| ${cited.n} | ${cited.non_error_count ?? 0} | ${cb.allowed} | ${cb.blocked} | ${cb.challenged} | ${cb.error} | ${cb.robots_disallowed} | ${pct(cited.block_rate)} | ${pct(cited.allowed_rate)} | ${pct(cited.markdown_negotiation_rate)} | ${cited.llms_txt_ok_count ?? 0} | ${cited.signers_count ?? 0} |`,
+    );
   }
   lines.push('');
 
   lines.push('## Per target');
   lines.push('');
-  lines.push('| domain | tier | result | status | server | md-neg | llms.txt | signs | cloak | bytes |');
-  lines.push('| --- | --- | --- | ---: | --- | --- | --- | --- | --- | ---: |');
+  lines.push('| domain | tier | cited | result | status | server | md-neg | llms.txt | signs | cloak | bytes |');
+  lines.push('| --- | --- | :-: | --- | ---: | --- | --- | --- | --- | --- | ---: |');
   for (const t of targets) {
     const h = t.homepage || {};
     lines.push(
-      `| ${cell(t.domain)} | ${cell(t.tier)} | ${cell(resultOf(t))} | ${cell(h.status)} | ${cell(h.server)} | ${yn(!!(t.markdown && t.markdown.negotiated))} | ${matrixMark(t, '/llms.txt')} | ${yn(t.signs_requests === true)} | ${t.cloaking && t.cloaking.differs ? 'yes (' + t.cloaking.reason + ')' : t.cloaking && t.cloaking.reason === 'insufficient' ? '—' : 'no'} | ${fmtBytes(h.bytes)} |`,
+      `| ${cell(t.domain)} | ${cell(t.tier)} | ${t.cited === true ? '✓' : ''} | ${cell(resultOf(t))} | ${cell(h.status)} | ${cell(h.server)} | ${yn(!!(t.markdown && t.markdown.negotiated))} | ${matrixMark(t, '/llms.txt')} | ${yn(t.signs_requests === true)} | ${t.cloaking && t.cloaking.differs ? 'yes (' + t.cloaking.reason + ')' : t.cloaking && t.cloaking.reason === 'insufficient' ? '—' : 'no'} | ${fmtBytes(h.bytes)} |`,
     );
   }
   lines.push('');
