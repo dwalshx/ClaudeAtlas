@@ -127,7 +127,7 @@ function parseArgs(argv) {
 }
 
 // ---------------------------------------------------------------------------
-// Target list (tiny committed JSON — whole-file lint allowlisted).
+// Target list + tier map (tiny committed JSON — whole-file lint allowlisted).
 // ---------------------------------------------------------------------------
 function loadTargets(opts) {
   const raw = JSON.parse(readFileSync(TARGETS_PATH, 'utf-8'));
@@ -135,7 +135,8 @@ function loadTargets(opts) {
   targets = targets.filter((t) => t && typeof t.domain === 'string' && t.domain.trim());
   if (opts.only) targets = targets.filter((t) => opts.only.includes(t.domain.toLowerCase()));
   if (opts.limit) targets = targets.slice(0, opts.limit);
-  return targets;
+  const tiers = raw && raw.tiers && typeof raw.tiers === 'object' && !Array.isArray(raw.tiers) ? raw.tiers : {};
+  return { targets, tiers };
 }
 
 // ---------------------------------------------------------------------------
@@ -388,6 +389,7 @@ async function probeTarget(t) {
     tier: t.tier ?? null,
     source: t.source ?? null,
     note: t.note ?? null,
+    cited: t.cited === true,
     robots: null,
     homepage: null,
     markdown: null,
@@ -557,6 +559,8 @@ function printSummary(pass, outPath) {
   console.log(`${LOG} markdown_negotiation_rate: ${pct(a.markdown_negotiation_rate)}  signers: ${a.signers_count}`);
   console.log(`${LOG} llms.txt: ${a.standards['/llms.txt'].ok_count}  robots present: ${a.robots.present_count}  names AI bots: ${a.robots.names_ai_bots_count}  disallows us: ${a.robots.disallows_us_count}`);
   console.log(`${LOG} control_passes: ${a.control_passes}`);
+  const c = a.cited;
+  if (c) console.log(`${LOG} cited cohort: n ${c.n}  block_rate ${pct(c.block_rate)}  md-neg ${pct(c.markdown_negotiation_rate)}`);
   console.log(`${LOG} wall-clock: ${fmtDuration(pass.duration_ms)}  requests: ${a.requests_total}  finished: ${pass.finished_at}`);
   console.log(`${LOG} wrote ${outPath}`);
   console.log(`${LOG} wrote ${REPORT_PATH}`);
@@ -580,7 +584,7 @@ export async function main(argv = process.argv.slice(2)) {
       return;
     }
 
-    const targets = loadTargets(opts);
+    const { targets, tiers } = loadTargets(opts);
     if (targets.length === 0) {
       console.warn(`${LOG} no targets selected (check --only / data/reciprocal-targets.json) — nothing written.`);
       process.exit(0);
@@ -607,6 +611,7 @@ export async function main(argv = process.argv.slice(2)) {
         policy: POLICY,
         probe_paths: WELL_KNOWN_PATHS.map((w) => w.path),
       },
+      tiers,
       targets: results,
       aggregate: aggregate(results),
     };
