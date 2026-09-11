@@ -1,33 +1,33 @@
 {
-  "timestamp": "2026-09-10T13:36:57.310Z",
-  "total_discovered": 102554,
-  "total_skills": 85666,
-  "unique_repos": 11195,
+  "timestamp": "2026-09-11T13:51:49.887Z",
+  "total_discovered": 103785,
+  "total_skills": 86699,
+  "unique_repos": 11332,
   "tiers": {
-    "featured": 8566,
-    "solid": 9434,
-    "listed": 67666
+    "featured": 8669,
+    "solid": 9331,
+    "listed": 68699
   },
   "categories": {
-    "Web & Frontend": 6163,
-    "AI & Automation": 54429,
-    "Testing & QA": 2820,
-    "Code & Development": 10358,
-    "Data & Documents": 7558,
-    "API & Backend": 2304,
-    "DevOps & Infrastructure": 2034
+    "Web & Frontend": 6211,
+    "AI & Automation": 55054,
+    "Testing & QA": 2848,
+    "Code & Development": 10504,
+    "Data & Documents": 7666,
+    "API & Backend": 2330,
+    "DevOps & Infrastructure": 2086
   },
   "content_flags": {
-    "flagged_records": 718,
+    "flagged_records": 729,
     "by_rule": {
-      "curl_pipe_sh": 442,
+      "curl_pipe_sh": 448,
       "exfil_endpoints": 25,
-      "ignore_previous": 176,
+      "ignore_previous": 180,
       "env_secret_to_url": 74,
       "dan_mode": 6,
       "wget_pipe_sh": 9,
       "reverse_shell": 1,
-      "override_system": 11,
+      "override_system": 12,
       "new_system_prompt": 2,
       "base64_decode_exec": 4
     },
@@ -42,18 +42,18 @@
     "SOLID_THRESHOLD": 70
   },
   "plugin": {
-    "timestamp": "2026-09-10T13:36:59.910Z",
-    "total_raw_repos": 26189,
-    "total_plugins": 13553,
+    "timestamp": "2026-09-11T13:51:52.424Z",
+    "total_raw_repos": 26257,
+    "total_plugins": 13590,
     "tiers": {
-      "featured": 1355,
-      "solid": 4065,
-      "listed": 8133
+      "featured": 1359,
+      "solid": 4077,
+      "listed": 8154
     }
   },
   "mcp_server": {
-    "timestamp": "2026-09-10T13:37:00.948Z",
-    "total_raw_repos": 26189,
+    "timestamp": "2026-09-11T13:51:53.457Z",
+    "total_raw_repos": 26257,
     "mcp_repos": 68,
     "total_mcp_servers": 166,
     "tiers": {
