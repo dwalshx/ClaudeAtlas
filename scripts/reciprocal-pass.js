@@ -60,6 +60,7 @@ import {
   closeSync,
   renameSync,
   unlinkSync,
+  mkdirSync,
 } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -88,6 +89,11 @@ const ROOT = join(__dirname, '..');
 const TARGETS_PATH = join(ROOT, 'data', 'reciprocal-targets.json');
 const DEFAULT_OUT_PATH = join(ROOT, 'data', 'reciprocal-pass.json');
 const REPORT_PATH = join(ROOT, 'docs', 'reciprocal-pass-report.md');
+// Every FULL run (no --only/--limit, default --out) is also banked here as
+// <run date>.json so runs accumulate for trend comparison. Smoke runs and
+// custom --out paths are never archived. ~300-400 KB per run at 157 targets;
+// a weekly cadence is ~20 MB/year — bounded, human-readable, committed.
+const HISTORY_DIR = join(ROOT, 'data', 'reciprocal-history');
 
 const SCHEMA_VERSION = 1;
 const SNIPPET_BYTES = 16 * 1024; // decoded prefix kept in memory for classification only
@@ -617,6 +623,13 @@ export async function main(argv = process.argv.slice(2)) {
     };
 
     writeJsonAtomic(opts.out, pass);
+    const isFullRun = !opts.only && !opts.limit && opts.out === DEFAULT_OUT_PATH;
+    if (isFullRun) {
+      mkdirSync(HISTORY_DIR, { recursive: true });
+      const archivePath = join(HISTORY_DIR, runAt.slice(0, 10) + '.json');
+      writeJsonAtomic(archivePath, pass);
+      console.log(`${LOG} archived ${archivePath}`);
+    }
     writeTextAtomic(REPORT_PATH, renderReport(pass));
     printSummary(pass, opts.out);
   } catch (err) {
