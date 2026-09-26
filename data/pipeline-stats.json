@@ -1,29 +1,29 @@
 {
-  "timestamp": "2026-09-25T14:25:06.444Z",
-  "total_discovered": 118355,
-  "total_skills": 98823,
-  "unique_repos": 13347,
+  "timestamp": "2026-09-26T15:01:17.935Z",
+  "total_discovered": 119840,
+  "total_skills": 100060,
+  "unique_repos": 13502,
   "tiers": {
-    "featured": 9882,
-    "solid": 8118,
-    "listed": 80823
+    "featured": 10006,
+    "solid": 7994,
+    "listed": 82060
   },
   "categories": {
-    "Web & Frontend": 7214,
-    "AI & Automation": 62524,
-    "Testing & QA": 3293,
-    "Code & Development": 11944,
-    "Data & Documents": 8778,
-    "API & Backend": 2673,
-    "DevOps & Infrastructure": 2397
+    "Web & Frontend": 7400,
+    "AI & Automation": 63253,
+    "Testing & QA": 3333,
+    "Code & Development": 12088,
+    "Data & Documents": 8853,
+    "API & Backend": 2719,
+    "DevOps & Infrastructure": 2414
   },
   "content_flags": {
-    "flagged_records": 811,
+    "flagged_records": 819,
     "by_rule": {
-      "curl_pipe_sh": 492,
-      "ignore_previous": 208,
+      "curl_pipe_sh": 494,
+      "ignore_previous": 213,
       "exfil_endpoints": 28,
-      "env_secret_to_url": 83,
+      "env_secret_to_url": 84,
       "dan_mode": 6,
       "wget_pipe_sh": 13,
       "reverse_shell": 1,
@@ -42,18 +42,18 @@
     "SOLID_THRESHOLD": 70
   },
   "plugin": {
-    "timestamp": "2026-09-25T14:25:08.899Z",
-    "total_raw_repos": 27351,
-    "total_plugins": 14186,
+    "timestamp": "2026-09-26T15:01:20.595Z",
+    "total_raw_repos": 27437,
+    "total_plugins": 14240,
     "tiers": {
-      "featured": 1418,
-      "solid": 4255,
-      "listed": 8513
+      "featured": 1424,
+      "solid": 4272,
+      "listed": 8544
     }
   },
   "mcp_server": {
-    "timestamp": "2026-09-25T14:25:09.899Z",
-    "total_raw_repos": 27351,
+    "timestamp": "2026-09-26T15:01:21.675Z",
+    "total_raw_repos": 27437,
     "mcp_repos": 74,
     "total_mcp_servers": 178,
     "tiers": {
