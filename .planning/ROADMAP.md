@@ -14,3 +14,45 @@
     - [x] 03.4-03-PLAN.md (wave 3) — R-4 test + Change C: pushed_at re-walk gate + single recursive-tree walk + weekly full re-walk safety net
     - [x] 03.4-04-PLAN.md (wave 4) — branch-measured (cold-cache ~324 min < 360) → flipped PLUGINS_ENABLED=true → first warm cron green, plugins live
     - [x] 03.4-05-PLAN.md (gap) — split weekly full re-walk into weekly-plugin-rewalk.yml so the daily cron is steady-state only
+
+---
+
+## Milestone v4.0 — Data Feeds (APIs + public datasets)
+
+**Spec:** `docs/PHASE-4.0-SPEC.md` (2026-11-01; decisions 1 + 8 resolved 2026-11-02). **Research:** `.planning/research/2026-11-01-data-feeds-sources.md`.
+**Branch:** `feat/v4.0-data-feeds` (own worktree, forked from main 2026-11-02 so v3.0's open 3.5–3.9 UI phases never contend).
+**Order:** 4.1 → 4.2 → 4.3 (APIs live on the site) → 4.4 → 4.5 → 4.6 → 4.7 → 4.8. Embed everything (Vectorize verified at $0.05 per 100M stored dims; not a cost governor).
+
+### Phase 4.1: Envelope generalization
+
+**Goal:** `api` and `dataset` become valid `entity_type`s that round-trip through every shared pipeline helper without a GitHub repo. Nullable `repo_*` for non-GitHub origins, `origin` + `home_url` + `docs_url` on `EntityCommon`, shared `access` block with per-field provenance, `ApiExtra` / `DatasetExtra`, scorer + embedding-input + rule-pack + recipe registry slots, `DATA_FEEDS_ENABLED` flag plumbing (default off, no workflow steps yet), fixtures + tests, CLAUDE.md data-model + Vectorize-cost corrections. No harvester, no pages.
+**Done when:** fixture api/dataset records pass `upcastRecord` → `scoreEntity` → `buildEmbeddingInput` → `isSlop` → `assignPercentileTiers` → `assignSlugs` → NDJSON write/read with `repo_*: null`, all existing tests still green, `check:patterns` clean.
+**Status:** Planning started 2026-11-02 — context in `.planning/phases/4.1-envelope-generalization/04.1-CONTEXT.md`.
+
+### Phase 4.2: API harvest v1
+
+**Goal:** `harvest-apis.js` (APIs.guru list + specs via ETag, data.gouv.fr dataservices, UK api-catalogue CSV, marcelscruz public-apis mirror) → `data/apis-raw.ndjson`; `filter-apis.js` with cross-source merge by primary host; `api.scorer.js` calibrated with Dan eyeballing the tier distribution; embed + enrich + upload-vectors wired behind `DATA_FEEDS_ENABLED`. Target ≈ 6–7k APIs.
+
+### Phase 4.3: API pages + search
+
+**Goal:** `/apis/` upgraded from the 69-service dictionary page to the API index; `/apis/<provider>/<name>/` detail pages (access card with provenance chips, score breakdown, spec/docs links); old service slugs 301; additive nav entry "Data" + `?type=api` search chip; Listed-tier KV render route; llms.txt / registry / feeds; methodology section. **Ship APIs visibly here.**
+
+### Phase 4.4: Reachability probe + feed history
+
+**Goal:** `probe-feeds.js` (politeness from `scripts/lib/reciprocal-probe.js`: robots-first, declared UA, per-host spacing, GET-only, 512 KB cap) → `data/feed-history/YYYY-MM-DD.json`; `RateLimit-*` / `X-RateLimit-*` header sniffing → `access.rate_limit` with provenance `probed`; Reachability signal live; `/bot` page updated.
+
+### Phase 4.5: Dataset harvest v1 + pages
+
+**Goal:** `harvest-datasets.js` (AWS Open Data Registry, OpenML, UCI, Hugging Face top-N by downloads, data.gov Catalog API with popularity floor; Zenodo/Dryad if budget allows) → `filter-datasets.js`, `dataset.scorer.js`, `/datasets/` + detail pages. Target ≈ 20–30k datasets. Open decisions 3 and 5 (popularity floors, Kaggle via Meta Kaggle) resolved at discuss time.
+
+### Phase 4.6: Consumer graph
+
+**Goal:** `link-consumers.js` extracts hosts/URLs from skill bodies, MCP configs and plugin manifests and matches them to API `base_urls` / dataset `download_urls`; `consumed_by[]` on feeds + `uses_feeds[]` back-edge on skills/plugins/MCPs (added to filter `PRESERVED_FIELDS`); replaces `mine-apis.js`'s hand dictionary; Ecosystem-adoption signal live; "Data sources used" section on skill/plugin/MCP pages.
+
+### Phase 4.7: Access-metadata extraction ladder
+
+**Goal:** heuristic regex pass over fetched docs/pricing pages, bounded LLM pass on Featured/Solid APIs only (open decision 2: needs Dan's cost approval), `data/feed-overrides.json` manual layer, provenance chips polished.
+
+### Phase 4.8: GitHub OpenAPI discovery
+
+**Goal:** partitioned GitHub code-search enumeration of `openapi.*` / `swagger.*` (separate 10 req/min bucket, 1,000 results/query → partition by size/language/org), noise gates, spec fetch via existing ETag machinery, incremental like Phase 3.4, cron audit. The lever from ~7k to 25k+ APIs. Measured go/no-go like 3.3-07.

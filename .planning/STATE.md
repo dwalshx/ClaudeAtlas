@@ -21,7 +21,7 @@ progress:
 See: `.planning/PROJECT.md` (last updated 2026-04-10)
 
 **Core value:** Users can find the best Claude skill for a given task in under 30 seconds, with visible signals for why it's trustworthy.
-**Current focus:** v3.0 milestone — Phases 3.3 + 3.4 done (plugins LIVE); 3.5–3.9 remain
+**Current focus:** v4.0 Data Feeds (branch `feat/v4.0-data-feeds`, forked 2026-11-02) — Phase 4.1 envelope generalization in planning; spec `docs/PHASE-4.0-SPEC.md`. v3.0 phases 3.5–3.9 remain open on main and are untouched by this branch. ⚠ Daily cron failing since 2026-09-28 at "Upload vectors to Vectorize" (0 records in skill-vectors.ndjson) — handed to a separate fix session 2026-11-02.
 **Milestone:** v3.0 — Comprehensive Agent Tooling Index (in progress)
 
 ## Current Position
