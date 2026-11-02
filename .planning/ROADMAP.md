@@ -27,7 +27,7 @@
 
 **Goal:** `api` and `dataset` become valid `entity_type`s that round-trip through every shared pipeline helper without a GitHub repo. Nullable `repo_*` for non-GitHub origins, `origin` + `home_url` + `docs_url` on `EntityCommon`, shared `access` block with per-field provenance, `ApiExtra` / `DatasetExtra`, scorer + embedding-input + rule-pack + recipe registry slots, `DATA_FEEDS_ENABLED` flag plumbing (default off, no workflow steps yet), fixtures + tests, CLAUDE.md data-model + Vectorize-cost corrections. No harvester, no pages.
 **Done when:** fixture api/dataset records pass `upcastRecord` → `scoreEntity` → `buildEmbeddingInput` → `isSlop` → `assignPercentileTiers` → `assignSlugs` → NDJSON write/read with `repo_*: null`, all existing tests still green, `check:patterns` clean.
-**Status:** Planned 2026-11-02 (8 plans / 4 waves) — context in `.planning/phases/4.1-envelope-generalization/04.1-CONTEXT.md`.
+**Status:** Planned 2026-11-02, revised 2026-11-02 (8 plans / 5 waves) — context in `.planning/phases/4.1-envelope-generalization/04.1-CONTEXT.md`.
 **Plans:** 8 plans
 
 Plans:
@@ -37,8 +37,8 @@ Plans:
 - [ ] 04.1-04-PLAN.md — Wave 2: scripts/lib/access.js + url-host.js; upcaster nullable buildCommonFields, origin back-fill, api/dataset upcast paths
 - [ ] 04.1-05-PLAN.md — Wave 3: feed.signals + api/dataset scorers (spec weights, uncalibrated) + embedding-input builders
 - [ ] 04.1-06-PLAN.md — Wave 3: api/dataset rule packs, dedupLanguageVariants/isFixtureRepo null-safety, api/dataset recipes (D-05 computeId)
-- [ ] 04.1-07-PLAN.md — Wave 3: slugParts resolver, tier tie-break ?? 0, SkillCard guards, generate-registry invokedAsScript guard + buildRegistryEntry (round-trip GREEN)
-- [ ] 04.1-08-PLAN.md — Wave 4: DATA_FEEDS_ENABLED flag, CLAUDE.md cost + data-model corrections, phase gate + VALIDATION sign-off
+- [ ] 04.1-07-PLAN.md — Wave 4 (depends on 04/05/06): slugParts resolver, tier tie-break ?? 0, SkillCard guards, generate-registry invokedAsScript guard + buildRegistryEntry (round-trip GREEN)
+- [ ] 04.1-08-PLAN.md — Wave 5: DATA_FEEDS_ENABLED flag, CLAUDE.md cost + data-model corrections, phase gate + VALIDATION sign-off
 
 ### Phase 4.2: API harvest v1
 
