@@ -211,6 +211,9 @@ These were INSERTED ahead of the Phase 3.0 spec's 3.1–3.9 lineup because the d
 
 ### Decisions log (cumulative; see `.planning/SESSION-MEMO-2026-04-to-05.md` for full reasoning)
 
+- (4.1-01) Fixtures live at `data/__fixtures__/apis-mini.ndjson` + `datasets-mini.ndjson` (plugins-mini/mcp-mini precedent), not CONTEXT D-09's non-existent `scripts/test/fixtures/`. Raw-ish upcaster inputs: no `schema_version`, no top-level `slug`, `raw_source` documents the verbatim source keys for the 4.2/4.5 harvesters.
+- (4.1-01) Round-trip test asserts `null` on all 16 `repo_*` keys for null-repo api/dataset records but only the 13 COERCED keys non-null for repo-backed skill/plugin/mcp_server types (`repo_license`/`repo_language`/`repo_description` stay `?? null` on every type).
+- (4.1-01) D-07 red baseline recorded in `04.1-01-SUMMARY.md`: round-trip fails at ESM link (`generate-registry.js` lacks `buildRegistryEntry` export — Plan 07); workflow-flags 2 pass / 2 fail (flag-present + spec-pointer red — Plan 08). Plans 04-07 and 08 are measured against these outputs.
 - (4.1-03) ProvenanceMethod declares D-03's six values (adds `heuristic` to the spec's five); CONTEXT.md D-03 is the locked source over docs/PHASE-4.0-SPEC.md
 - (4.1-03) `access: AccessBlock` lives ONLY on the api/dataset EntityRecord union members (D-03) — never on EntityCommon, never under `extra`; types.test.js slices EntityCommon and asserts no `access:` inside it
 - (4.1-03) Phase 4.1 type additions are additive: `schema_version` stays 2 and `TYPES_MODULE` stays `'claudeatlas/types@2'`; all sixteen `repo_*` fields are `T | null` gated on `origin.kind === 'github'` (upcaster never emits null for skill/plugin/mcp_server)
