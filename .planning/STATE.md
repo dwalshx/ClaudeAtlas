@@ -1,16 +1,16 @@
 ---
 gsd_state_version: 1.0
-milestone: v1.0
-milestone_name: milestone
-status: Phase 3.4 COMPLETE — plugins live
-stopped_at: "Phase 3.4 COMPLETE 2026-06-16 — plugins LIVE (6,317 indexed, 638 Featured). PLUGINS_ENABLED=true on main; first warm scheduled cron green ~2h35m; data/history/2026-06-16.json committed. Next: finish v3.0 milestone (3.5-3.9)."
-last_updated: "2026-08-04T17:05:00.000Z"
-last_activity: 2026-08-04
+milestone: v4.0
+milestone_name: — Data Feeds
+status: Ready to execute
+stopped_at: Completed 04.1-03-PLAN.md
+last_updated: "2026-11-02T16:03:12.449Z"
+last_activity: 2026-11-02
 progress:
-  total_phases: 19
-  completed_phases: 7
-  total_plans: 30
-  completed_plans: 30
+  total_phases: 8
+  completed_phases: 0
+  total_plans: 8
+  completed_plans: 3
   percent: 100
 ---
 
@@ -21,15 +21,17 @@ progress:
 See: `.planning/PROJECT.md` (last updated 2026-04-10)
 
 **Core value:** Users can find the best Claude skill for a given task in under 30 seconds, with visible signals for why it's trustworthy.
-**Current focus:** v4.0 Data Feeds (branch `feat/v4.0-data-feeds`, forked 2026-11-02) — Phase 4.1 envelope generalization in planning; spec `docs/PHASE-4.0-SPEC.md`. v3.0 phases 3.5–3.9 remain open on main and are untouched by this branch. ⚠ Daily cron failing since 2026-09-28 at "Upload vectors to Vectorize" (0 records in skill-vectors.ndjson) — handed to a separate fix session 2026-11-02.
+**Current focus:** Phase 4.1 — envelope-generalization
 **Milestone:** v3.0 — Comprehensive Agent Tooling Index (in progress)
 
 ## Current Position
 
-Phase: 3.4 (incremental-plugin-discovery) — ✅ COMPLETE 2026-06-16. Plugins LIVE on claudeatlas.com (6,317 indexed, 638 Featured). `PLUGINS_ENABLED=true` on main; first warm scheduled cron green ~2h35m; history snapshot intact.
+Phase: 4.1 (envelope-generalization) — EXECUTING
+Plan: 3 of 8
 Next: **finish the v3.0 milestone — phases 3.5–3.9** (defined in `docs/PHASE-3.0-SPEC.md` lines 434-446, not yet broken into ROADMAP entries).
 
 **Remaining v3.0 phases (all 1-3h; see PHASE-3.0-SPEC.md):**
+
 - **3.5** Homepage + nav redesign (Top Skills / Top Plugins sections, mixed search + type chips) — frontend
 - **3.6** Tier rename Featured→Top across codebase + UX — cross-cutting (do solo/first; conflicts with UI phases)
 - **3.7** Pipeline integration (cron handles both scrapes/embeds/registries) — **largely subsumed by 3.2+3.4**; residual likely just registries + verification
@@ -39,10 +41,12 @@ Next: **finish the v3.0 milestone — phases 3.5–3.9** (defined in `docs/PHASE
 **Parallelization note (discussed 2026-06-15):** sequence 3.6 first (solo), then 2 worktrees — UX stream (3.5→3.9) + data stream (3.7→3.8); seams = nav links + mixed-search render (assign to UX stream). GSD `/gsd:new-workspace` + `/gsd:workstreams` for isolation.
 
 **Operational notes for 3.4 maintenance:**
+
 - Steady-state daily cron ~2.5h (daily GraphQL refresh of ~7,339 repos ~35m is the recurring cost — future optimization candidate).
 - GHA cache is branch-scoped: a steady-state measurement branch can't see a stamped cache from another branch (restores unstamped bootstrap → one-time cold backfill ~324 min, still < 360). `weekly-plugin-rewalk.yml` seeds the stamped cache on main.
 - Re-disable: `PLUGINS_ENABLED='false'` (daily-scrape.yml line ~80).
-Last activity: 2026-09-10 - Reciprocal Pass v1.1 executed (157 targets / 13 tiers / cited cohort; dataset + report committed, not pushed)
+
+Last activity: 2026-11-02
 
 ### Quick Tasks Completed
 
@@ -200,6 +204,10 @@ These were INSERTED ahead of the Phase 3.0 spec's 3.1–3.9 lineup because the d
 
 ### Decisions log (cumulative; see `.planning/SESSION-MEMO-2026-04-to-05.md` for full reasoning)
 
+- (4.1-03) ProvenanceMethod declares D-03's six values (adds `heuristic` to the spec's five); CONTEXT.md D-03 is the locked source over docs/PHASE-4.0-SPEC.md
+- (4.1-03) `access: AccessBlock` lives ONLY on the api/dataset EntityRecord union members (D-03) — never on EntityCommon, never under `extra`; types.test.js slices EntityCommon and asserts no `access:` inside it
+- (4.1-03) Phase 4.1 type additions are additive: `schema_version` stays 2 and `TYPES_MODULE` stays `'claudeatlas/types@2'`; all sixteen `repo_*` fields are `T | null` gated on `origin.kind === 'github'` (upcaster never emits null for skill/plugin/mcp_server)
+
 - (3.4-05) Weekly full re-walk SPLIT out of the daily cron (3.4-04 measurement: worst-case Sunday total ~332 min, only ~28 min margin under the 360 cap on a growing O(n²) skills build). The full-rewalk trigger in scrape-plugins.js is now ENV-ONLY via a new exported `isFullRewalk(env)` helper (`PLUGINS_FULL_REWALK==='1'`); the old `|| new Date().getUTCDay() === 0` Sunday auto-trigger was REMOVED, so the daily cron only ever walks the cheap pushed_at-changed delta (~2h, comfortable margin). New `.github/workflows/weekly-plugin-rewalk.yml` (Sundays 02:00 UTC, own 360-min budget, lean: checkout → npm ci → restore/save plugins-raw-ndjson- cache → scrape-plugins.js with PLUGINS_FULL_REWALK=1, NO filter/embed/build/deploy/publish) does the full re-walk and saves under the SAME `plugins-raw-ndjson-` cache prefix the daily cron's restore-keys prefix-matches, so the daily cron picks up the fresh corpus and publishes it. Secrets match the daily plugin step (SCRAPE_PAT=GITHUB_TOKEN/REST + SCRAPE_PAT_CLASSIC/GraphQL). check-banned-patterns plugins-meta.json allowlist re-pinned 761→785. Unblocks the Plan 04 flag flip (after a steady-state branch re-measurement). PLUGINS_ENABLED untouched (still 'false' on main).
 - (3.4-03) Change C completeness gate: exported pure `shouldRewalk(known, freshPushedAt, opts)` re-walks a KNOWN plugin repo ONLY when its fresh `pushed_at` (Plan 02's GraphQL Map) advanced past the stored `walked_pushed_at` — missing stamp → backfill (re-walk once), missing fresh signal (refresh casualty) + valid stamp → keep cached, `opts.periodicFull` → always. ISO-string lexicographic `>` (= chronological) avoids null Date parsing; mirrors Track 2's blob-sha skip at repo granularity. `walkComponentDirs` rewritten as ONE `git/trees/{branch}?recursive=1` scan (was ~6-18 contents calls/repo, now ETag 304-free warm) emitting the BYTE-IDENTICAL `inventory[dir]={path,count,entries}` shape (git tree/blob → contents-API dir/file, single-level immediate children) — `mcp-servers` component preserved (R-5/Pitfall 6; filter-mcps `MIN_MCP_REPOS=10`). Re-walked known repos OVERWRITE their prior `allRepos` record via `indexByName` so OUTPUT has no duplicate `repo_full_name`s. Periodic full re-walk safety net = weekly UTC Sundays (`getUTCDay()===0`) + `PLUGINS_FULL_REWALK=1` override + `[gate] periodicFull=...` log line for Plan 04's mode-aware measurement. check-banned-patterns `plugins-meta.json` allowlist re-pinned 634→761. The warm plugin step is now bounded to (new repos) + (repos pushed since last walk) + (everything, once weekly).
 - (3.4-01) Cross-run plugin skip now seeds `processedSet` from the cached OUTPUT `data/plugins-raw.ndjson` via new exported `buildProcessedSeedFrom(OUTPUT_PATH, PARTIAL_PATH)`, merging the same-job `.partial` with `.partial` winning per-repo. The pre-3.4 `loadCheckpoint()` read ONLY the never-cached `.partial`, so `processedSet` started empty every run and all ~7,300 repos re-walked cold (~24h → the 3.3 re-enable NO-GO). main() now logs `resume: N known repos seeded from OUTPUT+partial` (Pitfall-1 warning-sign instrument for Plan 04). RESEARCH Q1 option a; main() skip loop unchanged. check-banned-patterns allowlist re-pinned 483→520 (Change A shifted the plugins-meta.json sidecar write).
@@ -254,8 +262,8 @@ These were INSERTED ahead of the Phase 3.0 spec's 3.1–3.9 lineup because the d
 
 ## Session Continuity
 
-Last session: 2026-06-15T05:34:26.268Z
-Stopped at: Completed 3.4-incremental-plugin-discovery-05-PLAN.md
+Last session: 2026-11-02T16:03:12.436Z
+Stopped at: Completed 04.1-03-PLAN.md
 
 **Resume:** read `.planning/SESSION-MEMO-2026-04-to-05.md` for full context, then `/gsd:execute-phase 3.1`.
 

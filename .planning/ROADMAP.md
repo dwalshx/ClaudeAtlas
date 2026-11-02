@@ -28,12 +28,12 @@
 **Goal:** `api` and `dataset` become valid `entity_type`s that round-trip through every shared pipeline helper without a GitHub repo. Nullable `repo_*` for non-GitHub origins, `origin` + `home_url` + `docs_url` on `EntityCommon`, shared `access` block with per-field provenance, `ApiExtra` / `DatasetExtra`, scorer + embedding-input + rule-pack + recipe registry slots, `DATA_FEEDS_ENABLED` flag plumbing (default off, no workflow steps yet), fixtures + tests, CLAUDE.md data-model + Vectorize-cost corrections. No harvester, no pages.
 **Done when:** fixture api/dataset records pass `upcastRecord` → `scoreEntity` → `buildEmbeddingInput` → `isSlop` → `assignPercentileTiers` → `assignSlugs` → NDJSON write/read with `repo_*: null`, all existing tests still green, `check:patterns` clean.
 **Status:** Planned 2026-11-02, revised 2026-11-02 (8 plans / 5 waves) — context in `.planning/phases/4.1-envelope-generalization/04.1-CONTEXT.md`.
-**Plans:** 8 plans
+**Plans:** 3/8 plans executed
 
 Plans:
-- [ ] 04.1-01-PLAN.md — Wave 1 (test-first): apis-mini + datasets-mini fixtures, RED round-trip test, RED workflow-flags test
-- [ ] 04.1-02-PLAN.md — Wave 1 (test-first): RED unit tests for access.js, api/dataset scorers, api/dataset rule packs, common.rules null-safety
-- [ ] 04.1-03-PLAN.md — Wave 1: types.d.ts + types.js (api/dataset, Origin, AccessBlock, ApiExtra, DatasetExtra, nullable repo_*) + types.test.js
+- [x] 04.1-01-PLAN.md — Wave 1 (test-first): apis-mini + datasets-mini fixtures, RED round-trip test, RED workflow-flags test
+- [x] 04.1-02-PLAN.md — Wave 1 (test-first): RED unit tests for access.js, api/dataset scorers, api/dataset rule packs, common.rules null-safety
+- [x] 04.1-03-PLAN.md — Wave 1: types.d.ts + types.js (api/dataset, Origin, AccessBlock, ApiExtra, DatasetExtra, nullable repo_*) + types.test.js
 - [ ] 04.1-04-PLAN.md — Wave 2: scripts/lib/access.js + url-host.js; upcaster nullable buildCommonFields, origin back-fill, api/dataset upcast paths
 - [ ] 04.1-05-PLAN.md — Wave 3: feed.signals + api/dataset scorers (spec weights, uncalibrated) + embedding-input builders
 - [ ] 04.1-06-PLAN.md — Wave 3: api/dataset rule packs, dedupLanguageVariants/isFixtureRepo null-safety, api/dataset recipes (D-05 computeId)
