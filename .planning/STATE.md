@@ -2,8 +2,8 @@
 gsd_state_version: 1.0
 milestone: v4.0
 milestone_name: — Data Feeds
-status: Phase complete — ready for verification
-stopped_at: Completed 04.1-08-PLAN.md (phase 4.1 complete — gate green, awaiting verify-work)
+status: Phase 4.1 COMPLETE — verified 14/14; next 4.2 API harvest v1
+stopped_at: "Phase 4.1 COMPLETE 2026-11-04 on feat/v4.0-data-feeds (unmerged). Next: /gsd:discuss-phase 4.2 or /gsd:plan-phase 4.2 (API harvest v1)."
 last_updated: "2026-11-05T02:24:06.761Z"
 last_activity: 2026-11-05
 progress:
@@ -21,14 +21,14 @@ progress:
 See: `.planning/PROJECT.md` (last updated 2026-04-10)
 
 **Core value:** Users can find the best Claude skill for a given task in under 30 seconds, with visible signals for why it's trustworthy.
-**Current focus:** Phase 4.1 — envelope-generalization
+**Current focus:** v4.0 Data Feeds — Phase 4.1 complete (verified); Phase 4.2 API harvest v1 is next. Branch feat/v4.0-data-feeds, not merged. Daily cron still failing since 2026-09-28 (separate fix session proposed).
 **Milestone:** v3.0 — Comprehensive Agent Tooling Index (in progress)
 
 ## Current Position
 
-Phase: 4.1 (envelope-generalization) — EXECUTING
+Phase: 4.1 (envelope-generalization) — ✅ COMPLETE 2026-11-04, VERIFICATION passed 14/14
 Plan: 8 of 8
-Next: **finish the v3.0 milestone — phases 3.5–3.9** (defined in `docs/PHASE-3.0-SPEC.md` lines 434-446, not yet broken into ROADMAP entries).
+Next: **Phase 4.2 — API harvest v1** (APIs.guru + data.gouv.fr + UK catalogue + public-apis mirror; see docs/PHASE-4.0-SPEC.md). v3.0 phases 3.5–3.9 remain open on main.
 
 **Remaining v3.0 phases (all 1-3h; see PHASE-3.0-SPEC.md):**
 
