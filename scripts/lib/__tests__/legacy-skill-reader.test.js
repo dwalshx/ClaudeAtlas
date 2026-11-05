@@ -205,3 +205,115 @@ test('4.1-M02 / Pitfall 1: v2 passthrough back-fills origin/home_url/docs_url in
   assert.equal(b.origin, keep);
   assert.equal(b.home_url, 'https://y');
 });
+
+// ---------------------------------------------------------------------------
+// Phase 4.1 Plan 04 — api / dataset upcast paths (D-03 access, D-04 extras,
+// D-05 ids). Inputs mirror the raw-ish data/__fixtures__/*-mini.ndjson shape.
+// ---------------------------------------------------------------------------
+
+const API_NO_REPO = {
+  entity_type: 'api',
+  name: 'stripe',
+  description: 'Stripe API: payments and billing endpoints described by OpenAPI.',
+  origin: { kind: 'registry', source: 'apis.guru', source_id: 'stripe.com', source_url: 'https://g', also_listed_in: [] },
+  home_url: 'https://stripe.com',
+  docs_url: 'https://stripe.com/docs',
+  access: { auth: { type: 'bearer' } },
+  extra: { provider: 'stripe.com', base_urls: ['https://api.stripe.com/'] },
+  raw_source: { x: 1 },
+};
+
+const DATASET_INPUT = {
+  entity_type: 'dataset',
+  name: 'squad',
+  description: 'Stanford Question Answering Dataset: reading-comprehension questions on Wikipedia.',
+  origin: { kind: 'portal', source: 'huggingface', source_id: 'squad', source_url: 'https://hf', also_listed_in: [] },
+  home_url: 'https://hf/datasets/squad',
+  extra: { publisher: 'rajpurkar', download_urls: ['https://hf/x'] },
+};
+
+/** Recursive walk: fails on the first `undefined` value (disk-hop deepEqual safety). */
+function assertNoUndefined(v, path = '$') {
+  if (v === undefined) assert.fail(`undefined at ${path}`);
+  if (Array.isArray(v)) v.forEach((x, i) => assertNoUndefined(x, `${path}[${i}]`));
+  else if (v && typeof v === 'object') {
+    for (const [k, x] of Object.entries(v)) assertNoUndefined(x, `${path}.${k}`);
+  }
+}
+
+test('4.1-M03: api input with no repo → repo_* null, access unknown-first, extra defaults, source registry', () => {
+  const v2 = upcastRecord(structuredClone(API_NO_REPO));
+  assert.equal(v2.id, 'api:api.stripe.com/stripe');
+  assert.equal(v2.entity_type, 'api');
+  for (const k of REPO_KEYS) assert.equal(v2[k], null, k);
+  assert.equal(v2.access.auth.type, 'bearer');
+  assert.equal(v2.access.cost.model, 'unknown');
+  assert.deepEqual(v2.access.rate_limit, { requests: null, per: null, notes: null, headers_observed: [] });
+  assert.deepEqual(v2.access.provenance, {});
+  assert.equal(v2.extra.type, 'api');
+  assert.deepEqual(v2.extra.consumed_by, { skills: [], plugins: [], mcp_servers: [] });
+  assert.equal(v2.extra.source_modified_at, null);
+  assert.equal(v2.extra.access_clarity, 0);
+  assert.deepEqual(v2.extra.sdks, []);
+  assert.deepEqual(v2.extra.base_urls, ['https://api.stripe.com/']);
+  assert.equal(v2.extra.provider, 'stripe.com');
+  assert.equal(v2.source, 'registry');
+  assert.equal(v2.schema_version, 2);
+  assert.equal(v2.body_length, API_NO_REPO.description.length);
+  assert.ok(!('raw_source' in v2));
+  assert.equal(v2.home_url, 'https://stripe.com');
+  assert.equal(v2.docs_url, 'https://stripe.com/docs');
+  assert.equal(v2.origin.kind, 'registry');
+});
+
+test('4.1-M03: api input with a known repo → repo_* populated with the skill coercions', () => {
+  const v2 = upcastRecord({
+    ...structuredClone(API_NO_REPO),
+    repo_full_name: 'github/rest-api-description',
+    repo_url: 'https://github.com/github/rest-api-description',
+    repo_stars: 1900,
+    // no repo_topics, no repo_owner_type → github-origin coercions apply
+  });
+  assert.equal(v2.repo_full_name, 'github/rest-api-description');
+  assert.equal(v2.repo_stars, 1900);
+  assert.deepEqual(v2.repo_topics, []);
+  assert.equal(v2.repo_owner_type, 'User');
+  assert.equal(v2.repo_pushed_at, '');
+  assert.equal(v2.repo_archived, false);
+  for (const k of REPO_KEYS_COERCED) assert.notEqual(v2[k], null, k);
+  // origin supplied wins over the repo — still the registry origin.
+  assert.equal(v2.origin.kind, 'registry');
+  assert.equal(v2.origin.source, 'apis.guru');
+});
+
+test('4.1-M03: dataset input → id from origin, popularity defaults, publisher kept', () => {
+  const v2 = upcastRecord(structuredClone(DATASET_INPUT));
+  assert.equal(v2.id, 'dataset:huggingface/squad');
+  assert.equal(v2.entity_type, 'dataset');
+  assert.equal(v2.extra.type, 'dataset');
+  assert.deepEqual(v2.extra.popularity, { downloads: null, views: null, likes: null, citations: null, window: null });
+  assert.equal(v2.extra.size_bytes, null);
+  assert.equal(v2.extra.publisher, 'rajpurkar');
+  assert.deepEqual(v2.extra.download_urls, ['https://hf/x']);
+  assert.deepEqual(v2.extra.consumed_by, { skills: [], plugins: [], mcp_servers: [] });
+  assert.equal(v2.access.cost.model, 'unknown');
+  assert.equal(v2.docs_url, null);
+  assert.equal(v2.repo_full_name, null);
+  assert.equal(v2.source, 'registry');
+});
+
+test('4.1-M03: api/dataset outputs contain no undefined values', () => {
+  assertNoUndefined(upcastRecord(structuredClone(API_NO_REPO)), 'api');
+  assertNoUndefined(upcastRecord(structuredClone(DATASET_INPUT)), 'dataset');
+});
+
+test('4.1-M03: api/dataset with no origin fall back to manual origin (never github)', () => {
+  const api = upcastRecord({ entity_type: 'api', name: 'x', home_url: 'https://x' });
+  assert.equal(api.origin.kind, 'manual');
+  assert.equal(api.origin.source, 'manual');
+  assert.equal(api.origin.source_id, 'x');
+  assert.equal(api.origin.source_url, 'https://x');
+  const ds = upcastRecord({ entity_type: 'dataset', name: 'y', home_url: 'https://y' });
+  assert.equal(ds.origin.kind, 'manual');
+  assert.equal(ds.origin.source_id, 'y');
+});

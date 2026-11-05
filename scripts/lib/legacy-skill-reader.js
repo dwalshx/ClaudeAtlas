@@ -59,7 +59,7 @@
  *   (a) `upcastRecord` dispatches `entity_type === 'api'` → upcastApiRecord
  *       and `'dataset'` → upcastDatasetRecord (D-01). These records mostly
  *       have NO GitHub repo; they carry a top-level `access` block (D-03,
- *       unknown-first via mergeAccess(emptyAccess(), rec.access)) and D-05
+ *       unknown-first — mergeAccess over emptyAccess()) and D-05
  *       ids (`api:<primary_host>/<name>`, `dataset:<source>/<native_id>`).
  *   (b) `buildCommonFields(rec, { nullableRepo, defaultSource })`: the
  *       `repo_*` fields are emitted as `null` ONLY when `nullableRepo` is
@@ -138,6 +138,10 @@ export function upcastRecord(rec) {
   // records carry no entity_type and fall through to the skill path.
   if (rec.entity_type === 'plugin') return upcastPluginRecord(rec);
   if (rec.entity_type === 'mcp_server') return upcastMcpRecord(rec);
+  // Phase 4.1 / D-01 — data feeds. Every path is a field whitelist, so
+  // `raw_source` and any other unknown input keys are dropped by construction.
+  if (rec.entity_type === 'api') return upcastApiRecord(rec);
+  if (rec.entity_type === 'dataset') return upcastDatasetRecord(rec);
 
   return upcastSkillRecord(rec);
 }
@@ -357,6 +361,115 @@ function upcastMcpRecord(rec) {
     id: rec.id || `mcp_server:${rec.repo_full_name || ''}/${server_path}`,
     entity_type: 'mcp_server',
     ...buildCommonFields(rec),
+    tags,
+    category: rec.category ?? projectCategoryFromTags(tags),
+    extra,
+  };
+}
+
+/**
+ * Phase 4.1 / D-04 — `consumed_by` default. The consumer graph (which
+ * skills/plugins/MCP servers call this feed) is populated in 4.6; 4.1 only
+ * guarantees the shape so downstream readers never branch on undefined.
+ *
+ * @param {any} v
+ * @returns {{ skills: string[], plugins: string[], mcp_servers: string[] }}
+ */
+function consumedBy(v) {
+  const o = v && typeof v === 'object' ? v : {};
+  return { skills: arr(o.skills), plugins: arr(o.plugins), mcp_servers: arr(o.mcp_servers) };
+}
+
+/**
+ * Phase 4.1 — upcast a raw-ish api record (APIs.guru / data.gouv.fr /
+ * public-apis-shaped, see data/__fixtures__/apis-mini.ndjson) to
+ * EntityRecord<ApiExtra>. Accepts flat and `rec.extra.*` inputs (F-1 chains).
+ *
+ * - D-02: `repo_*` are null ONLY when `repo_full_name` is absent; a known
+ *   repo (e.g. an `x-origin` resolving to GitHub) gets the skill coercions.
+ * - D-03: top-level `access`, unknown-first (mergeAccess over emptyAccess).
+ * - D-05: id = `api:<primary_host>/<name>` (host of base_urls[0], else provider).
+ * - `extra.access_clarity` defaults 0 (the api scorer writes it, Plan 05).
+ *
+ * @param {any} rec
+ * @returns {any}
+ */
+function upcastApiRecord(rec) {
+  const e = rec.extra || {};
+  const provider = typeof (e.provider ?? rec.provider) === 'string' ? (e.provider ?? rec.provider) : '';
+  const extra = {
+    type: 'api',
+    base_urls: arr(e.base_urls ?? rec.base_urls),
+    spec_url: str(e.spec_url ?? rec.spec_url),
+    spec_version: str(e.spec_version ?? rec.spec_version),
+    endpoint_count: num(e.endpoint_count ?? rec.endpoint_count),
+    categories_src: arr(e.categories_src ?? rec.categories_src),
+    provider,
+    status_page_url: str(e.status_page_url ?? rec.status_page_url),
+    sdks: arr(e.sdks ?? rec.sdks),
+    source_modified_at: str(e.source_modified_at ?? rec.source_modified_at),
+    access_clarity: num(e.access_clarity) ?? 0,
+    consumed_by: consumedBy(e.consumed_by ?? rec.consumed_by),
+  };
+  const tags = Array.isArray(rec.tags) ? rec.tags.filter((t) => typeof t === 'string') : [];
+  const nullableRepo = !rec.repo_full_name;   // D-02: null only when no repo is known
+  return {
+    id: rec.id || `api:${hostOf(extra.base_urls[0]) || provider}/${rec.name || ''}`,
+    entity_type: 'api',
+    ...buildCommonFields(rec, { nullableRepo, defaultSource: 'registry' }),
+    access: mergeAccess(emptyAccess(), rec.access),   // D-03: top-level, unknown-first
+    tags,
+    category: rec.category ?? projectCategoryFromTags(tags),
+    extra,
+  };
+}
+
+/**
+ * Phase 4.1 — upcast a raw-ish dataset record (Hugging Face / data.gov /
+ * AWS ODR / Zenodo-shaped, see data/__fixtures__/datasets-mini.ndjson) to
+ * EntityRecord<DatasetExtra>. Same shell as upcastApiRecord.
+ *
+ * - D-05: id = `dataset:<source>/<native_id>`, read from the ORIGIN (the
+ *   fixtures/harvesters always carry it; a missing origin falls back to the
+ *   manual origin, giving `dataset:manual/<id-or-name>`).
+ * - `extra.popularity` is always the full 5-key object (nulls when unknown).
+ *
+ * @param {any} rec
+ * @returns {any}
+ */
+function upcastDatasetRecord(rec) {
+  const e = rec.extra || {};
+  const popIn = e.popularity ?? rec.popularity;
+  const pop = popIn && typeof popIn === 'object' ? popIn : {};
+  const extra = {
+    type: 'dataset',
+    download_urls: arr(e.download_urls ?? rec.download_urls),
+    size_bytes: num(e.size_bytes ?? rec.size_bytes),
+    size_bucket: str(e.size_bucket ?? rec.size_bucket),
+    record_count: num(e.record_count ?? rec.record_count),
+    update_frequency: str(e.update_frequency ?? rec.update_frequency),
+    temporal_coverage: str(e.temporal_coverage ?? rec.temporal_coverage),
+    publisher: typeof (e.publisher ?? rec.publisher) === 'string' ? (e.publisher ?? rec.publisher) : '',
+    popularity: {
+      downloads: num(pop.downloads),
+      views: num(pop.views),
+      likes: num(pop.likes),
+      citations: num(pop.citations),
+      window: str(pop.window),
+    },
+    schema_url: str(e.schema_url ?? rec.schema_url),
+    source_modified_at: str(e.source_modified_at ?? rec.source_modified_at),
+    access_clarity: num(e.access_clarity) ?? 0,
+    consumed_by: consumedBy(e.consumed_by ?? rec.consumed_by),
+  };
+  const tags = Array.isArray(rec.tags) ? rec.tags.filter((t) => typeof t === 'string') : [];
+  // id: D-05 `dataset:<source>/<native_id>` — read from the ORIGIN (fixtures always carry it)
+  const common = buildCommonFields(rec, { nullableRepo: !rec.repo_full_name, defaultSource: 'registry' });
+  return {
+    id: rec.id || `dataset:${common.origin.source}/${common.origin.source_id}`,
+    entity_type: 'dataset',
+    ...common,
+    access: mergeAccess(emptyAccess(), rec.access),   // D-03: top-level, unknown-first
     tags,
     category: rec.category ?? projectCategoryFromTags(tags),
     extra,
