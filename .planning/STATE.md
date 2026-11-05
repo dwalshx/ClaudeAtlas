@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v4.0
 milestone_name: — Data Feeds
-status: Ready to execute
-stopped_at: Completed 04.1-07-PLAN.md
-last_updated: "2026-11-05T02:14:54.072Z"
+status: Phase complete — ready for verification
+stopped_at: Completed 04.1-08-PLAN.md (phase 4.1 complete — gate green, awaiting verify-work)
+last_updated: "2026-11-05T02:24:06.761Z"
 last_activity: 2026-11-05
 progress:
   total_phases: 8
-  completed_phases: 0
+  completed_phases: 1
   total_plans: 8
-  completed_plans: 7
+  completed_plans: 8
   percent: 100
 ---
 
@@ -205,6 +205,7 @@ These were INSERTED ahead of the Phase 3.0 spec's 3.1–3.9 lineup because the d
 | Phase 4.1 P06 | 5min | 3 tasks | 8 files |
 | Phase 4.1 P05 | 5min | 2 tasks | 8 files |
 | Phase 4.1 P07 | 7min | 3 tasks | 6 files |
+| Phase 4.1 P08 | 7 min | 3 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -235,6 +236,9 @@ These were INSERTED ahead of the Phase 3.0 spec's 3.1–3.9 lineup because the d
 - (4.1-07) Slug-collision winner tie-break is `(repo_full_name ?? id ?? '').length` (D-07) — `??` not `||` keeps skills byte-identical; null-repo feeds fall through to the shorter id. `assignPercentileTiers` coerces at the sort-key build site (`stars: s.repo_stars ?? 0`), never in the comparator, so the comparator stays byte-for-byte with filter.js Step 3; this closes Research Pitfall 4 (null !== 0 skipped the id ASC tie-break → input-order-dependent featured slot).
 - (4.1-07) `scripts/generate-registry.js` now exports `buildRegistryEntry(s, apiGraph)` + `main()` behind the generate-feeds.js `invokedAsScript` guard (importable by tests without `data/`); the ONLY content change is `install_command: null` for null-repo records (never the string `claude install-skill null`). Parity proven empirically, not by inspection: HEAD vs new on the worktree's legacy `data/skills.json` is byte-identical modulo `generated_at` (1,105 entries, 1,139,004 bytes). Registry stays skills-only (`loadSkillsArray`) until 4.3.
 - (4.1-07) D-07 null-safety sweep CLOSED for every shared helper the round-trip exercises: `data-feeds-roundtrip.test.js` GREEN 7/7 (4.1-M10); `npm test` 535/525/4 fail/6 skipped — remaining reds are exactly 2 pre-existing embed-skills + 2 workflow-flags (Plan 08).
+- (4.1-08) `DATA_FEEDS_ENABLED: 'false'` lives in daily-scrape.yml job env directly under `PLUGINS_ENABLED` (D-08) with NO `if:` guards and no new steps — 4.2 gates harvest/filter/embed/upload the PLUGINS_ENABLED way and flips it. The YAML comment must never quote the literal `env.DATA_FEEDS_ENABLED`: `workflow-flags.test.js` asserts zero occurrences until the gating phase ships.
+- (4.1-08) CLAUDE.md Vectorize cost corrected in both the Cost headline and the Cost-ceiling constraint to the verified pricing (Workers Paid includes 10M stored dims, then $0.05 per 100M/month; 50M queried dims/month included, then $0.01 per 1M — the prior per-million figure was 100× too high): ~$73/yr actual, <$1/yr Vectorize at ~160M dims, so cost is NOT a governor for the v4.0 embed-everything decision; the ~$102/yr approved ceiling stays as the constraint. Known issue 9 now records the 04.1-04 decision: rename `legacy-skill-reader.js` at the 3.1.2 D+7 cutover, do not delete it.
+- (4.1-08) Phase 4.1 gate PASSED at exactly the planned baseline: `npm test` 535 tests / 527 pass / fail 2 / skipped 6 (N = 86 = 60 new-file + 26 extended; invariant pass = tests − 8), the two fails are the pre-existing embed-skills `Task 9: B-2` pair; `check:patterns` clean (0 baselined, 0 new); legacy-shape lint 5 hits exit 0; `scripts/filter.js` / `scripts/score.js` untouched since `cbae842`. `04.1-VALIDATION.md` signed off (`nyquist_compliant: true`, 14/14 rows green). Branch `feat/v4.0-data-feeds` unpushed, awaiting `/gsd:verify-work 4.1` + Dan's review.
 - (4.1-03) Phase 4.1 type additions are additive: `schema_version` stays 2 and `TYPES_MODULE` stays `'claudeatlas/types@2'`; all sixteen `repo_*` fields are `T | null` gated on `origin.kind === 'github'` (upcaster never emits null for skill/plugin/mcp_server)
 - (4.1-02) Feed-scorer round-half totals (25.5 / 28.5) are asserted as 25|26 / 28|29 bands plus ordering against the bare record, never exact — Plan 05 may use plain `Math.round` with no tie-break convention. Exact totals pinned test-first: bare api/dataset 18, +freshness 33, +full access 38, +5 consumers 23, dataset@100d 29.
 - (4.1-02) `common.rules.test.js` dedup regression test lists `foo-de` BEFORE `foo` (plan revision 1 / B1): the implementation's base-name short-circuit (`rec.name === baseName`) only protects a base record that arrives AFTER a variant; reversed order would be permanently red on quality_score.
@@ -294,8 +298,8 @@ These were INSERTED ahead of the Phase 3.0 spec's 3.1–3.9 lineup because the d
 
 ## Session Continuity
 
-Last session: 2026-11-05T02:14:34.823Z
-Stopped at: Completed 04.1-07-PLAN.md
+Last session: 2026-11-05T02:24:06.749Z
+Stopped at: Completed 04.1-08-PLAN.md (phase 4.1 complete — gate green, awaiting verify-work)
 
 **Resume:** read `.planning/SESSION-MEMO-2026-04-to-05.md` for full context, then `/gsd:execute-phase 3.1`.
 
