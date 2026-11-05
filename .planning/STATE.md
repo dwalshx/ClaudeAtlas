@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v4.0
 milestone_name: — Data Feeds
 status: Ready to execute
-stopped_at: Completed 04.1-01-PLAN.md
-last_updated: "2026-11-02T16:04:14.502Z"
-last_activity: 2026-11-02
+stopped_at: Completed 04.1-04-PLAN.md
+last_updated: "2026-11-05T01:53:20.889Z"
+last_activity: 2026-11-05
 progress:
   total_phases: 8
   completed_phases: 0
   total_plans: 8
-  completed_plans: 3
+  completed_plans: 4
   percent: 100
 ---
 
@@ -27,7 +27,7 @@ See: `.planning/PROJECT.md` (last updated 2026-04-10)
 ## Current Position
 
 Phase: 4.1 (envelope-generalization) — EXECUTING
-Plan: 4 of 8
+Plan: 5 of 8
 Next: **finish the v3.0 milestone — phases 3.5–3.9** (defined in `docs/PHASE-3.0-SPEC.md` lines 434-446, not yet broken into ROADMAP entries).
 
 **Remaining v3.0 phases (all 1-3h; see PHASE-3.0-SPEC.md):**
@@ -46,7 +46,7 @@ Next: **finish the v3.0 milestone — phases 3.5–3.9** (defined in `docs/PHASE
 - GHA cache is branch-scoped: a steady-state measurement branch can't see a stamped cache from another branch (restores unstamped bootstrap → one-time cold backfill ~324 min, still < 360). `weekly-plugin-rewalk.yml` seeds the stamped cache on main.
 - Re-disable: `PLUGINS_ENABLED='false'` (daily-scrape.yml line ~80).
 
-Last activity: 2026-11-02
+Last activity: 2026-11-05
 
 ### Quick Tasks Completed
 
@@ -201,6 +201,7 @@ These were INSERTED ahead of the Phase 3.0 spec's 3.1–3.9 lineup because the d
 |-------|------|----------|-------|-------|-------|
 | 04.1 | 02 | 5min | 3 | 6 | Wave 0 red tests: 49 tests across 6 files; 5 files ERR_MODULE_NOT_FOUND, common.rules 3 pass / 2 fail by design |
 | Phase 4.1 P01 | 6min | 3 tasks | 4 files |
+| 04.1 | 04 | 8min | 3 | 5 | access.js 12/12 + upcaster 13/13 green (25 total); 8/8 fixtures upcast with null repo_*; full suite 487/470 pass, 11 fail = 2 pre-existing + 9 intended red; schema_version stays 2 |
 
 ## Accumulated Context
 
@@ -216,6 +217,10 @@ These were INSERTED ahead of the Phase 3.0 spec's 3.1–3.9 lineup because the d
 - (4.1-01) D-07 red baseline recorded in `04.1-01-SUMMARY.md`: round-trip fails at ESM link (`generate-registry.js` lacks `buildRegistryEntry` export — Plan 07); workflow-flags 2 pass / 2 fail (flag-present + spec-pointer red — Plan 08). Plans 04-07 and 08 are measured against these outputs.
 - (4.1-03) ProvenanceMethod declares D-03's six values (adds `heuristic` to the spec's five); CONTEXT.md D-03 is the locked source over docs/PHASE-4.0-SPEC.md
 - (4.1-03) `access: AccessBlock` lives ONLY on the api/dataset EntityRecord union members (D-03) — never on EntityCommon, never under `extra`; types.test.js slices EntityCommon and asserts no `access:` inside it
+- (4.1-04) The D+7 "delete `scripts/lib/legacy-skill-reader.js`" plan is SUPERSEDED: it is the production upcaster (filter.js / filter-plugins.js / filter-mcps.js route every record through `upcastRecord`) and 4.1 made it the single choke point for `repo_*` nullability + `origin` defaults — RENAME at cutover, do not delete (file header updated).
+- (4.1-04) `repo_*` nullability is decided PER RECORD (`nullableRepo = !rec.repo_full_name`), not per entity_type: an api with a resolved GitHub repo gets the exact skill coercions (missing `repo_topics` → `[]`, missing `repo_owner_type` → `'User'`); only the no-repo case emits null. `buildCommonFields(rec, { nullableRepo, defaultSource })` keeps the github-origin branch byte-identical to pre-4.1.
+- (4.1-04) `origin`/`home_url`/`docs_url` reach already-v2 production files via IN-PLACE back-fill on the upcaster's passthrough branch (`backfillOriginInPlace`, Research Pitfall 1) — same object returned, no data migration, no `schema_version` bump (stays 2, pinned by comment in entity-version.js). api/dataset without an origin fall back to `kind: 'manual'`, never a fabricated github origin.
+- (4.1-04) `scripts/lib/url-host.js` `hostOf(url)` is the shared host extractor: upcaster api id default `api:<host(base_urls[0]) || provider>/<name>`, Plan 06 recipe `computeId`, Plan 07 slug disambiguator must all use it to stay in id parity. Dataset id is `dataset:<origin.source>/<origin.source_id>`.
 - (4.1-03) Phase 4.1 type additions are additive: `schema_version` stays 2 and `TYPES_MODULE` stays `'claudeatlas/types@2'`; all sixteen `repo_*` fields are `T | null` gated on `origin.kind === 'github'` (upcaster never emits null for skill/plugin/mcp_server)
 - (4.1-02) Feed-scorer round-half totals (25.5 / 28.5) are asserted as 25|26 / 28|29 bands plus ordering against the bare record, never exact — Plan 05 may use plain `Math.round` with no tie-break convention. Exact totals pinned test-first: bare api/dataset 18, +freshness 33, +full access 38, +5 consumers 23, dataset@100d 29.
 - (4.1-02) `common.rules.test.js` dedup regression test lists `foo-de` BEFORE `foo` (plan revision 1 / B1): the implementation's base-name short-circuit (`rec.name === baseName`) only protects a base record that arrives AFTER a variant; reversed order would be permanently red on quality_score.
@@ -275,8 +280,8 @@ These were INSERTED ahead of the Phase 3.0 spec's 3.1–3.9 lineup because the d
 
 ## Session Continuity
 
-Last session: 2026-11-02T16:04:14.493Z
-Stopped at: Completed 04.1-01-PLAN.md
+Last session: 2026-11-05T01:53:20.179Z
+Stopped at: Completed 04.1-04-PLAN.md
 
 **Resume:** read `.planning/SESSION-MEMO-2026-04-to-05.md` for full context, then `/gsd:execute-phase 3.1`.
 
