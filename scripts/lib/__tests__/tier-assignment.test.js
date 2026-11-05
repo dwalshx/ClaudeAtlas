@@ -70,3 +70,42 @@ test('Task 7: returns the input array for chaining', () => {
   const input = mk(5);
   assert.equal(assignPercentileTiers(input), input);
 });
+
+// ---------------------------------------------------------------------------
+// Phase 4.1 / D-07: api/dataset records carry repo_stars === null.
+// ---------------------------------------------------------------------------
+
+test('4.1-M09: null repo_stars ties resolve by id ASC deterministically regardless of input order', () => {
+  const build = () => {
+    const top = [
+      { id: 'b', quality_score: 50, repo_stars: null, quality_tier: 'listed' },
+      { id: 'a', quality_score: 50, repo_stars: 0, quality_tier: 'listed' },
+    ];
+    const rest = Array.from({ length: 8 }, (_, i) => ({
+      id: `z${i}`,
+      quality_score: 10,
+      repo_stars: null,
+      quality_tier: 'listed',
+    }));
+    return { top, rest };
+  };
+
+  // Order 1: b before a.
+  const o1 = build();
+  const r1 = assignPercentileTiers([...o1.top, ...o1.rest]);
+  // N=10 → 1 featured, 3 solid, 6 listed. The featured slot MUST be 'a' (id ASC).
+  assert.equal(r1.find((r) => r.id === 'a').quality_tier, 'featured');
+  assert.equal(r1.find((r) => r.id === 'b').quality_tier, 'solid');
+
+  // Order 2: a before b (reverse the top pair).
+  const o2 = build();
+  const r2 = assignPercentileTiers([...o2.top.reverse(), ...o2.rest]);
+  assert.equal(r2.find((r) => r.id === 'a').quality_tier, 'featured');
+  assert.equal(r2.find((r) => r.id === 'b').quality_tier, 'solid');
+});
+
+test('4.1-M09: all-null repo_stars never throws and still yields the 10/30/60 split', () => {
+  const recs = mk(38).map((r) => ({ ...r, repo_stars: null }));
+  assert.doesNotThrow(() => assignPercentileTiers(recs));
+  assert.deepEqual(counts(recs), { featured: 3, solid: 11, listed: 24 });
+});
