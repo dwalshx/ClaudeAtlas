@@ -8,6 +8,7 @@
  * Rev 3's `_header: true` sentinel mechanism in scripts/lib/ndjson.js.
  */
 
+// Phase 4.1 added origin/home_url/docs_url to every record and api/dataset union members with nullable repo_* — ADDITIVE, so the version stays 2 (a bump would make assertKnownSchemaVersion reject every file in production until regenerated).
 export const CURRENT_SCHEMA_VERSION = 2;
 export const VERSION_HEADER_KEY = '_header';
 
