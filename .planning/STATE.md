@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v4.0
 milestone_name: — Data Feeds
 status: Ready to execute
-stopped_at: Completed 04.1-05-PLAN.md
-last_updated: "2026-11-05T02:03:38.120Z"
+stopped_at: Completed 04.1-07-PLAN.md
+last_updated: "2026-11-05T02:14:54.072Z"
 last_activity: 2026-11-05
 progress:
   total_phases: 8
   completed_phases: 0
   total_plans: 8
-  completed_plans: 6
+  completed_plans: 7
   percent: 100
 ---
 
@@ -27,7 +27,7 @@ See: `.planning/PROJECT.md` (last updated 2026-04-10)
 ## Current Position
 
 Phase: 4.1 (envelope-generalization) — EXECUTING
-Plan: 7 of 8
+Plan: 8 of 8
 Next: **finish the v3.0 milestone — phases 3.5–3.9** (defined in `docs/PHASE-3.0-SPEC.md` lines 434-446, not yet broken into ROADMAP entries).
 
 **Remaining v3.0 phases (all 1-3h; see PHASE-3.0-SPEC.md):**
@@ -204,6 +204,7 @@ These were INSERTED ahead of the Phase 3.0 spec's 3.1–3.9 lineup because the d
 | 04.1 | 04 | 8min | 3 | 5 | access.js 12/12 + upcaster 13/13 green (25 total); 8/8 fixtures upcast with null repo_*; full suite 487/470 pass, 11 fail = 2 pre-existing + 9 intended red; schema_version stays 2 |
 | Phase 4.1 P06 | 5min | 3 tasks | 8 files |
 | Phase 4.1 P05 | 5min | 2 tasks | 8 files |
+| Phase 4.1 P07 | 7min | 3 tasks | 6 files |
 
 ## Accumulated Context
 
@@ -230,6 +231,10 @@ These were INSERTED ahead of the Phase 3.0 spec's 3.1–3.9 lineup because the d
 - (4.1-05) `scorers.api` / `scorers.dataset` (D-06) carry the spec weight table VERBATIM in `feed.signals.js` `FEED_WEIGHTS` (access .20 / reachability .15 / docs .15 / license .15 / freshness .15 / popularity .15 / adoption .05) and are UNCALIBRATED — tune in 4.2 (api) / 4.5 (dataset), never here, and never in `scripts/score.js` (skill calibration, untouched). Neutral defaults: reachability 70 (until 4.4 probe history), popularity 50 (GitHub stars only when `repo_stars` is a number; source percentiles are 4.5), adoption 0 (`consumed_by` empty until 4.6). Freshness with no `source_modified_at` AND no `repo_pushed_at` scores 0, not neutral — the input exists at harvest time for every verified source. Bare record = exactly 18.
 - (4.1-05) Both feed scorers write `record.extra.access_clarity` (0-1, `accessClarity(record.access)`) as a side effect — same convention as `extra.manifest_completeness` on plugin/mcp — so the Plan 04 upcaster default of 0 is overwritten on every score pass. Freshness is the ONLY signal that differs between api (`scoreRecency`, 180d cliff) and dataset (`scoreDatasetFreshness`, 365d cliff).
 - (4.1-05) `builders.api` reads `extra.endpoint_summaries` (first 10, `'; '`-joined 5th segment) ONLY when present — it is a 4.2 field, so the harvester adds it without touching `embedding-input/api.js`. Both feed builders hard-`slice(0, 300)` and emit empty segments (never `'undefined'`) for missing provider/publisher. Plan 05 Task 1's scorer files landed inside Plan 06's `8d893f5` via the shared-index race above; content verified identical, history left unsplit; Task 2 is the clean `b0c94b6`.
+- (4.1-07) `assignSlugs` resolves (owner, repo) through `slugParts(s)` (D-05), dispatching on `entity_type` BEFORE `repo_full_name`: api → `<provider>/<name>` with `hostOf(base_urls[0])` as the collision disambiguator (so a repo-backed api like github/rest-api-description still slugs `github.com/github`, not `github/github`); dataset → `<publisher>/<name>` with `origin.source` as disambiguator; everything else the unchanged `repo_full_name` split. `slugParts` does NOT slugify name/provider/publisher (that would silently rewrite every skill slug and invalidate `data/slug-redirects.json`) — 4.2/4.5 harvesters must supply slug-safe values. Slugs are scoped PER entity type because production never mixes types in one `assignSlugs` call.
+- (4.1-07) Slug-collision winner tie-break is `(repo_full_name ?? id ?? '').length` (D-07) — `??` not `||` keeps skills byte-identical; null-repo feeds fall through to the shorter id. `assignPercentileTiers` coerces at the sort-key build site (`stars: s.repo_stars ?? 0`), never in the comparator, so the comparator stays byte-for-byte with filter.js Step 3; this closes Research Pitfall 4 (null !== 0 skipped the id ASC tie-break → input-order-dependent featured slot).
+- (4.1-07) `scripts/generate-registry.js` now exports `buildRegistryEntry(s, apiGraph)` + `main()` behind the generate-feeds.js `invokedAsScript` guard (importable by tests without `data/`); the ONLY content change is `install_command: null` for null-repo records (never the string `claude install-skill null`). Parity proven empirically, not by inspection: HEAD vs new on the worktree's legacy `data/skills.json` is byte-identical modulo `generated_at` (1,105 entries, 1,139,004 bytes). Registry stays skills-only (`loadSkillsArray`) until 4.3.
+- (4.1-07) D-07 null-safety sweep CLOSED for every shared helper the round-trip exercises: `data-feeds-roundtrip.test.js` GREEN 7/7 (4.1-M10); `npm test` 535/525/4 fail/6 skipped — remaining reds are exactly 2 pre-existing embed-skills + 2 workflow-flags (Plan 08).
 - (4.1-03) Phase 4.1 type additions are additive: `schema_version` stays 2 and `TYPES_MODULE` stays `'claudeatlas/types@2'`; all sixteen `repo_*` fields are `T | null` gated on `origin.kind === 'github'` (upcaster never emits null for skill/plugin/mcp_server)
 - (4.1-02) Feed-scorer round-half totals (25.5 / 28.5) are asserted as 25|26 / 28|29 bands plus ordering against the bare record, never exact — Plan 05 may use plain `Math.round` with no tie-break convention. Exact totals pinned test-first: bare api/dataset 18, +freshness 33, +full access 38, +5 consumers 23, dataset@100d 29.
 - (4.1-02) `common.rules.test.js` dedup regression test lists `foo-de` BEFORE `foo` (plan revision 1 / B1): the implementation's base-name short-circuit (`rec.name === baseName`) only protects a base record that arrives AFTER a variant; reversed order would be permanently red on quality_score.
@@ -289,8 +294,8 @@ These were INSERTED ahead of the Phase 3.0 spec's 3.1–3.9 lineup because the d
 
 ## Session Continuity
 
-Last session: 2026-11-05T02:03:38.110Z
-Stopped at: Completed 04.1-05-PLAN.md
+Last session: 2026-11-05T02:14:34.823Z
+Stopped at: Completed 04.1-07-PLAN.md
 
 **Resume:** read `.planning/SESSION-MEMO-2026-04-to-05.md` for full context, then `/gsd:execute-phase 3.1`.
 
