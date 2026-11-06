@@ -4,17 +4,23 @@
  * Embedding-input registry. Dispatches by entity_type to the per-type
  * builder. Throws on an unknown type — silent fallthrough would produce
  * the wrong vector for a record (fail loud).
+ *
+ * Phase 4.1: api + dataset builders (spec § Embedding input, ~300 chars).
  */
 
 import { buildSkillEmbeddingInput } from './skill.js';
 import { buildPluginEmbeddingInput } from './plugin.js';
 import { buildMcpEmbeddingInput } from './mcp.js';
+import { buildApiEmbeddingInput } from './api.js';
+import { buildDatasetEmbeddingInput } from './dataset.js';
 
 /** @type {Record<string, (rec: any) => string>} */
 export const builders = {
   skill: buildSkillEmbeddingInput,
   plugin: buildPluginEmbeddingInput,
   mcp_server: buildMcpEmbeddingInput,
+  api: buildApiEmbeddingInput,
+  dataset: buildDatasetEmbeddingInput,
 };
 
 /**
@@ -34,4 +40,10 @@ export function buildEmbeddingInput(rec) {
   return fn(rec);
 }
 
-export { buildSkillEmbeddingInput, buildPluginEmbeddingInput, buildMcpEmbeddingInput };
+export {
+  buildSkillEmbeddingInput,
+  buildPluginEmbeddingInput,
+  buildMcpEmbeddingInput,
+  buildApiEmbeddingInput,
+  buildDatasetEmbeddingInput,
+};

@@ -12,12 +12,73 @@ export type EntityType =
   | 'mcp_server'
   | 'command_lib'
   | 'agent_lib'
-  | 'hook_lib';
+  | 'hook_lib'
+  // Phase 4.1 (v4.0 Data Feeds): api + dataset — non-GitHub origins; see docs/PHASE-4.0-SPEC.md
+  | 'api'
+  | 'dataset';
 // NOTE: 'framework' is intentionally NOT an entity_type (Q3 decision:
 // frameworks are tag-based, e.g. `framework:gsd` attachable to any entity).
 
 export type QualityTier = 'featured' | 'solid' | 'listed';
 // Tier rename to 'top' / 'solid' / 'indexed' is Phase 3.6 — not in F2.
+
+/**
+ * Phase 4.1 / D-02 — where a record was read from. Present on EVERY record.
+ * For skill/plugin/mcp_server the upcaster fills the github form
+ * ({ kind:'github', source:'github', source_id: repo_full_name, source_url: repo_url, also_listed_in: [] }).
+ * NOTE: `origin.source` is the provenance CATALOG name ('apis.guru', 'huggingface', 'github'…);
+ * `EntityCommon.source` is the discovery CHANNEL enum — keep the two distinct.
+ */
+export interface Origin {
+  kind: 'github' | 'registry' | 'portal' | 'manual';
+  source: string;
+  source_id: string;
+  source_url: string;
+  also_listed_in: string[];
+}
+
+/** Phase 4.1 / D-03 — how a single `access.*` value was obtained. Keyed by field path, e.g. 'cost.model'. */
+export type ProvenanceMethod = 'declared' | 'spec' | 'probed' | 'heuristic' | 'extracted' | 'manual';
+export interface AccessProvenance {
+  method: ProvenanceMethod;
+  source_url: string | null;
+  /** 0-1 */
+  confidence: number;
+  /** ISO 8601 ('' when the source carried no timestamp) */
+  checked_at: string;
+}
+
+/**
+ * Phase 4.1 / D-03 — shared access block. Top-level on `api` and `dataset`
+ * records ONLY (never on EntityCommon, never under `extra`). `unknown` is a
+ * first-class value: the upcaster defaults every enum to 'unknown', numbers
+ * to null, arrays to [], provenance to {}. Helpers: scripts/lib/access.js.
+ */
+export interface AccessBlock {
+  cost: {
+    model: 'free' | 'freemium' | 'paid' | 'pay_per_call' | 'unknown';
+    free_tier: string | null;
+    price_notes: string | null;
+  };
+  rate_limit: {
+    requests: number | null;
+    per: 'second' | 'minute' | 'hour' | 'day' | 'month' | null;
+    notes: string | null;
+    headers_observed: string[];
+  };
+  auth: {
+    type: 'none' | 'api_key' | 'bearer' | 'oauth2' | 'http_basic' | 'openid' | 'unknown';
+    signup_url: string | null;
+  };
+  license: { spdx: string | null; name: string | null; url: string | null };
+  formats: string[];
+  /** api: 'rest' | 'graphql' | 'grpc' | 'soap'; dataset: 'download' | 'api' | 'sql' | 's3' */
+  transport: string | null;
+  provenance: Record<string, AccessProvenance>;
+}
+
+/** Phase 4.1 / D-04 — ids of indexed entities that consume a feed. Populated by Phase 4.6 link-consumers.js; [] until then. */
+export interface ConsumedBy { skills: string[]; plugins: string[]; mcp_servers: string[] }
 
 export interface EntityCommon {
   // --- Identity ---
@@ -29,23 +90,33 @@ export interface EntityCommon {
   name: string;
   description: string;
 
-  // --- Repo metadata (every entity lives in a GitHub repo) ---
-  repo_full_name: string;
-  repo_url: string;
-  repo_stars: number;
-  repo_forks: number;
-  repo_open_issues: number;
-  repo_topics: string[];
+  // --- Origin (Phase 4.1 / D-02) ---
+  origin: Origin;
+  /** Landing page. Equals repo_url for github-origin records. */
+  home_url: string;
+  docs_url: string | null;
+
+  // --- Repo metadata ---
+  // Phase 4.1 / D-02: NULLABLE. Non-null for every record with origin.kind === 'github'
+  // (all skill/plugin/mcp_server records — the upcaster never emits null for them).
+  // null ONLY for api/dataset records with no known GitHub repo; when one is known
+  // (e.g. an APIs.guru x-origin pointing at GitHub) they populate exactly like skills.
+  repo_full_name: string | null;
+  repo_url: string | null;
+  repo_stars: number | null;
+  repo_forks: number | null;
+  repo_open_issues: number | null;
+  repo_topics: string[] | null;
   repo_license: string | null;
   repo_language: string | null;
   /** ISO 8601. */
-  repo_created_at: string;
-  repo_updated_at: string;
-  repo_pushed_at: string;
-  repo_owner_type: 'Organization' | 'User';
-  repo_owner_avatar: string;
-  repo_archived: boolean;
-  repo_is_fork: boolean;
+  repo_created_at: string | null;
+  repo_updated_at: string | null;
+  repo_pushed_at: string | null;
+  repo_owner_type: 'Organization' | 'User' | null;
+  repo_owner_avatar: string | null;
+  repo_archived: boolean | null;
+  repo_is_fork: boolean | null;
   repo_description: string | null;
 
   // --- Content ---
@@ -87,6 +158,7 @@ export interface EntityCommon {
   // --- Lineage ---
   scraped_at: string;
   content_sha: string;
+  /** Discovery CHANNEL (not the catalog — see Origin.source). api/dataset use 'registry'. */
   source: 'code-search' | 'topics' | 'seed' | 'discover' | 'registry' | 'manual';
   /** Which discovery signals matched (audit trail). */
   discovery_signals: string[];
@@ -167,6 +239,50 @@ export interface McpExtra {
   manifest_completeness: number;
 }
 
+/** Phase 4.1 (scaffold; harvester lands 4.2). Field semantics in docs/PHASE-4.0-SPEC.md § ApiExtra. */
+export interface ApiExtra {
+  type: 'api';
+  /** OpenAPI servers[] or catalog base_api_url */
+  base_urls: string[];
+  spec_url: string | null;
+  spec_version: string | null;
+  endpoint_count: number | null;
+  /** source-native categories (x-apisguru-categories etc.) */
+  categories_src: string[];
+  /** 'stripe.com' — also the slug owner segment (D-05) */
+  provider: string;
+  status_page_url: string | null;
+  sdks: string[];
+  /** Phase 4.1 addition (orchestrator decision 1): source `modified` timestamp (APIs.guru versions[v].updated, data.gouv.fr metadata_modified_at). Freshness reads it; null → 0. */
+  source_modified_at: string | null;
+  /** 0-1, written by api.scorer.js (same side-effect convention as manifest_completeness). 0 until scored. */
+  access_clarity: number;
+  consumed_by: ConsumedBy;
+}
+
+/** Phase 4.1 (scaffold; harvester lands 4.5). Field semantics in docs/PHASE-4.0-SPEC.md § DatasetExtra. */
+export interface DatasetExtra {
+  type: 'dataset';
+  download_urls: string[];
+  size_bytes: number | null;
+  /** HF '1K<n<10K' when bytes unknown */
+  size_bucket: string | null;
+  record_count: number | null;
+  /** DCAT accrualPeriodicity / AWS ODR UpdateFrequency, normalized when possible */
+  update_frequency: string | null;
+  temporal_coverage: string | null;
+  /** also the slug owner segment (D-05) */
+  publisher: string;
+  popularity: { downloads: number | null; views: number | null; likes: number | null; citations: number | null; window: string | null };
+  /** croissant / DCAT / openapi.json */
+  schema_url: string | null;
+  /** Phase 4.1 addition: HF lastModified, DCAT modified, Zenodo modified. Freshness (365-day cliff) reads it; null → 0. */
+  source_modified_at: string | null;
+  /** 0-1, written by dataset.scorer.js. 0 until scored. */
+  access_clarity: number;
+  consumed_by: ConsumedBy;
+}
+
 export interface CommandLibExtra {
   type: 'command_lib';
   lib_path: string;
@@ -194,4 +310,7 @@ export type EntityRecord =
   | (EntityCommon & { entity_type: 'mcp_server'; extra: McpExtra })
   | (EntityCommon & { entity_type: 'command_lib'; extra: CommandLibExtra })
   | (EntityCommon & { entity_type: 'agent_lib'; extra: AgentLibExtra })
-  | (EntityCommon & { entity_type: 'hook_lib'; extra: HookLibExtra });
+  | (EntityCommon & { entity_type: 'hook_lib'; extra: HookLibExtra })
+  // Phase 4.1 / D-03: `access` lives on these two members ONLY (not EntityCommon, not extra).
+  | (EntityCommon & { entity_type: 'api'; access: AccessBlock; extra: ApiExtra })
+  | (EntityCommon & { entity_type: 'dataset'; access: AccessBlock; extra: DatasetExtra });

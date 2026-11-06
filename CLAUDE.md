@@ -9,7 +9,7 @@ Orientation for Claude Code sessions working on ClaudeAtlas.
 - **Live site:** https://claudeatlas.com
 - **GitHub repo:** https://github.com/dwalshx/ClaudeAtlas
 - **Hosted on:** Cloudflare Workers (Static Assets) — `claudeatlas.danthedub.workers.dev` with custom domain
-- **Cost:** ~$102/year as of Phase 3.1 (~$12 domain + ~$60 Cloudflare Workers Paid + ~$30 Vectorize stored-dim overage). Upgraded from $12/yr free-tier in Phase 3.1 ship (2026-05-26) to support the 35k-record catalog: free-tier KV is capped at 1k writes/day, well below the 21k Listed-tier records that need KV publishing. See "Constraints" in PROJECT.md for the change rationale.
+- **Cost:** ~$73/year as of Phase 4.1 (~$12 domain + ~$60 Cloudflare Workers Paid + <$1/yr Vectorize — Workers Paid includes 10M stored dims, then $0.05 per 100M dims/month; ~160M dims today ≈ $0.08/month; verified 2026-11-02 against developers.cloudflare.com/vectorize/platform/pricing). Upgraded from $12/yr free-tier in Phase 3.1 ship (2026-05-26) to support the 35k-record catalog: free-tier KV is capped at 1k writes/day, well below the 21k Listed-tier records that need KV publishing. See "Constraints" in PROJECT.md for the change rationale.
 
 ## Current status
 
@@ -103,8 +103,17 @@ interface EntityCommon {
   name: string;
   description: string;
 
-  // Repo metadata (unchanged from pre-3.1.2 SkillRecord shape)
-  repo_full_name: string;
+  // Origin (Phase 4.1 / D-02). Present on EVERY record; the upcaster back-fills
+  // the github form for skill/plugin/mcp_server. `origin.source` is the catalog
+  // name ('apis.guru', 'huggingface', 'github'); `source` below is the discovery channel.
+  origin: { kind: 'github' | 'registry' | 'portal' | 'manual'; source: string; source_id: string; source_url: string; also_listed_in: string[] };
+  home_url: string;             // repo_url for github-origin records
+  docs_url: string | null;
+
+  // Repo metadata — NULLABLE since Phase 4.1 (D-02): every repo_* field is T | null.
+  // null ONLY for api/dataset records with no known GitHub repo; always populated
+  // for skill/plugin/mcp_server (the upcaster never emits null for them).
+  repo_full_name: string | null;   // (all repo_* below are likewise T | null)
   repo_url: string;
   repo_stars: number;
   repo_forks: number;
@@ -193,10 +202,46 @@ interface McpExtra {
   manifest_completeness: number;    // 0-1; feeds the Manifest-Completeness scorer signal (D-03)
 }
 
+// Phase 4.1 (2026-11-02) — SCAFFOLD ONLY: types, upcaster paths, scorer / embedding /
+// rule-pack / recipe registry slots, fixtures (data/__fixtures__/{apis,datasets}-mini.ndjson)
+// and the DATA_FEEDS_ENABLED flag. Harvesters land in 4.2 (api) and 4.5 (dataset).
+// Full field semantics: docs/PHASE-4.0-SPEC.md. Helpers: scripts/lib/access.js.
+interface AccessBlock {            // TOP-LEVEL on api/dataset records only (never on EntityCommon, never under extra)
+  cost: { model: 'free' | 'freemium' | 'paid' | 'pay_per_call' | 'unknown'; free_tier: string | null; price_notes: string | null };
+  rate_limit: { requests: number | null; per: 'second' | 'minute' | 'hour' | 'day' | 'month' | null; notes: string | null; headers_observed: string[] };
+  auth: { type: 'none' | 'api_key' | 'bearer' | 'oauth2' | 'http_basic' | 'openid' | 'unknown'; signup_url: string | null };
+  license: { spdx: string | null; name: string | null; url: string | null };
+  formats: string[];
+  transport: string | null;
+  provenance: Record<string, { method: 'declared' | 'spec' | 'probed' | 'heuristic' | 'extracted' | 'manual'; source_url: string | null; confidence: number; checked_at: string }>;
+}                                  // `unknown` is first-class: the upcaster defaults every enum to 'unknown', numbers null, arrays [], provenance {}
+
+interface ApiExtra {
+  type: 'api';
+  base_urls: string[]; spec_url: string | null; spec_version: string | null; endpoint_count: number | null;
+  categories_src: string[]; provider: string; status_page_url: string | null; sdks: string[];
+  source_modified_at: string | null;   // Freshness input (180-day cliff); null → 0
+  access_clarity: number;              // 0-1, written by api.scorer.js (same side-effect convention as manifest_completeness)
+  consumed_by: { skills: string[]; plugins: string[]; mcp_servers: string[] };   // Phase 4.6 fills it
+}
+
+interface DatasetExtra {
+  type: 'dataset';
+  download_urls: string[]; size_bytes: number | null; size_bucket: string | null; record_count: number | null;
+  update_frequency: string | null; temporal_coverage: string | null; publisher: string;
+  popularity: { downloads: number | null; views: number | null; likes: number | null; citations: number | null; window: string | null };
+  schema_url: string | null;
+  source_modified_at: string | null;   // Freshness input (365-day cliff); null → 0
+  access_clarity: number;
+  consumed_by: { skills: string[]; plugins: string[]; mcp_servers: string[] };
+}
+
 type EntityRecord =
   | (EntityCommon & { entity_type: 'skill'; extra: SkillExtra })
   | (EntityCommon & { entity_type: 'plugin'; extra: PluginExtra })       // shipped 3.2
   | (EntityCommon & { entity_type: 'mcp_server'; extra: McpExtra })      // shipped 3.2
+  | (EntityCommon & { entity_type: 'api'; access: AccessBlock; extra: ApiExtra })          // 4.1 scaffold; harvester 4.2
+  | (EntityCommon & { entity_type: 'dataset'; access: AccessBlock; extra: DatasetExtra })  // 4.1 scaffold; harvester 4.5
   | /* CommandLibExtra, AgentLibExtra, HookLibExtra land in 3.3+ */;
 ```
 
@@ -205,6 +250,8 @@ the expanded blocks above. `CommandLibExtra`, `AgentLibExtra`, `HookLibExtra`
 are defined in `src/lib/types.d.ts` ready for 3.3+. `framework` is
 intentionally NOT an entity_type — frameworks are tag-based
 (`framework:gsd`, attachable to any entity).
+
+**Phase 4.1 (2026-11-02) — envelope generalization for v4.0 Data Feeds.** `api` and `dataset` are valid `entity_type`s whose records may have NO GitHub repo: `repo_*` are nullable (null only when `repo_full_name` is unknown), every record carries `origin` / `home_url` / `docs_url`, and api/dataset records carry a top-level `access` block with per-field provenance. ID scheme: `api:<primary_host>/<name>` (e.g. `api:api.stripe.com/stripe`), `dataset:<source>/<native_id>` (e.g. `dataset:huggingface/squad`); slugs are `<provider>/<name>` / `<publisher>/<name>` via the same `assignSlugs()`. Scorers (`scripts/lib/scorers/{api,dataset}.scorer.js`) implement the spec's 7 signals UNCALIBRATED — calibration is 4.2/4.5. The round-trip guard is `scripts/lib/__tests__/data-feeds-roundtrip.test.js`. Spec: `docs/PHASE-4.0-SPEC.md`.
 
 **Cutover (2026-05-28 — Phase 3.1.2 / F2 ships):** the F2 branch lands the
 polymorphic envelope. During the D+0 to D+7 cutover window the legacy flat
@@ -355,7 +402,12 @@ npm run preview
    instead. `scripts/lint-no-legacy-skill-shape.js` warns on legacy paths
    today; the D+7 cutover commit flips it to blocking and deletes the
    shim, the upcaster (`scripts/lib/legacy-skill-reader.js`), and the
-   one-shot migrator (`scripts/migrate-to-entities.js`). Schedule +
+   one-shot migrator (`scripts/migrate-to-entities.js`). **Phase 4.1 update
+   (2026-11-02):** `legacy-skill-reader.js` remains the production upcaster
+   (`filter.js` depends on it) and was extended with the `api`/`dataset` paths
+   and the `origin` back-fill; the D+7 "delete the upcaster" step is
+   superseded — rename it at cutover (e.g. `entity-upcaster.js`), do not
+   delete it. Schedule +
    rollback CLI: `.planning/phases/03.1.2-polymorphic-envelope/3.1.2-CUTOVER.md`.
 
    The first daily-scrape after F2 merge produces v2 NDJSON natively
@@ -639,7 +691,7 @@ If everything else fails, this must work — the single browse-and-discover loop
 ### Constraints
 
 - **Tech stack:** Astro 5 + Cloudflare Workers Static Assets — locked. Do not swap renderers or hosts.
-- **Cost ceiling (Phase 3.1+):** ~$102/year — $12 domain + ~$60 Cloudflare Workers Paid (1M KV writes/day, 1M reads/day, 50ms CPU/req) + ~$30 Vectorize stored-dim overage (55M dims at 35k catalog × $0.05/M after the 5M included). Free tier was sufficient through Phase 2.x (catalog 1k–2k records) but Phase 3.1's 28× catalog growth made it untenable: free KV cap is 1k writes/day, blocking the ~21k Listed-tier publish. Any future addition that breaks ~$102/yr (Vectorize query overage from >50M dims/mo, paid analytics, paid D1 capacity) requires explicit approval.
+- **Cost ceiling (Phase 3.1+):** ~$73/year actual (approved ceiling remains ~$102/year) — $12 domain + ~$60 Cloudflare Workers Paid (1M KV writes/day, 1M reads/day, 50ms CPU/req) + <$1/yr Vectorize stored dims (10M included, then $0.05 per **100M**/month — the earlier per-million figure was 100× too high; 50M queried dims/month included, then $0.01 per 1M). Free tier was sufficient through Phase 2.x (catalog 1k–2k records) but Phase 3.1's 28× catalog growth made it untenable: free KV cap is 1k writes/day, blocking the ~21k Listed-tier publish. Any future addition that breaks ~$102/yr (Vectorize query overage from >50M dims/mo, paid analytics, paid D1 capacity) requires explicit approval.
 - **Scraper footprint:** GitHub API rate limit is 5,000 requests/hour with a PAT. Any Phase 1.5 feature that needs backfill (skill birth dates, star history) must fit inside the rate limit with room for the daily cron.
 - **Data integrity:** Do not drift from the calibrated filter rules in `scripts/filter.js` without re-running against `skills-raw.json` and comparing the before/after distributions.
 - **Deployment:** Zero-downtime rollout is mandatory. The live site must keep serving through every Phase 1.5 deploy.

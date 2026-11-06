@@ -83,6 +83,9 @@ jobs:
     # back off. The gated steps AND-combine this flag; the skill side is untouched.
     env:
       PLUGINS_ENABLED: 'true'
+      # Phase 4.1 (v4.0 Data Feeds — docs/PHASE-4.0-SPEC.md): api + dataset pipeline flag.
+      # Default OFF; no steps gated yet — 4.2 adds harvest/filter/embed/upload steps gated like PLUGINS_ENABLED.
+      DATA_FEEDS_ENABLED: 'false'
     steps:
       - uses: actions/checkout@v4
 

@@ -12,8 +12,8 @@
  * The math mirrors filter.js Step 3 byte-for-byte:
  *   featuredTarget = Math.floor(N * 0.10)
  *   solidTarget    = Math.floor(N * 0.30)
- * Sort key: quality_score DESC, then repo_stars DESC, then id ASC (stable
- * boundary behaviour). The optional `renderableCap` reproduces filter.js's
+ * Sort key: quality_score DESC, then repo_stars DESC (null → 0), then id ASC
+ * (stable boundary behaviour). The optional `renderableCap` reproduces filter.js's
  * defense-in-depth Solid-trim so the skill path stays byte-identical.
  */
 
@@ -31,7 +31,12 @@ export function assignPercentileTiers(records, opts = {}) {
   if (!Array.isArray(records) || records.length === 0) return records;
 
   const tierOrder = records
-    .map((s, i) => ({ i, score: s.quality_score, stars: s.repo_stars, id: s.id }))
+    .map((s, i) => ({
+      i,
+      score: s.quality_score,
+      stars: s.repo_stars ?? 0, // Phase 4.1 / D-07: api/dataset carry repo_stars === null; null !== 0 in the comparator would skip the id tie-break (nondeterministic order), so coerce here.
+      id: s.id,
+    }))
     .sort((a, b) => {
       if (b.score !== a.score) return b.score - a.score;
       if (b.stars !== a.stars) return b.stars - a.stars;

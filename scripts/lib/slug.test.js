@@ -58,3 +58,102 @@ test('assignSlugs: handles missing name or repo_full_name gracefully', () => {
   assignSlugs(skills);
   assert.equal(skills[2].slug, 'a/ok');
 });
+
+// ---------------------------------------------------------------------------
+// Phase 4.1 / D-05: api and dataset slugs through the shared assigner.
+// ---------------------------------------------------------------------------
+
+test('4.1-M09/D-05: api slugs as provider/name with null repo_full_name', () => {
+  const apis = [
+    {
+      entity_type: 'api',
+      name: 'stripe',
+      slug: '',
+      quality_score: 70,
+      repo_full_name: null,
+      extra: { provider: 'stripe.com', base_urls: ['https://api.stripe.com/'] },
+    },
+  ];
+  const { collisionCount } = assignSlugs(apis);
+  assert.equal(apis[0].slug, 'stripe.com/stripe');
+  assert.equal(collisionCount, 0);
+});
+
+test('4.1-M09/D-05: api with a known GitHub repo still slugs as provider/name', () => {
+  const apis = [
+    {
+      entity_type: 'api',
+      name: 'github',
+      slug: '',
+      quality_score: 90,
+      repo_full_name: 'github/rest-api-description',
+      extra: { provider: 'github.com', base_urls: ['https://api.github.com/'] },
+    },
+  ];
+  assignSlugs(apis);
+  // D-05: provider wins over the repo owner.
+  assert.equal(apis[0].slug, 'github.com/github');
+});
+
+test('4.1-M09/D-05: dataset slugs as publisher/name', () => {
+  const datasets = [
+    {
+      entity_type: 'dataset',
+      name: 'simready-assets',
+      slug: '',
+      quality_score: 60,
+      repo_full_name: null,
+      origin: { source: 'huggingface' },
+      extra: { publisher: 'nvidia' },
+    },
+  ];
+  assignSlugs(datasets);
+  assert.equal(datasets[0].slug, 'nvidia/simready-assets');
+});
+
+test('4.1-M09/D-05: api and skill with the same owner/name slug independently in per-type calls', () => {
+  const skills = [{ repo_full_name: 'acme/tools', name: 'foo', slug: '', quality_score: 50 }];
+  const skillRes = assignSlugs(skills);
+  assert.equal(skills[0].slug, 'acme/foo');
+  assert.equal(skillRes.collisionCount, 0);
+
+  const apis = [
+    {
+      entity_type: 'api',
+      name: 'foo',
+      slug: '',
+      quality_score: 50,
+      repo_full_name: null,
+      extra: { provider: 'acme', base_urls: ['https://a.acme.com/'] },
+    },
+  ];
+  const apiRes = assignSlugs(apis);
+  assert.equal(apis[0].slug, 'acme/foo');
+  assert.equal(apiRes.collisionCount, 0);
+});
+
+test('4.1-M09/D-05: two apis with the same provider/name collide to provider/host/name with a redirect to the higher score', () => {
+  const colliding = [
+    {
+      entity_type: 'api',
+      name: 'foo',
+      slug: '',
+      quality_score: 80,
+      repo_full_name: null,
+      extra: { provider: 'acme', base_urls: ['https://a.acme.com/'] },
+    },
+    {
+      entity_type: 'api',
+      name: 'foo',
+      slug: '',
+      quality_score: 60,
+      repo_full_name: null,
+      extra: { provider: 'acme', base_urls: ['https://b.acme.com/'] },
+    },
+  ];
+  const res = assignSlugs(colliding);
+  assert.equal(colliding[0].slug, 'acme/a.acme.com/foo');
+  assert.equal(colliding[1].slug, 'acme/b.acme.com/foo');
+  assert.equal(res.redirects['acme/foo'], 'acme/a.acme.com/foo');
+  assert.equal(res.collisionCount, 1);
+});
