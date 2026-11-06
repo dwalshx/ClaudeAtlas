@@ -27,7 +27,7 @@
 
 **Goal:** `api` and `dataset` become valid `entity_type`s that round-trip through every shared pipeline helper without a GitHub repo. Nullable `repo_*` for non-GitHub origins, `origin` + `home_url` + `docs_url` on `EntityCommon`, shared `access` block with per-field provenance, `ApiExtra` / `DatasetExtra`, scorer + embedding-input + rule-pack + recipe registry slots, `DATA_FEEDS_ENABLED` flag plumbing (default off, no workflow steps yet), fixtures + tests, CLAUDE.md data-model + Vectorize-cost corrections. No harvester, no pages.
 **Done when:** fixture api/dataset records pass `upcastRecord` → `scoreEntity` → `buildEmbeddingInput` → `isSlop` → `assignPercentileTiers` → `assignSlugs` → NDJSON write/read with `repo_*: null`, all existing tests still green, `check:patterns` clean.
-**Status:** ✅ COMPLETE 2026-11-04 — 8 plans / 5 waves executed on `feat/v4.0-data-feeds` (35 commits), verification PASSED 14/14 (`04.1-VERIFICATION.md`). Gate: 535 tests / 527 pass / 2 pre-existing fails / 6 skipped; `check:patterns` clean; legacy-shape lint 5. Not yet merged to main. Context: `.planning/phases/4.1-envelope-generalization/04.1-CONTEXT.md`.
+**Status:** ✅ COMPLETE 2026-11-04 — 8 plans / 5 waves executed on `feat/v4.0-data-feeds` (35 commits), verification PASSED 14/14 (`04.1-VERIFICATION.md`). Gate: 535 tests / 527 pass / 2 pre-existing fails / 6 skipped; `check:patterns` clean; legacy-shape lint 5. **Merged to main 2026-11-05 via PR #23 (merge commit 41130b0; CI 3/3 green after PR #24 fixed the stale embed-skills tests).** Context: `.planning/phases/4.1-envelope-generalization/04.1-CONTEXT.md`.
 **Plans:** 8/8 plans complete
 
 Plans:
