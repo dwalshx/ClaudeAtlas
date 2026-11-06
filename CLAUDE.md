@@ -674,8 +674,8 @@ re-publish on the next run.
 ## Methodology
 
 - **Planning methodology:** Org OS (see `.objective/` locally — not committed to repo)
-- **Execution methodology (recommended for Phase 1.5+):** GSD (`.planning/` directory, phase-based delegation)
-- **Project history:** Phase 1 was planned with a full Org OS 12-phase pipeline and executed in one long session. Phase 1.5 onward should use GSD for execution discipline.
+- **Execution methodology:** GSD was used from Phase 1.5 through the Phase 4.2 plans (`.planning/` holds its artifacts); retired 2026-11-06 in favor of direct execution (see "Workflow" below).
+- **Project history:** Phase 1 was planned with a full Org OS 12-phase pipeline and executed in one long session.
 
 <!-- GSD:project-start source:PROJECT.md -->
 ## Project
@@ -717,18 +717,13 @@ Conventions not yet established. Will populate as patterns emerge during develop
 Architecture not yet mapped. Follow existing patterns found in the codebase.
 <!-- GSD:architecture-end -->
 
-<!-- GSD:workflow-start source:GSD defaults -->
-## GSD Workflow Enforcement
+## Workflow (updated 2026-11-06)
 
-Before using Edit, Write, or other file-changing tools, start work through a GSD command so planning artifacts and execution context stay in sync.
+**GSD is retired for this project** (Dan, 2026-11-06: the researcher / planner / checker / per-plan executor cycle was using far more tokens than the code it produced). Work directly:
 
-Use these entry points:
-- `/gsd:quick` for small fixes, doc updates, and ad-hoc tasks
-- `/gsd:debug` for investigation and bug fixing
-- `/gsd:execute-phase` for planned phase work
-
-Do not make direct repo edits outside a GSD workflow unless the user explicitly asks to bypass it.
-<!-- GSD:workflow-end -->
+- Use an existing spec or plan when one exists (the `docs/` phase specs, `.planning/phases/` plans); write a short context note only when the work has real unknowns.
+- Test-first where practical, atomic commits, one review pass before a PR.
+- Existing `.planning/` documents are reference material. Do not create new GSD artifacts (CONTEXT / RESEARCH / VALIDATION / PLAN / SUMMARY files), do not run `gsd-tools`, and do not invoke `/gsd:*` commands unless Dan asks for one explicitly.
 
 <!-- GSD:profile-start -->
 ## Developer Profile
