@@ -26,6 +26,9 @@ import { writeFileSync, existsSync, mkdirSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { writeNdjsonStreaming, readNdjsonRecords } from './lib/ndjson.js';
+// Token-free auth classifier (NOT github-fetch.js — that module exits at
+// import time without GITHUB_TOKEN, and the test suite imports this file).
+import { GitHubAuthError, isAuthFailure, describeAuthFailure } from './lib/github-auth-error.js';
 import { fetchRepoBatchGraphql } from './lib/github-graphql.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -118,18 +121,32 @@ async function rateLimitedFetch(url, isSearch = false, retries = 3) {
     throw err;
   }
 
+  // Auth failure → FATAL (outage 2026-10-15 → 11-05: "[search] HTTP 401,
+  // skipping" ×12 per run while the plugin corpus silently stopped growing).
+  if (res.status === 401 || res.status === 403) {
+    let body = '';
+    try { body = await res.clone().text(); } catch { body = ''; }
+    if (isAuthFailure(res, body)) {
+      throw new GitHubAuthError(res.status, url, body.replace(/\s+/g, ' ').slice(0, 200));
+    }
+  }
+
   if (res.status === 403 || res.status === 429) {
+    if (retries <= 0) {
+      log(`  [rate-limit] ${res.status} persists after retries; giving up on ${url}`);
+      return res;
+    }
     const resetHeader = res.headers.get('x-ratelimit-reset');
     if (resetHeader) {
       const resetTime = parseInt(resetHeader) * 1000;
       const waitMs = Math.max(resetTime - Date.now() + 2000, 5000);
       log(`  [rate-limit] ${res.status} hit, waiting ${Math.ceil(waitMs / 1000)}s until reset...`);
       await sleep(waitMs);
-      return rateLimitedFetch(url, isSearch, retries);
+      return rateLimitedFetch(url, isSearch, retries - 1);
     }
     log(`  [rate-limit] ${res.status} hit (no reset header), waiting 60s...`);
     await sleep(60000);
-    return rateLimitedFetch(url, isSearch, retries);
+    return rateLimitedFetch(url, isSearch, retries - 1);
   }
 
   return res;
@@ -813,6 +830,13 @@ const invokedAsScript = (() => {
 
 if (invokedAsScript) {
   main().catch(err => {
+    if (err instanceof GitHubAuthError) {
+      // REST discovery/walk → SCRAPE_PAT; the GraphQL refresh swaps in
+      // SCRAPE_PAT_CLASSIC. Name the one that was active for the failing call.
+      const secretName = err.url.includes('/graphql') ? 'SCRAPE_PAT_CLASSIC' : 'SCRAPE_PAT';
+      console.error(describeAuthFailure(err, { secretName, tag: '[plugins]' }));
+      process.exit(1);
+    }
     console.error(`FATAL: ${err.stack || err.message}`);
     process.exit(1);
   });
