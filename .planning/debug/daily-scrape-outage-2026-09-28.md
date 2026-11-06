@@ -110,7 +110,13 @@ fix: |
   - `.github/workflows/reseed-skills-raw.yml` + `scripts/reseed-skills-raw.js` (new): one-shot cache reseed from `skills-latest` ∪ `skills-raw-ndjson-bootstrap`.
   - `CLAUDE.md`: "Recovery: expired PAT / poisoned caches" runbook + known-issue entry.
 verification: |
-  Unit/subprocess tests for every guard (see PR). Token state confirmed by dispatching `check-tokens.yml` on the branch (see hand-over note). End-to-end recovery requires Dan to rotate `SCRAPE_PAT` first — cannot be exercised from this session.
+  - `npm test`: 492 tests, 486 pass, 0 fail, 6 skipped (34 new). `check:patterns` clean.
+  - Local filter round-trip on the May bootstrap: 33k v1 raw → 22,204; the v2 catalog fed back as raw → 22,204 (identical tiers); merged seed → 22,204; empty raw → FATAL; 2,000-record raw → FATAL (91% collapse).
+  - LIVE token probe: `check-tokens.yml` cannot be dispatched from a non-default branch (GitHub only registers workflows on main), so `daily-scrape.yml` was dispatched on the branch (run 42166501893, 2026-11-06 05:07 UTC). New preflight step output:
+      SCRAPE_PAT:         rest_status=401 expiration=none            → DEAD (expired/revoked)
+      SCRAPE_PAT_CLASSIC: rest_status=200 expiration=2027-06-03 UTC graphql_status=200 core_remaining=4915 → OK (209 days left)
+    Job failed at step 5 in 59 s (vs. 30–90 min before). Both cache guards emitted their ::warning:: and NO cache was saved (`skills-raw` absent → nothing to cache; `skill-vectors` byte-identical to the committed seed → skipped). notify-on-failure commented issue #18 with "step: **Preflight: verify GitHub tokens**" and retitled it.
+  - End-to-end recovery requires Dan to rotate `SCRAPE_PAT` first — cannot be exercised from this session.
 files_changed:
   - scripts/lib/github-auth-error.js
   - scripts/lib/github-fetch.js
