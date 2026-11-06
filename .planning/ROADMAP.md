@@ -44,6 +44,24 @@ Plans:
 
 **Goal:** `harvest-apis.js` (APIs.guru list + specs via ETag, data.gouv.fr dataservices, UK api-catalogue CSV, marcelscruz public-apis mirror) → `data/apis-raw.ndjson`; `filter-apis.js` with cross-source merge by primary host; `api.scorer.js` calibrated with Dan eyeballing the tier distribution; embed + enrich + upload-vectors wired behind `DATA_FEEDS_ENABLED`. Target ≈ 6–7k APIs.
 
+**Status:** PLANNED 2026-11-05 — 13 plans / 6 waves (W0 test-first: fixtures + red tests + types; W1 pure modules; W2 merge + harvester; W3 filter + loader/embed/enrich; W4 workflows; W5 calibration + gate). Context: `04.2-CONTEXT.md`; research: `04.2-RESEARCH.md`; fixtures captured 2026-11-05 staged in `fixtures-2026-11-05/`. Execution starts only after PR #23 merges (or a stacked branch) — see 04.2-01-PLAN objective. Flag flip is NOT in 4.2 (Plan 13 documents the gap).
+**Plans:** 0/13 plans complete
+
+Plans:
+- [ ] 04.2-01-PLAN.md — Wave 1 (W0): install the 7 real-response fixtures under data/__fixtures__/feeds/ + README (M13)
+- [ ] 04.2-02-PLAN.md — Wave 1 (W0, red): sources / openapi-extract / http-fetch / api-access contract tests (M01, M02, M03, M06)
+- [ ] 04.2-03-PLAN.md — Wave 1 (W0, red): fixture-fetch helper + api-merge / harvest-apis / filter-apis / feeds loader tests (M04, M05, M07, M08, M11)
+- [ ] 04.2-04-PLAN.md — Wave 1 (W0): ApiExtra.endpoint_summaries/spec_parsed + auth.schemes, upcaster whitelist, apis-mini extension, api Freshness neutral 50 (decisions 3/5/8)
+- [ ] 04.2-05-PLAN.md — Wave 2: scripts/lib/feeds/http-fetch.js — politeFetch, 5 MB streamed cap, NDJSON ETag sidecar, retry, 4-wide pool (M03)
+- [ ] 04.2-06-PLAN.md — Wave 2: openapi-extract.js + api-access.js (auth precedence/schemes, SPDX + format maps, rate-limit parser 61/38) (M02, M06)
+- [ ] 04.2-07-PLAN.md — Wave 2: text.js + the four source parsers (apis.guru, data.gouv.fr, UK CSV RFC 4180, public-apis) (M01)
+- [ ] 04.2-08-PLAN.md — Wave 3: api-merge.js — canonicalHost/nameStem key, precedence merge, also_listed_in, provenance-preserving fill (M05)
+- [ ] 04.2-09-PLAN.md — Wave 3: harvest-apis.js — catalog + spec passes, prior reuse, floors, checkpoints, catalog-only guard (M04)
+- [ ] 04.2-10-PLAN.md — Wave 4: filter-apis.js (merge → upcast → gates+drop table → score → tiers → slugs → preserved) + pipeline-stats api + allowlist (M07, M08)
+- [ ] 04.2-11-PLAN.md — Wave 4: src/lib/feeds.js loader; embed resolveEmbedIO + api defaults; enrich api test; snapshot/llms counts (M09, M11)
+- [ ] 04.2-12-PLAN.md — Wave 5: daily-scrape.yml api legs + data_feeds input ('false' on main); measure-data-feeds.yml; .gitignore; workflow-flags rewrite; CLAUDE.md (M10)
+- [ ] 04.2-13-PLAN.md — Wave 6: real local run → 4.2-CALIBRATION.md; 4.2-MEASUREMENT.md (documented gap); phase gate + VALIDATION sign-off (M12, M14)
+
 ### Phase 4.3: API pages + search
 
 **Goal:** `/apis/` upgraded from the 69-service dictionary page to the API index; `/apis/<provider>/<name>/` detail pages (access card with provenance chips, score breakdown, spec/docs links); old service slugs 301; additive nav entry "Data" + `?type=api` search chip; Listed-tier KV render route; llms.txt / registry / feeds; methodology section. **Ship APIs visibly here.**

@@ -1,0 +1,6 @@
+# Phase 4.2 (2026-11-05): captured-response fixtures are byte-pinned by sha256
+# (04.2-01-PLAN.md). core.autocrlf=true on Windows would rewrite their LF line
+# endings on checkout and break the pins, so they are stored and checked out
+# verbatim. Add future byte-pinned fixtures here too.
+.planning/phases/4.2-api-harvest-v1/fixtures-2026-11-05/** -text
+data/__fixtures__/feeds/** -text

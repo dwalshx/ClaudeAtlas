@@ -1,0 +1,612 @@
+{
+ "stripe.com": {
+  "added": "2017-11-14T11:01:43.000Z",
+  "preferred": "2022-11-15",
+  "versions": {
+   "2022-11-15": {
+    "added": "2017-11-14T11:01:43.000Z",
+    "info": {
+     "contact": {
+      "email": "dev-platform@stripe.com",
+      "name": "Stripe Dev Platform Team",
+      "url": "https://stripe.com",
+      "x-twitter": "stripe"
+     },
+     "description": "The Stripe REST API. Please see https://stripe.com/docs/api for more details.",
+     "termsOfService": "https://stripe.com/us/terms/",
+     "title": "Stripe API",
+     "version": "2022-11-15",
+     "x-apisguru-categories": [
+      "financial"
+     ],
+     "x-logo": {
+      "url": "https://api.apis.guru/v2/cache/logo/https_twitter.com_stripe_profile_image.jpeg"
+     },
+     "x-origin": [
+      {
+       "format": "openapi",
+       "url": "https://raw.githubusercontent.com/stripe/openapi/master/openapi/spec3.yaml",
+       "version": "3.0"
+      }
+     ],
+     "x-providerName": "stripe.com",
+     "x-stripeSpecFilename": "spec3"
+    },
+    "updated": "2023-03-06T07:12:59.965Z",
+    "swaggerUrl": "https://api.apis.guru/v2/specs/stripe.com/2022-11-15/openapi.json",
+    "swaggerYamlUrl": "https://api.apis.guru/v2/specs/stripe.com/2022-11-15/openapi.yaml",
+    "openapiVer": "3.0.0",
+    "link": "https://api.apis.guru/v2/specs/stripe.com/2022-11-15.json"
+   }
+  }
+ },
+ "data.gov": {
+  "added": "2015-11-29T05:55:33.000Z",
+  "preferred": "3.0",
+  "versions": {
+   "3.0": {
+    "added": "2015-11-29T05:55:33.000Z",
+    "info": {
+     "description": "Provides public users access to federal regulatory content.",
+     "title": "Regulations.gov",
+     "version": "3.0",
+     "x-logo": {
+      "url": "https://api.apis.guru/v2/cache/logo/http_regulationsgov.github.io_developers_static_img_logo.png"
+     },
+     "x-origin": [
+      {
+       "converter": {
+        "url": "https://github.com/lucybot/api-spec-converter",
+        "version": "2.7.11"
+       },
+       "format": "swagger",
+       "url": "http://regulationsgov.github.io/developers/api-docs.json",
+       "version": "1.2"
+      }
+     ],
+     "x-providerName": "data.gov"
+    },
+    "externalDocs": {
+     "url": "http://regulationsgov.github.io/developers/"
+    },
+    "updated": "2018-08-24T14:28:47.000Z",
+    "swaggerUrl": "https://api.apis.guru/v2/specs/data.gov/3.0/swagger.json",
+    "swaggerYamlUrl": "https://api.apis.guru/v2/specs/data.gov/3.0/swagger.yaml",
+    "openapiVer": "2.0",
+    "link": "https://api.apis.guru/v2/specs/data.gov/3.0.json"
+   }
+  }
+ },
+ "adobe.com:aem": {
+  "added": "2019-01-03T07:01:34.000Z",
+  "preferred": "3.7.1-pre.0",
+  "versions": {
+   "3.7.1-pre.0": {
+    "added": "2019-01-03T07:01:34.000Z",
+    "info": {
+     "contact": {
+      "email": "opensource@shinesolutions.com",
+      "name": "Shine Solutions",
+      "url": "http://shinesolutions.com",
+      "x-twitter": "Adobe"
+     },
+     "description": "Swagger AEM is an OpenAPI specification for Adobe Experience Manager (AEM) API",
+     "title": "Adobe Experience Manager (AEM) API",
+     "version": "3.7.1-pre.0",
+     "x-apisguru-categories": [
+      "marketing"
+     ],
+     "x-logo": {
+      "url": "https://api.apis.guru/v2/cache/logo/https_twitter.com_Adobe_profile_image.jpeg"
+     },
+     "x-origin": [
+      {
+       "format": "openapi",
+       "url": "https://raw.githubusercontent.com/shinesolutions/swagger-aem/master/conf/api.yml",
+       "version": "3.0"
+      }
+     ],
+     "x-providerName": "adobe.com",
+     "x-serviceName": "aem",
+     "x-unofficialSpec": true
+    },
+    "updated": "2023-03-06T07:12:59.965Z",
+    "swaggerUrl": "https://api.apis.guru/v2/specs/adobe.com/aem/3.7.1-pre.0/openapi.json",
+    "swaggerYamlUrl": "https://api.apis.guru/v2/specs/adobe.com/aem/3.7.1-pre.0/openapi.yaml",
+    "openapiVer": "3.0.0",
+    "link": "https://api.apis.guru/v2/specs/adobe.com:aem/3.7.1-pre.0.json"
+   }
+  }
+ },
+ "github.com": {
+  "added": "2021-06-18T13:57:32.889Z",
+  "preferred": "1.1.4",
+  "versions": {
+   "1.1.4": {
+    "added": "2021-06-18T13:57:32.889Z",
+    "info": {
+     "contact": {
+      "name": "Support",
+      "url": "https://support.github.com/contact?tags=dotcom-rest-api"
+     },
+     "description": "GitHub's v3 REST API.",
+     "license": {
+      "name": "MIT",
+      "url": "https://spdx.org/licenses/MIT"
+     },
+     "termsOfService": "https://docs.github.com/articles/github-terms-of-service",
+     "title": "GitHub v3 REST API",
+     "version": "1.1.4",
+     "x-apisguru-categories": [
+      "collaboration",
+      "developer_tools"
+     ],
+     "x-github-plan": "api.github.com",
+     "x-logo": {
+      "url": "https://api.apis.guru/v2/cache/logo/https_twitter_com_github_profile_image.svg.jpeg"
+     },
+     "x-origin": [
+      {
+       "format": "openapi",
+       "url": "https://raw.githubusercontent.com/github/rest-api-description/main/descriptions/api.github.com/api.github.com.json",
+       "version": "3.0"
+      }
+     ],
+     "x-providerName": "github.com",
+     "x-serviceName": "api.github.com"
+    },
+    "externalDocs": {
+     "description": "GitHub v3 REST API",
+     "url": "https://docs.github.com/rest/"
+    },
+    "updated": "2023-02-15T18:23:37.750Z",
+    "swaggerUrl": "https://api.apis.guru/v2/specs/github.com/1.1.4/openapi.json",
+    "swaggerYamlUrl": "https://api.apis.guru/v2/specs/github.com/1.1.4/openapi.yaml",
+    "openapiVer": "3.0.3",
+    "link": "https://api.apis.guru/v2/specs/github.com/1.1.4.json"
+   },
+   "v0.1": {
+    "added": "2023-03-04T15:39:44.475Z",
+    "info": {
+     "description": "Eqivo OpenApi Specification",
+     "title": "Eqivo API",
+     "version": "v0.1",
+     "x-apisguru-categories": [
+      "collaboration",
+      "developer_tools"
+     ],
+     "x-logo": {
+      "url": "https://api.apis.guru/v2/cache/logo/https_twitter_com_github_profile_image.svg"
+     },
+     "x-origin": [
+      {
+       "format": "openapi",
+       "url": "https://eqivo.org/openapi.yaml",
+       "version": "3.0"
+      }
+     ],
+     "x-providerName": "github.com"
+    },
+    "updated": "2023-03-04T15:39:44.475Z",
+    "swaggerUrl": "https://api.apis.guru/v2/specs/github.com/v0.1/openapi.json",
+    "swaggerYamlUrl": "https://api.apis.guru/v2/specs/github.com/v0.1/openapi.yaml",
+    "openapiVer": "3.0.0",
+    "link": "https://api.apis.guru/v2/specs/github.com/v0.1.json"
+   }
+  }
+ },
+ "azure.com:network-networkInterface": {
+  "added": "2017-12-04T09:12:06.000Z",
+  "preferred": "2018-01-01",
+  "versions": {
+   "2015-06-15": {
+    "added": "2017-12-04T09:12:06.000Z",
+    "info": {
+     "description": "The Microsoft Azure Network management API provides a RESTful set of web services that interact with Microsoft Azure Networks service to manage your network resources. The API has entities that capture the relationship between an end user and the Microsoft Azure Networks service.",
+     "title": "NetworkManagementClient",
+     "version": "2015-06-15",
+     "x-apisguru-categories": [
+      "cloud"
+     ],
+     "x-logo": {
+      "url": "https://api.apis.guru/v2/cache/logo/https_assets.onestore.ms_cdnfiles_onestorerolling-1606-01000_shell_v3_images_logo_microsoft.png"
+     },
+     "x-origin": [
+      {
+       "format": "swagger",
+       "url": "https://raw.githubusercontent.com/Azure/azure-rest-api-specs/master/specification/network/resource-manager/Microsoft.Network/stable/2015-06-15/networkInterface.json",
+       "version": "2.0"
+      }
+     ],
+     "x-preferred": false,
+     "x-providerName": "azure.com",
+     "x-serviceName": "network-networkInterface",
+     "x-tags": [
+      "Azure",
+      "Microsoft"
+     ]
+    },
+    "updated": "2017-12-04T09:12:06.000Z",
+    "swaggerUrl": "https://api.apis.guru/v2/specs/azure.com/network-networkInterface/2015-06-15/swagger.json",
+    "swaggerYamlUrl": "https://api.apis.guru/v2/specs/azure.com/network-networkInterface/2015-06-15/swagger.yaml",
+    "openapiVer": "2.0",
+    "link": "https://api.apis.guru/v2/specs/azure.com:network-networkInterface/2015-06-15.json"
+   },
+   "2016-09-01": {
+    "added": "2017-12-04T09:12:06.000Z",
+    "info": {
+     "description": "The Microsoft Azure Network management API provides a RESTful set of web services that interact with Microsoft Azure Networks service to manage your network resources. The API has entities that capture the relationship between an end user and the Microsoft Azure Networks service.",
+     "title": "NetworkManagementClient",
+     "version": "2016-09-01",
+     "x-apisguru-categories": [
+      "cloud"
+     ],
+     "x-logo": {
+      "url": "https://api.apis.guru/v2/cache/logo/https_assets.onestore.ms_cdnfiles_onestorerolling-1606-01000_shell_v3_images_logo_microsoft.png"
+     },
+     "x-origin": [
+      {
+       "format": "swagger",
+       "url": "https://raw.githubusercontent.com/Azure/azure-rest-api-specs/master/specification/network/resource-manager/Microsoft.Network/stable/2016-09-01/networkInterface.json",
+       "version": "2.0"
+      }
+     ],
+     "x-preferred": false,
+     "x-providerName": "azure.com",
+     "x-serviceName": "network-networkInterface",
+     "x-tags": [
+      "Azure",
+      "Microsoft"
+     ]
+    },
+    "updated": "2017-12-04T09:12:06.000Z",
+    "swaggerUrl": "https://api.apis.guru/v2/specs/azure.com/network-networkInterface/2016-09-01/swagger.json",
+    "swaggerYamlUrl": "https://api.apis.guru/v2/specs/azure.com/network-networkInterface/2016-09-01/swagger.yaml",
+    "openapiVer": "2.0",
+    "link": "https://api.apis.guru/v2/specs/azure.com:network-networkInterface/2016-09-01.json"
+   },
+   "2016-12-01": {
+    "added": "2017-12-04T09:12:06.000Z",
+    "info": {
+     "description": "The Microsoft Azure Network management API provides a RESTful set of web services that interact with Microsoft Azure Networks service to manage your network resources. The API has entities that capture the relationship between an end user and the Microsoft Azure Networks service.",
+     "title": "NetworkManagementClient",
+     "version": "2016-12-01",
+     "x-apisguru-categories": [
+      "cloud"
+     ],
+     "x-logo": {
+      "url": "https://api.apis.guru/v2/cache/logo/https_assets.onestore.ms_cdnfiles_onestorerolling-1606-01000_shell_v3_images_logo_microsoft.png"
+     },
+     "x-origin": [
+      {
+       "format": "swagger",
+       "url": "https://raw.githubusercontent.com/Azure/azure-rest-api-specs/master/specification/network/resource-manager/Microsoft.Network/stable/2016-12-01/networkInterface.json",
+       "version": "2.0"
+      }
+     ],
+     "x-preferred": false,
+     "x-providerName": "azure.com",
+     "x-serviceName": "network-networkInterface",
+     "x-tags": [
+      "Azure",
+      "Microsoft"
+     ]
+    },
+    "updated": "2017-12-04T09:12:06.000Z",
+    "swaggerUrl": "https://api.apis.guru/v2/specs/azure.com/network-networkInterface/2016-12-01/swagger.json",
+    "swaggerYamlUrl": "https://api.apis.guru/v2/specs/azure.com/network-networkInterface/2016-12-01/swagger.yaml",
+    "openapiVer": "2.0",
+    "link": "https://api.apis.guru/v2/specs/azure.com:network-networkInterface/2016-12-01.json"
+   },
+   "2017-03-01": {
+    "added": "2017-12-04T09:12:06.000Z",
+    "info": {
+     "description": "The Microsoft Azure Network management API provides a RESTful set of web services that interact with Microsoft Azure Networks service to manage your network resources. The API has entities that capture the relationship between an end user and the Microsoft Azure Networks service.",
+     "title": "NetworkManagementClient",
+     "version": "2017-03-01",
+     "x-apisguru-categories": [
+      "cloud"
+     ],
+     "x-logo": {
+      "url": "https://api.apis.guru/v2/cache/logo/https_assets.onestore.ms_cdnfiles_onestorerolling-1606-01000_shell_v3_images_logo_microsoft.png"
+     },
+     "x-origin": [
+      {
+       "format": "swagger",
+       "url": "https://raw.githubusercontent.com/Azure/azure-rest-api-specs/master/specification/network/resource-manager/Microsoft.Network/stable/2017-03-01/networkInterface.json",
+       "version": "2.0"
+      }
+     ],
+     "x-preferred": false,
+     "x-providerName": "azure.com",
+     "x-serviceName": "network-networkInterface",
+     "x-tags": [
+      "Azure",
+      "Microsoft"
+     ]
+    },
+    "updated": "2017-12-04T09:12:06.000Z",
+    "swaggerUrl": "https://api.apis.guru/v2/specs/azure.com/network-networkInterface/2017-03-01/swagger.json",
+    "swaggerYamlUrl": "https://api.apis.guru/v2/specs/azure.com/network-networkInterface/2017-03-01/swagger.yaml",
+    "openapiVer": "2.0",
+    "link": "https://api.apis.guru/v2/specs/azure.com:network-networkInterface/2017-03-01.json"
+   },
+   "2017-06-01": {
+    "added": "2017-12-04T09:12:06.000Z",
+    "info": {
+     "description": "The Microsoft Azure Network management API provides a RESTful set of web services that interact with Microsoft Azure Networks service to manage your network resources. The API has entities that capture the relationship between an end user and the Microsoft Azure Networks service.",
+     "title": "NetworkManagementClient",
+     "version": "2017-06-01",
+     "x-apisguru-categories": [
+      "cloud"
+     ],
+     "x-logo": {
+      "url": "https://api.apis.guru/v2/cache/logo/https_assets.onestore.ms_cdnfiles_onestorerolling-1606-01000_shell_v3_images_logo_microsoft.png"
+     },
+     "x-origin": [
+      {
+       "format": "swagger",
+       "url": "https://raw.githubusercontent.com/Azure/azure-rest-api-specs/master/specification/network/resource-manager/Microsoft.Network/stable/2017-06-01/networkInterface.json",
+       "version": "2.0"
+      }
+     ],
+     "x-preferred": false,
+     "x-providerName": "azure.com",
+     "x-serviceName": "network-networkInterface",
+     "x-tags": [
+      "Azure",
+      "Microsoft"
+     ]
+    },
+    "updated": "2017-12-04T09:12:06.000Z",
+    "swaggerUrl": "https://api.apis.guru/v2/specs/azure.com/network-networkInterface/2017-06-01/swagger.json",
+    "swaggerYamlUrl": "https://api.apis.guru/v2/specs/azure.com/network-networkInterface/2017-06-01/swagger.yaml",
+    "openapiVer": "2.0",
+    "link": "https://api.apis.guru/v2/specs/azure.com:network-networkInterface/2017-06-01.json"
+   },
+   "2017-08-01": {
+    "added": "2017-12-04T09:12:06.000Z",
+    "info": {
+     "description": "The Microsoft Azure Network management API provides a RESTful set of web services that interact with Microsoft Azure Networks service to manage your network resources. The API has entities that capture the relationship between an end user and the Microsoft Azure Networks service.",
+     "title": "NetworkManagementClient",
+     "version": "2017-08-01",
+     "x-apisguru-categories": [
+      "cloud"
+     ],
+     "x-logo": {
+      "url": "https://api.apis.guru/v2/cache/logo/https_assets.onestore.ms_cdnfiles_onestorerolling-1606-01000_shell_v3_images_logo_microsoft.png"
+     },
+     "x-origin": [
+      {
+       "format": "swagger",
+       "url": "https://raw.githubusercontent.com/Azure/azure-rest-api-specs/master/specification/network/resource-manager/Microsoft.Network/stable/2017-08-01/networkInterface.json",
+       "version": "2.0"
+      }
+     ],
+     "x-preferred": false,
+     "x-providerName": "azure.com",
+     "x-serviceName": "network-networkInterface",
+     "x-tags": [
+      "Azure",
+      "Microsoft"
+     ]
+    },
+    "updated": "2017-12-04T09:12:06.000Z",
+    "swaggerUrl": "https://api.apis.guru/v2/specs/azure.com/network-networkInterface/2017-08-01/swagger.json",
+    "swaggerYamlUrl": "https://api.apis.guru/v2/specs/azure.com/network-networkInterface/2017-08-01/swagger.yaml",
+    "openapiVer": "2.0",
+    "link": "https://api.apis.guru/v2/specs/azure.com:network-networkInterface/2017-08-01.json"
+   },
+   "2017-09-01": {
+    "added": "2017-12-04T09:12:06.000Z",
+    "info": {
+     "description": "The Microsoft Azure Network management API provides a RESTful set of web services that interact with Microsoft Azure Networks service to manage your network resources. The API has entities that capture the relationship between an end user and the Microsoft Azure Networks service.",
+     "title": "NetworkManagementClient",
+     "version": "2017-09-01",
+     "x-apisguru-categories": [
+      "cloud"
+     ],
+     "x-logo": {
+      "url": "https://api.apis.guru/v2/cache/logo/https_assets.onestore.ms_cdnfiles_onestorerolling-1606-01000_shell_v3_images_logo_microsoft.png"
+     },
+     "x-origin": [
+      {
+       "format": "swagger",
+       "url": "https://raw.githubusercontent.com/Azure/azure-rest-api-specs/master/specification/network/resource-manager/Microsoft.Network/stable/2017-09-01/networkInterface.json",
+       "version": "2.0"
+      }
+     ],
+     "x-preferred": false,
+     "x-providerName": "azure.com",
+     "x-serviceName": "network-networkInterface",
+     "x-tags": [
+      "Azure",
+      "Microsoft"
+     ]
+    },
+    "updated": "2017-12-04T09:12:06.000Z",
+    "swaggerUrl": "https://api.apis.guru/v2/specs/azure.com/network-networkInterface/2017-09-01/swagger.json",
+    "swaggerYamlUrl": "https://api.apis.guru/v2/specs/azure.com/network-networkInterface/2017-09-01/swagger.yaml",
+    "openapiVer": "2.0",
+    "link": "https://api.apis.guru/v2/specs/azure.com:network-networkInterface/2017-09-01.json"
+   },
+   "2017-10-01": {
+    "added": "2017-12-04T09:12:06.000Z",
+    "info": {
+     "description": "The Microsoft Azure Network management API provides a RESTful set of web services that interact with Microsoft Azure Networks service to manage your network resources. The API has entities that capture the relationship between an end user and the Microsoft Azure Networks service.",
+     "title": "NetworkManagementClient",
+     "version": "2017-10-01",
+     "x-apisguru-categories": [
+      "cloud"
+     ],
+     "x-logo": {
+      "url": "https://api.apis.guru/v2/cache/logo/https_assets.onestore.ms_cdnfiles_onestorerolling-1606-01000_shell_v3_images_logo_microsoft.png"
+     },
+     "x-origin": [
+      {
+       "format": "swagger",
+       "url": "https://raw.githubusercontent.com/Azure/azure-rest-api-specs/master/specification/network/resource-manager/Microsoft.Network/stable/2017-10-01/networkInterface.json",
+       "version": "2.0"
+      }
+     ],
+     "x-preferred": false,
+     "x-providerName": "azure.com",
+     "x-serviceName": "network-networkInterface",
+     "x-tags": [
+      "Azure",
+      "Microsoft"
+     ]
+    },
+    "updated": "2017-12-04T09:12:06.000Z",
+    "swaggerUrl": "https://api.apis.guru/v2/specs/azure.com/network-networkInterface/2017-10-01/swagger.json",
+    "swaggerYamlUrl": "https://api.apis.guru/v2/specs/azure.com/network-networkInterface/2017-10-01/swagger.yaml",
+    "openapiVer": "2.0",
+    "link": "https://api.apis.guru/v2/specs/azure.com:network-networkInterface/2017-10-01.json"
+   },
+   "2017-11-01": {
+    "added": "2018-03-10T09:23:51.000Z",
+    "info": {
+     "description": "The Microsoft Azure Network management API provides a RESTful set of web services that interact with Microsoft Azure Networks service to manage your network resources. The API has entities that capture the relationship between an end user and the Microsoft Azure Networks service.",
+     "title": "NetworkManagementClient",
+     "version": "2017-11-01",
+     "x-apisguru-categories": [
+      "cloud"
+     ],
+     "x-logo": {
+      "url": "https://api.apis.guru/v2/cache/logo/https_assets.onestore.ms_cdnfiles_onestorerolling-1606-01000_shell_v3_images_logo_microsoft.png"
+     },
+     "x-origin": [
+      {
+       "format": "swagger",
+       "url": "https://raw.githubusercontent.com/Azure/azure-rest-api-specs/master/specification/network/resource-manager/Microsoft.Network/stable/2017-11-01/networkInterface.json",
+       "version": "2.0"
+      }
+     ],
+     "x-preferred": false,
+     "x-providerName": "azure.com",
+     "x-serviceName": "network-networkInterface",
+     "x-tags": [
+      "Azure",
+      "Microsoft"
+     ]
+    },
+    "updated": "2018-03-10T09:23:51.000Z",
+    "swaggerUrl": "https://api.apis.guru/v2/specs/azure.com/network-networkInterface/2017-11-01/swagger.json",
+    "swaggerYamlUrl": "https://api.apis.guru/v2/specs/azure.com/network-networkInterface/2017-11-01/swagger.yaml",
+    "openapiVer": "2.0",
+    "link": "https://api.apis.guru/v2/specs/azure.com:network-networkInterface/2017-11-01.json"
+   },
+   "2018-01-01": {
+    "added": "2018-03-10T09:23:51.000Z",
+    "info": {
+     "description": "The Microsoft Azure Network management API provides a RESTful set of web services that interact with Microsoft Azure Networks service to manage your network resources. The API has entities that capture the relationship between an end user and the Microsoft Azure Networks service.",
+     "title": "NetworkManagementClient",
+     "version": "2018-01-01",
+     "x-apisguru-categories": [
+      "cloud"
+     ],
+     "x-logo": {
+      "url": "https://api.apis.guru/v2/cache/logo/https_assets.onestore.ms_cdnfiles_onestorerolling-1606-01000_shell_v3_images_logo_microsoft.png"
+     },
+     "x-origin": [
+      {
+       "format": "swagger",
+       "url": "https://raw.githubusercontent.com/Azure/azure-rest-api-specs/master/specification/network/resource-manager/Microsoft.Network/stable/2018-01-01/networkInterface.json",
+       "version": "2.0"
+      }
+     ],
+     "x-preferred": true,
+     "x-providerName": "azure.com",
+     "x-serviceName": "network-networkInterface",
+     "x-tags": [
+      "Azure",
+      "Microsoft"
+     ]
+    },
+    "updated": "2018-03-10T09:23:51.000Z",
+    "swaggerUrl": "https://api.apis.guru/v2/specs/azure.com/network-networkInterface/2018-01-01/swagger.json",
+    "swaggerYamlUrl": "https://api.apis.guru/v2/specs/azure.com/network-networkInterface/2018-01-01/swagger.yaml",
+    "openapiVer": "2.0",
+    "link": "https://api.apis.guru/v2/specs/azure.com:network-networkInterface/2018-01-01.json"
+   }
+  }
+ },
+ "twilio.com:api": {
+  "added": "2015-12-07T18:27:02.000Z",
+  "preferred": "1.42.0",
+  "versions": {
+   "1.42.0": {
+    "added": "2015-12-07T18:27:02.000Z",
+    "info": {
+     "contact": {
+      "email": "support@twilio.com",
+      "name": "Twilio Support",
+      "url": "https://support.twilio.com"
+     },
+     "description": "This is the public Twilio REST API.",
+     "license": {
+      "name": "Apache 2.0",
+      "url": "https://www.apache.org/licenses/LICENSE-2.0.html"
+     },
+     "termsOfService": "https://www.twilio.com/legal/tos",
+     "title": "Twilio - Api",
+     "version": "1.42.0",
+     "x-apisguru-categories": [
+      "telecom",
+      "messaging"
+     ],
+     "x-logo": {
+      "url": "https://api.apis.guru/v2/cache/logo/https_static1.twilio.com_marketing_bundles_marketing_img_logos_wordmark-red.svg"
+     },
+     "x-origin": [
+      {
+       "format": "openapi",
+       "url": "https://raw.githubusercontent.com/twilio/twilio-oai/main/spec/json/twilio_api_v2010.json",
+       "version": "3.0"
+      }
+     ],
+     "x-providerName": "twilio.com",
+     "x-serviceName": "api"
+    },
+    "updated": "2023-04-20T23:20:25.322Z",
+    "swaggerUrl": "https://api.apis.guru/v2/specs/twilio.com/api/1.42.0/openapi.json",
+    "swaggerYamlUrl": "https://api.apis.guru/v2/specs/twilio.com/api/1.42.0/openapi.yaml",
+    "openapiVer": "3.0.1",
+    "link": "https://api.apis.guru/v2/specs/twilio.com:api/1.42.0.json"
+   }
+  }
+ },
+ "openai.com": {
+  "added": "2023-02-15T18:47:28.575Z",
+  "preferred": "1.2.0",
+  "versions": {
+   "1.2.0": {
+    "added": "2023-02-15T18:47:28.575Z",
+    "info": {
+     "description": "APIs for sampling from and fine-tuning language models",
+     "title": "OpenAI API",
+     "version": "1.2.0",
+     "x-apisguru-categories": [
+      "machine_learning"
+     ],
+     "x-logo": {
+      "url": "https://api.apis.guru/v2/cache/logo/https_learnodo-newtonic.com_wp-content_uploads_2020_04_Logo-of-OpenAI-768x161.jpg"
+     },
+     "x-origin": [
+      {
+       "format": "openapi",
+       "url": "https://raw.githubusercontent.com/openai/openai-openapi/master/openapi.yaml",
+       "version": "3.0"
+      }
+     ],
+     "x-providerName": "openai.com"
+    },
+    "updated": "2023-03-03T09:27:09.469Z",
+    "swaggerUrl": "https://api.apis.guru/v2/specs/openai.com/1.2.0/openapi.json",
+    "swaggerYamlUrl": "https://api.apis.guru/v2/specs/openai.com/1.2.0/openapi.yaml",
+    "openapiVer": "3.0.0",
+    "link": "https://api.apis.guru/v2/specs/openai.com/1.2.0.json"
+   }
+  }
+ }
+}

@@ -1,0 +1,497 @@
+[
+ {
+  "raw": "-",
+  "requests": null,
+  "per": null
+ },
+ {
+  "raw": "1 Million d'appels par mois / 1200 requêtes par minute",
+  "requests": 1200,
+  "per": "minute"
+ },
+ {
+  "raw": "1 appel / seconde",
+  "requests": null,
+  "per": null
+ },
+ {
+  "raw": "1 appel / seconde / IP\nL'API est disponible à hauteur de 1 appel par seconde et par adresse IP.",
+  "requests": null,
+  "per": null
+ },
+ {
+  "raw": "1 appel / seconde / IP\nL'API est disponible à hauteur de 1 appel par secondes et par adresse IP.",
+  "requests": null,
+  "per": null
+ },
+ {
+  "raw": "10 appels / minute / IP\nL'API est disponible à hauteur de 10 appels par minutes.",
+  "requests": 10,
+  "per": "minute"
+ },
+ {
+  "raw": "10 appels / seconde",
+  "requests": 10,
+  "per": "second"
+ },
+ {
+  "raw": "10 appels / seconde / IP",
+  "requests": 10,
+  "per": "second"
+ },
+ {
+  "raw": "10 millions de requêtes /  1200 requêtes / min / IP",
+  "requests": 1200,
+  "per": "minute"
+ },
+ {
+  "raw": "10 requêtes par jour avec une clé gratuite",
+  "requests": 10,
+  "per": "day"
+ },
+ {
+  "raw": "10 requêtes par seconde depuis une même adresse IP",
+  "requests": 10,
+  "per": "second"
+ },
+ {
+  "raw": "10 requêtes/minute (accès direct API)",
+  "requests": 10,
+  "per": "minute"
+ },
+ {
+  "raw": "100 000\nLe nombre de thèses remontées est limité à 100 000",
+  "requests": null,
+  "per": null
+ },
+ {
+  "raw": "100 req / seconde",
+  "requests": 100,
+  "per": "second"
+ },
+ {
+  "raw": "100 req/min",
+  "requests": 100,
+  "per": "minute"
+ },
+ {
+  "raw": "100 requêtes / minute",
+  "requests": 100,
+  "per": "minute"
+ },
+ {
+  "raw": "1000",
+  "requests": null,
+  "per": null
+ },
+ {
+  "raw": "1000 appels / minute\nPour des raisons de sécurité, le nombre de requêtes par adresse IP est limitée à 1000 par minute. Passé cette limite, les requêtes aboutiront avec un status 429 (Too Many Requests).",
+  "requests": 1000,
+  "per": "minute"
+ },
+ {
+  "raw": "1000 appels/minute\nL’API Manager de la DGFiP délivre un quota de consultation pour chacun de ses partenaires pour chaque API utilisée. Concernant l'API R2P le quota par partenaire est fixé à 1 000 appels à la minute.",
+  "requests": 1000,
+  "per": "minute"
+ },
+ {
+  "raw": "1000 requêtes par jour",
+  "requests": 1000,
+  "per": "day"
+ },
+ {
+  "raw": "1000 requêtes/min par IP",
+  "requests": 1000,
+  "per": "minute"
+ },
+ {
+  "raw": "1000 requêtes/min par IP.",
+  "requests": 1000,
+  "per": "minute"
+ },
+ {
+  "raw": "1000 requêtes/min par IP.\n[Consulter les règles de volumétrie](\nhttps://entreprise.api.gouv.fr/developpeurs#respecter-la-volum%C3%A9trie)",
+  "requests": 1000,
+  "per": "minute"
+ },
+ {
+  "raw": "1000 tokens/IP avec recharge de 3 tokens/seconde (coûts variables : 5-200 tokens par requête selon endpoint)",
+  "requests": null,
+  "per": null
+ },
+ {
+  "raw": "10000 appels API par ip par jour",
+  "requests": null,
+  "per": null
+ },
+ {
+  "raw": "10000/mois",
+  "requests": 10000,
+  "per": "month"
+ },
+ {
+  "raw": "120 demandes par minute et par adresse IP, au-delà desquelles la réponse est un 429 portant le délai à attendre. Une réponse servie par le cache ne compte pas.",
+  "requests": null,
+  "per": null
+ },
+ {
+  "raw": "120 par minute",
+  "requests": 120,
+  "per": "minute"
+ },
+ {
+  "raw": "120/min",
+  "requests": 120,
+  "per": "minute"
+ },
+ {
+  "raw": "15 requêtes / minute",
+  "requests": 15,
+  "per": "minute"
+ },
+ {
+  "raw": "15 requêtes par heure",
+  "requests": 15,
+  "per": "hour"
+ },
+ {
+  "raw": "15 requêtes par seconde depuis une même adresse IP",
+  "requests": 15,
+  "per": "second"
+ },
+ {
+  "raw": "17 appels par seconde par application sur l'API Manager Gravitee",
+  "requests": 17,
+  "per": "second"
+ },
+ {
+  "raw": "2 appels / seconde",
+  "requests": 2,
+  "per": "second"
+ },
+ {
+  "raw": "20 appels / seconde / jeton\nL'API est disponible à hauteur de 20 appels par secondes et par jeton d'accès.\nUn plafond général par IP est fixé à 1000 requêtes/minutes.",
+  "requests": 20,
+  "per": "second"
+ },
+ {
+  "raw": "20 dépôts par jour et par adresse IP, 2 000 par jour au total",
+  "requests": 2000,
+  "per": "day"
+ },
+ {
+  "raw": "20 interrogations par seconde dans le cadre d'une navigation sans identification",
+  "requests": null,
+  "per": null
+ },
+ {
+  "raw": "200",
+  "requests": null,
+  "per": null
+ },
+ {
+  "raw": "200 appels/minute\nL’API Manager de la DGFiP délivre un quota de consultation pour chacun de ses partenaires pour chaque API utilisée. Concernant l'API Ficoba le quota par partenaire est fixé à 200 appels à la minute.",
+  "requests": 200,
+  "per": "minute"
+ },
+ {
+  "raw": "200 requêtes / minute / IP (limite par défaut, peut être modifiée en fonction des besoins)",
+  "requests": 200,
+  "per": "minute"
+ },
+ {
+  "raw": "240 requêtes POST par fenêtre glissante de 5 minutes, par adresse IP appelante et par instance du serveur",
+  "requests": null,
+  "per": null
+ },
+ {
+  "raw": "250 requêtes / minute",
+  "requests": 250,
+  "per": "minute"
+ },
+ {
+  "raw": "30 appels / minute\nL'usage d'API Sirene est soumis à une limite de 30 interrogations par minute. L'Insee se réserve le droit de changer cette limite en cas de nécessité.",
+  "requests": 30,
+  "per": "minute"
+ },
+ {
+  "raw": "30 appels / minute\nL'usage de l'API Métadonnées  est soumis à une limite de 30 interrogations par minute. L'Insee se réserve le droit de changer cette limite en cas de nécessité.",
+  "requests": 30,
+  "per": "minute"
+ },
+ {
+  "raw": "30 appels / minute / IP. L'API est disponible à hauteur de 30 appels par minute et par adresse IP.",
+  "requests": 30,
+  "per": "minute"
+ },
+ {
+  "raw": "30 appels par 60 secondes et par adresse IP. Une réponse servie depuis le cache ne consomme rien.",
+  "requests": null,
+  "per": null
+ },
+ {
+  "raw": "30 req/min",
+  "requests": 30,
+  "per": "minute"
+ },
+ {
+  "raw": "30 requêtes par minute et par adresse IP (en-têtes X-RateLimit-Limit / -Remaining / -Reset, puis 429 avec Retry-After).",
+  "requests": 30,
+  "per": "minute"
+ },
+ {
+  "raw": "30 requêtes par minute pour les usages open data",
+  "requests": 30,
+  "per": "minute"
+ },
+ {
+  "raw": "30 requêtes par seconde depuis une même adresse IP",
+  "requests": 30,
+  "per": "second"
+ },
+ {
+  "raw": "300",
+  "requests": null,
+  "per": null
+ },
+ {
+  "raw": "300 appels par heure et par adresse IP",
+  "requests": 300,
+  "per": "hour"
+ },
+ {
+  "raw": "350 req/min",
+  "requests": 350,
+  "per": "minute"
+ },
+ {
+  "raw": "360 requêtes par heure et par compte ; 1500 hauteurs d’eau maximum par requête ; plage de dates autorisée : de J-30 à J+30",
+  "requests": 360,
+  "per": "hour"
+ },
+ {
+  "raw": "40 requêtes par seconde depuis une même adresse IP",
+  "requests": 40,
+  "per": "second"
+ },
+ {
+  "raw": "400 appels par token par minute",
+  "requests": null,
+  "per": null
+ },
+ {
+  "raw": "400 req/min",
+  "requests": 400,
+  "per": "minute"
+ },
+ {
+  "raw": "5 requêtes / minute",
+  "requests": 5,
+  "per": "minute"
+ },
+ {
+  "raw": "5 requêtes par seconde depuis une même adresse IP",
+  "requests": 5,
+  "per": "second"
+ },
+ {
+  "raw": "50 appels / seconde / IP",
+  "requests": 50,
+  "per": "second"
+ },
+ {
+  "raw": "50 appels / seconde / IP\nL'API est disponible à hauteur de 50 appels par seconde et par adresse IP.",
+  "requests": 50,
+  "per": "second"
+ },
+ {
+  "raw": "50 appels / seconde / IP\nL'API unitaire est disponible à hauteur de 50 appels par seconde et par adresse IP.\nLe géocodage de masse (CSV) est disponible à hauteur d'un appel simultané par adresse IP.",
+  "requests": 50,
+  "per": "second"
+ },
+ {
+  "raw": "50 appels par minute par IP",
+  "requests": 50,
+  "per": "minute"
+ },
+ {
+  "raw": "50 requêtes / minute",
+  "requests": 50,
+  "per": "minute"
+ },
+ {
+  "raw": "50 requêtes par seconde depuis une même adresse IP",
+  "requests": 50,
+  "per": "second"
+ },
+ {
+  "raw": "50 unités par seconde et par adresse IP",
+  "requests": null,
+  "per": null
+ },
+ {
+  "raw": "500",
+  "requests": null,
+  "per": null
+ },
+ {
+  "raw": "500 appels/minute\nAPI : ouverture toute l’année.\nPlage d’ouverture : 0h-24h, 7j/7j.\nOffre de couverture du service : 8h-18h",
+  "requests": 500,
+  "per": "minute"
+ },
+ {
+  "raw": "500 résultats par requête",
+  "requests": null,
+  "per": null
+ },
+ {
+  "raw": "5000 appels / jour / IP\nLe nombre d'appels API pour un utilisateur anonyme est limité à 5000 appels par adresse IP et par jour.",
+  "requests": 5000,
+  "per": "day"
+ },
+ {
+  "raw": "6",
+  "requests": null,
+  "per": null
+ },
+ {
+  "raw": "60 req/min",
+  "requests": 60,
+  "per": "minute"
+ },
+ {
+  "raw": "60 requêtes par minute et par adresse IP. En cas de dépassement : HTTP 429 avec l’en-tête Retry-After. Limite partagée entre les routes publiques.",
+  "requests": 60,
+  "per": "minute"
+ },
+ {
+  "raw": "600 requêtes par fenêtre de 60 secondes",
+  "requests": null,
+  "per": null
+ },
+ {
+  "raw": "7 appels / seconde. L’administration s'autorise à baisser cette limite en cas de surcharge des serveurs",
+  "requests": 7,
+  "per": "second"
+ },
+ {
+  "raw": "8 appels / seconde",
+  "requests": 8,
+  "per": "second"
+ },
+ {
+  "raw": "8000",
+  "requests": null,
+  "per": null
+ },
+ {
+  "raw": "850 req/5mins",
+  "requests": null,
+  "per": null
+ },
+ {
+  "raw": "900 req/min",
+  "requests": 900,
+  "per": "minute"
+ },
+ {
+  "raw": "Aucune borne de débit.",
+  "requests": null,
+  "per": null
+ },
+ {
+  "raw": "Aucune borne de débit. Chaque réponse se range au bord cinq minutes, les sources amont une journée.",
+  "requests": null,
+  "per": null
+ },
+ {
+  "raw": "Aucune borne de débit. Chaque réponse se range au bord une journée, et la version connue reste servie une semaine le temps de se rafraîchir.",
+  "requests": null,
+  "per": null
+ },
+ {
+  "raw": "Clé d'essai : 100 requêtes/mois (destination Inde). Clé partenaire : quota défini par contrat. Remise à zéro le 1er du mois.",
+  "requests": 100,
+  "per": "month"
+ },
+ {
+  "raw": "Illimitée",
+  "requests": null,
+  "per": null
+ },
+ {
+  "raw": "Incluses dans la convention\nLes éventuelles limitations d’usage vis-à-vis d’un partenaire sont incluses dans la convention.",
+  "requests": null,
+  "per": null
+ },
+ {
+  "raw": "L'API est disponible à hauteur de 10 000 appels par jour.",
+  "requests": 10000,
+  "per": "day"
+ },
+ {
+  "raw": "Pas de quota chiffré ; usage raisonnable demandé",
+  "requests": null,
+  "per": null
+ },
+ {
+  "raw": "Pas de quota strict, sans clé. Réponses en cache 2 minutes : une requête par heure suffit pour la couleur du jour, une toutes les 30 minutes le matin pour celle de demain.",
+  "requests": null,
+  "per": null
+ },
+ {
+  "raw": "Plan gratuit : 20 appels par minute. Plan Pro : 180 appels par minute.",
+  "requests": 20,
+  "per": "minute"
+ },
+ {
+  "raw": "Sans clé ni inscription. 30 requêtes au plus par période de 10 secondes et par adresse IP, toutes adresses de api.trainnomade.fr confondues (réponse 429 et blocage d'une dizaine de secondes au-delà). Relecture conseillée : toutes les 60 secondes au plus pour le temps réel, une fois par jour pour les horaires prévus.",
+  "requests": null,
+  "per": null
+ },
+ {
+  "raw": "Sans clé ni inscription. 30 requêtes au plus par période de 10 secondes et par adresse IP, toutes adresses de api.trainnomade.fr confondues (réponse 429 et blocage d'une dizaine de secondes au-delà). Relecture conseillée : toutes les 60 secondes au plus, le fichier changeant au mieux toutes les 2 minutes.",
+  "requests": null,
+  "per": null
+ },
+ {
+  "raw": "Sans clé ni inscription. 30 requêtes au plus par période de 10 secondes et par adresse IP, toutes adresses de api.trainnomade.fr confondues (réponse 429 et blocage d'une dizaine de secondes au-delà). Relecture conseillée : une fois par jour, le fichier étant relevé chaque matin.",
+  "requests": null,
+  "per": null
+ },
+ {
+  "raw": "Sans clé. Un appel toutes les 30 minutes conseillé, 10 minutes au minimum.",
+  "requests": null,
+  "per": null
+ },
+ {
+  "raw": "Usage raisonnable recommandé",
+  "requests": null,
+  "per": null
+ },
+ {
+  "raw": "Volumétrie inconnue. Le fournisseur de la donnée n'a pas cette information.",
+  "requests": null,
+  "per": null
+ },
+ {
+  "raw": "de 5  à 20 appels / seconde Les quotas diffèrent en fonction des routes",
+  "requests": 20,
+  "per": "second"
+ },
+ {
+  "raw": "illimité\nLe volume d’utilisation du courtier SFiP n’est pas limité par défaut, mais fait l’objet d’une déclaration lors de votre demande d’accès. En cas d’utilisation abusive, la DGFiP se réserve le droit de restreindre et/ou couper votre accès à tout moment.",
+  "requests": null,
+  "per": null
+ },
+ {
+  "raw": "illimité\nVotre volume d'utilisation de l'API Impôt Particulier n'est pas limité par défaut mais fait l'objet d'une déclaration lors de votre demande d'habilitation. En cas d'utilisation abusive, la DGFiP se réserve le droit de restreindre et/ou couper votre accès à tout moment.",
+  "requests": null,
+  "per": null
+ },
+ {
+  "raw": "quota / jeton\nLes appels API sont limités par quotas par jetons d'accès.",
+  "requests": null,
+  "per": null
+ }
+]
