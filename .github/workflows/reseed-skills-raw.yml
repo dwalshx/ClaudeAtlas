@@ -1,0 +1,92 @@
+# One-shot recovery: rebuild the skills-raw GHA cache from release assets.
+#
+# When: every `skills-raw-ndjson-*` cache key is a ~200-byte placeholder (the
+# 2026-10 outage — see CLAUDE.md "Recovery: expired GitHub PAT / poisoned GHA
+# caches") and bootstrap-skills-raw.yml alone would regress the corpus to the
+# 33k-record May 2026 snapshot.
+#
+# What it does:
+#   1. downloads `skills-latest` (last published catalog, ~101k v2 records)
+#   2. optionally downloads `skills-raw-ndjson-bootstrap` (33k v1 records)
+#   3. merges them by id (skills-latest wins) via scripts/reseed-skills-raw.js
+#   4. refuses to save anything under 1,000 lines
+#   5. saves the result under `skills-raw-ndjson-reseed-<run>` — the NEWEST
+#      key, so daily-scrape.yml / weekly-discover.yml `restore-keys:
+#      skills-raw-ndjson-` pick it up on their next run.
+#
+# Usage (after SCRAPE_PAT has been rotated and check-tokens.yml is green):
+#   gh workflow run reseed-skills-raw.yml
+#   gh run watch
+#   gh cache list --key skills-raw-ndjson-reseed   # expect ~250+ MB, not ~200 B
+name: Reseed skills-raw cache (recovery)
+
+on:
+  workflow_dispatch:
+    inputs:
+      include_bootstrap:
+        description: 'Also merge the May-2026 skills-raw-ndjson-bootstrap asset (33k v1 records) underneath skills-latest'
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+
+jobs:
+  reseed:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      # No npm ci — the merge script uses only scripts/lib/ndjson.js (no deps).
+      - name: Download skills-latest (primary seed)
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          mkdir -p data /tmp/seed
+          gh release download skills-latest --pattern 'skills.ndjson' --output /tmp/seed/primary.ndjson
+          echo "primary lines: $(wc -l < /tmp/seed/primary.ndjson)"
+
+      - name: Download skills-raw-ndjson-bootstrap (secondary seed)
+        if: ${{ github.event.inputs.include_bootstrap != 'false' }}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release download skills-raw-ndjson-bootstrap --pattern 'skills-raw.ndjson' --output /tmp/seed/secondary.ndjson
+          echo "secondary lines: $(wc -l < /tmp/seed/secondary.ndjson)"
+
+      - name: Merge into data/skills-raw.ndjson
+        run: |
+          if [ -f /tmp/seed/secondary.ndjson ]; then
+            node scripts/reseed-skills-raw.js --primary /tmp/seed/primary.ndjson --secondary /tmp/seed/secondary.ndjson --output data/skills-raw.ndjson
+          else
+            node scripts/reseed-skills-raw.js --primary /tmp/seed/primary.ndjson --output data/skills-raw.ndjson
+          fi
+          ls -lh data/skills-raw.ndjson
+
+      - name: "Guard: refuse to cache a small corpus"
+        run: |
+          LINES=$(wc -l < data/skills-raw.ndjson)
+          echo "merged lines: $LINES"
+          if [ "$LINES" -lt 1000 ]; then
+            echo "::error::merged corpus has only $LINES lines — not saving. Check the release assets."
+            exit 1
+          fi
+
+      # Key prefix MUST stay `skills-raw-ndjson-` (daily + weekly restore-keys).
+      - name: Save to GitHub Actions cache
+        uses: actions/cache/save@v4
+        with:
+          path: data/skills-raw.ndjson
+          key: skills-raw-ndjson-reseed-${{ github.run_number }}
+
+      - name: Next steps
+        run: |
+          echo "Saved cache key: skills-raw-ndjson-reseed-${{ github.run_number }}"
+          echo "Verify:  gh cache list --key skills-raw-ndjson-reseed"
+          echo "Then:    gh workflow run daily-scrape.yml -f force_reembed=true"
+          echo "         (force_reembed rebuilds skill-vectors.ndjson — the cached copy is the 1,078-vector seed)"

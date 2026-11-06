@@ -35,6 +35,16 @@ jobs:
 
       - run: npm ci
 
+      # Outage 2026-10 (see daily-scrape.yml for the full story): probe the
+      # PATs before touching any cache. SCRAPE_PAT_CLASSIC is probed too so a
+      # Monday weekly run surfaces a Track 1 problem before Tuesday's daily.
+      - name: "Preflight: verify GitHub tokens"
+        env:
+          SCRAPE_PAT: ${{ secrets.SCRAPE_PAT }}
+          SCRAPE_PAT_CLASSIC: ${{ secrets.SCRAPE_PAT_CLASSIC }}
+          TOKEN_WARN_DAYS: '14'
+        run: node scripts/check-github-tokens.js
+
       # Restore ETag cache from previous run.
       # Split from save step so that save can run with `if: always()`
       # after the scrape — even if the scrape times out or is cancelled,
@@ -88,14 +98,36 @@ jobs:
           path: data/etag-cache.json
           key: etag-cache-${{ github.run_number }}
 
+      # Outage 2026-10-18 (run #26 of THIS workflow): with an expired
+      # SCRAPE_PAT the full sweep parsed 0 skills, wrote the empty file, THEN
+      # exited 1 — and this always() save persisted the ~200-byte placeholder
+      # as the newest `skills-raw-ndjson-*` key, which the daily restore-keys
+      # prefix match served for the next 18 days. scrape.js now refuses to
+      # write a 0-result sweep; this guard is the belt to that braces.
+      - name: "Guard: never persist an empty skills-raw corpus"
+        id: skills-raw-guard
+        if: always()
+        run: |
+          SAVE=false
+          if [ -f data/skills-raw.ndjson ]; then
+            LINES=$(wc -l < data/skills-raw.ndjson)
+            if [ "$LINES" -ge 1000 ]; then
+              SAVE=true
+              echo "skills-raw.ndjson: $LINES lines — OK to cache"
+            else
+              echo "::warning::data/skills-raw.ndjson has only $LINES lines — NOT saving it to the GHA cache (placeholder/empty corpus)."
+            fi
+          fi
+          echo "save=$SAVE" >> "$GITHUB_OUTPUT"
+
       # Save skills-raw cache even on timeout/failure/cancel. The 6h platform
       # cap will likely cancel the scrape mid-run; without `if: always()`,
       # the partially-built corpus (scraper checkpoints every 1000 skills via
       # saveSkillsRaw()) would be lost and next week's run would start cold.
-      # Bounded by hashFiles to avoid saving an empty cache if the scrape
-      # never produced output.
+      # Gated on the line-count guard above (was hashFiles, which an empty
+      # header-only file still satisfies).
       - name: Save skills-raw cache
-        if: always() && hashFiles('data/skills-raw.ndjson') != ''
+        if: always() && steps.skills-raw-guard.outputs.save == 'true'
         uses: actions/cache/save@v4
         with:
           path: data/skills-raw.ndjson

@@ -93,6 +93,20 @@ jobs:
 
       - run: npm ci
 
+      # Outage 2026-09-28 → 11-05 (.planning/debug/daily-scrape-outage-
+      # 2026-09-28.md): the fine-grained SCRAPE_PAT expired on 2026-10-14 and
+      # every scraper read the resulting 401 as a quiet day. Probe BOTH PATs
+      # before spending a single API call or cache restore: fail in seconds
+      # with the runbook if either is dead, ::warning:: when <14 days remain.
+      # Logs status + expiration header only, never token material.
+      - name: "Preflight: verify GitHub tokens"
+        if: github.event_name != 'push'
+        env:
+          SCRAPE_PAT: ${{ secrets.SCRAPE_PAT }}
+          SCRAPE_PAT_CLASSIC: ${{ secrets.SCRAPE_PAT_CLASSIC }}
+          TOKEN_WARN_DAYS: '14'
+        run: node scripts/check-github-tokens.js
+
       # --- Data pipeline (scheduled + manual runs only) ---
       # Push events skip the scrape+filter+cache+publish steps and just
       # fetch skills.ndjson from the `skills-latest` release asset
@@ -180,11 +194,35 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.SCRAPE_PAT }}
 
+      # Outage 2026-10-18: the weekly workflow persisted a 0-record
+      # skills-raw.ndjson under the NEWEST `skills-raw-ndjson-*` key, and the
+      # restore-keys prefix match above served that placeholder to every daily
+      # run for 18 days. Never persist a corpus under 1,000 lines — emit
+      # save=false so the step below is skipped and the last good key stays
+      # the newest. (`wc -l` streams; no JSON.parse of data/ in YAML — F1 B4.)
+      - name: "Guard: never persist an empty skills-raw corpus"
+        id: skills-raw-guard
+        if: always() && github.event_name != 'push'
+        run: |
+          SAVE=false
+          if [ -f data/skills-raw.ndjson ]; then
+            LINES=$(wc -l < data/skills-raw.ndjson)
+            if [ "$LINES" -ge 1000 ]; then
+              SAVE=true
+              echo "skills-raw.ndjson: $LINES lines — OK to cache"
+            else
+              echo "::warning::data/skills-raw.ndjson has only $LINES lines — NOT saving it to the GHA cache (placeholder/empty corpus). See CLAUDE.md 'Recovery: expired GitHub PAT / poisoned GHA caches'."
+            fi
+          else
+            echo "data/skills-raw.ndjson absent — nothing to cache"
+          fi
+          echo "save=$SAVE" >> "$GITHUB_OUTPUT"
+
       # Save skills-raw cache even on timeout/failure/cancel, matching the
       # ETag cache `if: always()` pattern. Track 2 checkpoints incrementally,
       # so a partial corpus is still valuable for the next run.
       - name: Save skills-raw cache
-        if: always() && github.event_name != 'push' && hashFiles('data/skills-raw.ndjson') != ''
+        if: always() && github.event_name != 'push' && steps.skills-raw-guard.outputs.save == 'true'
         uses: actions/cache/save@v4
         with:
           path: data/skills-raw.ndjson
@@ -297,6 +335,7 @@ jobs:
       # recent prior cache, then to the committed seed (one-time bootstrap
       # via the force_reembed dispatch input below).
       - name: Restore skill-vectors cache
+        id: restore-skill-vectors
         if: github.event_name != 'push'
         uses: actions/cache/restore@v4
         with:
@@ -314,12 +353,36 @@ jobs:
           # workflow_dispatch boolean inputs arrive as the STRING 'true'/'false'.
           EMBED_FORCE_REEMBED: ${{ github.event.inputs.force_reembed == 'true' && '1' || '0' }}
 
+      # Outage 2026-09-28: Track 1 failed BEFORE the restore step above ran,
+      # so data/skill-vectors.ndjson on disk was the COMMITTED 1,078-vector
+      # Phase-1 seed — and this always() save persisted it as the newest
+      # `skill-vectors-*` key. Every later run restored the seed, the embed
+      # drift guard (correctly) refused to re-embed 103k records, and the
+      # save re-persisted the seed: 19 days of "Embed skills" failures.
+      # Two guards: (a) only save when the restore step actually ran
+      # (`outcome == 'success'`; a skipped restore means an earlier failure);
+      # (b) never save a file byte-identical to the committed seed.
+      - name: "Guard: never persist the committed skill-vectors seed"
+        id: skill-vectors-guard
+        if: always() && github.event_name != 'push'
+        run: |
+          SAVE=false
+          if [ -f data/skill-vectors.ndjson ]; then
+            if git diff --quiet -- data/skill-vectors.ndjson; then
+              echo "::warning::data/skill-vectors.ndjson is byte-identical to the committed 1,078-vector seed — NOT saving it to the GHA cache. Dispatch with force_reembed=true to rebuild the real vector cache."
+            else
+              SAVE=true
+              echo "skill-vectors.ndjson: $(wc -l < data/skill-vectors.ndjson) vectors — OK to cache"
+            fi
+          fi
+          echo "save=$SAVE" >> "$GITHUB_OUTPUT"
+
       # Save skill-vectors cache even on timeout/failure/cancel, mirroring the
       # skills-raw `if: always()` pattern. The embed grows the vector file
       # incrementally; persisting it (even partially) keeps the next run warm
       # so the drift guard never re-trips on a cold seed.
       - name: Save skill-vectors cache
-        if: always() && github.event_name != 'push' && hashFiles('data/skill-vectors.ndjson') != ''
+        if: always() && github.event_name != 'push' && steps.restore-skill-vectors.outcome == 'success' && steps.skill-vectors-guard.outputs.save == 'true'
         uses: actions/cache/save@v4
         with:
           path: data/skill-vectors.ndjson
@@ -674,6 +737,10 @@ jobs:
     permissions:
       contents: read
       issues: write
+      # Outage 2026-10: 39 daily comments on issue #18 carried only a date +
+      # run URL. actions:read lets the notify step look up the FAILING STEP
+      # NAME via the jobs API and put it in the issue title/body.
+      actions: read
     steps:
       # (2) OPTIONAL push first. NO step-level `if:` — the `secrets` context
       # is INVALID in a step `if:` and would invalidate the WHOLE workflow
@@ -699,6 +766,7 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           REPO: ${{ github.repository }}
+          RUN_ID: ${{ github.run_id }}
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         run: |
           set -euo pipefail
@@ -711,16 +779,28 @@ jobs:
           gh label create cron-failure --repo "$REPO" --force --color B60205 \
             --description "Automated daily-scrape failure" 2>/dev/null || true
           DATE=$(date -u +%Y-%m-%d)
-          BODY="daily-scrape run failed on ${DATE} (UTC).\n\nFailed run: ${RUN_URL}"
+          # Name the failing step (outage 2026-10: the issue said nothing about
+          # WHICH of 40 steps failed, so three different root causes read as
+          # one undifferentiated "failed" for 39 days). Best-effort: falls
+          # back to "unknown" rather than failing the notification.
+          FAILED_STEP=$(gh api "repos/${REPO}/actions/runs/${RUN_ID}/jobs" \
+            --jq '[.jobs[] | select(.conclusion=="failure" or .conclusion=="cancelled") | .steps[] | select(.conclusion=="failure" or .conclusion=="cancelled") | .name] | first // "unknown"' \
+            2>/dev/null || echo "unknown")
+          echo "failing step: ${FAILED_STEP}"
+          BODY="daily-scrape run failed on ${DATE} (UTC).\n\n**Failed step:** ${FAILED_STEP}\n\nFailed run: ${RUN_URL}\n\nRunbook: CLAUDE.md → \"Recovery: expired GitHub PAT / poisoned GHA caches\" (token/cache failures) or \"Recovery: F1 deploy broken\" (build/deploy failures)."
           EXISTING=$(gh issue list --repo "$REPO" --label cron-failure \
             --state open --json number --jq '.[0].number // empty')
           if [ -n "$EXISTING" ]; then
-            printf '%b' "New failure: ${DATE}\n\n${RUN_URL}" \
+            printf '%b' "New failure: ${DATE} — step: **${FAILED_STEP}**\n\n${RUN_URL}" \
               | gh issue comment "$EXISTING" --repo "$REPO" --body-file -
+            # Keep the TITLE current so the sidebar/notification shows the
+            # latest date + step instead of the first failure's date.
+            gh issue edit "$EXISTING" --repo "$REPO" \
+              --title "daily-scrape failing — latest ${DATE} at step: ${FAILED_STEP}" 2>/dev/null || true
             echo "Commented existing cron-failure issue #$EXISTING"
           else
             printf '%b' "$BODY" \
               | gh issue create --repo "$REPO" --label cron-failure \
-                --title "daily-scrape failed (${DATE})" --body-file -
+                --title "daily-scrape failing — latest ${DATE} at step: ${FAILED_STEP}" --body-file -
             echo "Created new cron-failure issue"
           fi
