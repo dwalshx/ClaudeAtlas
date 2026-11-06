@@ -23,7 +23,10 @@ import {
   getETagCache,
   saveETagCache,
   sleep,
+  GitHubAuthError,
 } from './lib/github-fetch.js';
+import { describeAuthFailure } from './lib/github-auth-error.js';
+import { checkFullSweepResult } from './lib/corpus-guards.js';
 import { readNdjsonRecords, writeNdjsonStreaming } from './lib/ndjson.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -589,6 +592,25 @@ async function main() {
     }
   }
 
+  // --- Regression guard (full mode only) — evaluated BEFORE the write ---
+  // Outage 2026-10-18: this guard used to run AFTER writeNdjsonStreaming, so a
+  // 0-result sweep (expired PAT → every search 401) first REPLACED the on-disk
+  // corpus with an empty file, then exited 1; the workflow's `if: always()`
+  // cache save persisted the empty file and poisoned every later daily run.
+  // Full mode replaces (does not merge) the corpus, so the only safe failure
+  // is to leave the existing file untouched. Incremental days can legitimately
+  // return 0, hence the mode gate (incremental is deprecated anyway).
+  if (mode === 'full') {
+    const prevStats = existsSync(STATS_PATH) ? JSON.parse(readFileSync(STATS_PATH, 'utf-8')) : null;
+    const prevCount = prevStats && prevStats.total_skills > 0 ? prevStats.total_skills : 0;
+    const guard = checkFullSweepResult({ prevCount, newCount: finalSkills.length });
+    if (!guard.ok) {
+      console.error(`\n[discover] FATAL: ${guard.message}`);
+      console.error(`[discover]        Existing ${SKILLS_PATH} left untouched.`);
+      process.exit(1);
+    }
+  }
+
   writeNdjsonStreaming(SKILLS_PATH, writeSkills);
   saveETagCache(getETagCache());
 
@@ -631,20 +653,7 @@ async function main() {
   console.log(`Elapsed: ${elapsed}s`);
   console.log(`Output: ${SKILLS_PATH}`);
 
-  // --- Regression guard (full mode only) ---
-  // Incremental days can legitimately return 0 valid skills on quiet days, so the
-  // "skills count too low" guard would false-positive there. Only enforce in full mode.
-  if (mode === 'full' && existsSync(SKILLS_PATH)) {
-    // Check previous count if we had one
-    const prevStats = existsSync(STATS_PATH) ? JSON.parse(readFileSync(STATS_PATH, 'utf-8')) : null;
-    if (prevStats && prevStats.total_skills > 0) {
-      const drop = ((prevStats.total_skills - finalSkills.length) / prevStats.total_skills) * 100;
-      if (drop > 20) {
-        console.error(`\n!!! REGRESSION: Skills count dropped ${drop.toFixed(1)}% (${prevStats.total_skills} -> ${finalSkills.length})`);
-        process.exit(1);
-      }
-    }
-  }
+  // (The full-mode regression guard now runs BEFORE the write — see above.)
 }
 
 function extractSkillName(path) {
@@ -674,6 +683,12 @@ function extractTags(skill) {
 }
 
 main().catch(err => {
+  if (err instanceof GitHubAuthError) {
+    // Expired/revoked SCRAPE_PAT: say so in one place, loudly, and leave the
+    // on-disk corpus exactly as the cache restored it.
+    console.error(describeAuthFailure(err, { secretName: 'SCRAPE_PAT', tag: '[discover]' }));
+    process.exit(1);
+  }
   console.error('Pipeline failed:', err);
   process.exit(1);
 });
