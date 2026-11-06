@@ -44,7 +44,9 @@ import {
   getETagCache,
   saveETagCache,
   sleep,
+  GitHubAuthError,
 } from './lib/github-fetch.js';
+import { describeAuthFailure } from './lib/github-auth-error.js';
 import { readNdjsonRecords, writeNdjsonStreaming } from './lib/ndjson.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -405,6 +407,16 @@ const isMain = (() => {
 
 if (isMain) {
   main().catch(err => {
+    if (err instanceof GitHubAuthError) {
+      // Outage 2026-10-15 → 11-05: an expired SCRAPE_PAT used to log seven
+      // "WARN: HTTP 401 … skipping rest of topic" lines and exit 0 with
+      // "0 new, 0 updated". rateLimitedFetch/fetchWithETag now throw on the
+      // first auth failure; we exit 1 here with the runbook, BEFORE any
+      // corpus write (writeMergedAtomic only runs on the success path /
+      // checkpoints, both of which carry the full restored corpus).
+      console.error(describeAuthFailure(err, { secretName: 'SCRAPE_PAT', tag: '[discover]' }));
+      process.exit(1);
+    }
     console.error('[discover] fatal:', err);
     // Best-effort partial-save: if RAW_PARTIAL_PATH exists, leave it for the
     // next run to inspect. Don't promote it to RAW_PATH on error.

@@ -1,0 +1,77 @@
+# Token health check. Verifies SCRAPE_PAT (REST) and SCRAPE_PAT_CLASSIC
+# (REST + GraphQL) are alive and warns when one expires within 14 days.
+#
+# Why: the fine-grained SCRAPE_PAT expired on 2026-10-14 and daily-scrape.yml
+# failed silently-ish for 39 days (debug: .planning/debug/daily-scrape-outage-
+# 2026-09-28.md). daily-scrape.yml now runs the same script as a preflight
+# step; this workflow is the independent weekly canary + the on-demand probe
+# an operator runs right after rotating a secret.
+#
+# Logs ONLY: HTTP status, the `github-authentication-token-expiration`
+# header, days left and core rate-limit remaining. Never token material.
+#
+# Usage:
+#   gh workflow run check-tokens.yml                # from main
+#   gh workflow run check-tokens.yml --ref <branch> # from a branch
+#   gh run watch
+name: Check GitHub tokens
+
+on:
+  workflow_dispatch: {}
+  schedule:
+    - cron: '0 8 * * 1' # Mondays 08:00 UTC
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      # No npm ci — the script uses only Node built-ins (global fetch).
+      - name: Probe SCRAPE_PAT + SCRAPE_PAT_CLASSIC
+        env:
+          SCRAPE_PAT: ${{ secrets.SCRAPE_PAT }}
+          SCRAPE_PAT_CLASSIC: ${{ secrets.SCRAPE_PAT_CLASSIC }}
+          TOKEN_WARN_DAYS: '14'
+        run: node scripts/check-github-tokens.js
+
+  notify-on-failure:
+    needs: check
+    if: failure()
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      issues: write
+    steps:
+      - name: Open or update token-expiry issue
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          set -euo pipefail
+          gh label create token-expiry --repo "$REPO" --force --color B60205 \
+            --description "A pipeline GitHub token is dead or expiring" 2>/dev/null || true
+          DATE=$(date -u +%Y-%m-%d)
+          BODY="GitHub token preflight FAILED on ${DATE} (UTC).\n\nOne of SCRAPE_PAT / SCRAPE_PAT_CLASSIC is missing, rejected, or expired. The daily scrape cannot run until it is rotated.\n\nRun: ${RUN_URL}\n\nRunbook: CLAUDE.md → \"Recovery: expired GitHub PAT / poisoned GHA caches\"."
+          EXISTING=$(gh issue list --repo "$REPO" --label token-expiry \
+            --state open --json number --jq '.[0].number // empty')
+          if [ -n "$EXISTING" ]; then
+            printf '%b' "Still failing: ${DATE}\n\n${RUN_URL}" \
+              | gh issue comment "$EXISTING" --repo "$REPO" --body-file -
+            echo "Commented existing token-expiry issue #$EXISTING"
+          else
+            printf '%b' "$BODY" \
+              | gh issue create --repo "$REPO" --label token-expiry \
+                --title "GitHub token preflight failed (${DATE}) — rotate SCRAPE_PAT / SCRAPE_PAT_CLASSIC" --body-file -
+            echo "Created new token-expiry issue"
+          fi
