@@ -103,8 +103,8 @@ const LINT_ALLOWLIST = [
   },
   {
     file: 'scripts/filter-apis.js',
-    line: 297,
-    reason: 'pipeline-stats.json api-section merge write — bounded (~6 KB; counts, by_source, dropped per gate, tiers, 10-bucket clarity histogram). Phase 4.2 Plan 10.',
+    line: 299,
+    reason: 'pipeline-stats.json api-section merge write — bounded (~6 KB; counts, by_source, dropped per gate, tiers, 10-bucket clarity histogram). Phase 4.2 Plan 10. Line shifted by the 4.2 rawKey content_sha fix comment.',
   },
   {
     file: 'scripts/filter.js',
