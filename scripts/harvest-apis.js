@@ -207,7 +207,16 @@ export async function harvestApis({
       }
       return r;
     };
-    await Promise.all(guru.map((rec) => thePool.run(rec.extra.spec_url ?? LIST_URL, async () => {
+    const tick = () => {
+      processed++;
+      if (checkpointEvery > 0 && processed % checkpointEvery === 0) {
+        writeNdjsonStreaming(checkpointPath, records, { header: buildHeader('api') });
+      }
+    };
+    // Reuse / skip decisions are made BEFORE entering the pool: only real fetches pay the
+    // per-host spacing (otherwise a fully-reused 2.5k-spec run waits ~10 min doing nothing).
+    const toFetch = [];
+    for (const rec of guru) {
       const p = prior.get(rawKey(rec));
       if (p && p.extra && p.raw_source?.updated === rec.raw_source.updated && !transient(p.raw_source?.spec_skip_reason)) {
         rec.extra = {
@@ -222,10 +231,17 @@ export async function harvestApis({
         if (p.docs_url && rec.docs_url == null) rec.docs_url = p.docs_url;
         if (p.access) rec.access = structuredClone(p.access);
         specStats.reused++;
+        tick();
       } else if (!rec.extra.spec_url) {
         markSpecUnparsed(rec, 'no_spec_url');
         specStats.skipped++;
+        tick();
       } else {
+        toFetch.push(rec);
+      }
+    }
+    await Promise.all(toFetch.map((rec) => thePool.run(rec.extra.spec_url, async () => {
+      {
         try {
           const r = await fetchSpec(rec.extra.spec_url);
           if (r.capped) {
@@ -250,10 +266,7 @@ export async function harvestApis({
           specStats.failed++;
         }
       }
-      processed++;
-      if (checkpointEvery > 0 && processed % checkpointEvery === 0) {
-        writeNdjsonStreaming(checkpointPath, records, { header: buildHeader('api') });
-      }
+      tick();
     })));
   }
   const specMs = Date.now() - t1;
