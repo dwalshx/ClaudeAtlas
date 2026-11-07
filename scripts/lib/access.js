@@ -37,13 +37,16 @@ const strArr = (v) => (Array.isArray(v) ? v.filter((x) => typeof x === 'string')
  * Fresh unknown-first access block. A new literal on every call so callers
  * can mutate freely (setAccessField mutates in place).
  *
+ * Phase 4.2 adds auth.schemes (decision 5), additive: every declared security
+ * scheme mapped to the auth.type vocabulary; [] when none/unknown.
+ *
  * @returns {import('../../src/lib/types.js').AccessBlock}
  */
 export function emptyAccess() {
   return {
     cost: { model: UNKNOWN, free_tier: null, price_notes: null },
     rate_limit: { requests: null, per: null, notes: null, headers_observed: [] },
-    auth: { type: UNKNOWN, signup_url: null },
+    auth: { type: UNKNOWN, signup_url: null, schemes: [] },
     license: { spdx: null, name: null, url: null },
     formats: [],
     transport: null,
@@ -92,6 +95,7 @@ export function mergeAccess(base, partial) {
     }
   }
   out.rate_limit.headers_observed = strArr(out.rate_limit.headers_observed);
+  out.auth.schemes = strArr(out.auth.schemes);
   if (partial.formats !== undefined) out.formats = strArr(partial.formats);
   if (partial.transport !== undefined) {
     out.transport = typeof partial.transport === 'string' ? partial.transport : null;

@@ -307,6 +307,24 @@ test('4.1-M03: api/dataset outputs contain no undefined values', () => {
   assertNoUndefined(upcastRecord(structuredClone(DATASET_INPUT)), 'dataset');
 });
 
+test('4.2/decision 3: upcastApiRecord whitelists endpoint_summaries (default []) and spec_parsed (default false), from extra or top-level', () => {
+  const bare = upcastRecord(structuredClone(API_NO_REPO));
+  assert.deepEqual(bare.extra.endpoint_summaries, []);
+  assert.equal(bare.extra.spec_parsed, false);
+  assert.deepEqual(bare.access.auth.schemes, []);
+
+  const withExtra = structuredClone(API_NO_REPO);
+  withExtra.extra.endpoint_summaries = ['GET /x a', 9];
+  withExtra.extra.spec_parsed = true;
+  const v2 = upcastRecord(withExtra);
+  assert.deepEqual(v2.extra.endpoint_summaries, ['GET /x a']);
+  assert.equal(v2.extra.spec_parsed, true);
+
+  const topLevel = structuredClone(API_NO_REPO);
+  topLevel.spec_parsed = true;
+  assert.equal(upcastRecord(topLevel).extra.spec_parsed, true);
+});
+
 test('4.1-M03: api/dataset with no origin fall back to manual origin (never github)', () => {
   const api = upcastRecord({ entity_type: 'api', name: 'x', home_url: 'https://x' });
   assert.equal(api.origin.kind, 'manual');

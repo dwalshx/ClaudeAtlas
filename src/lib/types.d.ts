@@ -69,6 +69,8 @@ export interface AccessBlock {
   auth: {
     type: 'none' | 'api_key' | 'bearer' | 'oauth2' | 'http_basic' | 'openid' | 'unknown';
     signup_url: string | null;
+    /** Phase 4.2 (decision 5): every declared security scheme mapped to the `type` vocabulary, in declaration order; [] when none/unknown. `type` is the one that wins (global security requirement, else api_key > bearer > oauth2 > http_basic > openid). */
+    schemes: string[];
   };
   license: { spdx: string | null; name: string | null; url: string | null };
   formats: string[];
@@ -253,8 +255,12 @@ export interface ApiExtra {
   provider: string;
   status_page_url: string | null;
   sdks: string[];
-  /** Phase 4.1 addition (orchestrator decision 1): source `modified` timestamp (APIs.guru versions[v].updated, data.gouv.fr metadata_modified_at). Freshness reads it; null → 0. */
+  /** Phase 4.1 addition (orchestrator decision 1): source `modified` timestamp (APIs.guru versions[v].updated, data.gouv.fr metadata_modified_at). Freshness reads it; null → NEUTRAL 50 for api since Phase 4.2 (decision 8; APIs.guru is a frozen 2023 snapshot so the harvester nulls pre-2024 dates); DatasetExtra keeps its unknown-scores-0 rule. */
   source_modified_at: string | null;
+  /** Phase 4.2 (spec § Embedding input): first ≤ 10 "METHOD /path summary" strings from the parsed OpenAPI document, ≤ 80 chars each; [] when no spec was parsed. Read by embedding-input/api.js when present. */
+  endpoint_summaries: string[];
+  /** Phase 4.2 (D-02): true when the OpenAPI document was fetched and extracted this or a prior run; false when skipped (> 5 MB cap, HTTP error, invalid JSON, catalog-only mode, or no spec_url). */
+  spec_parsed: boolean;
   /** 0-1, written by api.scorer.js (same side-effect convention as manifest_completeness). 0 until scored. */
   access_clarity: number;
   consumed_by: ConsumedBy;
