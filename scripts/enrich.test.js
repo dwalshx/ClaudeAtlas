@@ -336,3 +336,22 @@ test('Test I (novelty): novelty_score === 1 - exact top-1 sim when nearest neigh
   assert.equal(skills[0].novelty_score, 1 - exactTop1Sim);
   assert.equal(skills[1].novelty_score, 1 - exactTop1Sim);
 });
+
+test('4.2-M09: api records dedup like skills — equal vectors, no dates → lexically larger slug is the duplicate, canonical_slug points at the smaller', () => {
+  const apis = [
+    { id: 'api:openai.com/openai', slug: 'openai.com/openai', entity_type: 'api' },
+    { id: 'api:api.openai.com/openai', slug: 'api.openai.com/openai', entity_type: 'api' },
+    { id: 'api:catfact.ninja/cat-facts', slug: 'catfact.ninja/cat-facts', entity_type: 'api' },
+  ];
+  const vectors = [
+    { id: expectedVid(apis[0].id), values: vec(8, { slot: 0 }) },
+    { id: expectedVid(apis[1].id), values: vec(8, { slot: 0 }) },
+    { id: expectedVid(apis[2].id), values: vec(8, { slot: 5 }) },
+  ];
+  enrichSkills(apis, vectors);
+  assert.equal(apis[1].is_duplicate, false, 'api.openai.com/openai is canonical (lexically smaller slug)');
+  assert.equal(apis[0].is_duplicate, true);
+  assert.equal(apis[0].canonical_slug, 'api.openai.com/openai');
+  assert.equal(apis[2].is_duplicate, false);
+  assert.equal(apis[2].novelty_score, 1);
+});

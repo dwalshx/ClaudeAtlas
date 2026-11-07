@@ -56,8 +56,8 @@ const ROOT = join(__dirname, '..');
 // T5: NDJSON format. SKILLS_PATH retained for error messages; reads use loadSkillsArray().
 const SKILLS_PATH = join(ROOT, 'data', 'skills.ndjson');
 
-// Phase 3.2 (D-09): embed-skills.js is the unified embedder for all three
-// entity_types. CLI: --input <path> --output <path> --entity-type <type>.
+// Phase 3.2 (D-09): embed-skills.js is the unified embedder for all
+// entity_types (skill, plugin, mcp_server; api since Phase 4.2). CLI: --input <path> --output <path> --entity-type <type>.
 // Defaults preserve the legacy skill invocation so daily-scrape.yml's
 // `node scripts/embed-skills.js` keeps working unchanged.
 function parseArgs(argv) {
@@ -78,12 +78,20 @@ const DEFAULT_OUTPUTS = {
   skill: join(ROOT, 'data', 'skill-vectors.ndjson'),
   plugin: join(ROOT, 'data', 'plugin-vectors.ndjson'),
   mcp_server: join(ROOT, 'data', 'mcp-vectors.ndjson'),
+  api: join(ROOT, 'data', 'api-vectors.ndjson'),
 };
 const DEFAULT_INPUTS = {
   skill: join(ROOT, 'data', 'skills.ndjson'),
   plugin: join(ROOT, 'data', 'plugins.ndjson'),
   mcp_server: join(ROOT, 'data', 'mcp-servers.ndjson'),
+  api: join(ROOT, 'data', 'apis.ndjson'),
 };
+
+/** Phase 4.2 (4.2-M09): pure IO resolution so tests can cover the api mapping without a subprocess. */
+export function resolveEmbedIO(entityType, args = {}) {
+  if (!DEFAULT_INPUTS[entityType]) throw new Error(`unknown --entity-type "${entityType}" (skill|plugin|mcp_server|api).`);
+  return { inputPath: args.input || DEFAULT_INPUTS[entityType], outputPath: args.output || DEFAULT_OUTPUTS[entityType] };
+}
 
 const OPENAI_KEY = process.env.OPENAI_API_KEY;
 // Note: we don't hard-fail on missing key here. If there are no deltas to
@@ -287,12 +295,15 @@ async function embedBatch(inputs, attempt = 1) {
 async function main() {
   const args = parseArgs(process.argv);
   const entityType = args.entityType || 'skill';
-  if (!DEFAULT_INPUTS[entityType]) {
-    console.error(`ERROR: unknown --entity-type "${entityType}" (skill|plugin|mcp_server).`);
+  let io;
+  try {
+    io = resolveEmbedIO(entityType, args);
+  } catch (err) {
+    console.error(`ERROR: ${err.message}`);
     process.exit(1);
   }
-  const inputPath = args.input || DEFAULT_INPUTS[entityType];
-  const outputPath = args.output || DEFAULT_OUTPUTS[entityType];
+  const inputPath = io.inputPath;
+  const outputPath = io.outputPath;
 
   log(`=== embedder start (entity_type=${entityType}) ===`);
   log(`input:  ${inputPath}`);

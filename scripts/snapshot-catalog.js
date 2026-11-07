@@ -73,6 +73,8 @@ const CATALOG_FILES = [
   join(ROOT, 'data', 'skills.ndjson'),
   join(ROOT, 'data', 'plugins.ndjson'),
   join(ROOT, 'data', 'mcp-servers.ndjson'),
+  // Phase 4.2: api records (optional file; DATA_FEEDS_ENABLED gates its producer)
+  join(ROOT, 'data', 'apis.ndjson'),
 ];
 
 // Canonical entity types always present in the output (stable time-series
@@ -301,6 +303,8 @@ export function buildAndWriteSnapshot(opts = {}) {
     join(rootDir, 'data', 'skills.ndjson'),
     join(rootDir, 'data', 'plugins.ndjson'),
     join(rootDir, 'data', 'mcp-servers.ndjson'),
+    // Phase 4.2: api records (optional file; DATA_FEEDS_ENABLED gates its producer)
+    join(rootDir, 'data', 'apis.ndjson'),
   ];
   const records = loadCatalogRecords(files);
   const snapshot = aggregateSnapshot(records, { date, generatedAt });
