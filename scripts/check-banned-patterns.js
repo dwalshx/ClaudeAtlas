@@ -102,6 +102,11 @@ const LINT_ALLOWLIST = [
     reason: 'pipeline-stats.json mcp-section merge write — bounded (~5 KB; tier counts). Phase 3.2 T7.',
   },
   {
+    file: 'scripts/filter-apis.js',
+    line: 297,
+    reason: 'pipeline-stats.json api-section merge write — bounded (~6 KB; counts, by_source, dropped per gate, tiers, 10-bucket clarity histogram). Phase 4.2 Plan 10.',
+  },
+  {
     file: 'scripts/filter.js',
     line: 491,
     reason: 'slug-redirects.json write — bounded by collision count (~402 entries at 33k catalog; <2000 long-term per RECALIBRATION.md Deviation 4). Line shifted by F2 T6 + 3.1.2 drift hotfix + 3.1.4 v2-writer imports.',
