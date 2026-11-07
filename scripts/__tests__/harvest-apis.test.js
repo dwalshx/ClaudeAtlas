@@ -140,6 +140,12 @@ test('4.2-M04: full run over the fixture sources writes a header + 33 records; b
   assert.equal(side.has(GOUV_URL), false);
 }));
 
+test('4.2-M04: rawKey keeps same-source records that share a source_id distinct (real UK HMRC rows share one url)', () => {
+  const mk = (sha) => ({ origin: { source: 'uk-api-catalogue', source_id: 'https://api.service.hmrc.gov.uk' }, content_sha: sha });
+  assert.notEqual(rawKey(mk('a'.repeat(64))), rawKey(mk('b'.repeat(64))));
+  assert.equal(rawKey(mk('a'.repeat(64))), rawKey(mk('a'.repeat(64))));
+});
+
 test('4.2-M04/D-02: any source returning zero records rejects with a FATAL message and writes nothing', withTmp(async (dir) => {
   const { out } = paths(dir);
   for (const s of SOURCES) {

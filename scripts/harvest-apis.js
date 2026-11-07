@@ -51,7 +51,10 @@ export const MIN_TOTAL = 1000;
 export const CHECKPOINT_EVERY = 500;
 export const SPEC_MAX_BYTES = 5 * 1024 * 1024;
 
-export const rawKey = (rec) => `${rec?.origin?.source}:${rec?.origin?.source_id}`;
+// source_id alone is NOT unique within a source (real data 2026-11-06: 29 UK HMRC APIs share
+// one url; 13 public-apis names repeat across categories), so content_sha (stable per-record
+// identity hash from the parsers) is part of the key. Keep in sync with filter-apis.js rawKey.
+export const rawKey = (rec) => `${rec?.origin?.source}:${rec?.origin?.source_id}:${rec?.content_sha}`;
 
 /** rec.id = apiRecipe.computeId(rec) for every record (after the spec pass). */
 export function assignIds(records) {

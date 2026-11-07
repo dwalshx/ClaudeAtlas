@@ -48,7 +48,9 @@ export const PRESERVED_FIELDS = ['is_duplicate', 'canonical_id', 'canonical_slug
 const GATES = ['fixture_repo', 'template_name', 'placeholder_description', 'biz_slop', 'short_description', 'no_home_url', 'no_base_or_spec'];
 const MIN_DESCRIPTION_LENGTH = 50;
 
-export const rawKey = (r) => `${r?.origin?.source}:${r?.origin?.source_id}`;
+// Includes content_sha: source_id is not unique within a source (UK HMRC rows share one url,
+// public-apis names repeat across categories). Keep in sync with harvest-apis.js rawKey.
+export const rawKey = (r) => `${r?.origin?.source}:${r?.origin?.source_id}:${r?.content_sha}`;
 
 /** Per-source counts over the 4 SOURCES (0 when absent). */
 export function countBySource(raw) {
