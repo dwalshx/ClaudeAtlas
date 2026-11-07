@@ -10,6 +10,10 @@
  *
  * SIDE-EFFECT: writes `record.extra.access_clarity` (0-1 float), mirroring
  * the `extra.manifest_completeness` convention in plugin/mcp scorers.
+ *
+ * Phase 4.2 decision 8: unknown freshness → NEUTRAL_FRESHNESS (50); the
+ * frozen APIs.guru snapshot must not be punished as 'stale'. Dataset scorer
+ * unchanged.
  */
 
 import { scoreRecency } from '../../score.js';
@@ -17,6 +21,7 @@ import { accessClarity } from '../access.js';
 import {
   FEED_WEIGHTS,
   NEUTRAL_REACHABILITY,
+  NEUTRAL_FRESHNESS,
   scoreFeedDocs,
   scoreFeedLicense,
   feedFreshnessInput,
@@ -34,12 +39,13 @@ import {
 export function scoreApi(record) {
   const clarity = accessClarity(record?.access);
   if (record?.extra && typeof record.extra === 'object') record.extra.access_clarity = clarity;
+  const freshnessInput = feedFreshnessInput(record);
   const scores = {
     access: clarity * 100,
     reachability: NEUTRAL_REACHABILITY,          // Phase 4.4 probe history replaces this
     docs: scoreFeedDocs(record),
     license: scoreFeedLicense(record),
-    freshness: scoreRecency(feedFreshnessInput(record)),   // 180-day cliff
+    freshness: freshnessInput == null ? NEUTRAL_FRESHNESS : scoreRecency(freshnessInput),   // 180-day cliff; unknown → neutral 50 (4.2 decision 8)
     popularity: scoreFeedPopularity(record),
     adoption: scoreAdoption(record),             // Phase 4.6 consumer graph feeds consumed_by
   };

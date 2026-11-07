@@ -84,6 +84,7 @@
  *       single choke point for repo_* nullability and origin defaults.
  *       RENAME at the cutover (e.g. entity-upcaster.js), do NOT delete.
  *       `CURRENT_SCHEMA_VERSION` stays 2 — all 4.1 fields are additive.
+ *   (e) Phase 4.2: api extra whitelist gains endpoint_summaries (string[] → []) and spec_parsed (boolean → false); access.auth.schemes arrives via mergeAccess.
  * ---------------------------------------------------------------------------
  */
 
@@ -408,6 +409,8 @@ function upcastApiRecord(rec) {
     status_page_url: str(e.status_page_url ?? rec.status_page_url),
     sdks: arr(e.sdks ?? rec.sdks),
     source_modified_at: str(e.source_modified_at ?? rec.source_modified_at),
+    endpoint_summaries: arr(e.endpoint_summaries ?? rec.endpoint_summaries),
+    spec_parsed: bool(e.spec_parsed ?? rec.spec_parsed) ?? false,
     access_clarity: num(e.access_clarity) ?? 0,
     consumed_by: consumedBy(e.consumed_by ?? rec.consumed_by),
   };

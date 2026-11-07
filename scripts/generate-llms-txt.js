@@ -73,9 +73,12 @@ function renderTemplate(stats) {
   // stats section is absent (e.g., before plugins land on a given branch).
   const pluginCount = (stats.plugin && stats.plugin.total_plugins) || 0;
   const mcpCount = (stats.mcp_server && stats.mcp_server.total_mcp_servers) || 0;
+  // Phase 4.2 (D-07): api count from pipeline-stats.json.api (filter-apis.js); omitted when absent.
+  const apiCount = (stats.api && stats.api.total_apis) || 0;
   const catalogParts = [`${fmt(totalIndexed)} skills`];
   if (pluginCount > 0) catalogParts.push(`${fmt(pluginCount)} plugins`);
   if (mcpCount > 0) catalogParts.push(`${fmt(mcpCount)} MCP servers`);
+  if (apiCount > 0) catalogParts.push(`${fmt(apiCount)} APIs`);
   const catalogLine = `Catalog: ${catalogParts.join(' · ')} (live).`;
 
   return `# ClaudeAtlas

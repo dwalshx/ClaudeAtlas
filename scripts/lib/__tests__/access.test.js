@@ -24,7 +24,7 @@ test('4.1-M04: emptyAccess returns the spec shape with unknown-first defaults', 
   assert.deepEqual(emptyAccess(), {
     cost: { model: 'unknown', free_tier: null, price_notes: null },
     rate_limit: { requests: null, per: null, notes: null, headers_observed: [] },
-    auth: { type: 'unknown', signup_url: null },
+    auth: { type: 'unknown', signup_url: null, schemes: [] },
     license: { spdx: null, name: null, url: null },
     formats: [],
     transport: null,
@@ -167,4 +167,12 @@ test('4.1-M04: mergeAccess deep-fills a partial access block, normalises provena
   });
   assert.deepEqual(base, emptyAccess());
   assert.deepEqual(mergeAccess(emptyAccess(), undefined), emptyAccess());
+});
+
+test('4.2/decision 5: auth.schemes is a first-class path — setAccessField stamps provenance, mergeAccess coerces to string[]', () => {
+  const a = setAccessField(emptyAccess(), 'auth.schemes', ['http_basic', 'bearer'], { method: 'spec', confidence: 0.9 });
+  assert.deepEqual(a.auth.schemes, ['http_basic', 'bearer']);
+  assert.equal(a.provenance['auth.schemes'].confidence, 0.9);
+  assert.deepEqual(mergeAccess(emptyAccess(), { auth: { schemes: ['bearer', 7, null] } }).auth.schemes, ['bearer']);
+  assert.deepEqual(mergeAccess(emptyAccess(), { auth: { type: 'bearer' } }).auth.schemes, []);
 });
