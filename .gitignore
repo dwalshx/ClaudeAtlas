@@ -86,6 +86,20 @@ data/mcp-servers-raw.ndjson.partial
 data/plugin-vectors.ndjson
 data/mcp-vectors.ndjson
 
+# Phase 4.2 (D-02/D-05/D-07): api harvest raw + filtered NDJSON, api embeddings and the
+# feeds ETag sidecar are rebuilt each cron run / GHA-cached (apis-raw-ndjson-*, api-vectors-*)
+# and distributed via the `apis-latest` release asset. Never committed. The .catalog-only
+# file is smoke-only output (decision 10: never the real raw path). The .json sidecar name
+# is listed defensively (the sidecar is NDJSON).
+data/apis-raw.ndjson
+data/apis-raw.ndjson.partial
+data/apis-raw.catalog-only.ndjson
+data/apis.ndjson
+data/apis.ndjson.partial
+data/api-vectors.ndjson
+data/feeds-etag-cache.ndjson
+data/feeds-etag-cache.json
+
 # check-banned-patterns.js baseline-mode artifact (transient; never committed —
 # a stale baseline would silently suppress new banned-pattern hits in lint mode)
 .lint-baseline.json

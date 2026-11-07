@@ -58,6 +58,13 @@ ClaudeAtlas/
 │   ├── plugin-vectors.ndjson    # GITIGNORED: plugin embeddings (embed-skills.js --entity-type plugin)
 │   └── mcp-vectors.ndjson       # GITIGNORED: MCP embeddings (embed-skills.js --entity-type mcp_server)
 │                                #   pipeline-stats.json gains committed plugin + mcp_server sections.
+│                                # --- Phase 4.2 api catalog (behind DATA_FEEDS_ENABLED; rebuilt each run) ---
+│   ├── apis-raw.ndjson          # GITIGNORED: harvest-apis.js output (~6k raw: APIs.guru + data.gouv.fr + UK + public-apis), GHA-cached (apis-raw-ndjson-*)
+│   ├── apis-raw.catalog-only.ndjson  # GITIGNORED: --mode=catalog-only smoke output (never the real raw path — ids differ)
+│   ├── feeds-etag-cache.ndjson  # GITIGNORED: ETag/Last-Modified sidecar for the feed harvesters (validators only, no bodies)
+│   ├── apis.ndjson              # GITIGNORED: filter-apis.js output (merged/scored/tiered), published as `apis-latest`
+│   └── api-vectors.ndjson       # GITIGNORED: api embeddings (embed-skills.js --entity-type api), GHA-cached (api-vectors-*)
+│                                #   pipeline-stats.json gains a committed `api` section; data/__fixtures__/feeds/ holds the 2026-11-05 captures.
 │
 ├── src/
 │   ├── layouts/
@@ -253,6 +260,8 @@ intentionally NOT an entity_type — frameworks are tag-based
 
 **Phase 4.1 (2026-11-02) — envelope generalization for v4.0 Data Feeds.** `api` and `dataset` are valid `entity_type`s whose records may have NO GitHub repo: `repo_*` are nullable (null only when `repo_full_name` is unknown), every record carries `origin` / `home_url` / `docs_url`, and api/dataset records carry a top-level `access` block with per-field provenance. ID scheme: `api:<primary_host>/<name>` (e.g. `api:api.stripe.com/stripe`), `dataset:<source>/<native_id>` (e.g. `dataset:huggingface/squad`); slugs are `<provider>/<name>` / `<publisher>/<name>` via the same `assignSlugs()`. Scorers (`scripts/lib/scorers/{api,dataset}.scorer.js`) implement the spec's 7 signals UNCALIBRATED — calibration is 4.2/4.5. The round-trip guard is `scripts/lib/__tests__/data-feeds-roundtrip.test.js`. Spec: `docs/PHASE-4.0-SPEC.md`.
 
+Phase 4.2 added `ApiExtra.endpoint_summaries` / `spec_parsed` and `AccessBlock.auth.schemes` (additive; schema_version still 2) and made api Freshness neutral (50) when `source_modified_at` is unknown (decision 8).
+
 **Cutover (2026-05-28 — Phase 3.1.2 / F2 ships):** the F2 branch lands the
 polymorphic envelope. During the D+0 to D+7 cutover window the legacy flat
 fields (`skill.body_markdown`, `skill.frontmatter`, `skill.skill_path`,
@@ -338,6 +347,7 @@ npm run preview
 - **Hosting:** Cloudflare Workers Static Assets (configured via `wrangler.toml`)
 - **Deploy command:** `npx wrangler deploy` (runs inside CI)
 - **Daily cron:** `.github/workflows/daily-scrape.yml` runs at 6:30 AM UTC — scrapes, filters, builds, deploys, commits updated `data/skills.json` and `data/history/<today>.json` back to main. **Phase 3.2 (Task 12) extended the flow:** Track 1 → Track 2 → scrape-plugins → filter (skills) → filter-plugins → filter-mcps → link-bundles → embed (skills) → embed plugins → embed MCPs → enrich (skills) → enrich plugins (MCPs skip enrich, D-10) → upload-vectors (loops skill/plugin/mcp vector files) → build → deploy → commit. New steps gate on `github.event_name != 'push'`; publish/deploy/upload steps stay `main`-only.
+- **Phase 4.2 added the api legs** (all gated on `DATA_FEEDS_ENABLED == 'true' && event != push`; the flag resolves from the `data_feeds` workflow_dispatch input with a `'false'` fallback, so main runs are unchanged until the flip): … link-bundles → **harvest-apis → filter-apis** → embed skills → embed plugins → embed MCPs → **embed APIs** → enrich skills → enrich plugins → **enrich APIs** → upload-vectors (loop now includes `data/api-vectors.ndjson`) → … → **publish apis-latest (+ -prev)**; push-event runs fetch `apis-latest` with `continue-on-error`. The branch-only `.github/workflows/measure-data-feeds.yml` (dispatch: `live_embed`, `limit`) runs just the api legs with per-step timing and never publishes — see `.planning/phases/4.2-api-harvest-v1/4.2-MEASUREMENT.md` for the measured numbers and the flip gate.
 - **Required GitHub Actions secrets:** `SCRAPE_PAT`, `CF_API_TOKEN`, `CF_ACCOUNT_ID`
 
 ## Known issues / things a new session should know
@@ -460,6 +470,18 @@ npm run preview
    "related skills" UI feels too sparse, bump `TOP_K` back toward 5 — the
    runtime cost is unchanged. The genuine long-term fix is an HNSW index
    for the similarity computation (deferred to Phase 3.x backlog).
+
+13. **Phase 4.2 api pipeline is wired but OFF on main.** `DATA_FEEDS_ENABLED`
+   stays `'false'` until (a) main's daily cron is green again (red since
+   2026-09-28 — Track 2 401 / Track 1 failure-ratio gate) and (b) a measured
+   branch run (`measure-data-feeds.yml`, then a `daily-scrape.yml` dispatch
+   with `data_feeds=true`) finishes inside the 330-minute budget. Flip =
+   change the `|| 'false'` fallback to `|| 'true'` in the job env (one line)
+   and update `scripts/__tests__/workflow-flags.test.js` test 1. Calibration
+   findings (per-source Freshness/Access bias, description-floor and
+   biz-slop drops) are in `.planning/phases/4.2-api-harvest-v1/4.2-CALIBRATION.md`;
+   retunes are separate, reviewed changes — never silent edits to
+   `scripts/lib/scorers/*` or `scripts/lib/filter-rules/*`.
 
 ## Pipeline footguns (F1 streaming foundation, Phase 3.1.1)
 
