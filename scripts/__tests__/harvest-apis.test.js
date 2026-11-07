@@ -22,6 +22,7 @@ import {
 } from '../harvest-apis.js';
 import { makeFixtureFetch, specUrlOf, GOUV_URL, LIST_URL, LIST_ETAG } from '../lib/feeds/__tests__/helpers/fixture-fetch.js';
 import { readNdjsonRecords, writeNdjsonStreaming } from '../lib/ndjson.js';
+import { FetchPool } from '../lib/feeds/http-fetch.js';
 import { buildHeader } from '../lib/entity-version.js';
 
 const NOW = () => '2026-11-05T12:00:00Z';
@@ -59,6 +60,8 @@ async function runFixtureHarvest(dir, extra = {}) {
     sidecarPath: p.sidecar,
     enforceFloors: false,
     log: () => {},
+    // No real per-host spacing in tests (politeness spacing is covered by http-fetch.test.js).
+    pool: new FetchPool({ limit: 4, perHostMs: 0 }),
     ...rest,
   });
   r.calls = ff.calls;

@@ -26,6 +26,7 @@ import { makeFixtureFetch } from '../lib/feeds/__tests__/helpers/fixture-fetch.j
 import { readNdjsonRecords, writeNdjsonStreaming } from '../lib/ndjson.js';
 import { buildHeader } from '../lib/entity-version.js';
 import { emptyAccess } from '../lib/access.js';
+import { FetchPool } from '../lib/feeds/http-fetch.js';
 
 const NOW = () => '2026-11-05T12:00:00Z';
 
@@ -39,6 +40,7 @@ async function runFixtureHarvest(dir, extra = {}) {
     sidecarPath: join(dir, 'feeds-etag-cache.ndjson'),
     enforceFloors: false,
     log: () => {},
+    pool: new FetchPool({ limit: 4, perHostMs: 0 }),
     ...rest,
   });
 }
