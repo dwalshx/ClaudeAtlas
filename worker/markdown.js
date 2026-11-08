@@ -7,7 +7,8 @@
  * NO build-time .md siblings (locked decision: siblings would ~double the
  * static-asset count and threaten Cloudflare's 20k-file cap).
  *
- * Pure ESM module: zero imports, zero I/O — unit-tests under plain
+ * Pure ESM module: zero I/O; its only import is the pure, zero-import
+ * search-results.js (PR #26 per-type detail URLs) — unit-tests under plain
  * `node --test` (Wave 1 pattern). index.js imports FROM here, never the
  * reverse.
  *
@@ -15,6 +16,8 @@
  * % of fetches carrying a markdown-preferring Accept header — measurable
  * from day 1 via request_log.accept_header.
  */
+
+import { detailPathFor } from './search-results.js';
 
 // ---------------------------------------------------------------------------
 // prefersMarkdown(acceptHeader) → boolean
@@ -99,7 +102,8 @@ export function renderSkillMarkdown(record) {
   const stars = Number(r.repo_stars || 0);
   const category = str(r.category);
   const body = str((r.extra && r.extra.body_markdown) || r.body_markdown || '');
-  const detailUrl = slug ? `https://claudeatlas.com/skills/${slug}/` : 'https://claudeatlas.com/';
+  // PR #26: per-entity-type detail page (unknown/missing → /skills/).
+  const detailUrl = slug ? `https://claudeatlas.com${detailPathFor(r.entity_type, slug)}` : 'https://claudeatlas.com/';
 
   const lines = [
     AGENT_PREAMBLE,
