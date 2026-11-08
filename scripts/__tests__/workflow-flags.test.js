@@ -31,16 +31,46 @@ test('4.2-M10: workflow_dispatch declares the data_feeds boolean input defaultin
   assert.match(yml, /data_feeds:\r?\n\s+description: [^\n]+\r?\n\s+type: boolean\r?\n\s+default: false/);
 });
 
-test('4.2-M10: exactly 10 steps are gated on DATA_FEEDS_ENABLED (8 pipeline + 2 main-only publish)', () => {
-  const total = (yml.match(/env\.DATA_FEEDS_ENABLED == 'true'/g) || []).length;
-  const plain = (yml.match(/^\s+if: \$\{\{ env\.DATA_FEEDS_ENABLED == 'true' && github\.event_name != 'push' \}\}\s*$/gm) || []).length;
-  const saves = (yml.match(/^\s+if: \$\{\{ always\(\) && env\.DATA_FEEDS_ENABLED == 'true' && github\.event_name != 'push' && hashFiles\('data\/(apis-raw|api-vectors)\.ndjson'\) != '' \}\}\s*$/gm) || []).length;
-  const publish = (yml.match(/^\s+if: \$\{\{ env\.DATA_FEEDS_ENABLED == 'true' && github\.event_name != 'push' && github\.ref == 'refs\/heads\/main' \}\}\s*$/gm) || []).length;
-  assert.equal(plain, 6, 'restore apis-raw, harvest, filter, restore api-vectors, embed, enrich');
+// Split the job into step blocks (each starts at a `      - ` list item under `steps:`).
+const steps = yml.split(/\r?\n(?=      - )/).filter((b) => /^      - /.test(b));
+const apiSteps = steps.filter((b) => b.includes('env.DATA_FEEDS_ENABLED'));
+const count = (re) => (yml.match(re) || []).length;
+const G = "env\\.DATA_FEEDS_ENABLED == 'true' && github\\.event_name != 'push'";
+
+test('4.2-M10: exactly 10 steps are gated on DATA_FEEDS_ENABLED (8 pipeline + 2 main-only publish), each downstream step chained on its upstream outcome + input file', () => {
+  const total = count(/env\.DATA_FEEDS_ENABLED == 'true'/g);
+  const plain = count(new RegExp(`^\\s+if: \\$\\{\\{ ${G} \\}\\}\\s*$`, 'gm'));
+  const saves = count(new RegExp(`^\\s+if: \\$\\{\\{ always\\(\\) && ${G} && hashFiles\\('data\\/(apis-raw|api-vectors)\\.ndjson'\\) != '' \\}\\}\\s*$`, 'gm'));
+  const filter = count(new RegExp(`^\\s+if: \\$\\{\\{ ${G} && steps\\.harvest_apis\\.outcome == 'success' && hashFiles\\('data\\/apis-raw\\.ndjson'\\) != '' \\}\\}\\s*$`, 'gm'));
+  const embed = count(new RegExp(`^\\s+if: \\$\\{\\{ ${G} && steps\\.filter_apis\\.outcome == 'success' && hashFiles\\('data\\/apis\\.ndjson'\\) != '' \\}\\}\\s*$`, 'gm'));
+  const enrich = count(new RegExp(`^\\s+if: \\$\\{\\{ ${G} && steps\\.embed_apis\\.outcome == 'success' && hashFiles\\('data\\/apis\\.ndjson'\\) != '' \\}\\}\\s*$`, 'gm'));
+  const publish = count(new RegExp(`^\\s+if: \\$\\{\\{ ${G} && github\\.ref == 'refs\\/heads\\/main' && steps\\.filter_apis\\.outcome == 'success' && hashFiles\\('data\\/apis\\.ndjson'\\) != '' \\}\\}\\s*$`, 'gm'));
+  assert.equal(plain, 3, 'restore apis-raw, harvest, restore api-vectors');
   assert.equal(saves, 2, 'save apis-raw, save api-vectors');
-  assert.equal(publish, 2, 'tag apis-latest-prev, publish apis-latest');
-  assert.equal(plain + saves + publish, 10);
+  assert.equal(filter, 1, 'filter needs a successful harvest + the raw file');
+  assert.equal(embed, 1, 'embed needs a successful filter + apis.ndjson');
+  assert.equal(enrich, 1, 'enrich needs a successful embed + apis.ndjson');
+  assert.equal(publish, 2, 'tag apis-latest-prev + publish apis-latest need a successful filter + apis.ndjson');
+  assert.equal(plain + saves + filter + embed + enrich + publish, 10);
   assert.equal(total, 10);
+  for (const id of ['harvest_apis', 'filter_apis', 'embed_apis']) {
+    assert.equal(count(new RegExp(`^\\s+id: ${id}\\s*$`, 'gm')), 1, `step id ${id}`);
+  }
+});
+
+test('PR #26: every api step carries continue-on-error: true and no skill-side step depends on an api step', () => {
+  assert.equal(apiSteps.length, 10);
+  for (const b of apiSteps) {
+    const name = /- name: ([^\n]+)/.exec(b)?.[1] ?? b.slice(0, 60);
+    assert.match(b, /^\s+continue-on-error: true\s*$/m, `${name} must be continue-on-error`);
+  }
+  const fetchApis = steps.find((b) => b.includes('Fetch apis-latest release asset'));
+  assert.match(fetchApis, /continue-on-error: true/);
+  for (const b of steps.filter((s) => !s.includes('env.DATA_FEEDS_ENABLED'))) {
+    assert.doesNotMatch(b, /steps\.(harvest_apis|filter_apis|embed_apis)\./, `skill-side step references an api step: ${b.slice(0, 80)}`);
+  }
+  // The shared upload loop must not fail the skills deploy on an api upload error.
+  assert.ok(yml.includes('node scripts/upload-vectors.js --input "$f" || echo "::warning::api vector upload failed'));
 });
 
 test('4.2-M10: upload loop lists data/api-vectors.ndjson and the api steps invoke the four scripts', () => {

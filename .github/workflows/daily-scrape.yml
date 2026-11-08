@@ -294,8 +294,14 @@ jobs:
       # (actions/cache multi-line path), runs the four-source harvester (no GitHub token:
       # raw.githubusercontent.com is unauthenticated; apis.guru / data.gouv.fr are public),
       # saves the cache even on failure so a partial corpus survives.
+      # FAILURE ISOLATION (PR #26): every api step is `continue-on-error: true` so an api
+      # failure never blocks the skill build/deploy/commit. Each downstream api step requires
+      # the upstream step's `outcome == 'success'` (outcome is the real result even with
+      # continue-on-error) AND its input file, so a failed harvest/filter never filters,
+      # embeds or publishes stale/empty data. No skill-side step references these step ids.
       - name: Restore apis-raw cache
         if: ${{ env.DATA_FEEDS_ENABLED == 'true' && github.event_name != 'push' }}
+        continue-on-error: true
         uses: actions/cache/restore@v4
         with:
           path: |
@@ -306,11 +312,14 @@ jobs:
             apis-raw-ndjson-
 
       - name: Run API harvest (harvest-apis)
+        id: harvest_apis
         if: ${{ env.DATA_FEEDS_ENABLED == 'true' && github.event_name != 'push' }}
+        continue-on-error: true
         run: node scripts/harvest-apis.js
 
       - name: Save apis-raw cache
         if: ${{ always() && env.DATA_FEEDS_ENABLED == 'true' && github.event_name != 'push' && hashFiles('data/apis-raw.ndjson') != '' }}
+        continue-on-error: true
         uses: actions/cache/save@v4
         with:
           path: |
@@ -320,8 +329,11 @@ jobs:
 
       # Phase 4.2 (D-05): merge + score + tier api records → data/apis.ndjson; appends an `api`
       # section to data/pipeline-stats.json (allowlisted sidecar). Fails loudly below 1,000 raw.
+      # Runs only on a successful harvest: the restored cache would otherwise feed yesterday's raw.
       - name: Filter APIs
-        if: ${{ env.DATA_FEEDS_ENABLED == 'true' && github.event_name != 'push' }}
+        id: filter_apis
+        if: ${{ env.DATA_FEEDS_ENABLED == 'true' && github.event_name != 'push' && steps.harvest_apis.outcome == 'success' && hashFiles('data/apis-raw.ndjson') != '' }}
+        continue-on-error: true
         run: node scripts/filter-apis.js
 
       # --- Semantic search: embed new/changed skills, upload to Vectorize ---
@@ -403,6 +415,7 @@ jobs:
       # vector file is GHA-cached (restore/save split like skill-vectors) so runs stay deltas.
       - name: Restore api-vectors cache
         if: ${{ env.DATA_FEEDS_ENABLED == 'true' && github.event_name != 'push' }}
+        continue-on-error: true
         uses: actions/cache/restore@v4
         with:
           path: data/api-vectors.ndjson
@@ -410,13 +423,16 @@ jobs:
           restore-keys: api-vectors-
 
       - name: Embed APIs (OpenAI)
-        if: ${{ env.DATA_FEEDS_ENABLED == 'true' && github.event_name != 'push' }}
+        id: embed_apis
+        if: ${{ env.DATA_FEEDS_ENABLED == 'true' && github.event_name != 'push' && steps.filter_apis.outcome == 'success' && hashFiles('data/apis.ndjson') != '' }}
+        continue-on-error: true
         run: node scripts/embed-skills.js --entity-type api
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
 
       - name: Save api-vectors cache
         if: ${{ always() && env.DATA_FEEDS_ENABLED == 'true' && github.event_name != 'push' && hashFiles('data/api-vectors.ndjson') != '' }}
+        continue-on-error: true
         uses: actions/cache/save@v4
         with:
           path: data/api-vectors.ndjson
@@ -464,7 +480,8 @@ jobs:
       # Phase 4.2: api IS enriched (D-03: embedding dedup catches same-API-different-host);
       # mcp_server remains the only skipped type.
       - name: Enrich APIs (dedup + novelty)
-        if: ${{ env.DATA_FEEDS_ENABLED == 'true' && github.event_name != 'push' }}
+        if: ${{ env.DATA_FEEDS_ENABLED == 'true' && github.event_name != 'push' && steps.embed_apis.outcome == 'success' && hashFiles('data/apis.ndjson') != '' }}
+        continue-on-error: true
         run: node scripts/enrich.js --input data/api-vectors.ndjson --records data/apis.ndjson --entity-type api
 
       # quick-260804-d5p: versioned catalog composition snapshot. Runs AFTER
@@ -506,7 +523,11 @@ jobs:
         if: github.event_name != 'push' && github.ref == 'refs/heads/main'
         run: |
           for f in data/skill-vectors.ndjson data/plugin-vectors.ndjson data/mcp-vectors.ndjson data/api-vectors.ndjson; do
-            if [ -f "$f" ]; then
+            if [ -f "$f" ] && [ "$f" = data/api-vectors.ndjson ]; then
+              # PR #26: the api upload is non-fatal — an api failure must never block the skills deploy.
+              echo "Uploading vectors from $f (non-fatal)"
+              node scripts/upload-vectors.js --input "$f" || echo "::warning::api vector upload failed (non-fatal; skills deploy continues)"
+            elif [ -f "$f" ]; then
               echo "Uploading vectors from $f"
               node scripts/upload-vectors.js --input "$f"
             else
@@ -580,7 +601,8 @@ jobs:
       # Phase 4.2 (D-07): rotate apis-latest → apis-latest-prev (one-day rollback target),
       # mirroring the skills-latest-prev step. Main-only AND flag-gated.
       - name: Tag previous apis-latest as apis-latest-prev
-        if: ${{ env.DATA_FEEDS_ENABLED == 'true' && github.event_name != 'push' && github.ref == 'refs/heads/main' }}
+        if: ${{ env.DATA_FEEDS_ENABLED == 'true' && github.event_name != 'push' && github.ref == 'refs/heads/main' && steps.filter_apis.outcome == 'success' && hashFiles('data/apis.ndjson') != '' }}
+        continue-on-error: true
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
@@ -599,7 +621,8 @@ jobs:
       # Phase 4.2 (D-07): publish data/apis.ndjson as the `apis-latest` release asset so
       # push-event rebuilds (and 4.3 pages) have api data. Main-only AND flag-gated.
       - name: Publish apis-latest release asset
-        if: ${{ env.DATA_FEEDS_ENABLED == 'true' && github.event_name != 'push' && github.ref == 'refs/heads/main' }}
+        if: ${{ env.DATA_FEEDS_ENABLED == 'true' && github.event_name != 'push' && github.ref == 'refs/heads/main' && steps.filter_apis.outcome == 'success' && hashFiles('data/apis.ndjson') != '' }}
+        continue-on-error: true
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
