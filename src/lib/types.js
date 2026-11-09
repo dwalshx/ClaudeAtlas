@@ -58,7 +58,7 @@
  * @typedef {Object} AccessBlock
  * @property {{ model: 'free' | 'freemium' | 'paid' | 'pay_per_call' | 'unknown', free_tier: string | null, price_notes: string | null }} cost
  * @property {{ requests: number | null, per: 'second' | 'minute' | 'hour' | 'day' | 'month' | null, notes: string | null, headers_observed: string[] }} rate_limit
- * @property {{ type: 'none' | 'api_key' | 'bearer' | 'oauth2' | 'http_basic' | 'openid' | 'unknown', signup_url: string | null }} auth
+ * @property {{ type: 'none' | 'api_key' | 'bearer' | 'oauth2' | 'http_basic' | 'openid' | 'unknown', signup_url: string | null, schemes: string[] }} auth  schemes: Phase 4.2 decision 5 — all declared schemes mapped, declaration order.
  * @property {{ spdx: string | null, name: string | null, url: string | null }} license
  * @property {string[]} formats         'json', 'csv', 'parquet', 'xml', 'graphql', ...
  * @property {string | null} transport  api: 'rest' | 'graphql' | 'grpc' | 'soap'; dataset: 'download' | 'api' | 'sql' | 's3'
@@ -190,7 +190,9 @@
  * @property {string} provider                 'stripe.com' — also the slug owner segment (D-05).
  * @property {string | null} status_page_url
  * @property {string[]} sdks
- * @property {string | null} source_modified_at  Phase 4.1 addition: source `modified` timestamp (APIs.guru versions[v].updated, data.gouv.fr metadata_modified_at). Freshness reads it; null → 0.
+ * @property {string | null} source_modified_at  Phase 4.1 addition: source `modified` timestamp (APIs.guru versions[v].updated, data.gouv.fr metadata_modified_at). Freshness reads it; null → NEUTRAL 50 for api (4.2 decision 8).
+ * @property {string[]} endpoint_summaries  Phase 4.2: first ≤10 "METHOD /path summary" strings (≤80 chars) from the parsed spec; [] when none.
+ * @property {boolean} spec_parsed  Phase 4.2 (D-02): spec fetched + extracted; false when skipped (cap/HTTP/invalid/catalog-only/no spec_url).
  * @property {number} access_clarity           0-1, written by api.scorer.js (same side-effect convention as manifest_completeness). 0 until scored.
  * @property {ConsumedBy} consumed_by
  */

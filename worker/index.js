@@ -93,6 +93,8 @@ import { handleMcpRequest, buildServerCard } from './mcp.js';
 // (PRIV-01..04) are enforced inside beh.js.
 // ---------------------------------------------------------------------------
 import { handleBehActivate, handleBehIngest } from './beh.js';
+// PR #26: per-entity-type search result links + untyped-search post-filter (pure, node-testable).
+import { shapeSearchResults, vectorTopK } from './search-results.js';
 
 // Shared response headers for every markdown rendition. noindex keeps the
 // markdown twin out of search indexes (canonical is the HTML page); Vary
@@ -554,7 +556,8 @@ export async function semanticSearch(request, env, ctx) {
   let vectorResults;
   try {
     const opts = {
-      topK,
+      // PR #26: over-fetch a few matches on untyped searches (post-filter may drop api/dataset hits).
+      topK: vectorTopK(topK, filterType, SEARCH_MAX_K),
       returnMetadata: 'all',
     };
     // F2 (B4) — Filter TRIAD: ?tier, ?category, ?type. Build the filter
@@ -582,35 +585,12 @@ export async function semanticSearch(request, env, ctx) {
   const vecMs = Date.now() - vecStart;
 
   const matches = (vectorResults && vectorResults.matches) || [];
-  // Dedupe: if two skills share a slug (6 known collisions in current catalog)
-  // both can match. Keep the highest-scoring one per slug.
-  const bySlug = new Map();
-  for (const m of matches) {
-    const slug = m.metadata?.slug;
-    if (!slug) continue;
-    const prior = bySlug.get(slug);
-    if (!prior || m.score > prior.score) {
-      bySlug.set(slug, m);
-    }
-  }
-  const results = [...bySlug.values()]
-    .sort((a, b) => b.score - a.score)
-    .map(m => ({
-      slug: m.metadata.slug,
-      score: Math.round(m.score * 10000) / 10000, // 4 decimals
-      name: m.metadata?.name || '',
-      category: m.metadata?.category || null,
-      quality_tier: m.metadata?.quality_tier || null,
-      quality_score: m.metadata?.quality_score || null,
-      repo_stars: m.metadata?.repo_stars || null,
-      repo_full_name: m.metadata?.repo_full_name || null,
-      description: m.metadata?.description || null,
-      // F2 (DOD-7 / Smoke H): echo entity_type so cross-type clients can
-      // discriminate without a second round-trip. Defaults to 'skill' for
-      // legacy vectors uploaded before T8 populated the metadata field.
-      entity_type: m.metadata?.entity_type || 'skill',
-      detail_url: `/skills/${m.metadata.slug}/`,
-    }));
+  // PR #26: dedupe per (entity_type, slug) keeping the best score (6 known
+  // skill slug collisions), drop HIDDEN_FROM_UNTYPED_SEARCH types (api /
+  // dataset — no pages until 4.3/4.5) on untyped searches, truncate to topK,
+  // and build detail_url per entity_type (unknown → /skills/). Pure helper in
+  // worker/search-results.js so it is unit-tested under plain node.
+  const results = shapeSearchResults(matches, { filterType, topK });
 
   // Fire-and-forget log to D1 if available. Don't block the response.
   //

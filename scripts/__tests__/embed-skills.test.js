@@ -18,6 +18,7 @@ import { tmpdir } from 'node:os';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { readNdjsonRecords } from '../lib/ndjson.js';
+import { resolveEmbedIO } from '../embed-skills.js';
 import { MIN_PRIOR_FOR_DRIFT_CHECK } from '../embed-skills.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -214,4 +215,12 @@ test('Task 9: B-2 drift guard PROCEEDS on catalog growth and on a below-floor pr
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }
+});
+
+test('4.2-M09: resolveEmbedIO maps api → data/apis.ndjson / data/api-vectors.ndjson and rejects unknown types', () => {
+  const io = resolveEmbedIO('api', {});
+  assert.ok(io.inputPath.endsWith(join('data', 'apis.ndjson')), io.inputPath);
+  assert.ok(io.outputPath.endsWith(join('data', 'api-vectors.ndjson')), io.outputPath);
+  assert.equal(resolveEmbedIO('plugin', { input: 'x.ndjson' }).inputPath, 'x.ndjson');
+  assert.throws(() => resolveEmbedIO('nope', {}), /skill\|plugin\|mcp_server\|api/);
 });

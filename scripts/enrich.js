@@ -55,6 +55,10 @@ const DUP_THRESHOLD = 0.92;
 // (planner-discretion per D-10): at N=38 the O(n²) dedup overhead exceeds any
 // benefit. Plugin enrich runs the SAME cosine logic (N≈4,500, well within the
 // O(n²) practicality window — skills already run at N≈35k).
+// Phase 4.2: `--entity-type api` (data/api-vectors.ndjson + data/apis.ndjson)
+// flows through the same dedup — no early return; compareForCanonical falls to
+// the slug tie-break because api records carry no commit/created/pushed dates
+// (deterministic).
 function parseArgs(argv) {
   const out = { input: null, records: null, entityType: null, dryRun: false };
   for (let i = 2; i < argv.length; i++) {
@@ -281,6 +285,7 @@ function main() {
   log(`entity_type: ${entityType}`);
 
   // D-10: MCP enrich is intentionally skipped (N=38 below dedup threshold).
+  // api is NOT skipped (Phase 4.2 D-03: embedding dedup catches same-API-different-host cases).
   if (entityType === 'mcp_server') {
     log(`skipping mcp_server (N=${records.length} below dedup threshold; dedup overhead exceeds benefit per D-10). Exiting 0.`);
     process.exit(0);

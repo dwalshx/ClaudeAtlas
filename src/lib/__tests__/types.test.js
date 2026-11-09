@@ -408,6 +408,22 @@ test('4.1-M01: types.js JSDoc mirror documents the same Phase 4.1 names', () => 
   }
 });
 
+test('4.2/decision 3+5: ApiExtra gains endpoint_summaries + spec_parsed and auth gains schemes in both type mirrors', () => {
+  const dts = readFileSync(join(REPO_ROOT, 'src', 'lib', 'types.d.ts'), 'utf-8');
+  for (const s of ['endpoint_summaries: string[]', 'spec_parsed: boolean', 'schemes: string[]']) {
+    assert.ok(dts.includes(s), s);
+  }
+  const authStart = dts.indexOf('  auth: {');
+  const authBlock = dts.slice(authStart, dts.indexOf('  };', authStart));
+  assert.ok(authBlock.includes('schemes: string[];'), 'schemes lives inside the auth block');
+  const js = readFileSync(join(REPO_ROOT, 'src', 'lib', 'types.js'), 'utf-8');
+  for (const s of ['endpoint_summaries', 'spec_parsed', 'schemes: string[]']) {
+    assert.ok(js.includes(s), s);
+  }
+  assert.ok(js.includes('@property {string[]} endpoint_summaries'));
+  assert.ok(js.includes('@property {boolean} spec_parsed'));
+});
+
 test('4.1-M01/D-03: access is NOT declared on EntityCommon', () => {
   const dts = readFileSync(join(REPO_ROOT, 'src', 'lib', 'types.d.ts'), 'utf-8');
   const start = dts.indexOf('export interface EntityCommon {');

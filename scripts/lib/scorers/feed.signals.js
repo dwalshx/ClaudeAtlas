@@ -6,9 +6,12 @@
  * (docs/PHASE-4.0-SPEC.md § "Scoring — 7 signals"); calibration against
  * real harvests is 4.2 (api) and 4.5 (dataset). Do not tune here.
  *
- * Freshness with no `source_modified_at` and no `repo_pushed_at` scores 0
- * (unknown ≠ neutral — the input exists at harvest time for every verified
- * source; orchestrator decision 5).
+ * Freshness: api records with no `source_modified_at` and no `repo_pushed_at`
+ * score NEUTRAL 50 (Phase 4.2 decision 8 — APIs.guru's hosted directory is a
+ * frozen 2023-04 snapshot; `harvest-apis.js` nulls any `updated` before
+ * 2024-01-01 and keeps the raw date in `raw_source.updated`, so 'unknown'
+ * means 'the source cannot tell us', not 'stale'). Dataset records keep
+ * unknown → 0 (orchestrator decision 5 of 4.1) until Phase 4.5 calibrates.
  *
  * Reachability (no probe history until 4.4) and Popularity (no
  * source-normalised percentiles until 4.5; GitHub stars used when a repo is
@@ -22,6 +25,7 @@ export const FEED_WEIGHTS = Object.freeze({ access: 0.20, reachability: 0.15, do
 
 export const NEUTRAL_REACHABILITY = 70;   // spec: "starts neutral at 0.7 until 7 days of history"
 export const NEUTRAL_POPULARITY = 50;
+export const NEUTRAL_FRESHNESS = 50;   // Phase 4.2 decision 8 — api ONLY (see api.scorer.js); dataset keeps unknown → 0 until 4.5 decides
 
 /**
  * Documentation signal, 0-100:
@@ -73,7 +77,7 @@ export function scoreDatasetFreshness(iso) {
 
 /**
  * Freshness input: source `modified` first, GitHub push date as fallback
- * when a repo is known, else null (→ 0).
+ * when a repo is known, else null (api → NEUTRAL_FRESHNESS; dataset → 0).
  *
  * @param {any} record
  * @returns {string | null}
