@@ -61,5 +61,60 @@
       "solid": 53,
       "listed": 108
     }
+  },
+  "api": {
+    "timestamp": "2026-11-07T04:18:02.816Z",
+    "total_raw": 6027,
+    "total_merged": 5931,
+    "total_apis": 4223,
+    "id_collisions": 1,
+    "by_source": {
+      "apis.guru": {
+        "raw": 2529,
+        "kept": 1771
+      },
+      "data.gouv.fr": {
+        "raw": 1264,
+        "kept": 1104
+      },
+      "uk-api-catalogue": {
+        "raw": 231,
+        "kept": 218
+      },
+      "public-apis": {
+        "raw": 2003,
+        "kept": 1130
+      }
+    },
+    "merged_duplicates": {
+      "cross_source": 51,
+      "same_source": 45
+    },
+    "dropped": {
+      "fixture_repo": 0,
+      "template_name": 0,
+      "placeholder_description": 16,
+      "biz_slop": 18,
+      "short_description": 1645,
+      "no_home_url": 10,
+      "no_base_or_spec": 19
+    },
+    "tiers": {
+      "featured": 422,
+      "solid": 1266,
+      "listed": 2535
+    },
+    "access_clarity_histogram": [
+      6,
+      0,
+      218,
+      1725,
+      2055,
+      39,
+      43,
+      137,
+      0,
+      0
+    ]
   }
 }

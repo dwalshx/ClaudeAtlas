@@ -1,0 +1,131 @@
+name: Measure Data Feeds (Phase 4.2, branch-only)
+
+# Phase 4.2 Plan 12 — measures the api legs INDEPENDENTLY of daily-scrape.yml
+# (main's cron has been red since 2026-09-28 — Research Pitfall 11 — so a
+# branch dispatch of daily-scrape.yml dies before the api steps). Runs
+# harvest → filter → embed → enrich → upload --dry-run with per-step wall time.
+# NEVER deploys, publishes release assets, writes KV or Vectorize. Caches use
+# the SAME prefixes as daily-scrape.yml (apis-raw-ndjson-, api-vectors-) so a
+# later daily run on this branch restores them. Dispatch-only, so it is
+# harmless on main; delete or keep after the flip (3.4 weekly-workflow precedent).
+#
+# Dispatch inputs are passed to shell steps through `env:` only (never
+# interpolated into `run:` — script-injection hygiene).
+
+on:
+  workflow_dispatch:
+    inputs:
+      live_embed:
+        description: 'Use the real OPENAI_API_KEY (one-time live smoke, ~$0.01). Default: EMBED_DRY_RUN=1 deterministic fake vectors.'
+        type: boolean
+        default: false
+      limit:
+        description: 'Optional --limit N for harvest-apis.js (smoke); leave empty for the full run'
+        type: string
+        default: ''
+
+jobs:
+  measure:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+
+      - name: Restore apis-raw cache
+        uses: actions/cache/restore@v4
+        with:
+          path: |
+            data/apis-raw.ndjson
+            data/feeds-etag-cache.ndjson
+          key: apis-raw-ndjson-measure-${{ github.run_number }}
+          restore-keys: |
+            apis-raw-ndjson-
+
+      - name: Harvest APIs (timed)
+        env:
+          HARVEST_LIMIT: ${{ inputs.limit }}
+        run: |
+          start=$(date +%s)
+          if [ -n "$HARVEST_LIMIT" ]; then node scripts/harvest-apis.js --limit "$HARVEST_LIMIT"; else node scripts/harvest-apis.js; fi
+          echo "::notice title=harvest-apis::$(( $(date +%s) - start )) s"
+          echo "raw records: $(( $(wc -l < data/apis-raw.ndjson) - 1 ))"
+
+      - name: Save apis-raw cache
+        if: ${{ always() && hashFiles('data/apis-raw.ndjson') != '' }}
+        uses: actions/cache/save@v4
+        with:
+          path: |
+            data/apis-raw.ndjson
+            data/feeds-etag-cache.ndjson
+          key: apis-raw-ndjson-measure-${{ github.run_number }}
+
+      - name: Filter APIs (timed)
+        run: |
+          start=$(date +%s)
+          node scripts/filter-apis.js
+          echo "::notice title=filter-apis::$(( $(date +%s) - start )) s"
+          echo "api records: $(( $(wc -l < data/apis.ndjson) - 1 ))"
+
+      - name: Restore api-vectors cache
+        uses: actions/cache/restore@v4
+        with:
+          path: data/api-vectors.ndjson
+          key: api-vectors-measure-${{ github.run_number }}
+          restore-keys: api-vectors-
+
+      # Decision 1: live embed only when live_embed=true AND the secret exists;
+      # otherwise deterministic fake vectors (EMBED_DRY_RUN=1).
+      - name: Decide embed mode
+        env:
+          LIVE_EMBED: ${{ inputs.live_embed }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        run: |
+          if [ "$LIVE_EMBED" = "true" ] && [ -n "$OPENAI_API_KEY" ]; then
+            echo "EMBED_DRY_RUN=0" >> "$GITHUB_ENV"
+          else
+            echo "EMBED_DRY_RUN=1" >> "$GITHUB_ENV"
+          fi
+
+      - name: Embed APIs (timed; dry-run unless live_embed)
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        run: |
+          start=$(date +%s)
+          echo "EMBED_DRY_RUN=$EMBED_DRY_RUN"
+          node scripts/embed-skills.js --entity-type api
+          echo "::notice title=embed-api::$(( $(date +%s) - start )) s"
+
+      - name: Save api-vectors cache
+        if: ${{ always() && hashFiles('data/api-vectors.ndjson') != '' }}
+        uses: actions/cache/save@v4
+        with:
+          path: data/api-vectors.ndjson
+          key: api-vectors-measure-${{ github.run_number }}
+
+      - name: Enrich APIs (timed)
+        run: |
+          start=$(date +%s)
+          node scripts/enrich.js --input data/api-vectors.ndjson --records data/apis.ndjson --entity-type api
+          echo "::notice title=enrich-api::$(( $(date +%s) - start )) s"
+
+      - name: Upload vectors DRY RUN (validates payload; no Vectorize calls)
+        run: |
+          start=$(date +%s)
+          node scripts/upload-vectors.js --input data/api-vectors.ndjson --dry-run
+          echo "::notice title=upload-dry-run::$(( $(date +%s) - start )) s"
+
+      - name: Summary
+        if: ${{ always() }}
+        run: |
+          {
+            echo "## Phase 4.2 api legs — measured"
+            echo "raw lines: $(wc -l < data/apis-raw.ndjson 2>/dev/null || echo 0)  filtered lines: $(wc -l < data/apis.ndjson 2>/dev/null || echo 0)  vector lines: $(wc -l < data/api-vectors.ndjson 2>/dev/null || echo 0)"
+            echo "EMBED_DRY_RUN=$EMBED_DRY_RUN"
+          } >> "$GITHUB_STEP_SUMMARY"

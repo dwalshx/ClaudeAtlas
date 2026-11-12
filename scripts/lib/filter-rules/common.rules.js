@@ -41,10 +41,14 @@ export const FIXTURE_REPO_DENYLIST = new Set([
  * Return true if the record belongs to a denylisted scanner / fixture repo
  * (exact `repo_full_name` match). Such records must be dropped entirely.
  *
- * @param {{ repo_full_name?: string }} record
+ * Null-safe (Phase 4.1 / D-07): api/dataset records carry
+ * `repo_full_name === null`; `Set.has(null)` was already false, the `?? ''`
+ * makes that explicit.
+ *
+ * @param {{ repo_full_name?: string | null }} record
  */
 export function isFixtureRepo(record) {
-  return FIXTURE_REPO_DENYLIST.has(record?.repo_full_name);
+  return FIXTURE_REPO_DENYLIST.has(record?.repo_full_name ?? '');
 }
 
 export const TEMPLATE_NAMES = new Set([
@@ -113,15 +117,21 @@ export function hasShortDescription(record, minLen) {
 
 /**
  * Dedup by base name (strip language suffix). Preserves the highest-quality
- * variant within each (repo, base_name) bucket.
+ * variant within each (scope, base_name) bucket where scope = repo_full_name,
+ * else origin.source_id, else id.
  *
- * @param {Array<{ name: string, repo_full_name: string, quality_score?: number }>} records
+ * @param {Array<{ name: string, repo_full_name: string | null, origin?: { source_id?: string }, id?: string, quality_score?: number }>} records
  */
 export function dedupLanguageVariants(records) {
   const seen = new Map();
   for (const rec of records) {
     const baseName = (rec.name || '').replace(LANG_SUFFIXES, '');
-    const key = `${rec.repo_full_name}/${baseName}`;
+    // Phase 4.1 / D-07 (Research Pitfall 3): api/dataset records carry
+    // repo_full_name === null. Template-literal null would key EVERY null-repo
+    // feed with the same name as "null/<name>" and collapse unrelated providers.
+    // Fall back to the source-native id, then the record id.
+    const scope = rec.repo_full_name ?? rec.origin?.source_id ?? rec.id ?? '';
+    const key = `${scope}/${baseName}`;
     const existing = seen.get(key);
     if (!existing || rec.name === baseName || (rec.quality_score || 0) > (existing.quality_score || 0)) {
       seen.set(key, rec);

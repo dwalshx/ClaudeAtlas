@@ -9,7 +9,7 @@ Orientation for Claude Code sessions working on ClaudeAtlas.
 - **Live site:** https://claudeatlas.com
 - **GitHub repo:** https://github.com/dwalshx/ClaudeAtlas
 - **Hosted on:** Cloudflare Workers (Static Assets) — `claudeatlas.danthedub.workers.dev` with custom domain
-- **Cost:** ~$102/year as of Phase 3.1 (~$12 domain + ~$60 Cloudflare Workers Paid + ~$30 Vectorize stored-dim overage). Upgraded from $12/yr free-tier in Phase 3.1 ship (2026-05-26) to support the 35k-record catalog: free-tier KV is capped at 1k writes/day, well below the 21k Listed-tier records that need KV publishing. See "Constraints" in PROJECT.md for the change rationale.
+- **Cost:** ~$73/year as of Phase 4.1 (~$12 domain + ~$60 Cloudflare Workers Paid + <$1/yr Vectorize — Workers Paid includes 10M stored dims, then $0.05 per 100M dims/month; ~160M dims today ≈ $0.08/month; verified 2026-11-02 against developers.cloudflare.com/vectorize/platform/pricing). Upgraded from $12/yr free-tier in Phase 3.1 ship (2026-05-26) to support the 35k-record catalog: free-tier KV is capped at 1k writes/day, well below the 21k Listed-tier records that need KV publishing. See "Constraints" in PROJECT.md for the change rationale.
 
 ## Current status
 
@@ -58,6 +58,13 @@ ClaudeAtlas/
 │   ├── plugin-vectors.ndjson    # GITIGNORED: plugin embeddings (embed-skills.js --entity-type plugin)
 │   └── mcp-vectors.ndjson       # GITIGNORED: MCP embeddings (embed-skills.js --entity-type mcp_server)
 │                                #   pipeline-stats.json gains committed plugin + mcp_server sections.
+│                                # --- Phase 4.2 api catalog (behind DATA_FEEDS_ENABLED; rebuilt each run) ---
+│   ├── apis-raw.ndjson          # GITIGNORED: harvest-apis.js output (~6k raw: APIs.guru + data.gouv.fr + UK + public-apis), GHA-cached (apis-raw-ndjson-*)
+│   ├── apis-raw.catalog-only.ndjson  # GITIGNORED: --mode=catalog-only smoke output (never the real raw path — ids differ)
+│   ├── feeds-etag-cache.ndjson  # GITIGNORED: ETag/Last-Modified sidecar for the feed harvesters (validators only, no bodies)
+│   ├── apis.ndjson              # GITIGNORED: filter-apis.js output (merged/scored/tiered), published as `apis-latest`
+│   └── api-vectors.ndjson       # GITIGNORED: api embeddings (embed-skills.js --entity-type api), GHA-cached (api-vectors-*)
+│                                #   pipeline-stats.json gains a committed `api` section; data/__fixtures__/feeds/ holds the 2026-11-05 captures.
 │
 ├── src/
 │   ├── layouts/
@@ -103,8 +110,17 @@ interface EntityCommon {
   name: string;
   description: string;
 
-  // Repo metadata (unchanged from pre-3.1.2 SkillRecord shape)
-  repo_full_name: string;
+  // Origin (Phase 4.1 / D-02). Present on EVERY record; the upcaster back-fills
+  // the github form for skill/plugin/mcp_server. `origin.source` is the catalog
+  // name ('apis.guru', 'huggingface', 'github'); `source` below is the discovery channel.
+  origin: { kind: 'github' | 'registry' | 'portal' | 'manual'; source: string; source_id: string; source_url: string; also_listed_in: string[] };
+  home_url: string;             // repo_url for github-origin records
+  docs_url: string | null;
+
+  // Repo metadata — NULLABLE since Phase 4.1 (D-02): every repo_* field is T | null.
+  // null ONLY for api/dataset records with no known GitHub repo; always populated
+  // for skill/plugin/mcp_server (the upcaster never emits null for them).
+  repo_full_name: string | null;   // (all repo_* below are likewise T | null)
   repo_url: string;
   repo_stars: number;
   repo_forks: number;
@@ -193,10 +209,46 @@ interface McpExtra {
   manifest_completeness: number;    // 0-1; feeds the Manifest-Completeness scorer signal (D-03)
 }
 
+// Phase 4.1 (2026-11-02) — SCAFFOLD ONLY: types, upcaster paths, scorer / embedding /
+// rule-pack / recipe registry slots, fixtures (data/__fixtures__/{apis,datasets}-mini.ndjson)
+// and the DATA_FEEDS_ENABLED flag. Harvesters land in 4.2 (api) and 4.5 (dataset).
+// Full field semantics: docs/PHASE-4.0-SPEC.md. Helpers: scripts/lib/access.js.
+interface AccessBlock {            // TOP-LEVEL on api/dataset records only (never on EntityCommon, never under extra)
+  cost: { model: 'free' | 'freemium' | 'paid' | 'pay_per_call' | 'unknown'; free_tier: string | null; price_notes: string | null };
+  rate_limit: { requests: number | null; per: 'second' | 'minute' | 'hour' | 'day' | 'month' | null; notes: string | null; headers_observed: string[] };
+  auth: { type: 'none' | 'api_key' | 'bearer' | 'oauth2' | 'http_basic' | 'openid' | 'unknown'; signup_url: string | null };
+  license: { spdx: string | null; name: string | null; url: string | null };
+  formats: string[];
+  transport: string | null;
+  provenance: Record<string, { method: 'declared' | 'spec' | 'probed' | 'heuristic' | 'extracted' | 'manual'; source_url: string | null; confidence: number; checked_at: string }>;
+}                                  // `unknown` is first-class: the upcaster defaults every enum to 'unknown', numbers null, arrays [], provenance {}
+
+interface ApiExtra {
+  type: 'api';
+  base_urls: string[]; spec_url: string | null; spec_version: string | null; endpoint_count: number | null;
+  categories_src: string[]; provider: string; status_page_url: string | null; sdks: string[];
+  source_modified_at: string | null;   // Freshness input (180-day cliff); null → 0
+  access_clarity: number;              // 0-1, written by api.scorer.js (same side-effect convention as manifest_completeness)
+  consumed_by: { skills: string[]; plugins: string[]; mcp_servers: string[] };   // Phase 4.6 fills it
+}
+
+interface DatasetExtra {
+  type: 'dataset';
+  download_urls: string[]; size_bytes: number | null; size_bucket: string | null; record_count: number | null;
+  update_frequency: string | null; temporal_coverage: string | null; publisher: string;
+  popularity: { downloads: number | null; views: number | null; likes: number | null; citations: number | null; window: string | null };
+  schema_url: string | null;
+  source_modified_at: string | null;   // Freshness input (365-day cliff); null → 0
+  access_clarity: number;
+  consumed_by: { skills: string[]; plugins: string[]; mcp_servers: string[] };
+}
+
 type EntityRecord =
   | (EntityCommon & { entity_type: 'skill'; extra: SkillExtra })
   | (EntityCommon & { entity_type: 'plugin'; extra: PluginExtra })       // shipped 3.2
   | (EntityCommon & { entity_type: 'mcp_server'; extra: McpExtra })      // shipped 3.2
+  | (EntityCommon & { entity_type: 'api'; access: AccessBlock; extra: ApiExtra })          // 4.1 scaffold; harvester 4.2
+  | (EntityCommon & { entity_type: 'dataset'; access: AccessBlock; extra: DatasetExtra })  // 4.1 scaffold; harvester 4.5
   | /* CommandLibExtra, AgentLibExtra, HookLibExtra land in 3.3+ */;
 ```
 
@@ -205,6 +257,10 @@ the expanded blocks above. `CommandLibExtra`, `AgentLibExtra`, `HookLibExtra`
 are defined in `src/lib/types.d.ts` ready for 3.3+. `framework` is
 intentionally NOT an entity_type — frameworks are tag-based
 (`framework:gsd`, attachable to any entity).
+
+**Phase 4.1 (2026-11-02) — envelope generalization for v4.0 Data Feeds.** `api` and `dataset` are valid `entity_type`s whose records may have NO GitHub repo: `repo_*` are nullable (null only when `repo_full_name` is unknown), every record carries `origin` / `home_url` / `docs_url`, and api/dataset records carry a top-level `access` block with per-field provenance. ID scheme: `api:<primary_host>/<name>` (e.g. `api:api.stripe.com/stripe`), `dataset:<source>/<native_id>` (e.g. `dataset:huggingface/squad`); slugs are `<provider>/<name>` / `<publisher>/<name>` via the same `assignSlugs()`. Scorers (`scripts/lib/scorers/{api,dataset}.scorer.js`) implement the spec's 7 signals UNCALIBRATED — calibration is 4.2/4.5. The round-trip guard is `scripts/lib/__tests__/data-feeds-roundtrip.test.js`. Spec: `docs/PHASE-4.0-SPEC.md`.
+
+Phase 4.2 added `ApiExtra.endpoint_summaries` / `spec_parsed` and `AccessBlock.auth.schemes` (additive; schema_version still 2) and made api Freshness neutral (50) when `source_modified_at` is unknown (decision 8).
 
 **Cutover (2026-05-28 — Phase 3.1.2 / F2 ships):** the F2 branch lands the
 polymorphic envelope. During the D+0 to D+7 cutover window the legacy flat
@@ -291,6 +347,7 @@ npm run preview
 - **Hosting:** Cloudflare Workers Static Assets (configured via `wrangler.toml`)
 - **Deploy command:** `npx wrangler deploy` (runs inside CI)
 - **Daily cron:** `.github/workflows/daily-scrape.yml` runs at 6:30 AM UTC — scrapes, filters, builds, deploys, commits updated `data/skills.json` and `data/history/<today>.json` back to main. **Phase 3.2 (Task 12) extended the flow:** Track 1 → Track 2 → scrape-plugins → filter (skills) → filter-plugins → filter-mcps → link-bundles → embed (skills) → embed plugins → embed MCPs → enrich (skills) → enrich plugins (MCPs skip enrich, D-10) → upload-vectors (loops skill/plugin/mcp vector files) → build → deploy → commit. New steps gate on `github.event_name != 'push'`; publish/deploy/upload steps stay `main`-only.
+- **Phase 4.2 added the api legs** (all gated on `DATA_FEEDS_ENABLED == 'true' && event != push`; the flag resolves from the `data_feeds` workflow_dispatch input with a `'false'` fallback, so main runs are unchanged until the flip): … link-bundles → **harvest-apis → filter-apis** → embed skills → embed plugins → embed MCPs → **embed APIs** → enrich skills → enrich plugins → **enrich APIs** → upload-vectors (loop now includes `data/api-vectors.ndjson`) → … → **publish apis-latest (+ -prev)**; push-event runs fetch `apis-latest` with `continue-on-error`. The branch-only `.github/workflows/measure-data-feeds.yml` (dispatch: `live_embed`, `limit`) runs just the api legs with per-step timing and never publishes — see `.planning/phases/4.2-api-harvest-v1/4.2-MEASUREMENT.md` for the measured numbers and the flip gate.
 - **Required GitHub Actions secrets:** `SCRAPE_PAT`, `CF_API_TOKEN`, `CF_ACCOUNT_ID`
 
 ## Known issues / things a new session should know
@@ -355,7 +412,12 @@ npm run preview
    instead. `scripts/lint-no-legacy-skill-shape.js` warns on legacy paths
    today; the D+7 cutover commit flips it to blocking and deletes the
    shim, the upcaster (`scripts/lib/legacy-skill-reader.js`), and the
-   one-shot migrator (`scripts/migrate-to-entities.js`). Schedule +
+   one-shot migrator (`scripts/migrate-to-entities.js`). **Phase 4.1 update
+   (2026-11-02):** `legacy-skill-reader.js` remains the production upcaster
+   (`filter.js` depends on it) and was extended with the `api`/`dataset` paths
+   and the `origin` back-fill; the D+7 "delete the upcaster" step is
+   superseded — rename it at cutover (e.g. `entity-upcaster.js`), do not
+   delete it. Schedule +
    rollback CLI: `.planning/phases/03.1.2-polymorphic-envelope/3.1.2-CUTOVER.md`.
 
    The first daily-scrape after F2 merge produces v2 NDJSON natively
@@ -409,7 +471,19 @@ npm run preview
    runtime cost is unchanged. The genuine long-term fix is an HNSW index
    for the similarity computation (deferred to Phase 3.x backlog).
 
-13. **The pipeline fails LOUDLY and EARLY on dead credentials and empty
+13. **Phase 4.2 api pipeline is wired but OFF on main.** `DATA_FEEDS_ENABLED`
+   stays `'false'` until (a) main's daily cron is green again (red since
+   2026-09-28 — Track 2 401 / Track 1 failure-ratio gate) and (b) a measured
+   branch run (`measure-data-feeds.yml`, then a `daily-scrape.yml` dispatch
+   with `data_feeds=true`) finishes inside the 330-minute budget. Flip =
+   change the `|| 'false'` fallback to `|| 'true'` in the job env (one line)
+   and update `scripts/__tests__/workflow-flags.test.js` test 1. Calibration
+   findings (per-source Freshness/Access bias, description-floor and
+   biz-slop drops) are in `.planning/phases/4.2-api-harvest-v1/4.2-CALIBRATION.md`;
+   retunes are separate, reviewed changes — never silent edits to
+   `scripts/lib/scorers/*` or `scripts/lib/filter-rules/*`.
+
+14. **The pipeline fails LOUDLY and EARLY on dead credentials and empty
    data (added after the 2026-09-28 → 2026-11-05 outage).** Root causes
    and timeline: `.planning/debug/daily-scrape-outage-2026-09-28.md`. The
    fine-grained `SCRAPE_PAT` expired on 2026-10-14; every REST scraper read
@@ -730,8 +804,8 @@ Notes:
 ## Methodology
 
 - **Planning methodology:** Org OS (see `.objective/` locally — not committed to repo)
-- **Execution methodology (recommended for Phase 1.5+):** GSD (`.planning/` directory, phase-based delegation)
-- **Project history:** Phase 1 was planned with a full Org OS 12-phase pipeline and executed in one long session. Phase 1.5 onward should use GSD for execution discipline.
+- **Execution methodology:** GSD was used from Phase 1.5 through the Phase 4.2 plans (`.planning/` holds its artifacts); retired 2026-11-06 in favor of direct execution (see "Workflow" below).
+- **Project history:** Phase 1 was planned with a full Org OS 12-phase pipeline and executed in one long session.
 
 <!-- GSD:project-start source:PROJECT.md -->
 ## Project
@@ -747,7 +821,7 @@ If everything else fails, this must work — the single browse-and-discover loop
 ### Constraints
 
 - **Tech stack:** Astro 5 + Cloudflare Workers Static Assets — locked. Do not swap renderers or hosts.
-- **Cost ceiling (Phase 3.1+):** ~$102/year — $12 domain + ~$60 Cloudflare Workers Paid (1M KV writes/day, 1M reads/day, 50ms CPU/req) + ~$30 Vectorize stored-dim overage (55M dims at 35k catalog × $0.05/M after the 5M included). Free tier was sufficient through Phase 2.x (catalog 1k–2k records) but Phase 3.1's 28× catalog growth made it untenable: free KV cap is 1k writes/day, blocking the ~21k Listed-tier publish. Any future addition that breaks ~$102/yr (Vectorize query overage from >50M dims/mo, paid analytics, paid D1 capacity) requires explicit approval.
+- **Cost ceiling (Phase 3.1+):** ~$73/year actual (approved ceiling remains ~$102/year) — $12 domain + ~$60 Cloudflare Workers Paid (1M KV writes/day, 1M reads/day, 50ms CPU/req) + <$1/yr Vectorize stored dims (10M included, then $0.05 per **100M**/month — the earlier per-million figure was 100× too high; 50M queried dims/month included, then $0.01 per 1M). Free tier was sufficient through Phase 2.x (catalog 1k–2k records) but Phase 3.1's 28× catalog growth made it untenable: free KV cap is 1k writes/day, blocking the ~21k Listed-tier publish. Any future addition that breaks ~$102/yr (Vectorize query overage from >50M dims/mo, paid analytics, paid D1 capacity) requires explicit approval.
 - **Scraper footprint:** GitHub API rate limit is 5,000 requests/hour with a PAT. Any Phase 1.5 feature that needs backfill (skill birth dates, star history) must fit inside the rate limit with room for the daily cron.
 - **Data integrity:** Do not drift from the calibrated filter rules in `scripts/filter.js` without re-running against `skills-raw.json` and comparing the before/after distributions.
 - **Deployment:** Zero-downtime rollout is mandatory. The live site must keep serving through every Phase 1.5 deploy.
@@ -773,18 +847,13 @@ Conventions not yet established. Will populate as patterns emerge during develop
 Architecture not yet mapped. Follow existing patterns found in the codebase.
 <!-- GSD:architecture-end -->
 
-<!-- GSD:workflow-start source:GSD defaults -->
-## GSD Workflow Enforcement
+## Workflow (updated 2026-11-06)
 
-Before using Edit, Write, or other file-changing tools, start work through a GSD command so planning artifacts and execution context stay in sync.
+**GSD is retired for this project** (Dan, 2026-11-06: the researcher / planner / checker / per-plan executor cycle was using far more tokens than the code it produced). Work directly:
 
-Use these entry points:
-- `/gsd:quick` for small fixes, doc updates, and ad-hoc tasks
-- `/gsd:debug` for investigation and bug fixing
-- `/gsd:execute-phase` for planned phase work
-
-Do not make direct repo edits outside a GSD workflow unless the user explicitly asks to bypass it.
-<!-- GSD:workflow-end -->
+- Use an existing spec or plan when one exists (the `docs/` phase specs, `.planning/phases/` plans); write a short context note only when the work has real unknowns.
+- Test-first where practical, atomic commits, one review pass before a PR.
+- Existing `.planning/` documents are reference material. Do not create new GSD artifacts (CONTEXT / RESEARCH / VALIDATION / PLAN / SUMMARY files), do not run `gsd-tools`, and do not invoke `/gsd:*` commands unless Dan asks for one explicitly.
 
 <!-- GSD:profile-start -->
 ## Developer Profile

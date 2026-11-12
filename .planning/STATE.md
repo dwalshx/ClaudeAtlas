@@ -1,16 +1,16 @@
 ---
 gsd_state_version: 1.0
-milestone: v1.0
-milestone_name: milestone
-status: Phase 3.4 COMPLETE — plugins live
-stopped_at: "Phase 3.4 COMPLETE 2026-06-16 — plugins LIVE (6,317 indexed, 638 Featured). PLUGINS_ENABLED=true on main; first warm scheduled cron green ~2h35m; data/history/2026-06-16.json committed. Next: finish v3.0 milestone (3.5-3.9)."
-last_updated: "2026-08-04T17:05:00.000Z"
-last_activity: 2026-08-04
+milestone: v4.0
+milestone_name: — Data Feeds
+status: Phase 4.1 COMPLETE — verified 14/14; next 4.2 API harvest v1
+stopped_at: "Phase 4.1 COMPLETE 2026-11-04 on feat/v4.0-data-feeds (unmerged). Next: /gsd:discuss-phase 4.2 or /gsd:plan-phase 4.2 (API harvest v1)."
+last_updated: "2026-11-05T02:24:06.761Z"
+last_activity: 2026-11-05
 progress:
-  total_phases: 19
-  completed_phases: 7
-  total_plans: 30
-  completed_plans: 30
+  total_phases: 8
+  completed_phases: 1
+  total_plans: 8
+  completed_plans: 8
   percent: 100
 ---
 
@@ -21,15 +21,17 @@ progress:
 See: `.planning/PROJECT.md` (last updated 2026-04-10)
 
 **Core value:** Users can find the best Claude skill for a given task in under 30 seconds, with visible signals for why it's trustworthy.
-**Current focus:** v3.0 milestone — Phases 3.3 + 3.4 done (plugins LIVE); 3.5–3.9 remain
+**Current focus:** v4.0 Data Feeds — Phase 4.1 complete (verified); Phase 4.2 API harvest v1 is next. Branch feat/v4.0-data-feeds, not merged. Daily cron still failing since 2026-09-28 (separate fix session proposed).
 **Milestone:** v3.0 — Comprehensive Agent Tooling Index (in progress)
 
 ## Current Position
 
-Phase: 3.4 (incremental-plugin-discovery) — ✅ COMPLETE 2026-06-16. Plugins LIVE on claudeatlas.com (6,317 indexed, 638 Featured). `PLUGINS_ENABLED=true` on main; first warm scheduled cron green ~2h35m; history snapshot intact.
-Next: **finish the v3.0 milestone — phases 3.5–3.9** (defined in `docs/PHASE-3.0-SPEC.md` lines 434-446, not yet broken into ROADMAP entries).
+Phase: 4.1 (envelope-generalization) — ✅ COMPLETE 2026-11-04, VERIFICATION passed 14/14
+Plan: 8 of 8
+Next: **Phase 4.2 — API harvest v1** (APIs.guru + data.gouv.fr + UK catalogue + public-apis mirror; see docs/PHASE-4.0-SPEC.md). v3.0 phases 3.5–3.9 remain open on main.
 
 **Remaining v3.0 phases (all 1-3h; see PHASE-3.0-SPEC.md):**
+
 - **3.5** Homepage + nav redesign (Top Skills / Top Plugins sections, mixed search + type chips) — frontend
 - **3.6** Tier rename Featured→Top across codebase + UX — cross-cutting (do solo/first; conflicts with UI phases)
 - **3.7** Pipeline integration (cron handles both scrapes/embeds/registries) — **largely subsumed by 3.2+3.4**; residual likely just registries + verification
@@ -39,10 +41,12 @@ Next: **finish the v3.0 milestone — phases 3.5–3.9** (defined in `docs/PHASE
 **Parallelization note (discussed 2026-06-15):** sequence 3.6 first (solo), then 2 worktrees — UX stream (3.5→3.9) + data stream (3.7→3.8); seams = nav links + mixed-search render (assign to UX stream). GSD `/gsd:new-workspace` + `/gsd:workstreams` for isolation.
 
 **Operational notes for 3.4 maintenance:**
+
 - Steady-state daily cron ~2.5h (daily GraphQL refresh of ~7,339 repos ~35m is the recurring cost — future optimization candidate).
 - GHA cache is branch-scoped: a steady-state measurement branch can't see a stamped cache from another branch (restores unstamped bootstrap → one-time cold backfill ~324 min, still < 360). `weekly-plugin-rewalk.yml` seeds the stamped cache on main.
 - Re-disable: `PLUGINS_ENABLED='false'` (daily-scrape.yml line ~80).
-Last activity: 2026-09-10 - Reciprocal Pass v1.1 executed (157 targets / 13 tiers / cited cohort; dataset + report committed, not pushed)
+
+Last activity: 2026-11-05
 
 ### Quick Tasks Completed
 
@@ -194,6 +198,18 @@ These were INSERTED ahead of the Phase 3.0 spec's 3.1–3.9 lineup because the d
 - Daily request budget: comfortable (~500-800 fresh GitHub API requests; <20% of 5000/hr limit)
 - Cache hit rates: high after first warm day; etag cache + skills-raw cache both bootstrapped from release assets
 
+**Phase 4.1 execution metrics:**
+
+| Phase | Plan | Duration | Tasks | Files | Notes |
+|-------|------|----------|-------|-------|-------|
+| 04.1 | 02 | 5min | 3 | 6 | Wave 0 red tests: 49 tests across 6 files; 5 files ERR_MODULE_NOT_FOUND, common.rules 3 pass / 2 fail by design |
+| Phase 4.1 P01 | 6min | 3 tasks | 4 files |
+| 04.1 | 04 | 8min | 3 | 5 | access.js 12/12 + upcaster 13/13 green (25 total); 8/8 fixtures upcast with null repo_*; full suite 487/470 pass, 11 fail = 2 pre-existing + 9 intended red; schema_version stays 2 |
+| Phase 4.1 P06 | 5min | 3 tasks | 8 files |
+| Phase 4.1 P05 | 5min | 2 tasks | 8 files |
+| Phase 4.1 P07 | 7min | 3 tasks | 6 files |
+| Phase 4.1 P08 | 7 min | 3 tasks | 3 files |
+
 ## Accumulated Context
 
 ### Roadmap Evolution
@@ -202,6 +218,34 @@ These were INSERTED ahead of the Phase 3.0 spec's 3.1–3.9 lineup because the d
 - Phase 3.2.1 inserted after Phase 3.2 (2026-06-10): HNSW optimization — replace O(N²) cosine scans (compute-similar.js + enrich.js dedup) with approximate-NN; folds in security Audit B content-scanner filter (URGENT — cron at 4.5-5.5h vs 360-min hard cap; blocks 3.3 plugin re-enable)
 
 ### Decisions log (cumulative; see `.planning/SESSION-MEMO-2026-04-to-05.md` for full reasoning)
+
+- (4.1-01) Fixtures live at `data/__fixtures__/apis-mini.ndjson` + `datasets-mini.ndjson` (plugins-mini/mcp-mini precedent), not CONTEXT D-09's non-existent `scripts/test/fixtures/`. Raw-ish upcaster inputs: no `schema_version`, no top-level `slug`, `raw_source` documents the verbatim source keys for the 4.2/4.5 harvesters.
+- (4.1-01) Round-trip test asserts `null` on all 16 `repo_*` keys for null-repo api/dataset records but only the 13 COERCED keys non-null for repo-backed skill/plugin/mcp_server types (`repo_license`/`repo_language`/`repo_description` stay `?? null` on every type).
+- (4.1-01) D-07 red baseline recorded in `04.1-01-SUMMARY.md`: round-trip fails at ESM link (`generate-registry.js` lacks `buildRegistryEntry` export — Plan 07); workflow-flags 2 pass / 2 fail (flag-present + spec-pointer red — Plan 08). Plans 04-07 and 08 are measured against these outputs.
+- (4.1-03) ProvenanceMethod declares D-03's six values (adds `heuristic` to the spec's five); CONTEXT.md D-03 is the locked source over docs/PHASE-4.0-SPEC.md
+- (4.1-03) `access: AccessBlock` lives ONLY on the api/dataset EntityRecord union members (D-03) — never on EntityCommon, never under `extra`; types.test.js slices EntityCommon and asserts no `access:` inside it
+- (4.1-04) The D+7 "delete `scripts/lib/legacy-skill-reader.js`" plan is SUPERSEDED: it is the production upcaster (filter.js / filter-plugins.js / filter-mcps.js route every record through `upcastRecord`) and 4.1 made it the single choke point for `repo_*` nullability + `origin` defaults — RENAME at cutover, do not delete (file header updated).
+- (4.1-04) `repo_*` nullability is decided PER RECORD (`nullableRepo = !rec.repo_full_name`), not per entity_type: an api with a resolved GitHub repo gets the exact skill coercions (missing `repo_topics` → `[]`, missing `repo_owner_type` → `'User'`); only the no-repo case emits null. `buildCommonFields(rec, { nullableRepo, defaultSource })` keeps the github-origin branch byte-identical to pre-4.1.
+- (4.1-04) `origin`/`home_url`/`docs_url` reach already-v2 production files via IN-PLACE back-fill on the upcaster's passthrough branch (`backfillOriginInPlace`, Research Pitfall 1) — same object returned, no data migration, no `schema_version` bump (stays 2, pinned by comment in entity-version.js). api/dataset without an origin fall back to `kind: 'manual'`, never a fabricated github origin.
+- (4.1-04) `scripts/lib/url-host.js` `hostOf(url)` is the shared host extractor: upcaster api id default `api:<host(base_urls[0]) || provider>/<name>`, Plan 06 recipe `computeId`, Plan 07 slug disambiguator must all use it to stay in id parity. Dataset id is `dataset:<origin.source>/<origin.source_id>`.
+- (4.1-06) `dedupLanguageVariants` scope key is `repo_full_name ?? origin?.source_id ?? id ?? ''` (D-07, Research Pitfall 3): a null repo never becomes the literal `"null/<name>"` scope, so two null-repo feeds named alike from different providers survive dedup; skills (always non-empty `repo_full_name`) keep byte-identical keys. `isFixtureRepo` change (`?? ''`) is readability-only.
+- (4.1-06) `rulePacks.api` / `rulePacks.dataset` (D-06) read NO `repo_*` fields: common gates → `MIN_DESCRIPTION_LENGTH 50` → `HAS_HOME_URL` → `HAS_BASE_URL_OR_SPEC` (api) / `HAS_DOWNLOAD_OR_LANDING` (dataset). `HAS_DOWNLOAD_OR_LANDING` is redundant under `HAS_HOME_URL` and kept only for D-06 parity (commented inline); a landing page alone passes.
+- (4.1-06) `recipes.api` / `recipes.dataset` `computeId` are the id-parity twins of the Plan 04 upcaster default (same `hostOf`, same `provider` fallback, same `origin.source/source_id`) and are pinned by an 8-fixture replay (`computeId(raw) === raw.id` over apis-mini + datasets-mini). 4.2/4.5 harvesters must extend the fixtures rather than invent id rules; `discover()` stays empty until `harvest-apis.js` (4.2) / `harvest-datasets.js` (4.5).
+- (4.1-06) Parallel executors in ONE worktree share the git index: a plain `git add` + `git commit` in Plan 06 swept Plan 05's concurrently-staged scorer files into `8d893f5` (left as-is; content green). Wave-parallel plans should commit with `git commit --only -- <paths>` (or add+commit in one chained command).
+- (4.1-05) `scorers.api` / `scorers.dataset` (D-06) carry the spec weight table VERBATIM in `feed.signals.js` `FEED_WEIGHTS` (access .20 / reachability .15 / docs .15 / license .15 / freshness .15 / popularity .15 / adoption .05) and are UNCALIBRATED — tune in 4.2 (api) / 4.5 (dataset), never here, and never in `scripts/score.js` (skill calibration, untouched). Neutral defaults: reachability 70 (until 4.4 probe history), popularity 50 (GitHub stars only when `repo_stars` is a number; source percentiles are 4.5), adoption 0 (`consumed_by` empty until 4.6). Freshness with no `source_modified_at` AND no `repo_pushed_at` scores 0, not neutral — the input exists at harvest time for every verified source. Bare record = exactly 18.
+- (4.1-05) Both feed scorers write `record.extra.access_clarity` (0-1, `accessClarity(record.access)`) as a side effect — same convention as `extra.manifest_completeness` on plugin/mcp — so the Plan 04 upcaster default of 0 is overwritten on every score pass. Freshness is the ONLY signal that differs between api (`scoreRecency`, 180d cliff) and dataset (`scoreDatasetFreshness`, 365d cliff).
+- (4.1-05) `builders.api` reads `extra.endpoint_summaries` (first 10, `'; '`-joined 5th segment) ONLY when present — it is a 4.2 field, so the harvester adds it without touching `embedding-input/api.js`. Both feed builders hard-`slice(0, 300)` and emit empty segments (never `'undefined'`) for missing provider/publisher. Plan 05 Task 1's scorer files landed inside Plan 06's `8d893f5` via the shared-index race above; content verified identical, history left unsplit; Task 2 is the clean `b0c94b6`.
+- (4.1-07) `assignSlugs` resolves (owner, repo) through `slugParts(s)` (D-05), dispatching on `entity_type` BEFORE `repo_full_name`: api → `<provider>/<name>` with `hostOf(base_urls[0])` as the collision disambiguator (so a repo-backed api like github/rest-api-description still slugs `github.com/github`, not `github/github`); dataset → `<publisher>/<name>` with `origin.source` as disambiguator; everything else the unchanged `repo_full_name` split. `slugParts` does NOT slugify name/provider/publisher (that would silently rewrite every skill slug and invalidate `data/slug-redirects.json`) — 4.2/4.5 harvesters must supply slug-safe values. Slugs are scoped PER entity type because production never mixes types in one `assignSlugs` call.
+- (4.1-07) Slug-collision winner tie-break is `(repo_full_name ?? id ?? '').length` (D-07) — `??` not `||` keeps skills byte-identical; null-repo feeds fall through to the shorter id. `assignPercentileTiers` coerces at the sort-key build site (`stars: s.repo_stars ?? 0`), never in the comparator, so the comparator stays byte-for-byte with filter.js Step 3; this closes Research Pitfall 4 (null !== 0 skipped the id ASC tie-break → input-order-dependent featured slot).
+- (4.1-07) `scripts/generate-registry.js` now exports `buildRegistryEntry(s, apiGraph)` + `main()` behind the generate-feeds.js `invokedAsScript` guard (importable by tests without `data/`); the ONLY content change is `install_command: null` for null-repo records (never the string `claude install-skill null`). Parity proven empirically, not by inspection: HEAD vs new on the worktree's legacy `data/skills.json` is byte-identical modulo `generated_at` (1,105 entries, 1,139,004 bytes). Registry stays skills-only (`loadSkillsArray`) until 4.3.
+- (4.1-07) D-07 null-safety sweep CLOSED for every shared helper the round-trip exercises: `data-feeds-roundtrip.test.js` GREEN 7/7 (4.1-M10); `npm test` 535/525/4 fail/6 skipped — remaining reds are exactly 2 pre-existing embed-skills + 2 workflow-flags (Plan 08).
+- (4.1-08) `DATA_FEEDS_ENABLED: 'false'` lives in daily-scrape.yml job env directly under `PLUGINS_ENABLED` (D-08) with NO `if:` guards and no new steps — 4.2 gates harvest/filter/embed/upload the PLUGINS_ENABLED way and flips it. The YAML comment must never quote the literal `env.DATA_FEEDS_ENABLED`: `workflow-flags.test.js` asserts zero occurrences until the gating phase ships.
+- (4.1-08) CLAUDE.md Vectorize cost corrected in both the Cost headline and the Cost-ceiling constraint to the verified pricing (Workers Paid includes 10M stored dims, then $0.05 per 100M/month; 50M queried dims/month included, then $0.01 per 1M — the prior per-million figure was 100× too high): ~$73/yr actual, <$1/yr Vectorize at ~160M dims, so cost is NOT a governor for the v4.0 embed-everything decision; the ~$102/yr approved ceiling stays as the constraint. Known issue 9 now records the 04.1-04 decision: rename `legacy-skill-reader.js` at the 3.1.2 D+7 cutover, do not delete it.
+- (4.1-08) Phase 4.1 gate PASSED at exactly the planned baseline: `npm test` 535 tests / 527 pass / fail 2 / skipped 6 (N = 86 = 60 new-file + 26 extended; invariant pass = tests − 8), the two fails are the pre-existing embed-skills `Task 9: B-2` pair; `check:patterns` clean (0 baselined, 0 new); legacy-shape lint 5 hits exit 0; `scripts/filter.js` / `scripts/score.js` untouched since `cbae842`. `04.1-VALIDATION.md` signed off (`nyquist_compliant: true`, 14/14 rows green). Branch `feat/v4.0-data-feeds` unpushed, awaiting `/gsd:verify-work 4.1` + Dan's review.
+- (4.1-03) Phase 4.1 type additions are additive: `schema_version` stays 2 and `TYPES_MODULE` stays `'claudeatlas/types@2'`; all sixteen `repo_*` fields are `T | null` gated on `origin.kind === 'github'` (upcaster never emits null for skill/plugin/mcp_server)
+- (4.1-02) Feed-scorer round-half totals (25.5 / 28.5) are asserted as 25|26 / 28|29 bands plus ordering against the bare record, never exact — Plan 05 may use plain `Math.round` with no tie-break convention. Exact totals pinned test-first: bare api/dataset 18, +freshness 33, +full access 38, +5 consumers 23, dataset@100d 29.
+- (4.1-02) `common.rules.test.js` dedup regression test lists `foo-de` BEFORE `foo` (plan revision 1 / B1): the implementation's base-name short-circuit (`rec.name === baseName`) only protects a base record that arrives AFTER a variant; reversed order would be permanently red on quality_score.
+- (4.1-02) Pitfall 8 pinned in `dataset.rules.test.js`: the biz-slop prefix list rejects the realistic dataset name `energy-consumption` — documented as CURRENT status quo for Phase 4.5 calibration, not endorsed.
 
 - (3.4-05) Weekly full re-walk SPLIT out of the daily cron (3.4-04 measurement: worst-case Sunday total ~332 min, only ~28 min margin under the 360 cap on a growing O(n²) skills build). The full-rewalk trigger in scrape-plugins.js is now ENV-ONLY via a new exported `isFullRewalk(env)` helper (`PLUGINS_FULL_REWALK==='1'`); the old `|| new Date().getUTCDay() === 0` Sunday auto-trigger was REMOVED, so the daily cron only ever walks the cheap pushed_at-changed delta (~2h, comfortable margin). New `.github/workflows/weekly-plugin-rewalk.yml` (Sundays 02:00 UTC, own 360-min budget, lean: checkout → npm ci → restore/save plugins-raw-ndjson- cache → scrape-plugins.js with PLUGINS_FULL_REWALK=1, NO filter/embed/build/deploy/publish) does the full re-walk and saves under the SAME `plugins-raw-ndjson-` cache prefix the daily cron's restore-keys prefix-matches, so the daily cron picks up the fresh corpus and publishes it. Secrets match the daily plugin step (SCRAPE_PAT=GITHUB_TOKEN/REST + SCRAPE_PAT_CLASSIC/GraphQL). check-banned-patterns plugins-meta.json allowlist re-pinned 761→785. Unblocks the Plan 04 flag flip (after a steady-state branch re-measurement). PLUGINS_ENABLED untouched (still 'false' on main).
 - (3.4-03) Change C completeness gate: exported pure `shouldRewalk(known, freshPushedAt, opts)` re-walks a KNOWN plugin repo ONLY when its fresh `pushed_at` (Plan 02's GraphQL Map) advanced past the stored `walked_pushed_at` — missing stamp → backfill (re-walk once), missing fresh signal (refresh casualty) + valid stamp → keep cached, `opts.periodicFull` → always. ISO-string lexicographic `>` (= chronological) avoids null Date parsing; mirrors Track 2's blob-sha skip at repo granularity. `walkComponentDirs` rewritten as ONE `git/trees/{branch}?recursive=1` scan (was ~6-18 contents calls/repo, now ETag 304-free warm) emitting the BYTE-IDENTICAL `inventory[dir]={path,count,entries}` shape (git tree/blob → contents-API dir/file, single-level immediate children) — `mcp-servers` component preserved (R-5/Pitfall 6; filter-mcps `MIN_MCP_REPOS=10`). Re-walked known repos OVERWRITE their prior `allRepos` record via `indexByName` so OUTPUT has no duplicate `repo_full_name`s. Periodic full re-walk safety net = weekly UTC Sundays (`getUTCDay()===0`) + `PLUGINS_FULL_REWALK=1` override + `[gate] periodicFull=...` log line for Plan 04's mode-aware measurement. check-banned-patterns `plugins-meta.json` allowlist re-pinned 634→761. The warm plugin step is now bounded to (new repos) + (repos pushed since last walk) + (everything, once weekly).
@@ -257,8 +301,8 @@ These were INSERTED ahead of the Phase 3.0 spec's 3.1–3.9 lineup because the d
 
 ## Session Continuity
 
-Last session: 2026-06-15T05:34:26.268Z
-Stopped at: Completed 3.4-incremental-plugin-discovery-05-PLAN.md
+Last session: 2026-11-05T02:24:06.749Z
+Stopped at: Completed 04.1-08-PLAN.md (phase 4.1 complete — gate green, awaiting verify-work)
 
 **Resume:** read `.planning/SESSION-MEMO-2026-04-to-05.md` for full context, then `/gsd:execute-phase 3.1`.
 

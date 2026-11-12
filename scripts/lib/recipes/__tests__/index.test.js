@@ -5,6 +5,11 @@
  * STUBS: they carry the DiscoveryRecipe shape but discover() is an empty
  * generator (production discovery lives in scripts/scrape-plugins.js).
  *
+ * Phase 4.1 Plan 06 (4.1-M08 / D-05). api + dataset recipes follow the same
+ * stub contract; their computeId is real and must reproduce every id in
+ * data/__fixtures__/apis-mini.ndjson + datasets-mini.ndjson (parity with
+ * the upcaster default in scripts/lib/legacy-skill-reader.js).
+ *
  * `node --test` only.
  */
 
@@ -13,6 +18,8 @@ import assert from 'node:assert/strict';
 import { recipes } from '../index.js';
 import { pluginRecipe } from '../plugin.recipe.js';
 import { mcpRecipe } from '../mcp.recipe.js';
+import { apiRecipe } from '../api.recipe.js';
+import { datasetRecipe } from '../dataset.recipe.js';
 
 function assertRecipeShape(r) {
   assert.equal(typeof r.entity_type, 'string');
@@ -50,6 +57,58 @@ test('Task 5: mcp computeId produces canonical id', () => {
 
 test('Task 5: discover() yields zero items (stub contract)', async () => {
   for (const r of [pluginRecipe, mcpRecipe]) {
+    const items = [];
+    for await (const it of r.discover()) items.push(it);
+    assert.equal(items.length, 0);
+  }
+});
+
+// ---------------------------------------------------------------------------
+// Phase 4.1 Plan 06 — api + dataset recipes (4.1-M08 / D-05)
+// ---------------------------------------------------------------------------
+
+test('4.1-M08: registry exposes api + dataset recipes conforming to DiscoveryRecipe shape', () => {
+  assert.equal(recipes.api, apiRecipe);
+  assert.equal(recipes.dataset, datasetRecipe);
+  assertRecipeShape(apiRecipe);
+  assertRecipeShape(datasetRecipe);
+  assert.equal(apiRecipe.entity_type, 'api');
+  assert.equal(datasetRecipe.entity_type, 'dataset');
+  assert.equal(apiRecipe.output_path, 'data/apis-raw.ndjson');
+  assert.equal(datasetRecipe.output_path, 'data/datasets-raw.ndjson');
+});
+
+test('4.1-M08/D-05: api computeId = api:<host of first base_url>/<name>, provider fallback without base_urls', () => {
+  assert.equal(
+    apiRecipe.computeId({ name: 'stripe', extra: { base_urls: ['https://api.stripe.com/'], provider: 'stripe.com' } }),
+    'api:api.stripe.com/stripe',
+  );
+  assert.equal(
+    apiRecipe.computeId({ name: 'melodi', extra: { base_urls: ['https://api.insee.fr/melodi/'], provider: 'insee' } }),
+    'api:api.insee.fr/melodi',
+  );
+  // public-apis-shaped minimal record: no base_urls → provider fallback
+  assert.equal(
+    apiRecipe.computeId({ name: 'cat-facts', extra: { base_urls: [], provider: 'alexwohlbruck' } }),
+    'api:alexwohlbruck/cat-facts',
+  );
+});
+
+test('4.1-M08/D-05: dataset computeId = dataset:<origin.source>/<origin.source_id>', () => {
+  assert.equal(
+    datasetRecipe.computeId({ origin: { source: 'huggingface', source_id: 'nvidia/simready-assets' } }),
+    'dataset:huggingface/nvidia/simready-assets',
+  );
+  assert.equal(
+    datasetRecipe.computeId({ origin: { source: 'zenodo', source_id: '23888170' } }),
+    'dataset:zenodo/23888170',
+  );
+  // No origin at all: never throws, degenerate-but-stable id
+  assert.equal(datasetRecipe.computeId({}), 'dataset:/');
+});
+
+test('4.1-M08: api/dataset discover() yields zero items (stub contract)', async () => {
+  for (const r of [apiRecipe, datasetRecipe]) {
     const items = [];
     for await (const it of r.discover()) items.push(it);
     assert.equal(items.length, 0);

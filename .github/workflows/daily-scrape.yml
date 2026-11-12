@@ -13,6 +13,10 @@ on:
         description: 'Run the one-shot HNSW-vs-exact recall validation (adds ~60-100 min; needs warm skill-vectors cache)'
         type: boolean
         default: false
+      data_feeds:
+        description: 'Phase 4.2: run the api harvest/filter/embed/enrich/upload legs this run (branch measurement; main stays off until the flip)'
+        type: boolean
+        default: false
   push:
     branches: [main]
 
@@ -83,6 +87,12 @@ jobs:
     # back off. The gated steps AND-combine this flag; the skill side is untouched.
     env:
       PLUGINS_ENABLED: 'true'
+      # Phase 4.2 (v4.0 Data Feeds — docs/PHASE-4.0-SPEC.md): api pipeline flag. Resolves to 'false'
+      # on schedule/push and when the dispatch input is unset/false, so main is unchanged; dispatch
+      # with data_feeds=true to exercise the gated api steps on a branch. The flip (literal 'true'
+      # fallback) happens only after a green measured run — see
+      # .planning/phases/4.2-api-harvest-v1/4.2-MEASUREMENT.md.
+      DATA_FEEDS_ENABLED: ${{ inputs.data_feeds || 'false' }}
     steps:
       - uses: actions/checkout@v4
 
@@ -318,6 +328,52 @@ jobs:
         if: ${{ env.PLUGINS_ENABLED == 'true' && github.event_name != 'push' }}
         run: node scripts/link-bundles.js
 
+      # Phase 4.2 (D-07): api harvest. Restores the raw corpus + the feeds ETag sidecar
+      # (actions/cache multi-line path), runs the four-source harvester (no GitHub token:
+      # raw.githubusercontent.com is unauthenticated; apis.guru / data.gouv.fr are public),
+      # saves the cache even on failure so a partial corpus survives.
+      # FAILURE ISOLATION (PR #26): every api step is `continue-on-error: true` so an api
+      # failure never blocks the skill build/deploy/commit. Each downstream api step requires
+      # the upstream step's `outcome == 'success'` (outcome is the real result even with
+      # continue-on-error) AND its input file, so a failed harvest/filter never filters,
+      # embeds or publishes stale/empty data. No skill-side step references these step ids.
+      - name: Restore apis-raw cache
+        if: ${{ env.DATA_FEEDS_ENABLED == 'true' && github.event_name != 'push' }}
+        continue-on-error: true
+        uses: actions/cache/restore@v4
+        with:
+          path: |
+            data/apis-raw.ndjson
+            data/feeds-etag-cache.ndjson
+          key: apis-raw-ndjson-${{ github.run_number }}
+          restore-keys: |
+            apis-raw-ndjson-
+
+      - name: Run API harvest (harvest-apis)
+        id: harvest_apis
+        if: ${{ env.DATA_FEEDS_ENABLED == 'true' && github.event_name != 'push' }}
+        continue-on-error: true
+        run: node scripts/harvest-apis.js
+
+      - name: Save apis-raw cache
+        if: ${{ always() && env.DATA_FEEDS_ENABLED == 'true' && github.event_name != 'push' && hashFiles('data/apis-raw.ndjson') != '' }}
+        continue-on-error: true
+        uses: actions/cache/save@v4
+        with:
+          path: |
+            data/apis-raw.ndjson
+            data/feeds-etag-cache.ndjson
+          key: apis-raw-ndjson-${{ github.run_number }}
+
+      # Phase 4.2 (D-05): merge + score + tier api records → data/apis.ndjson; appends an `api`
+      # section to data/pipeline-stats.json (allowlisted sidecar). Fails loudly below 1,000 raw.
+      # Runs only on a successful harvest: the restored cache would otherwise feed yesterday's raw.
+      - name: Filter APIs
+        id: filter_apis
+        if: ${{ env.DATA_FEEDS_ENABLED == 'true' && github.event_name != 'push' && steps.harvest_apis.outcome == 'success' && hashFiles('data/apis-raw.ndjson') != '' }}
+        continue-on-error: true
+        run: node scripts/filter-apis.js
+
       # --- Semantic search: embed new/changed skills, upload to Vectorize ---
       # Embed step is resumable and idempotent: reads prior ndjson, only embeds
       # deltas. Safe to run on every workflow event. Upload step upserts into
@@ -417,6 +473,34 @@ jobs:
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
 
+      # Phase 4.2 (D-07): Embed APIs. Reads data/apis.ndjson, writes data/api-vectors.ndjson
+      # (metadata.entity_type=api → /api/v1/search?type=api). Unlike plugin vectors, the api
+      # vector file is GHA-cached (restore/save split like skill-vectors) so runs stay deltas.
+      - name: Restore api-vectors cache
+        if: ${{ env.DATA_FEEDS_ENABLED == 'true' && github.event_name != 'push' }}
+        continue-on-error: true
+        uses: actions/cache/restore@v4
+        with:
+          path: data/api-vectors.ndjson
+          key: api-vectors-${{ github.run_number }}
+          restore-keys: api-vectors-
+
+      - name: Embed APIs (OpenAI)
+        id: embed_apis
+        if: ${{ env.DATA_FEEDS_ENABLED == 'true' && github.event_name != 'push' && steps.filter_apis.outcome == 'success' && hashFiles('data/apis.ndjson') != '' }}
+        continue-on-error: true
+        run: node scripts/embed-skills.js --entity-type api
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+
+      - name: Save api-vectors cache
+        if: ${{ always() && env.DATA_FEEDS_ENABLED == 'true' && github.event_name != 'push' && hashFiles('data/api-vectors.ndjson') != '' }}
+        continue-on-error: true
+        uses: actions/cache/save@v4
+        with:
+          path: data/api-vectors.ndjson
+          key: api-vectors-${{ github.run_number }}
+
       # Phase 3.1: post-embed enrichment. Reads skills.ndjson + the freshly
       # updated skill-vectors.ndjson via the chunked NDJSON helper, computes
       # pairwise cosine to set is_duplicate / canonical_slug / novelty_score,
@@ -456,6 +540,13 @@ jobs:
         if: ${{ env.PLUGINS_ENABLED == 'true' && github.event_name != 'push' }}
         run: node scripts/enrich.js --input data/plugin-vectors.ndjson --records data/plugins.ndjson --entity-type plugin
 
+      # Phase 4.2: api IS enriched (D-03: embedding dedup catches same-API-different-host);
+      # mcp_server remains the only skipped type.
+      - name: Enrich APIs (dedup + novelty)
+        if: ${{ env.DATA_FEEDS_ENABLED == 'true' && github.event_name != 'push' && steps.embed_apis.outcome == 'success' && hashFiles('data/apis.ndjson') != '' }}
+        continue-on-error: true
+        run: node scripts/enrich.js --input data/api-vectors.ndjson --records data/apis.ndjson --entity-type api
+
       # quick-260804-d5p: versioned catalog composition snapshot. Runs AFTER
       # enrichment (so is_duplicate / quality_tier are fresh) and BEFORE the
       # Astro build. Writes one small committed file per day at
@@ -494,8 +585,12 @@ jobs:
         # without touching prod search.
         if: github.event_name != 'push' && github.ref == 'refs/heads/main'
         run: |
-          for f in data/skill-vectors.ndjson data/plugin-vectors.ndjson data/mcp-vectors.ndjson; do
-            if [ -f "$f" ]; then
+          for f in data/skill-vectors.ndjson data/plugin-vectors.ndjson data/mcp-vectors.ndjson data/api-vectors.ndjson; do
+            if [ -f "$f" ] && [ "$f" = data/api-vectors.ndjson ]; then
+              # PR #26: the api upload is non-fatal — an api failure must never block the skills deploy.
+              echo "Uploading vectors from $f (non-fatal)"
+              node scripts/upload-vectors.js --input "$f" || echo "::warning::api vector upload failed (non-fatal; skills deploy continues)"
+            elif [ -f "$f" ]; then
               echo "Uploading vectors from $f"
               node scripts/upload-vectors.js --input "$f"
             else
@@ -566,6 +661,42 @@ jobs:
           fi
           echo "Published $(wc -l < data/plugins.ndjson) plugins and $(wc -l < data/mcp-servers.ndjson) MCP servers to plugins-latest"
 
+      # Phase 4.2 (D-07): rotate apis-latest → apis-latest-prev (one-day rollback target),
+      # mirroring the skills-latest-prev step. Main-only AND flag-gated.
+      - name: Tag previous apis-latest as apis-latest-prev
+        if: ${{ env.DATA_FEEDS_ENABLED == 'true' && github.event_name != 'push' && github.ref == 'refs/heads/main' && steps.filter_apis.outcome == 'success' && hashFiles('data/apis.ndjson') != '' }}
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if gh release view apis-latest >/dev/null 2>&1; then
+            mkdir -p /tmp/prev-apis
+            gh release download apis-latest --pattern 'apis.ndjson' --output /tmp/prev-apis/apis.ndjson
+            gh release delete apis-latest-prev --yes 2>/dev/null || true
+            gh release create apis-latest-prev /tmp/prev-apis/apis.ndjson \
+              --notes "Previous apis-latest, kept for rollback. Auto-tagged $(date -u +%Y-%m-%dT%H:%M:%SZ)." \
+              --prerelease
+            echo "Tagged previous apis-latest as apis-latest-prev"
+          else
+            echo "First publish — no prior apis-latest to tag as prev"
+          fi
+
+      # Phase 4.2 (D-07): publish data/apis.ndjson as the `apis-latest` release asset so
+      # push-event rebuilds (and 4.3 pages) have api data. Main-only AND flag-gated.
+      - name: Publish apis-latest release asset
+        if: ${{ env.DATA_FEEDS_ENABLED == 'true' && github.event_name != 'push' && github.ref == 'refs/heads/main' && steps.filter_apis.outcome == 'success' && hashFiles('data/apis.ndjson') != '' }}
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if gh release view apis-latest >/dev/null 2>&1; then
+            gh release upload --clobber apis-latest data/apis.ndjson
+          else
+            gh release create apis-latest data/apis.ndjson \
+              --notes "Daily API NDJSON snapshot $(date -u +%Y-%m-%d)"
+          fi
+          echo "Published $(wc -l < data/apis.ndjson) api records to apis-latest"
+
       # T5 5e (Decision A): Publish per-slug records to Workers KV for
       # the Listed-tier dynamic render path in worker/index.js. Streams
       # data/skills.ndjson, computes content_sha per record, upserts only
@@ -628,6 +759,21 @@ jobs:
             echo "Fetched plugins.ndjson ($(wc -l < data/plugins.ndjson) records) and mcp-servers.ndjson ($(wc -l < data/mcp-servers.ndjson) records) from plugins-latest"
           else
             echo "::warning::plugins-latest release asset unavailable (expected before the first post-fix scheduled run). Building without plugin/MCP data this push."
+          fi
+
+      # Phase 4.2 (D-07): push-event fetch of apis-latest. NOT flag-gated (the asset simply
+      # does not exist until DATA_FEEDS is on for main); non-fatal either way.
+      - name: Fetch apis-latest release asset (push-event path)
+        if: github.event_name == 'push'
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          mkdir -p data
+          if gh release download apis-latest --pattern 'apis.ndjson' --output data/apis.ndjson 2>/dev/null; then
+            echo "Fetched apis.ndjson ($(wc -l < data/apis.ndjson) records) from apis-latest"
+          else
+            echo "::notice::apis-latest release asset unavailable (DATA_FEEDS not yet enabled on main). Building without api data this push."
           fi
 
       # T5 5e (Rev 2 B4): Regression guard. Rewritten from `JSON.parse(

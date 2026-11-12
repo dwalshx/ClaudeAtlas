@@ -1,0 +1,85 @@
+{
+ "count": 10,
+ "entries": [
+  {
+   "API": "Cat Facts",
+   "Description": "Random cat facts",
+   "Auth": "",
+   "Cors": "yes",
+   "Link": "https://catfact.ninja/",
+   "Category": "Animals"
+  },
+  {
+   "API": "GitHub",
+   "Description": "Make use of GitHub repositories, code and user info programmatically",
+   "Auth": "OAuth",
+   "Cors": "yes",
+   "Link": "https://docs.github.com/en/free-pro-team@latest/rest",
+   "Category": "Development"
+  },
+  {
+   "API": "OpenAI",
+   "Description": "Use AI models such as ChatGPT or DALL-E to experience the capabilities of AI",
+   "Auth": "apiKey",
+   "Cors": "yes",
+   "Link": "https://openai.com/index/openai-api",
+   "Category": "AI"
+  },
+  {
+   "API": "Stripe",
+   "Description": "Payment processing, subscriptions, and financial management",
+   "Auth": "apiKey",
+   "Cors": "unknown",
+   "Link": "https://stripe.com/docs/api",
+   "Category": "Finance"
+  },
+  {
+   "API": "Open Food Facts",
+   "Description": "Food Products Database",
+   "Auth": "",
+   "Cors": "unknown",
+   "Link": "https://world.openfoodfacts.org/data",
+   "Category": "Food & Drink"
+  },
+  {
+   "API": "ApexVerify",
+   "Description": "Verify emails, phone numbers, and addresses with real-time accuracy. Keep your contact data clean, compliant, and reliable with our all-in-one suite",
+   "Auth": "X-Mashape-Key",
+   "Cors": "no",
+   "Link": "https://apexverify.com",
+   "Category": "Data Validation"
+  },
+  {
+   "API": "Clarifai",
+   "Description": "Computer Vision",
+   "Auth": "OAuth",
+   "Cors": "unknown",
+   "Link": "https://docs.clarifai.com/api-guide/api-overview",
+   "Category": "AI"
+  },
+  {
+   "API": "Meteorologisk Institutt",
+   "Description": "Weather and climate data",
+   "Auth": "User-Agent",
+   "Cors": "unknown",
+   "Link": "https://api.met.no/weatherapi/documentation",
+   "Category": "Weather"
+  },
+  {
+   "API": "Advanced Multilanguage AI Translator (RapidAPI)",
+   "Description": "AI-powered translator supporting multiple languages with fast, context-aware responses",
+   "Auth": "apiKey",
+   "Cors": "yes",
+   "Link": "https://rapidapi.com/vintarok-vintarok-default/api/advanced-multilanguage-ai-translator-api-with-fast-responses",
+   "Category": "AI"
+  },
+  {
+   "API": "AI Learning Engine",
+   "Description": "Create, auto-grade, and analyze learning tasks with AI-based evaluations",
+   "Auth": "apiKey",
+   "Cors": "yes",
+   "Link": "https://rapidapi.com/vintarok-vintarok-default/api/ai-learning-engine-task-creation-auto-grading-api",
+   "Category": "AI"
+  }
+ ]
+}

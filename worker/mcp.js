@@ -38,6 +38,7 @@
  */
 
 import { CATEGORIES } from './agent-index.js';
+import { detailPathFor } from './search-results.js';
 
 export const MCP_PROTOCOL_VERSION = '2025-06-18';
 
@@ -256,7 +257,8 @@ async function callGetSkill(id, args, env) {
       repo_stars: record.repo_stars,
       repo_license: record.repo_license ?? null,
       install: `claude install-skill ${record.repo_full_name || ''}`,
-      detail_url: `https://claudeatlas.com/skills/${record.slug}/`,
+      // PR #26: per-entity-type detail page (unknown/missing → /skills/).
+      detail_url: `https://claudeatlas.com${detailPathFor(record.entity_type, record.slug)}`,
       body_markdown: String(body).slice(0, 1500),
     };
     return toolTextResult(id, trimmed);

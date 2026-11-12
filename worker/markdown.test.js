@@ -2,7 +2,7 @@
  * worker/markdown.test.js — Accept-header negotiation + markdown renderers
  * (quick-260806-ejd, E2).
  *
- * markdown.js is a pure ESM module (zero imports, zero I/O) so these tests
+ * markdown.js is a pure ESM module (zero I/O; only imports the pure search-results.js) so these tests
  * run under plain `node --test`. NEVER import worker/index.js here — it uses
  * native JSON imports that esbuild handles but plain Node cannot; its wiring
  * is verified by grep instead (Wave 1 convention).

@@ -1,0 +1,878 @@
+{
+ "data": [
+  {
+   "access_audiences": [],
+   "access_type": "open",
+   "access_type_reason": null,
+   "access_type_reason_category": null,
+   "acronym": null,
+   "archived_at": null,
+   "authorization_request_url": null,
+   "availability": 99.9,
+   "availability_url": null,
+   "badges": [
+    {
+     "kind": "hvd"
+    }
+   ],
+   "base_api_url": "https://api.insee.fr/melodi/",
+   "business_documentation_url": "https://portail-api.insee.fr/catalog/api/a890b735-159c-4c91-90b7-35159c7c9126/doc?page=712a242a-9d5c-4675-aa24-2a9d5c4675c4",
+   "contact_points": [
+    {
+     "contact_form": null,
+     "email": "support-apim@insee.fr",
+     "id": "6661ddf17b69c2c7a59dbf07",
+     "name": "Support APIM",
+     "organization": {
+      "acronym": null,
+      "badges": [
+       {
+        "kind": "public-service"
+       },
+       {
+        "kind": "certified"
+       }
+      ],
+      "class": "Organization",
+      "id": "534fff81a3a7292c64a77e5c",
+      "logo": "https://udata-avatars.s3.rbx.io.cloud.ovh.net/64/f90b7bc5674a8c9160fad0ec1def4d.png",
+      "logo_thumbnail": "https://udata-avatars.s3.rbx.io.cloud.ovh.net/64/f90b7bc5674a8c9160fad0ec1def4d-100.png",
+      "name": "Institut national de la statistique et des études économiques (Insee)",
+      "page": "https://www.data.gouv.fr/organizations/institut-national-de-la-statistique-et-des-etudes-economiques-insee",
+      "permissions": {
+       "delete": false,
+       "edit": false,
+       "harvest": false,
+       "members": false,
+       "private": false
+      },
+      "slug": "institut-national-de-la-statistique-et-des-etudes-economiques-insee",
+      "uri": "https://www.data.gouv.fr/api/1/organizations/institut-national-de-la-statistique-et-des-etudes-economiques-insee/"
+     },
+     "owner": null,
+     "role": "contact"
+    }
+   ],
+   "created_at": "2024-06-06T16:15:24.890000+00:00",
+   "datasets": {
+    "href": "https://www.data.gouv.fr/api/1/datasets/?dataservice=6661e09c7230a8fc3b1ec229",
+    "rel": "subsection",
+    "total": 104,
+    "type": "GET"
+   },
+   "deleted_at": null,
+   "description": "L'API Melodi donne accès aux données ouvertes répertoriées dans le catalogue des jeux de données de l'Insee (<https://catalogue-donnees.insee.fr/fr/catalogue/recherche>)\n\nLes services actuellement disponibles permettent d'interroger les jeux de données avec, d'une part, la description des jeux de données et la structure des données diffusées, et, d'autre part, les données elles-mêmes qui peuvent être filtrées au moment de la requête sur de multiples critères ou être téléchargées en intégralité pour chaque jeu de données.\n\nLes données disponibles par l'API Melodi font l'objet d'un travail d'harmonisation de métadonnées, ainsi la documentation des variables peut différer de celle présente sur les publications du site insee.fr.\n\nLimites de responsabilité : L’Insee décline toute responsabilité quant à la pertinence des informations fournies au regard des besoins particuliers des internautes et, a fortiori, quant aux utilisations qu’ils sont susceptibles d’en faire.\n\nDe même, l’Insee ne prend aucun engagement concernant les sites auxquels il donne accès au travers de son site, et en particulier ne saurait être responsable de leur contenu. Par ailleurs, les risques liés à leur utilisation incombent pleinement à l’internaute, et notamment ceux liés à l’existence de virus ou de tout autre parasite de nature destructive.\n\nPlus d'informations ici : <https://portail-api.insee.fr/catalog/api/a890b735-159c-4c91-90b7-35159c7c9126/doc>\n",
+   "extras": {},
+   "featured": null,
+   "format": null,
+   "harvest": {
+    "archived_at": null,
+    "archived_reason": null,
+    "backend": null,
+    "created_at": null,
+    "domain": null,
+    "issued_at": null,
+    "last_update": null,
+    "modified_at": null,
+    "remote_id": null,
+    "remote_url": null,
+    "source_id": null,
+    "source_url": null,
+    "uri": null
+   },
+   "id": "6661e09c7230a8fc3b1ec229",
+   "license": "lov2",
+   "machine_documentation_url": "https://api-apimanager.insee.fr/portal/environments/DEFAULT/apis/a890b735-159c-4c91-90b7-35159c7c9126/pages/ee625968-272a-4637-a259-68272aa63766/content",
+   "metadata_modified_at": "2026-11-05T13:21:25.919000+00:00",
+   "metrics": {
+    "discussions": 0,
+    "discussions_open": 0,
+    "followers": 19,
+    "followers_by_months": {
+     "2025-09": 0,
+     "2025-10": 0,
+     "2025-11": 0,
+     "2025-12": 0,
+     "2026-01": 0,
+     "2026-02": 0,
+     "2026-03": 0,
+     "2026-04": 0,
+     "2026-05": 0,
+     "2026-06": 0,
+     "2026-07": 0,
+     "2026-08": 0,
+     "2026-09": 0
+    },
+    "reuses": 14,
+    "views": 35996
+   },
+   "organization": {
+    "acronym": null,
+    "badges": [
+     {
+      "kind": "public-service"
+     },
+     {
+      "kind": "certified"
+     }
+    ],
+    "class": "Organization",
+    "id": "534fff81a3a7292c64a77e5c",
+    "logo": "https://udata-avatars.s3.rbx.io.cloud.ovh.net/64/f90b7bc5674a8c9160fad0ec1def4d.png",
+    "logo_thumbnail": "https://udata-avatars.s3.rbx.io.cloud.ovh.net/64/f90b7bc5674a8c9160fad0ec1def4d-100.png",
+    "name": "Institut national de la statistique et des études économiques (Insee)",
+    "page": "https://www.data.gouv.fr/organizations/institut-national-de-la-statistique-et-des-etudes-economiques-insee",
+    "permissions": {
+     "delete": false,
+     "edit": false,
+     "harvest": false,
+     "members": false,
+     "private": false
+    },
+    "slug": "institut-national-de-la-statistique-et-des-etudes-economiques-insee",
+    "uri": "https://www.data.gouv.fr/api/1/organizations/institut-national-de-la-statistique-et-des-etudes-economiques-insee/"
+   },
+   "owner": null,
+   "permissions": {
+    "delete": false,
+    "edit": false
+   },
+   "private": false,
+   "quality": {
+    "access_conditions_clear": true,
+    "availability_documented": true,
+    "has_base_api_url": true,
+    "has_business_documentation": true,
+    "has_contact_point": true,
+    "has_description": true,
+    "has_machine_documentation": true,
+    "has_technical_documentation": true,
+    "license": true,
+    "rate_limiting_documented": true,
+    "score": 1
+   },
+   "rate_limiting": "20 interrogations par seconde dans le cadre d'une navigation sans identification",
+   "rate_limiting_url": "https://portail-api.insee.fr/catalog/api/a890b735-159c-4c91-90b7-35159c7c9126/doc?page=e58bbbe2-e906-4ac9-8bbb-e2e9069ac9d9#4-limites-dutilisation",
+   "self_api_url": "https://www.data.gouv.fr/api/1/dataservices/api-melodi/",
+   "self_web_url": "https://www.data.gouv.fr/dataservices/api-melodi",
+   "slug": "api-melodi",
+   "tags": [
+    "hvd",
+    "statistiques"
+   ],
+   "technical_documentation_url": "https://portail-api.insee.fr/catalog/api/a890b735-159c-4c91-90b7-35159c7c9126/doc?page=ee625968-272a-4637-a259-68272aa63766",
+   "title": "API Melodi"
+  },
+  {
+   "access_audiences": [],
+   "access_type": "open_with_account",
+   "access_type_reason": null,
+   "access_type_reason_category": null,
+   "acronym": "Ciblée radar",
+   "archived_at": null,
+   "authorization_request_url": "https://portail-api.meteofrance.fr/accountrecoveryendpoint/register.do",
+   "availability": 99.9,
+   "availability_url": null,
+   "badges": [
+    {
+     "kind": "hvd"
+    }
+   ],
+   "base_api_url": "https://portail-api.meteofrance.fr/web/fr/api/DonneesPubliquesRadar",
+   "business_documentation_url": "https://confluence-meteofrance.atlassian.net/wiki/spaces/OpenDataMeteoFrance/pages/853639355/API+Cibl+e+Radar",
+   "contact_points": [
+    {
+     "contact_form": null,
+     "email": "contact.api@meteo.fr",
+     "id": "6661de3080af2e6f478a53f7",
+     "name": "Support API Météo-France",
+     "organization": {
+      "acronym": null,
+      "badges": [
+       {
+        "kind": "public-service"
+       },
+       {
+        "kind": "certified"
+       }
+      ],
+      "class": "Organization",
+      "id": "534fff8ba3a7292c64a77ed4",
+      "logo": "https://udata-avatars.s3.rbx.io.cloud.ovh.net/81/6374003e904fad9ddac7436315fd15.png",
+      "logo_thumbnail": "https://udata-avatars.s3.rbx.io.cloud.ovh.net/81/6374003e904fad9ddac7436315fd15-100.png",
+      "name": "Météo-France",
+      "page": "https://www.data.gouv.fr/organizations/meteo-france",
+      "permissions": {
+       "delete": false,
+       "edit": false,
+       "harvest": false,
+       "members": false,
+       "private": false
+      },
+      "slug": "meteo-france",
+      "uri": "https://www.data.gouv.fr/api/1/organizations/meteo-france/"
+     },
+     "owner": null,
+     "role": "contact"
+    }
+   ],
+   "created_at": "2024-06-06T16:28:35.375000+00:00",
+   "datasets": {
+    "href": "https://www.data.gouv.fr/api/1/datasets/?dataservice=6661e3b3ac0706063080aa40",
+    "rel": "subsection",
+    "total": 1,
+    "type": "GET"
+   },
+   "deleted_at": null,
+   "description": "Dernières données radar (fréquence 5 min) à l'échelle de la station ou sous forme de mosaïque France Métropole ou de mosaïque Outre Mer. Possibilité de cibler la zone et le type de donnée à récupérer (réflectivité, lame d'eau, PAM, PAG).\n",
+   "extras": {},
+   "featured": null,
+   "format": null,
+   "harvest": {
+    "archived_at": null,
+    "archived_reason": null,
+    "backend": null,
+    "created_at": null,
+    "domain": null,
+    "issued_at": null,
+    "last_update": null,
+    "modified_at": null,
+    "remote_id": null,
+    "remote_url": null,
+    "source_id": null,
+    "source_url": null,
+    "uri": null
+   },
+   "id": "6661e3b3ac0706063080aa40",
+   "license": "lov2",
+   "machine_documentation_url": "https://portail-api.meteofrance.fr/api/am/devportal/v3/apis/fd7d27d0-9f8e-491a-94ce-8d281edb201d/swagger?environmentName=APIS%20publiques",
+   "metadata_modified_at": "2026-09-24T17:12:53.367000+00:00",
+   "metrics": {
+    "discussions": 0,
+    "discussions_open": 0,
+    "followers": 3,
+    "followers_by_months": {
+     "2025-07": 0,
+     "2025-08": 0,
+     "2025-09": 0,
+     "2025-10": 0,
+     "2025-11": 0,
+     "2025-12": 0,
+     "2026-01": 0,
+     "2026-02": 0,
+     "2026-03": 0,
+     "2026-04": 0,
+     "2026-05": 0,
+     "2026-06": 0,
+     "2026-07": 0
+    },
+    "reuses": 0,
+    "views": 6874
+   },
+   "organization": {
+    "acronym": null,
+    "badges": [
+     {
+      "kind": "public-service"
+     },
+     {
+      "kind": "certified"
+     }
+    ],
+    "class": "Organization",
+    "id": "534fff8ba3a7292c64a77ed4",
+    "logo": "https://udata-avatars.s3.rbx.io.cloud.ovh.net/81/6374003e904fad9ddac7436315fd15.png",
+    "logo_thumbnail": "https://udata-avatars.s3.rbx.io.cloud.ovh.net/81/6374003e904fad9ddac7436315fd15-100.png",
+    "name": "Météo-France",
+    "page": "https://www.data.gouv.fr/organizations/meteo-france",
+    "permissions": {
+     "delete": false,
+     "edit": false,
+     "harvest": false,
+     "members": false,
+     "private": false
+    },
+    "slug": "meteo-france",
+    "uri": "https://www.data.gouv.fr/api/1/organizations/meteo-france/"
+   },
+   "owner": null,
+   "permissions": {
+    "delete": false,
+    "edit": false
+   },
+   "private": false,
+   "quality": {
+    "access_conditions_clear": true,
+    "availability_documented": true,
+    "has_base_api_url": true,
+    "has_business_documentation": true,
+    "has_contact_point": true,
+    "has_description": true,
+    "has_machine_documentation": true,
+    "has_technical_documentation": true,
+    "license": true,
+    "rate_limiting_documented": true,
+    "score": 1
+   },
+   "rate_limiting": "850 req/5mins",
+   "rate_limiting_url": null,
+   "self_api_url": "https://www.data.gouv.fr/api/1/dataservices/api-donnees-radar/",
+   "self_web_url": "https://www.data.gouv.fr/dataservices/api-donnees-radar",
+   "slug": "api-donnees-radar",
+   "tags": [
+    "hvd",
+    "meteorologiques"
+   ],
+   "technical_documentation_url": "https://portail-api.meteofrance.fr/web/fr/api/test/fd7d27d0-9f8e-491a-94ce-8d281edb201d/",
+   "title": "API Données Radar"
+  },
+  {
+   "access_audiences": [],
+   "access_type": "open_with_account",
+   "access_type_reason": null,
+   "access_type_reason_category": null,
+   "acronym": null,
+   "archived_at": null,
+   "authorization_request_url": "https://portail-api.meteofrance.fr",
+   "availability": 99.9,
+   "availability_url": null,
+   "badges": [
+    {
+     "kind": "hvd"
+    }
+   ],
+   "base_api_url": "https://portail-api.meteofrance.fr/web/fr/api/DonneesPubliquesVigilance",
+   "business_documentation_url": "https://confluence-meteofrance.atlassian.net/wiki/spaces/OpenDataMeteoFrance/pages/854065168/API+Bulletin+Vigilance",
+   "contact_points": [
+    {
+     "contact_form": null,
+     "email": "contact.api@meteo.fr",
+     "id": "6661de3080af2e6f478a53f7",
+     "name": "Support API Météo-France",
+     "organization": {
+      "acronym": null,
+      "badges": [
+       {
+        "kind": "public-service"
+       },
+       {
+        "kind": "certified"
+       }
+      ],
+      "class": "Organization",
+      "id": "534fff8ba3a7292c64a77ed4",
+      "logo": "https://udata-avatars.s3.rbx.io.cloud.ovh.net/81/6374003e904fad9ddac7436315fd15.png",
+      "logo_thumbnail": "https://udata-avatars.s3.rbx.io.cloud.ovh.net/81/6374003e904fad9ddac7436315fd15-100.png",
+      "name": "Météo-France",
+      "page": "https://www.data.gouv.fr/organizations/meteo-france",
+      "permissions": {
+       "delete": false,
+       "edit": false,
+       "harvest": false,
+       "members": false,
+       "private": false
+      },
+      "slug": "meteo-france",
+      "uri": "https://www.data.gouv.fr/api/1/organizations/meteo-france/"
+     },
+     "owner": null,
+     "role": "contact"
+    }
+   ],
+   "created_at": "2024-06-06T16:30:01.725000+00:00",
+   "datasets": {
+    "href": "https://www.data.gouv.fr/api/1/datasets/?dataservice=6661e4099e5c08ae03ef7904",
+    "rel": "subsection",
+    "total": 1,
+    "type": "GET"
+   },
+   "deleted_at": null,
+   "description": "Flux de la Vigilance de Météo-France qui indique le niveau de danger d'une situation météorologique pour chaque département. Formats téléchargeables : un produit \"bulletin\" de Vigilance, au format JSON : ce produit contient le texte des bulletins de suivi diffusés, qu’ils soient nationaux, zonaux (au sens zones de défense) ou départementaux. un produit \"carte\" de Vigilance, au format JSON : ce produit contient les prévisions de risque, dont la chronologie des phénomènes, de niveau national et départemental. trois vignettes des cartes nationales de Vigilance à haute définition et au format PNG pour J et J+1, J seul, J+1 seul.\n",
+   "extras": {},
+   "featured": null,
+   "format": null,
+   "harvest": {
+    "archived_at": null,
+    "archived_reason": null,
+    "backend": null,
+    "created_at": null,
+    "domain": null,
+    "issued_at": null,
+    "last_update": null,
+    "modified_at": null,
+    "remote_id": null,
+    "remote_url": null,
+    "source_id": null,
+    "source_url": null,
+    "uri": null
+   },
+   "id": "6661e4099e5c08ae03ef7904",
+   "license": "lov2",
+   "machine_documentation_url": "https://portail-api.meteofrance.fr/api/am/devportal/v3/apis/ed0ad072-a309-4d13-b518-df4e9f8dbbea/swagger?environmentName=APIS%20publiques",
+   "metadata_modified_at": "2026-09-24T17:17:46.841000+00:00",
+   "metrics": {
+    "discussions": 1,
+    "discussions_open": 0,
+    "followers": 11,
+    "followers_by_months": {
+     "2025-06": 0,
+     "2025-07": 0,
+     "2025-08": 0,
+     "2025-09": 0,
+     "2025-10": 0,
+     "2025-11": 0,
+     "2025-12": 0,
+     "2026-01": 0,
+     "2026-02": 0,
+     "2026-03": 0,
+     "2026-04": 0,
+     "2026-05": 0,
+     "2026-06": 0
+    },
+    "reuses": 8,
+    "views": 26934
+   },
+   "organization": {
+    "acronym": null,
+    "badges": [
+     {
+      "kind": "public-service"
+     },
+     {
+      "kind": "certified"
+     }
+    ],
+    "class": "Organization",
+    "id": "534fff8ba3a7292c64a77ed4",
+    "logo": "https://udata-avatars.s3.rbx.io.cloud.ovh.net/81/6374003e904fad9ddac7436315fd15.png",
+    "logo_thumbnail": "https://udata-avatars.s3.rbx.io.cloud.ovh.net/81/6374003e904fad9ddac7436315fd15-100.png",
+    "name": "Météo-France",
+    "page": "https://www.data.gouv.fr/organizations/meteo-france",
+    "permissions": {
+     "delete": false,
+     "edit": false,
+     "harvest": false,
+     "members": false,
+     "private": false
+    },
+    "slug": "meteo-france",
+    "uri": "https://www.data.gouv.fr/api/1/organizations/meteo-france/"
+   },
+   "owner": null,
+   "permissions": {
+    "delete": false,
+    "edit": false
+   },
+   "private": false,
+   "quality": {
+    "access_conditions_clear": true,
+    "availability_documented": true,
+    "has_base_api_url": true,
+    "has_business_documentation": true,
+    "has_contact_point": true,
+    "has_description": true,
+    "has_machine_documentation": true,
+    "has_technical_documentation": true,
+    "license": true,
+    "rate_limiting_documented": true,
+    "score": 1
+   },
+   "rate_limiting": "60 req/min",
+   "rate_limiting_url": null,
+   "self_api_url": "https://www.data.gouv.fr/api/1/dataservices/api-bulletin-vigilance/",
+   "self_web_url": "https://www.data.gouv.fr/dataservices/api-bulletin-vigilance",
+   "slug": "api-bulletin-vigilance",
+   "tags": [
+    "hvd",
+    "meteorologiques"
+   ],
+   "technical_documentation_url": "https://portail-api.meteofrance.fr/web/fr/api/test/ed0ad072-a309-4d13-b518-df4e9f8dbbea",
+   "title": "API Bulletin Vigilance"
+  },
+  {
+   "access_audiences": [],
+   "access_type": "restricted",
+   "access_type_reason": null,
+   "access_type_reason_category": null,
+   "acronym": null,
+   "archived_at": null,
+   "authorization_request_url": null,
+   "availability": null,
+   "availability_url": null,
+   "badges": [],
+   "base_api_url": "https://data.eurelien.fr/api/explore/v2.1/",
+   "business_documentation_url": null,
+   "contact_points": [],
+   "created_at": "2024-07-12T00:04:04.431000+00:00",
+   "datasets": {
+    "href": "https://www.data.gouv.fr/api/1/datasets/?dataservice=669072f4fba98e775b0f7faf",
+    "rel": "subsection",
+    "total": 35,
+    "type": "GET"
+   },
+   "deleted_at": null,
+   "description": "",
+   "extras": {},
+   "featured": null,
+   "format": null,
+   "harvest": {
+    "archived_at": null,
+    "archived_reason": null,
+    "backend": "DCAT",
+    "created_at": null,
+    "domain": "data.eurelien.fr",
+    "issued_at": null,
+    "last_update": "2026-11-05T00:13:03.241000+00:00",
+    "modified_at": null,
+    "remote_id": "https://data.eurelien.fr/api/explore/v2.1/",
+    "remote_url": "https://data.eurelien.fr/api-console/explore/v2.1/",
+    "source_id": "5a71ef40c751df47c37a2460",
+    "source_url": "https://data.eurelien.fr/api/explore/v2.1/catalog/exports/dcat/?where=publisher%3D%22CD28%22&include_exports=json%2Ccsv%2Cshp%2Cgeojson&lang=fr",
+    "uri": "https://data.eurelien.fr/api/explore/v2.1/"
+   },
+   "id": "669072f4fba98e775b0f7faf",
+   "license": null,
+   "machine_documentation_url": "https://data.eurelien.fr/api/explore/v2.1/swagger.json",
+   "metadata_modified_at": "2026-11-05T00:13:03.241000+00:00",
+   "metrics": {
+    "discussions": 0,
+    "discussions_open": 0,
+    "followers": 0,
+    "followers_by_months": 0,
+    "reuses": 0,
+    "views": 1619
+   },
+   "organization": {
+    "acronym": "CD28",
+    "badges": [
+     {
+      "kind": "local-authority"
+     },
+     {
+      "kind": "certified"
+     }
+    ],
+    "class": "Organization",
+    "id": "58b3e7e588ee3814c598d150",
+    "logo": "https://udata-avatars.s3.rbx.io.cloud.ovh.net/18/b9839625e84b1d9ba37db2705998f2.jpg",
+    "logo_thumbnail": "https://udata-avatars.s3.rbx.io.cloud.ovh.net/18/b9839625e84b1d9ba37db2705998f2-100.jpg",
+    "name": "Conseil départemental d'Eure-et-Loir",
+    "page": "https://www.data.gouv.fr/organizations/conseil-departemental-deure-et-loir",
+    "permissions": {
+     "delete": false,
+     "edit": false,
+     "harvest": false,
+     "members": false,
+     "private": false
+    },
+    "slug": "conseil-departemental-deure-et-loir",
+    "uri": "https://www.data.gouv.fr/api/1/organizations/conseil-departemental-deure-et-loir/"
+   },
+   "owner": null,
+   "permissions": {
+    "delete": false,
+    "edit": false
+   },
+   "private": false,
+   "quality": {
+    "access_conditions_clear": false,
+    "availability_documented": false,
+    "has_base_api_url": true,
+    "has_business_documentation": false,
+    "has_contact_point": false,
+    "has_description": false,
+    "has_machine_documentation": true,
+    "has_technical_documentation": false,
+    "license": false,
+    "rate_limiting_documented": false,
+    "score": 0.2857142857142857
+   },
+   "rate_limiting": null,
+   "rate_limiting_url": null,
+   "self_api_url": "https://www.data.gouv.fr/api/1/dataservices/explore-api-v2-56/",
+   "self_web_url": "https://www.data.gouv.fr/dataservices/explore-api-v2-56",
+   "slug": "explore-api-v2-56",
+   "tags": [],
+   "technical_documentation_url": null,
+   "title": "Explore API v2 https://data.eurelien.fr"
+  },
+  {
+   "access_audiences": [],
+   "access_type": "restricted",
+   "access_type_reason": null,
+   "access_type_reason_category": null,
+   "acronym": null,
+   "archived_at": null,
+   "authorization_request_url": "https://datapass.api.gouv.fr/demandes/api_sfip/nouveau",
+   "availability": null,
+   "availability_url": null,
+   "badges": [],
+   "base_api_url": null,
+   "business_documentation_url": "https://www.impots.gouv.fr/sites/default/files/media/1_metier/stats_et_donnees/api/docs-fonctionnelles-cgu/documentation_fonctionnelle-api_sfip_v0-11.pdf",
+   "contact_points": [
+    {
+     "contact_form": null,
+     "email": "dtnum.donnees.demande-acces@dgfip.finances.gouv.fr",
+     "id": "672cf66eee9a5fed20dd93e2",
+     "name": "dtnum.donnees.demande-acces@dgfip.finances.gouv.fr",
+     "organization": {
+      "acronym": "MEF",
+      "badges": [
+       {
+        "kind": "public-service"
+       },
+       {
+        "kind": "certified"
+       }
+      ],
+      "class": "Organization",
+      "id": "534fff8ea3a7292c64a77f02",
+      "logo": "https://udata-avatars.s3.rbx.io.cloud.ovh.net/3b/06ce9c1027460a87364418789747b6.jpg",
+      "logo_thumbnail": "https://udata-avatars.s3.rbx.io.cloud.ovh.net/3b/06ce9c1027460a87364418789747b6-100.jpg",
+      "name": "Ministères économiques et financiers",
+      "page": "https://www.data.gouv.fr/organizations/ministeres-economiques-et-financiers",
+      "permissions": {
+       "delete": false,
+       "edit": false,
+       "harvest": false,
+       "members": false,
+       "private": false
+      },
+      "slug": "ministeres-economiques-et-financiers",
+      "uri": "https://www.data.gouv.fr/api/1/organizations/ministeres-economiques-et-financiers/"
+     },
+     "owner": null,
+     "role": "contact"
+    }
+   ],
+   "created_at": "2024-11-07T17:18:38.859000+00:00",
+   "datasets": {
+    "href": "https://www.data.gouv.fr/api/1/datasets/?dataservice=672cf66ef8b5d52b76263398",
+    "rel": "subsection",
+    "total": 0,
+    "type": "GET"
+   },
+   "deleted_at": null,
+   "description": "> *Tous les premiers vendredis du mois à 10h, un bureau ouvert vous permet de venir poser vos questions, 20 places sont disponibles par mois, [inscrivez-vous ici](https://grist.numerique.gouv.fr/o/docs/forms/rsCkGhjBL1sapVBrPT6Bkg/4). Cet espace est destiné à apporter clarifications et précisions à toutes les phases de l'accès aux données protégées de la DGFiP.*\n\n### **Description**\n\nL’API SFiP rassemblera pour vous les données strictement nécessaires issues de différents référentiels et API de la DGFiP, en excluant les données intermédiaires.\n\nLe courtier SFiP est un service de la DGFiP simplifiant le recours aux différentes API de la DGFiP. Il permet aux partenaires, entité administrative (administration, ministère, organisme public, collectivité) ou entreprise, de récupérer les données strictement nécessaires à la simplification des démarches des usagers et au processus de gestion des téléservices.\n\nPour ce faire, il enchaîne pour le compte du partenaire, les appels aux différents référentiels et API de la DGFiP et restitue les données qu’il aura rassemblées en excluant les données intermédiaires.\n\nL’API SFiP propose deux fonctionnalités :\n\n\\- la recherche des personnes physiques, reprise de l’ancienne API R2P ;\n\n\\- la fonction de courtier qui permet l’enchaînement vers les autres API de la DGFiP.\n\n* Les API partenaires de SFiP :\n\n- API Impôt particulier\n\nL'API Impôt particulier simplifie les démarches des usagers et le processus de gestion de vos téléservices. Elle permet l’échange d’informations fiscales entre la DGFiP et une entité administrative (administration, ministère, organisme public, collectivité) ou une entreprise dans le cadre de leurs obligations légales et réglementaires pour des missions d’intérêts général.\n\nL’API Impôt particulier peut restituer différentes données fiscales issues de la déclaration annuelle de revenus soumise à taxation.\n\n### **A quoi sert l’API SFiP ?**\n\nPour l’acteur qui le met en place :\n\n* Réduction des coûts de traitements Back office\n* Transmission par la DGFiP de données fiables et fraîches\n* Simplification (un seul DataPass nécessaire pour se raccorder à plusieurs APIs)\n* Sécurisation juridique et administrative\n\nExemples de cas d'utilisation :\n\n* pour une collectivité locale dans le cadre de la prise en charge d'une facture afin de fiabiliser l'état civil du débiteur ;\n\n- pour une banque dans le cadre du contrôle de l'éligibilité des conditions d'ouverture d'un Livret d’Épargne Populaire (LEP).\n\n### Les données disponibles dans l’API\n\nL’API SFiP peut restituer sous réserve du respect des conditions juridiques requises, et sur demande des partenaires, toutes les données des API DGFiP existantes.\n\nElle fait appel aux différents référentiels nationaux de la DGFiP afin de rechercher et de restituer des éléments relatifs à l'état civil et l'adresse d'un usager.\n\nLe tableau ci-dessous présente un exemple non exhaustif du type de données restituées :\n\n\\- Données concernant la recherche des personnes physiques\n\n| Nom de la donnée | Commentaire                                          |\n| :--------------- | :--------------------------------------------------- |\n| Etat civil       | Nom, prénom, date de naissance et lieu de naissance  |\n| Adresse          | Dernière adresse connue par l’administration fiscale |\n| SPI              | Identifiant fiscal                                   |\n\n* Données issues des différentes API de la DGFiP :\n\nExemple de données disponibles dans l’API Impôt particulier\n\n| Nom de la donnée                                           |\n| :--------------------------------------------------------- |\n| Revenu fiscal de référence (RFR)                           |\n| Nombre de parts fiscales                                   |\n| Situation familiale                                        |\n| Adresse fiscale de taxation                                |\n| Éligibilité à la détention d’un livret d’épargne populaire |\n\n### **En savoir plus**\n\nConcernant la partie recherche des personnes physiques, l’API SFiP propose 4 modes d’interrogation :\n\n| Mode d'interrogation                     | Détail                                                                                                                                                                                                                                                                                                                                                               |\n| :--------------------------------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |\n| état civil complet                       | Nom, prénom, date de naissance et lieu de naissance                                                                                                                                                                                                                                                                                                                  |\n| état civil dégradé et éléments d'adresse | les nom et prénom doivent alors être impérativement renseignés, de même que les éléments suivants : code pays, code département, et code commune de l'adresse. Les autres éléments d'état civil (date et lieu de naissance) et les autres éléments d'adresse (libellé voie, numéro de voirie et indice de répétition) peuvent être renseignés de manière facultative |\n| SPI                                      | Identifiant fiscal                                                                                                                                                                                                                                                                                                                                                   |\n| état civil dégradé                       | Nom, prénom et date de naissance (lieu de naissance facultatif)                                                                                                                                                                                                                                                                                                      |\n",
+   "extras": {
+    "availability_url": "",
+    "is_franceconnect": false,
+    "public_cible": []
+   },
+   "featured": null,
+   "format": null,
+   "harvest": {
+    "archived_at": null,
+    "archived_reason": null,
+    "backend": null,
+    "created_at": null,
+    "domain": null,
+    "issued_at": null,
+    "last_update": null,
+    "modified_at": null,
+    "remote_id": null,
+    "remote_url": null,
+    "source_id": null,
+    "source_url": null,
+    "uri": null
+   },
+   "id": "672cf66ef8b5d52b76263398",
+   "license": null,
+   "machine_documentation_url": "https://raw.githubusercontent.com/betagouv/api_gouv_swaggers/refs/heads/main/swaggers/API-SFIP.json",
+   "metadata_modified_at": "2026-10-20T14:07:43.517000+00:00",
+   "metrics": {
+    "discussions": 1,
+    "discussions_open": 1,
+    "followers": 3,
+    "followers_by_months": {
+     "2025-08": 0,
+     "2025-09": 0,
+     "2025-10": 0,
+     "2025-11": 0,
+     "2025-12": 0,
+     "2026-01": 0,
+     "2026-02": 0,
+     "2026-03": 0,
+     "2026-04": 0,
+     "2026-05": 0,
+     "2026-06": 0,
+     "2026-07": 0,
+     "2026-08": 0
+    },
+    "reuses": 0,
+    "views": 14195
+   },
+   "organization": {
+    "acronym": "MEF",
+    "badges": [
+     {
+      "kind": "public-service"
+     },
+     {
+      "kind": "certified"
+     }
+    ],
+    "class": "Organization",
+    "id": "534fff8ea3a7292c64a77f02",
+    "logo": "https://udata-avatars.s3.rbx.io.cloud.ovh.net/3b/06ce9c1027460a87364418789747b6.jpg",
+    "logo_thumbnail": "https://udata-avatars.s3.rbx.io.cloud.ovh.net/3b/06ce9c1027460a87364418789747b6-100.jpg",
+    "name": "Ministères économiques et financiers",
+    "page": "https://www.data.gouv.fr/organizations/ministeres-economiques-et-financiers",
+    "permissions": {
+     "delete": false,
+     "edit": false,
+     "harvest": false,
+     "members": false,
+     "private": false
+    },
+    "slug": "ministeres-economiques-et-financiers",
+    "uri": "https://www.data.gouv.fr/api/1/organizations/ministeres-economiques-et-financiers/"
+   },
+   "owner": null,
+   "permissions": {
+    "delete": false,
+    "edit": false
+   },
+   "private": false,
+   "quality": {
+    "access_conditions_clear": true,
+    "availability_documented": false,
+    "has_base_api_url": false,
+    "has_business_documentation": true,
+    "has_contact_point": true,
+    "has_description": true,
+    "has_machine_documentation": true,
+    "has_technical_documentation": false,
+    "license": false,
+    "rate_limiting_documented": true,
+    "score": 0.7142857142857143
+   },
+   "rate_limiting": "illimité\nLe volume d’utilisation du courtier SFiP n’est pas limité par défaut, mais fait l’objet d’une déclaration lors de votre demande d’accès. En cas d’utilisation abusive, la DGFiP se réserve le droit de restreindre et/ou couper votre accès à tout moment.\n",
+   "rate_limiting_url": null,
+   "self_api_url": "https://www.data.gouv.fr/api/1/dataservices/api-service-finances-publiques-sfip/",
+   "self_web_url": "https://www.data.gouv.fr/dataservices/api-service-finances-publiques-sfip",
+   "slug": "api-service-finances-publiques-sfip",
+   "tags": [
+    "adresse",
+    "impots",
+    "justificatif-de-domicile",
+    "particulier",
+    "revenu-fiscal-de-reference"
+   ],
+   "technical_documentation_url": null,
+   "title": "API Service Finances Publiques (SFiP)"
+  },
+  {
+   "access_audiences": [],
+   "access_type": "open",
+   "access_type_reason": null,
+   "access_type_reason_category": null,
+   "acronym": "CROUStillant",
+   "archived_at": null,
+   "authorization_request_url": null,
+   "availability": 100,
+   "availability_url": null,
+   "badges": [],
+   "base_api_url": "https://api.croustillant.menu",
+   "business_documentation_url": "https://github.com/CROUStillant-Developpement",
+   "contact_points": [],
+   "created_at": "2025-02-20T18:14:24.530000+00:00",
+   "datasets": {
+    "href": "https://www.data.gouv.fr/api/1/datasets/?dataservice=67b771005febee7f11a51520",
+    "rel": "subsection",
+    "total": 4,
+    "type": "GET"
+   },
+   "deleted_at": null,
+   "description": "### 📝 • Introduction\n\nCROUStillant est un projet open-source et gratuit qui a pour but de fournir des informations sur les menus des restaurants universitaires CROUS en France et en Outre-Mer.\n\nCette API alimente aussi le site internet de CROUStillant qui est disponible ici : [croustillant.menu/fr](https://croustillant.menu/fr)\n\nL'API CROUStillant permet d'accéder à toutes les informations stockées dans la base de données du projet :\n\n* Les régions où se trouvent les restaurants universitaires.\n\n* Les restaurants universitaires.\n\n* Les menus et plats proposés par les restaurants universitaires.\n\n \n\nPour en apprendre plus sur le projet, rendez vous ici : [croustillant.menu/fr/about](https://croustillant.menu/fr/about)\n\n‎ \n\n### 🔒 • Authentification\n\nL'API CROUStillant ne nécessite pas d'authentification pour accéder aux données. Cependant **les requêtes sont limitées à 200 par minute par adresse IP**.\n\n🏫 *Si vous êtes une organisation (université, entreprise, association, etc.), ou un particulier et que vous avez besoin de plus de requêtes, vous pouvez nous contacter à l'adresse suivante :* *<croustillant@bayfield.dev>* *!*\n\n‎ \n\n### ⚙️ • Données\n\n* Les données sont mises à jour 4 fois par jour (1h, 9h, 11h et 15h).\n\n* Toutes les dates sont stockées en UTC+0.\n\n‎ \n\n### 📄 • Termes d'utilisation\n\nIl y a quelques règles à respecter pour toute utilisation de l'API CROUStillant :\n\n* Vous ne pouvez pas utiliser l'API à des fins commerciales.\n\n* Vous ne pouvez pas utiliser l'API pour des activités illégales / malveillantes.\n\n* Vous ne devez pas abuser de l'API (limite de 200 requêtes par minute), l'utilisation de plusieurs adresses IP pour contourner cette limite est interdite.\n\n‎ \n\n### 📩 • Contact\n\nPour toute question, suggestion, bug, ou problème n'hésitez pas à nous contacter !\n\n* E-mail : <croustillant@bayfield.dev>\n\n* GitHub : [github.com/CROUStillant-Developpement](https://github.com/CROUStillant-Developpement)\n",
+   "extras": {},
+   "featured": null,
+   "format": null,
+   "harvest": {
+    "archived_at": null,
+    "archived_reason": null,
+    "backend": null,
+    "created_at": null,
+    "domain": null,
+    "issued_at": null,
+    "last_update": null,
+    "modified_at": null,
+    "remote_id": null,
+    "remote_url": null,
+    "source_id": null,
+    "source_url": null,
+    "uri": null
+   },
+   "id": "67b771005febee7f11a51520",
+   "license": null,
+   "machine_documentation_url": "https://api.croustillant.menu/openapi.json",
+   "metadata_modified_at": "2026-01-25T21:02:22.971000+00:00",
+   "metrics": {
+    "discussions": 0,
+    "discussions_open": 0,
+    "followers": 3,
+    "followers_by_months": {
+     "2025-06": 0,
+     "2025-07": 0,
+     "2025-08": 0,
+     "2025-09": 0,
+     "2025-10": 0,
+     "2025-11": 0,
+     "2025-12": 0,
+     "2026-01": 0,
+     "2026-02": 0,
+     "2026-03": 0,
+     "2026-04": 0,
+     "2026-05": 0,
+     "2026-06": 0
+    },
+    "reuses": 0,
+    "views": 4482
+   },
+   "organization": null,
+   "owner": {
+    "avatar": "https://udata-avatars.s3.rbx.io.cloud.ovh.net/ba/5b9ea32f2b4fd993897c0665756b42.png",
+    "avatar_thumbnail": "https://udata-avatars.s3.rbx.io.cloud.ovh.net/ba/5b9ea32f2b4fd993897c0665756b42-500.png",
+    "class": "User",
+    "deleted": null,
+    "first_name": "Paul",
+    "id": "67b76d8d858371cef2625464",
+    "last_name": "Bayfield",
+    "page": "https://www.data.gouv.fr/users/paul-bayfield",
+    "slug": "paul-bayfield",
+    "uri": "https://www.data.gouv.fr/api/1/users/paul-bayfield/"
+   },
+   "permissions": {
+    "delete": false,
+    "edit": false
+   },
+   "private": false,
+   "quality": {
+    "access_conditions_clear": true,
+    "availability_documented": true,
+    "has_base_api_url": true,
+    "has_business_documentation": true,
+    "has_contact_point": false,
+    "has_description": true,
+    "has_machine_documentation": true,
+    "has_technical_documentation": true,
+    "license": false,
+    "rate_limiting_documented": true,
+    "score": 0.8571428571428571
+   },
+   "rate_limiting": "200 requêtes / minute / IP (limite par défaut, peut être modifiée en fonction des besoins)",
+   "rate_limiting_url": null,
+   "self_api_url": "https://www.data.gouv.fr/api/1/dataservices/api-croustillant/",
+   "self_web_url": "https://www.data.gouv.fr/dataservices/api-croustillant",
+   "slug": "api-croustillant",
+   "tags": [],
+   "technical_documentation_url": "https://api.croustillant.menu/openapi.json",
+   "title": "API CROUStillant"
+  }
+ ],
+ "next_page": null,
+ "page": 1,
+ "page_size": 200,
+ "previous_page": null,
+ "total": 6
+}

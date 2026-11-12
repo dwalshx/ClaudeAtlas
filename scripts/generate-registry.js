@@ -10,6 +10,11 @@
  * This is Phase 1.5's answer to the Phase 2 query API: a simple static
  * bulk file that any tool can fetch once and parse locally. Costs nothing
  * at the edge, caches forever (content-addressed-ish via daily rebuilds).
+ *
+ * Phase 4.1: `buildRegistryEntry` is exported and `main()` is guarded by
+ * `invokedAsScript` so the round-trip test can exercise the registry leg
+ * without `data/skills.ndjson`. CLI behaviour unchanged. Registry content
+ * is still skills-only (`loadSkillsArray`); Phase 4.3 reshapes it for feeds.
  */
 
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'fs';
@@ -33,7 +38,40 @@ function log(msg) {
   console.log(`[registry] ${msg}`);
 }
 
-function main() {
+/**
+ * Build one registry entry from an entity record. Pure; exported for the
+ * Phase 4.1 round-trip test. For skills (always a non-empty repo_full_name)
+ * the output is byte-identical to the pre-4.1 inline map; null-repo feeds
+ * get `install_command: null` instead of the string "claude install-skill null".
+ *
+ * @param {object} s
+ * @param {{ skill_integrations?: Record<string, string[]> }} [apiGraph]
+ */
+export function buildRegistryEntry(s, apiGraph = { skill_integrations: {} }) {
+  return {
+    name: s.name,
+    slug: s.slug,
+    description: s.description || null,
+    category: s.category,
+    quality_tier: s.quality_tier,
+    quality_score: s.quality_score,
+    install_command: s.repo_full_name ? `claude install-skill ${s.repo_full_name}` : null,
+    repo_full_name: s.repo_full_name,
+    repo_url: s.repo_url,
+    repo_stars: s.repo_stars || 0,
+    repo_license: s.repo_license || null,
+    repo_pushed_at: s.repo_pushed_at || null,
+    // F2: prefer entity.extra.skill_first_commit_at (v2); fall back to legacy.
+    skill_first_commit_at: (s.extra && s.extra.skill_first_commit_at) || s.skill_first_commit_at || null,
+    integrations: apiGraph.skill_integrations?.[s.slug] || [],
+    detail_url: `${SITE_URL}/skills/${s.slug}/`,
+    badge_url: `${SITE_URL}/badge/${s.slug}.svg`,
+    star_history_url: `${SITE_URL}/badge/${s.slug}-history.svg`,
+    integrations_url: `${SITE_URL}/apis/`,
+  };
+}
+
+export function main() {
   log('=== registry generator start ===');
 
   // T5: loadSkillsArray() handles NDJSON + legacy fallback.
@@ -78,27 +116,7 @@ function main() {
   // grows past ~14k renderable.
   const renderableEntries = skills.filter(s => s.quality_tier === 'featured' || s.quality_tier === 'solid');
 
-  const entries = renderableEntries.map(s => ({
-    name: s.name,
-    slug: s.slug,
-    description: s.description || null,
-    category: s.category,
-    quality_tier: s.quality_tier,
-    quality_score: s.quality_score,
-    install_command: `claude install-skill ${s.repo_full_name}`,
-    repo_full_name: s.repo_full_name,
-    repo_url: s.repo_url,
-    repo_stars: s.repo_stars || 0,
-    repo_license: s.repo_license || null,
-    repo_pushed_at: s.repo_pushed_at || null,
-    // F2: prefer entity.extra.skill_first_commit_at (v2); fall back to legacy.
-    skill_first_commit_at: (s.extra && s.extra.skill_first_commit_at) || s.skill_first_commit_at || null,
-    integrations: apiGraph.skill_integrations?.[s.slug] || [],
-    detail_url: `${SITE_URL}/skills/${s.slug}/`,
-    badge_url: `${SITE_URL}/badge/${s.slug}.svg`,
-    star_history_url: `${SITE_URL}/badge/${s.slug}-history.svg`,
-    integrations_url: `${SITE_URL}/apis/`,
-  }));
+  const entries = renderableEntries.map((s) => buildRegistryEntry(s, apiGraph));
 
   const registry = {
     name: 'ClaudeAtlas',
@@ -156,4 +174,13 @@ function main() {
   log('=== registry generator complete ===');
 }
 
-main();
+// Only run main() when invoked as a script, not when imported by tests.
+const invokedAsScript = (() => {
+  try {
+    return import.meta.url === fileURLToPath(`file://${process.argv[1]}`).replace(/\\/g, '/')
+      || fileURLToPath(import.meta.url) === process.argv[1];
+  } catch {
+    return false;
+  }
+})();
+if (invokedAsScript) main();

@@ -9,6 +9,8 @@
 import { isSkillSlop } from './skill.rules.js';
 import { isPluginSlop } from './plugin.rules.js';
 import { isMcpSlop } from './mcp.rules.js';
+import { isApiSlop } from './api.rules.js';
+import { isDatasetSlop } from './dataset.rules.js';
 import {
   hasTemplateName,
   hasPlaceholderDescription,
@@ -32,6 +34,13 @@ export const rulePacks = {
   },
   mcp_server: {
     isSlop: isMcpSlop,
+  },
+  // Phase 4.1 (D-06): data-feed packs — no star gate, repo_* may be null.
+  api: {
+    isSlop: isApiSlop,
+  },
+  dataset: {
+    isSlop: isDatasetSlop,
   },
 };
 

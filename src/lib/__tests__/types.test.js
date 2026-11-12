@@ -173,3 +173,262 @@ test('Task 1: types.js JSDoc mirror documents the same Phase 3.2 fields', () => 
     assert.ok(js.includes(field), `types.js must document ${field}`);
   }
 });
+
+// ---------------------------------------------------------------------------
+// Phase 4.1 (v4.0 Data Feeds) — envelope generalization guards.
+//
+// `api` and `dataset` are the first entity types that mostly do NOT live in a
+// GitHub repo (D-02): `origin` lands on every record, `repo_*` become
+// nullable, and the two new union members carry a TOP-LEVEL `access` block
+// (D-03 — never on EntityCommon, never under `extra`). The synthetic records
+// below mirror docs/PHASE-4.0-SPEC.md § "Entity model" plus the Phase 4.1
+// additions (`source_modified_at`, `access_clarity`).
+// ---------------------------------------------------------------------------
+
+function emptyConsumedBy() {
+  return { skills: [], plugins: [], mcp_servers: [] };
+}
+
+function nullRepoFields() {
+  // All sixteen repo_* fields, null — an api/dataset record with no known repo.
+  return {
+    repo_full_name: null,
+    repo_url: null,
+    repo_stars: null,
+    repo_forks: null,
+    repo_open_issues: null,
+    repo_topics: null,
+    repo_license: null,
+    repo_language: null,
+    repo_created_at: null,
+    repo_updated_at: null,
+    repo_pushed_at: null,
+    repo_owner_type: null,
+    repo_owner_avatar: null,
+    repo_archived: null,
+    repo_is_fork: null,
+    repo_description: null,
+  };
+}
+
+function syntheticApi() {
+  return {
+    id: 'api:api.stripe.com/stripe',
+    slug: 'stripe.com/stripe',
+    entity_type: 'api',
+    name: 'stripe',
+    description:
+      'The Stripe REST API: payments, subscriptions, invoicing and payouts over HTTPS with bearer auth.',
+    origin: {
+      kind: 'registry',
+      source: 'apis.guru',
+      source_id: 'stripe.com',
+      source_url: 'https://api.apis.guru/v2/specs/stripe.com/2022-11-15/openapi.json',
+      also_listed_in: [],
+    },
+    home_url: 'https://stripe.com',
+    docs_url: 'https://stripe.com/docs/api',
+    ...nullRepoFields(),
+    body_length: 120,
+    quality_score: 0,
+    quality_tier: 'listed',
+    novelty_score: 0,
+    is_duplicate: false,
+    canonical_id: null,
+    tags: ['category:api-and-backend'],
+    category: 'API & Backend',
+    scraped_at: '2026-11-02T00:00:00Z',
+    content_sha: 'a1b2c3',
+    source: 'registry',
+    discovery_signals: [],
+    schema_version: 2,
+    bundled_in_plugins: [],
+    access: {
+      cost: { model: 'freemium', free_tier: null, price_notes: null },
+      rate_limit: { requests: null, per: null, notes: null, headers_observed: [] },
+      auth: { type: 'bearer', signup_url: null },
+      license: { spdx: null, name: null, url: null },
+      formats: ['json'],
+      transport: 'rest',
+      provenance: {
+        'auth.type': {
+          method: 'spec',
+          source_url: 'https://x',
+          confidence: 0.95,
+          checked_at: '2026-11-02T00:00:00Z',
+        },
+      },
+    },
+    extra: {
+      type: 'api',
+      base_urls: ['https://api.stripe.com/'],
+      spec_url: 'https://x',
+      spec_version: '3.0.0',
+      endpoint_count: null,
+      categories_src: ['financial'],
+      provider: 'stripe.com',
+      status_page_url: null,
+      sdks: [],
+      source_modified_at: '2023-03-06T07:12:59.965Z',
+      access_clarity: 0,
+      consumed_by: emptyConsumedBy(),
+    },
+  };
+}
+
+function syntheticDataset() {
+  return {
+    id: 'dataset:zenodo/23888170',
+    slug: 'zenodo/archi-v2',
+    entity_type: 'dataset',
+    name: 'archi-v2',
+    description:
+      'ARCHI v2: an annotated corpus of architectural floor plans with room-level labels, released on Zenodo.',
+    origin: {
+      kind: 'registry',
+      source: 'zenodo',
+      source_id: '23888170',
+      source_url: 'https://zenodo.org/api/records/23888170',
+      also_listed_in: [],
+    },
+    home_url: 'https://zenodo.org/records/23888170',
+    docs_url: null,
+    ...nullRepoFields(),
+    body_length: 340,
+    quality_score: 0,
+    quality_tier: 'listed',
+    novelty_score: 0,
+    is_duplicate: false,
+    canonical_id: null,
+    tags: ['category:data-and-analytics'],
+    category: 'Data & Analytics',
+    scraped_at: '2026-11-02T00:00:00Z',
+    content_sha: 'd4e5f6',
+    source: 'registry',
+    discovery_signals: [],
+    schema_version: 2,
+    bundled_in_plugins: [],
+    access: {
+      cost: { model: 'free', free_tier: null, price_notes: null },
+      rate_limit: { requests: null, per: null, notes: null, headers_observed: [] },
+      auth: { type: 'none', signup_url: null },
+      license: { spdx: 'CC-BY-4.0', name: 'Creative Commons Attribution 4.0', url: null },
+      formats: ['zip'],
+      transport: 'download',
+      provenance: {
+        'license.spdx': {
+          method: 'declared',
+          source_url: 'https://zenodo.org/api/records/23888170',
+          confidence: 1,
+          checked_at: '2026-11-02T00:00:00Z',
+        },
+      },
+    },
+    extra: {
+      type: 'dataset',
+      download_urls: ['https://zenodo.org/records/23888170/files/archi-v2.zip?download=1'],
+      size_bytes: 4544128,
+      size_bucket: null,
+      record_count: null,
+      update_frequency: null,
+      temporal_coverage: null,
+      publisher: 'zenodo',
+      popularity: { downloads: 312, views: 1480, likes: null, citations: 4, window: 'all_time' },
+      schema_url: null,
+      source_modified_at: '2026-10-20T08:00:00.000Z',
+      access_clarity: 0,
+      consumed_by: emptyConsumedBy(),
+    },
+  };
+}
+
+test('4.1-M01: synthetic api record round-trips JSON with top-level access and null repo_*', () => {
+  const rec = JSON.parse(JSON.stringify(syntheticApi()));
+  assert.equal(rec.entity_type, 'api');
+  assert.equal(typeof rec.access, 'object', 'access block is top-level on api records');
+  assert.equal(rec.access.cost.model, 'freemium');
+  assert.equal(rec.repo_full_name, null, 'repo_full_name is null when no repo is known');
+  assert.equal(rec.repo_stars, null, 'repo_stars is null when no repo is known');
+  assert.equal(rec.origin.kind, 'registry');
+  assert.equal(typeof rec.extra.access_clarity, 'number');
+  assert.deepEqual(Object.keys(rec.extra.consumed_by).sort(), ['mcp_servers', 'plugins', 'skills']);
+});
+
+test('4.1-M01: synthetic dataset record round-trips JSON and retains popularity + source_modified_at', () => {
+  const rec = JSON.parse(JSON.stringify(syntheticDataset()));
+  assert.equal(rec.entity_type, 'dataset');
+  assert.equal(rec.extra.popularity.citations, 4);
+  assert.equal(typeof rec.extra.source_modified_at, 'string');
+  assert.equal(rec.repo_pushed_at, null, 'repo_pushed_at is null when no repo is known');
+});
+
+test('4.1-M01: types.d.ts documents the Phase 4.1 envelope', () => {
+  const dts = readFileSync(join(REPO_ROOT, 'src', 'lib', 'types.d.ts'), 'utf-8');
+  for (const s of [
+    "| 'api'",
+    "| 'dataset'",
+    'interface Origin',
+    'interface AccessBlock',
+    'interface AccessProvenance',
+    'interface ConsumedBy',
+    'interface ApiExtra',
+    'interface DatasetExtra',
+    'origin: Origin',
+    'home_url: string',
+    'docs_url: string | null',
+    'repo_full_name: string | null',
+    'repo_stars: number | null',
+    'source_modified_at: string | null',
+    'access_clarity: number',
+    'consumed_by: ConsumedBy',
+    "entity_type: 'api'; access: AccessBlock; extra: ApiExtra",
+    "entity_type: 'dataset'; access: AccessBlock; extra: DatasetExtra",
+  ]) {
+    assert.ok(dts.includes(s), s);
+  }
+});
+
+test('4.1-M01: types.js JSDoc mirror documents the same Phase 4.1 names', () => {
+  const js = readFileSync(join(REPO_ROOT, 'src', 'lib', 'types.js'), 'utf-8');
+  for (const s of [
+    "'api' | 'dataset'",
+    '@typedef {Object} Origin',
+    '@typedef {Object} AccessBlock',
+    '@typedef {Object} ApiExtra',
+    '@typedef {Object} DatasetExtra',
+    'origin',
+    'home_url',
+    'docs_url',
+    'consumed_by',
+    'provenance',
+    'source_modified_at',
+    'access_clarity',
+  ]) {
+    assert.ok(js.includes(s), s);
+  }
+});
+
+test('4.2/decision 3+5: ApiExtra gains endpoint_summaries + spec_parsed and auth gains schemes in both type mirrors', () => {
+  const dts = readFileSync(join(REPO_ROOT, 'src', 'lib', 'types.d.ts'), 'utf-8');
+  for (const s of ['endpoint_summaries: string[]', 'spec_parsed: boolean', 'schemes: string[]']) {
+    assert.ok(dts.includes(s), s);
+  }
+  const authStart = dts.indexOf('  auth: {');
+  const authBlock = dts.slice(authStart, dts.indexOf('  };', authStart));
+  assert.ok(authBlock.includes('schemes: string[];'), 'schemes lives inside the auth block');
+  const js = readFileSync(join(REPO_ROOT, 'src', 'lib', 'types.js'), 'utf-8');
+  for (const s of ['endpoint_summaries', 'spec_parsed', 'schemes: string[]']) {
+    assert.ok(js.includes(s), s);
+  }
+  assert.ok(js.includes('@property {string[]} endpoint_summaries'));
+  assert.ok(js.includes('@property {boolean} spec_parsed'));
+});
+
+test('4.1-M01/D-03: access is NOT declared on EntityCommon', () => {
+  const dts = readFileSync(join(REPO_ROOT, 'src', 'lib', 'types.d.ts'), 'utf-8');
+  const start = dts.indexOf('export interface EntityCommon {');
+  assert.ok(start >= 0, 'EntityCommon interface present');
+  const end = dts.indexOf('\n}', start);
+  const slice = dts.slice(start, end);
+  assert.ok(!slice.includes('access:'), 'access block must live on the api/dataset union members only');
+});
