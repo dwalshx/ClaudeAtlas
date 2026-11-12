@@ -15,6 +15,10 @@
 import { readFileSync, writeFileSync, existsSync, mkdirSync, openSync, writeSync, closeSync, renameSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
+import { GitHubAuthError, isAuthFailure } from './github-auth-error.js';
+
+// Re-exported so scrapers can `instanceof` the error without a second import.
+export { GitHubAuthError, isAuthFailure } from './github-auth-error.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..', '..');
@@ -44,6 +48,25 @@ let generalHourStart = Date.now();
 
 export async function sleep(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+// Read a response body for classification WITHOUT consuming it for the
+// caller (clone). Only used on 401/403, so the cost is negligible.
+async function peekBody(res) {
+  try { return await res.clone().text(); } catch { return ''; }
+}
+
+// Outage 2026-09-28 → 2026-11-05 (.planning/debug/daily-scrape-outage-
+// 2026-09-28.md): an expired SCRAPE_PAT produced HTTP 401 on every call and
+// every scraper treated it as "skip this page". Auth failures are now FATAL
+// at the fetch layer — they can never look like a quiet day again. Callers
+// catch GitHubAuthError in their main().catch and print the runbook.
+async function throwIfAuthFailure(res, url) {
+  if (res.status !== 401 && res.status !== 403) return;
+  const body = await peekBody(res);
+  if (isAuthFailure(res, body)) {
+    throw new GitHubAuthError(res.status, url, body.replace(/\s+/g, ' ').slice(0, 200));
+  }
 }
 
 export async function rateLimitedFetch(url, isSearch = false, retries = 3) {
@@ -91,12 +114,23 @@ export async function rateLimitedFetch(url, isSearch = false, retries = 3) {
     throw err;
   }
 
+  // Auth failure (401, or a 403 that is not a rate limit) → FATAL, see above.
+  await throwIfAuthFailure(res, url);
+
   // Handle rate limit errors.
   // retry-after = SECONDARY (abuse) limit; x-ratelimit-reset = PRIMARY.
   // Check retry-after first per RESEARCH §6 — the prior code over-waited up to
   // ~1hr on a secondary 403 (it read x-ratelimit-reset, which is the primary
   // hourly reset, not the short secondary backoff GitHub actually asks for).
+  // Retries now DECREMENT on every wait (they used to loop forever: a
+  // persistent 403 would re-wait until reset indefinitely and burn the
+  // 6h job cap with no diagnostic). After the budget is spent the non-OK
+  // response is returned so the caller logs it and moves on.
   if (res.status === 403 || res.status === 429) {
+    if (retries <= 0) {
+      console.log(`  [rate-limit] ${res.status} persists after retries; giving up on ${url}`);
+      return res;
+    }
     const retryAfter = res.headers.get('retry-after');
     const retryAfterSecs = retryAfter ? parseInt(retryAfter, 10) : NaN;
     if (Number.isInteger(retryAfterSecs) && retryAfterSecs > 0) {
@@ -104,7 +138,7 @@ export async function rateLimitedFetch(url, isSearch = false, retries = 3) {
       const waitMs = Math.min(retryAfterSecs * 1000 + 1000, 120000);
       console.log(`  [rate-limit] secondary limit, retry-after ${retryAfterSecs}s...`);
       await sleep(waitMs);
-      return rateLimitedFetch(url, isSearch, retries); // retry
+      return rateLimitedFetch(url, isSearch, retries - 1); // retry
     }
     const resetHeader = res.headers.get('x-ratelimit-reset');
     if (resetHeader) {
@@ -112,12 +146,12 @@ export async function rateLimitedFetch(url, isSearch = false, retries = 3) {
       const waitMs = Math.max(resetTime - Date.now() + 1000, 5000);
       console.log(`  [rate-limit] 403/429 hit, waiting ${Math.ceil(waitMs / 1000)}s until reset...`);
       await sleep(waitMs);
-      return rateLimitedFetch(url, isSearch, retries); // retry
+      return rateLimitedFetch(url, isSearch, retries - 1); // retry
     }
     // Fallback: wait 60s
     console.log('  [rate-limit] 403/429 hit (no reset header), waiting 60s...');
     await sleep(60000);
-    return rateLimitedFetch(url, isSearch, retries);
+    return rateLimitedFetch(url, isSearch, retries - 1);
   }
 
   return res;
@@ -202,12 +236,19 @@ export async function fetchWithETag(url, retries = 3) {
     return { data: cached.data, cached: true };
   }
 
+  // Auth failure (401, or a 403 that is not a rate limit) → FATAL, see above.
+  await throwIfAuthFailure(res, url);
+
   // retry-after = SECONDARY (abuse) limit; x-ratelimit-reset = PRIMARY.
   // Check retry-after first per RESEARCH §6 — the prior code over-waited up to
   // ~1hr on a secondary 403 (Track 1's proximate failure: ~4,351 back-to-back
   // GETs trip the secondary 900-pts/min abuse heuristic, which signals via
-  // retry-after, not x-ratelimit-reset).
+  // retry-after, not x-ratelimit-reset). Retries decrement (see rateLimitedFetch).
   if (res.status === 403 || res.status === 429) {
+    if (retries <= 0) {
+      console.log(`  [rate-limit] ${res.status} persists after retries; giving up on ${url}`);
+      return { data: null, cached: false, status: res.status };
+    }
     const retryAfter = res.headers.get('retry-after');
     const retryAfterSecs = retryAfter ? parseInt(retryAfter, 10) : NaN;
     if (Number.isInteger(retryAfterSecs) && retryAfterSecs > 0) {
@@ -215,7 +256,7 @@ export async function fetchWithETag(url, retries = 3) {
       const waitMs = Math.min(retryAfterSecs * 1000 + 1000, 120000);
       console.log(`  [rate-limit] secondary limit, retry-after ${retryAfterSecs}s...`);
       await sleep(waitMs);
-      return fetchWithETag(url, retries);
+      return fetchWithETag(url, retries - 1);
     }
     const resetHeader = res.headers.get('x-ratelimit-reset');
     if (resetHeader) {
@@ -223,10 +264,10 @@ export async function fetchWithETag(url, retries = 3) {
       const waitMs = Math.max(resetTime - Date.now() + 1000, 5000);
       console.log(`  [rate-limit] ETag fetch 403/429, waiting ${Math.ceil(waitMs / 1000)}s...`);
       await sleep(waitMs);
-      return fetchWithETag(url, retries);
+      return fetchWithETag(url, retries - 1);
     }
     await sleep(60000);
-    return fetchWithETag(url, retries);
+    return fetchWithETag(url, retries - 1);
   }
 
   if (!res.ok) {

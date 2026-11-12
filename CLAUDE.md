@@ -483,6 +483,42 @@ npm run preview
    retunes are separate, reviewed changes — never silent edits to
    `scripts/lib/scorers/*` or `scripts/lib/filter-rules/*`.
 
+14. **The pipeline fails LOUDLY and EARLY on dead credentials and empty
+   data (added after the 2026-09-28 → 2026-11-05 outage).** Root causes
+   and timeline: `.planning/debug/daily-scrape-outage-2026-09-28.md`. The
+   fine-grained `SCRAPE_PAT` expired on 2026-10-14; every REST scraper read
+   the resulting HTTP 401 as "skip this page" and exited 0; the weekly full
+   sweep then wrote an EMPTY raw corpus which the `if: always()` cache save
+   persisted as the newest `skills-raw-ndjson-*` key; `filter.js` and
+   `embed-skills.js` happily produced empty outputs; only `upload-vectors.js`
+   (step 30 of 40) refused. Guards now in place — **do not remove them**:
+   - `scripts/lib/github-auth-error.js`: `isAuthFailure()` — 401, or a 403
+     that is neither a rate limit nor a per-repo block. `github-fetch.js`,
+     `github-graphql.js` and `scrape-plugins.js` THROW `GitHubAuthError`;
+     every scraper's `main().catch` prints the runbook and exits 1 before
+     any corpus write. Rate-limit 403 retries now decrement (they used to
+     loop until the 6h job cap).
+   - `scripts/check-github-tokens.js` runs as the first data step of
+     `daily-scrape.yml` and `weekly-discover.yml` ("Preflight: verify GitHub
+     tokens") and weekly via `check-tokens.yml`: fails on a dead PAT, warns
+     `<14` days before expiry. Logs status + expiration header only.
+   - `scripts/lib/corpus-guards.js` (pure, tested): `filter.js` refuses a
+     0-record raw corpus (`FILTER_ALLOW_EMPTY=1` for fixtures) and a >50%
+     catalog collapse vs the prior `skills.ndjson` (`FILTER_ALLOW_COLLAPSE=1`
+     when a validated filter-rule change really shrinks it);
+     `embed-skills.js` refuses 0 input records (`EMBED_ALLOW_EMPTY=1`) and 0
+     output; `scrape.js --mode=full` evaluates its >20% regression rule
+     BEFORE writing and refuses 0 results.
+   - Workflow cache saves are gated: `skills-raw.ndjson` is only cached when
+     it has ≥1,000 lines; `skill-vectors.ndjson` only when its restore step
+     actually ran AND the file differs from the committed 1,078-vector seed.
+   - `github-graphql.js` retries 5xx three times (5s/15s/45s) before marking
+     a batch as casualties — GitHub 502/504 storms used to trip Track 1's
+     15% gate.
+   - The `cron-failure` issue now names the failing step and keeps its title
+     current. **Read it.** Recovery runbook: "Recovery: expired GitHub PAT /
+     poisoned GHA caches" below.
+
 ## Pipeline footguns (F1 streaming foundation, Phase 3.1.1)
 
 V8 has a ~536 MB single-string ceiling. The entire pipeline used to assume
@@ -692,6 +728,78 @@ gh workflow run daily-scrape.yml
 The `data/kv-published.json` sidecar is the slug→content_sha map that
 publish-kv.js uses to skip unchanged records. Deleting it forces a full
 re-publish on the next run.
+
+### Recovery: expired GitHub PAT / poisoned GHA caches (2026-10 outage)
+
+Symptoms (any of): `daily-scrape` fails at "Preflight: verify GitHub
+tokens"; a scraper log ends in `FATAL: GitHub rejected our credentials
+(HTTP 401)`; `[discover] existing corpus: 0 skill ids`; `[embed] loaded 0
+skill records`; `[embed-skills] DRIFT DETECTED … 1078 PRIOR vectors`;
+`gh cache list` shows `skills-raw-ndjson-*` / `etag-cache-*` at ~200 B or
+`skill-vectors-*` at exactly 5.8 MB (the committed seed). Full timeline:
+`.planning/debug/daily-scrape-outage-2026-09-28.md`.
+
+**Which secret does what** (the preflight step names the dead one):
+
+| Secret               | Type                              | Used by                                                                 | Minimum access                                                                                     |
+|----------------------|-----------------------------------|-------------------------------------------------------------------------|-----------------------------------------------------------------------------------------------------|
+| `SCRAPE_PAT`         | **fine-grained** PAT (expires!)   | Track 2 repo search + tree/contents fetch, plugin code search + walk, weekly code search (all REST) | "Public repositories (read-only)". No repo permissions needed. Set expiry to the max (1 year) and put the date in your calendar. |
+| `SCRAPE_PAT_CLASSIC` | **classic** PAT                   | Track 1 star pulse + plugin engagement refresh (GraphQL)                | `public_repo` scope. Must be classic — the GraphQL API refuses fine-grained PATs (403).            |
+| `GITHUB_TOKEN`       | Actions-provided                  | `gh release upload/download`, data commit-back, notify issue            | Already granted via `permissions:` in the workflow — nothing to rotate.                           |
+
+Create tokens at <https://github.com/settings/tokens> (classic) or
+<https://github.com/settings/personal-access-tokens/new> (fine-grained);
+set them at <https://github.com/dwalshx/ClaudeAtlas/settings/secrets/actions>.
+
+**Recovery sequence** (each step is idempotent; stop at the first red step):
+
+```bash
+# 0. Which token is dead? (also tells you expiry dates of the live ones)
+gh workflow run check-tokens.yml && sleep 30 && gh run watch
+#    → rotate the secret(s) it names, then re-run until green.
+
+# 1. Is the skills-raw cache a placeholder?  (~200 B = yes; ≥100 MB = healthy)
+gh cache list --key skills-raw-ndjson --limit 3
+
+# 2. If yes: rebuild it from skills-latest ∪ the May bootstrap asset.
+#    (NOT bootstrap-skills-raw.yml alone — that regresses the corpus to the
+#    33k-record May 2026 snapshot; skills-latest has ~101k records.)
+gh workflow run reseed-skills-raw.yml && sleep 30 && gh run watch
+gh cache list --key skills-raw-ndjson-reseed          # expect ~250+ MB
+
+# 3. Is the skill-vectors cache the seed?  (5.8 MB = yes)
+gh cache list --key skill-vectors --limit 3
+#    If yes, the next daily run MUST force a full re-embed (the drift guard
+#    will otherwise refuse): ~101k skills × 400 tokens ≈ 40M tokens ≈ $0.81
+#    on text-embedding-3-small, ~50 min wall time, checkpointed every batch.
+#    Plugins (~15k, $0.12) re-embed every run anyway (not cached — follow-up).
+
+# 4. Dispatch the daily run (force_reembed only if step 3 said yes):
+gh workflow run daily-scrape.yml -f force_reembed=true
+gh run watch
+#    Watch for, in order: "Preflight" green → "[discover] existing corpus:
+#    ~105k skill ids" → "[embed] to embed: ~101k" → "Upload vectors" green →
+#    "Commit skills data" pushes data/history/<today>.json.
+
+# 5. Confirm the outage is over:
+git pull && ls data/history | tail -3                 # today's snapshot
+gh issue list --label cron-failure --state open       # close it manually
+curl -sI https://claudeatlas.com/ | head -1           # 200
+```
+
+Notes:
+- `data/history/<today>.json` is written by Track 1 from `skills-latest`
+  (the release asset survived the outage), so history resumes on the first
+  green run. Days inside the outage window are unrecoverable.
+- The ETag cache is also a placeholder; Track 2's first run after reseed is
+  "cold" (every tree fetch is a 200) but still finishes in ~1 h for the
+  3-day window. Nothing to do.
+- If step 4 times out at 360 min (cold caches + full re-embed + build), just
+  dispatch again WITHOUT `force_reembed`: the embed checkpoints every batch
+  and the vectors cache is saved `if: always()`, so the second run resumes.
+- `bootstrap-skills-raw.yml` is still the right tool when the goal is "any
+  corpus at all" (e.g. `skills-latest` itself is lost); otherwise prefer
+  `reseed-skills-raw.yml`.
 
 ## Methodology
 

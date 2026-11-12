@@ -50,6 +50,8 @@ import { fileURLToPath } from 'url';
 import { readNdjsonRecords, writeNdjsonStreaming } from './lib/ndjson.js';
 import { loadSkillsArray } from './lib/skills-stream.js';
 import { buildEmbeddingInput as buildEmbeddingInputRegistry } from './lib/embedding-input/index.js';
+// Outage 2026-10 fail-fast guard (pure; see scripts/lib/corpus-guards.js).
+import { checkEmbedOutput } from './lib/corpus-guards.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..');
@@ -318,6 +320,16 @@ async function main() {
   }
   log(`loaded ${records.length} ${entityType} records`);
 
+  // Fail-fast (outage 2026-10-18 → 11-03): 17 daily runs embedded "0 skill
+  // records", wrote a 0-vector file with exit 0, and only upload-vectors.js
+  // (two steps later) refused. An empty input is never legitimate in the
+  // daily pipeline — stop here, before the output file is touched.
+  const inputGuard = checkEmbedOutput({ inputCount: records.length, outputCount: 1, allowEmpty: process.env.EMBED_ALLOW_EMPTY === '1' });
+  if (!inputGuard.ok) {
+    console.error(`[embed] FATAL: ${inputGuard.message}`);
+    process.exit(1);
+  }
+
   const prior = loadPriorVectors(outputPath);
   log(`prior vectors: ${prior.size}`);
 
@@ -367,6 +379,14 @@ async function main() {
       );
       process.exit(1);
     }
+  }
+
+  // Fail-fast: non-empty input must yield a non-empty vector file. (Every
+  // record lacking an id is the only way kept + todo can both be empty.)
+  const outputGuard = checkEmbedOutput({ inputCount: records.length, outputCount: kept.length + todo.length, allowEmpty: process.env.EMBED_ALLOW_EMPTY === '1' });
+  if (!outputGuard.ok) {
+    console.error(`[embed] FATAL: ${outputGuard.message}`);
+    process.exit(1);
   }
 
   if (todo.length === 0) {

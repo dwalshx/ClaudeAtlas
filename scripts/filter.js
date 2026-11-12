@@ -34,6 +34,8 @@ import { buildHeader } from './lib/entity-version.js';
 // Phase 3.2 (B-1): shared percentile tier assignment, also used by
 // filter-plugins.js / filter-mcps.js. NO small-N carve-out.
 import { assignPercentileTiers } from './lib/tier-assignment.js';
+// Outage 2026-10 fail-fast guards (pure; see scripts/lib/corpus-guards.js).
+import { checkRawCorpusNotEmpty, checkCatalogCollapse } from './lib/corpus-guards.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..');
@@ -473,6 +475,15 @@ function main() {
   }
   console.log(`Raw skills: ${raw.length}`);
 
+  // Fail-fast #1 (outage 2026-10-18 → 11-03): an empty raw corpus means the
+  // GHA cache restored a placeholder; building (and later publishing) an
+  // empty catalog from it is never right. Exit 1 BEFORE touching skills.ndjson.
+  const rawGuard = checkRawCorpusNotEmpty(raw.length, { allowEmpty: process.env.FILTER_ALLOW_EMPTY === '1' });
+  if (!rawGuard.ok) {
+    console.error(`[filter] FATAL: ${rawGuard.message}`);
+    process.exit(1);
+  }
+
   // Load prior enrichments (skill_first_commit_at, etc.) from existing skills.json
   const priorEnrichments = loadPriorEnrichments();
   if (priorEnrichments.size > 0) {
@@ -525,6 +536,19 @@ function main() {
   console.log(`Categories:`);
   for (const [cat, count] of Object.entries(categories).sort((a, b) => b[1] - a[1])) {
     console.log(`  ${cat}: ${count}`);
+  }
+
+  // Fail-fast #2: refuse to overwrite a healthy catalog with a collapsed one.
+  // currentSkillsBySlug is the prior skills.ndjson (one entry per slug, so it
+  // slightly undercounts records — conservative in the right direction).
+  const collapseGuard = checkCatalogCollapse({
+    priorCount: currentSkillsBySlug.size,
+    newCount: capped.length,
+    allow: process.env.FILTER_ALLOW_COLLAPSE === '1',
+  });
+  if (!collapseGuard.ok) {
+    console.error(`[filter] FATAL: ${collapseGuard.message}`);
+    process.exit(1);
   }
 
   // T5: streaming NDJSON write (V8-string-limit safe).

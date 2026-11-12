@@ -43,6 +43,7 @@ import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { sleep } from './lib/github-fetch.js';
 import { fetchRepoBatchGraphql } from './lib/github-graphql.js';
+import { GitHubAuthError, describeAuthFailure } from './lib/github-auth-error.js';
 import { TRACK1_FRESHNESS_FIELDS } from './lib/skill-fields.js';
 import { writeNdjsonStreaming } from './lib/ndjson.js';
 import { loadSkillsArray } from './lib/skills-stream.js';
@@ -196,4 +197,14 @@ async function main() {
   log(`=== Track 1 complete in ${elapsed}s ===`);
 }
 
-main().catch(err => { console.error('[pulse] fatal:', err); process.exit(1); });
+main().catch(err => {
+  if (err instanceof GitHubAuthError) {
+    // fetchRepoBatchGraphql throws on 401 (expired/revoked classic PAT) so
+    // Track 1 stops on the FIRST batch with the runbook, instead of marking
+    // 274 batches as casualties and tripping the 15% gate 30 minutes later.
+    console.error(describeAuthFailure(err, { secretName: 'SCRAPE_PAT_CLASSIC', tag: '[pulse]' }));
+    process.exit(1);
+  }
+  console.error('[pulse] fatal:', err);
+  process.exit(1);
+});

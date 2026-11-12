@@ -88,8 +88,8 @@ const LINT_ALLOWLIST = [
   },
   {
     file: 'scripts/filter.js',
-    line: 555,
-    reason: 'pipeline-stats.json write — bounded (~5 KB; tier counts + categories summary + 3.2.1 content_flags counts). Line shifted by F2 T6 + 3.1.2 drift hotfix + 3.1.4 v2-writer imports + 3.2 T7 tier-assignment extraction + body_length invariant warn-not-throw fragility fix + 3.2.1 Audit B annotation pass.',
+    line: 579,
+    reason: 'pipeline-stats.json write — bounded (~5 KB; tier counts + categories summary + 3.2.1 content_flags counts). Line shifted by F2 T6 + 3.1.2 drift hotfix + 3.1.4 v2-writer imports + 3.2 T7 tier-assignment extraction + body_length invariant warn-not-throw fragility fix + 3.2.1 Audit B annotation pass + outage-2026-10 corpus guards (checkRawCorpusNotEmpty / checkCatalogCollapse).',
   },
   {
     file: 'scripts/filter-plugins.js',
@@ -128,13 +128,13 @@ const LINT_ALLOWLIST = [
   },
   {
     file: 'scripts/scrape-plugins.js',
-    line: 785,
-    reason: 'plugins-meta.json sidecar write (T6 migration done — bulk records went to plugins-raw.ndjson). Metadata is bounded ~1 KB at any catalog size. Line shifted by 3.3-01 D-02 (loadCheckpoint NDJSON fix + invoked-as-script guard), 3.4-01 Change A (buildProcessedSeedFrom export + resume log line), 3.4-02 Change B (fetchRepoBatchGraphql import + refresh constants + applyFreshFields/refreshKnownRepos + main() refresh pass), 3.4-03 Change C (shouldRewalk export + byName/indexByName + pushed_at re-walk gate + walked_pushed_at stamp), and 3.4-05 R-1 (isFullRewalk env-only trigger helper + expanded periodicFull comment block — daily Sunday auto-trigger removed).',
+    line: 802,
+    reason: 'plugins-meta.json sidecar write (T6 migration done — bulk records went to plugins-raw.ndjson). Metadata is bounded ~1 KB at any catalog size. Line shifted by 3.3-01 D-02 (loadCheckpoint NDJSON fix + invoked-as-script guard), 3.4-01 Change A (buildProcessedSeedFrom export + resume log line), 3.4-02 Change B (fetchRepoBatchGraphql import + refresh constants + applyFreshFields/refreshKnownRepos + main() refresh pass), 3.4-03 Change C (shouldRewalk export + byName/indexByName + pushed_at re-walk gate + walked_pushed_at stamp), and 3.4-05 R-1 (isFullRewalk env-only trigger helper + expanded periodicFull comment block — daily Sunday auto-trigger removed), and outage-2026-10 auth fail-fast (github-auth-error import + rateLimitedFetch throw + retry decrement).',
   },
   {
     file: 'scripts/scrape.js',
-    line: 624,
-    reason: 'pipeline-stats.json write (Track 2) — bounded (~5 KB; same shape as filter.js stats write)',
+    line: 646,
+    reason: 'pipeline-stats.json write (Track 2) — bounded (~5 KB; same shape as filter.js stats write). Line shifted by outage-2026-10 full-sweep guard (checkFullSweepResult evaluated before the write).',
   },
   // ---------------------------------------------------------------------------
   // Phase 3.1.3 — Agent Hub generators. All bounded outputs (~1-10 KB each).

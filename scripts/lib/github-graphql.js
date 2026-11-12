@@ -27,10 +27,22 @@
  * Exports: fetchRepoBatchGraphql, mapGraphqlRepoToFields, buildPulseQuery.
  */
 
+import { GitHubAuthError, isAuthFailure } from './github-auth-error.js'; // token-free module — safe to import
+
 const GRAPHQL_ENDPOINT = 'https://api.github.com/graphql';
 
 // Local sleep — NOT imported from github-fetch.js (see module header / token-free guarantee).
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+// 5xx retry backoff (outage 2026-09-28 / 11-04 / 11-05: GitHub GraphQL 502/504
+// storms with NO retry turned one gateway blip into 50 lost repos per batch
+// and tripped Track 1's 15% failure gate). Base wait × 3^attempt: 5s, 15s, 45s.
+// Overridable for tests.
+export const GRAPHQL_RETRY_BASE_MS = 5000;
+function retryBaseMs() {
+  const v = Number.parseInt(process.env.GRAPHQL_RETRY_BASE_MS || '', 10);
+  return Number.isFinite(v) && v >= 0 ? v : GRAPHQL_RETRY_BASE_MS;
+}
 
 /**
  * Pure: map one GraphQL `repository` node to the 11 TRACK1_FRESHNESS_FIELDS.
@@ -180,10 +192,33 @@ export async function fetchRepoBatchGraphql(repoFullNames, retries = 3) {
   // classic PAT being revoked or hitting the GraphQL points budget) must now be
   // diagnosable from the CI log. res.text() consumes the body once, so we read
   // it here and reuse the captured string in both non-OK branches below.
+  let body = '';
   if (!res.ok) {
-    let body = '';
     try { body = await res.text(); } catch { body = '<unreadable body>'; }
     console.error(`[pulse] GraphQL ${res.status}: ${body.slice(0, 300)}`);
+  }
+
+  // Auth failure → FATAL (never a tolerated casualty). An expired/revoked
+  // SCRAPE_PAT_CLASSIC must stop Track 1 on the FIRST batch with a clear
+  // message, not after 274 silently-failed batches. See github-auth-error.js.
+  if (res.status === 401 || (res.status === 403 && isAuthFailure(res, body))) {
+    throw new GitHubAuthError(res.status, GRAPHQL_ENDPOINT, body.replace(/\s+/g, ' ').slice(0, 200));
+  }
+
+  // 5xx (502 Bad Gateway / 504 timeout) → transient on GitHub's side. Retry
+  // with backoff before giving the batch up as casualties.
+  if (res.status >= 500) {
+    if (retries > 0) {
+      const attempt = 3 - retries; // 0,1,2
+      const waitMs = retryBaseMs() * Math.pow(3, attempt);
+      console.log(`  [retry] GraphQL ${res.status}, retrying in ${Math.ceil(waitMs / 1000)}s... (${retries} left)`);
+      await sleep(waitMs);
+      return fetchRepoBatchGraphql(repoFullNames, retries - 1);
+    }
+    for (const repoFullName of repoFullNames) {
+      failures.push({ repoFullName, status: `graphql-${res.status}` });
+    }
+    return { freshByRepo, failures };
   }
 
   // 403/429 → secondary abuse limit. Honor retry-after first (RESEARCH §6),
