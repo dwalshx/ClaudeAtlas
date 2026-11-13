@@ -271,7 +271,16 @@ jobs:
       - name: Run plugin discovery (scrape-plugins)
         # quick-260603-e96: plugin/MCP pipeline gated OFF (see job env above).
         # This step is the timeout culprit — full-ecosystem sweep at 5k REST/hr.
+        # 2026-11-12: after the 6-week outage the re-walk backlog ran this step
+        # past the job's 360-min limit, so build/deploy never ran. The step now has
+        # its own 90-min budget and is non-fatal: scrape-plugins checkpoints into
+        # data/plugins-raw.ndjson and the always() cache save below keeps that
+        # progress, so a backlog drains over several days while the skills build,
+        # deploy and history commit still happen every day. Steady state today is
+        # ~11 min discovery + ~60 min GraphQL refresh (29.6k known repos) + re-walks.
         if: ${{ env.PLUGINS_ENABLED == 'true' && github.event_name != 'push' }}
+        timeout-minutes: 90
+        continue-on-error: true
         run: node scripts/scrape-plugins.js
         env:
           # REST discovery/walk uses the fine-grained SCRAPE_PAT (GITHUB_TOKEN).
