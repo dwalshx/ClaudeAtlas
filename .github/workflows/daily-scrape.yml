@@ -20,6 +20,18 @@ on:
   push:
     branches: [main]
 
+# One data run at a time (2026-11-13). A manual recovery dispatch at 14:37 UTC
+# and the scheduled run 13 min later embedded the same corpus in parallel,
+# shared one GitHub user rate-limit bucket and one OpenAI quota, and BOTH hit
+# the 6-hour job cap. schedule + workflow_dispatch now queue behind each other
+# (never cancel — a cancelled data run loses its day's work). Push-event runs
+# (~20-min redeploys from skills-latest) get their own group so a push can
+# never replace a queued data run (GitHub keeps one pending run per group);
+# a newer push supersedes an older in-flight push.
+concurrency:
+  group: daily-scrape-${{ github.event_name == 'push' && 'push' || 'data' }}
+  cancel-in-progress: ${{ github.event_name == 'push' }}
+
 jobs:
   scrape-build-deploy:
     runs-on: ubuntu-latest

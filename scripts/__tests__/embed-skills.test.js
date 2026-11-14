@@ -13,7 +13,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
-import { mkdtempSync, rmSync, writeFileSync, copyFileSync } from 'node:fs';
+import { mkdtempSync, rmSync, writeFileSync, copyFileSync, readFileSync, appendFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -212,6 +212,80 @@ test('Task 9: B-2 drift guard PROCEEDS on catalog growth and on a below-floor pr
     assert.match(small, /to embed:\s+3\b/);
     assert.match(small, /embedder complete/);
     assert.doesNotMatch(small, /DRIFT DETECTED/);
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+// --- Append-only checkpointing (2026-11-13) ---
+//
+// The per-batch checkpoint used to rewrite the WHOLE vector file after every
+// 100-record batch. At ~120k vectors (~600 MB) that cost ~20 s/batch and turned
+// the 2026-11-13 recovery re-embed into a 6-hour job-timeout. The embedder now
+// writes the kept vectors once, then APPENDS each batch. These tests pin the
+// observable contract: multi-batch output holds every kept + new vector exactly
+// once (no duplicate lines), kept vectors are byte-preserved, and a run killed
+// mid-line (truncated final line) resumes cleanly.
+
+function vectorLines(path) {
+  return readFileSync(path, 'utf-8').split('\n').filter(Boolean).map((l) => JSON.parse(l)).filter((r) => !r._header);
+}
+
+test('append checkpoint: multi-batch re-embed writes kept + new exactly once and preserves kept vectors', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'embed-append-'));
+  try {
+    const N = 250; // 3 batches at BATCH_SIZE=100
+    const CHANGED = 110; // spans 2 batches; 140/250 prior still match (> 0.5 drift floor)
+    const out = join(dir, 'plugin-vectors.ndjson');
+    const input = join(dir, 'plugins.ndjson');
+    writeSyntheticPlugins(input, N);
+    runEmbed(['--input', input, '--output', out, '--entity-type', 'plugin']);
+    const first = vectorLines(out);
+    assert.equal(first.length, N);
+    assert.equal(new Set(first.map((r) => r.id)).size, N, 'no duplicate vector lines on a cold multi-batch run');
+
+    writeSyntheticPlugins(input, N, (r, i) => (i < CHANGED ? { ...r, description: r.description + ' CHANGED.' } : r));
+    const log = runEmbed(['--input', input, '--output', out, '--entity-type', 'plugin']);
+    assert.match(log, new RegExp(`to embed:\\s+${CHANGED}\\b`));
+    const second = vectorLines(out);
+    assert.equal(second.length, N, 'kept + new, each exactly once');
+    assert.equal(new Set(second.map((r) => r.id)).size, N);
+
+    const before = new Map(first.map((r) => [r.metadata.skill_id, r]));
+    let preserved = 0;
+    let changed = 0;
+    for (const r of second) {
+      const prev = before.get(r.metadata.skill_id);
+      assert.ok(prev, `vector for ${r.metadata.skill_id} must exist in the prior run`);
+      if (prev.metadata._content_sha === r.metadata._content_sha) {
+        assert.deepEqual(r.values, prev.values);
+        preserved++;
+      } else {
+        changed++;
+      }
+    }
+    assert.equal(preserved, N - CHANGED);
+    assert.equal(changed, CHANGED);
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test('append checkpoint: a truncated final line (run killed mid-append) resumes cleanly', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'embed-trunc-'));
+  try {
+    const N = 120;
+    const out = join(dir, 'plugin-vectors.ndjson');
+    const input = join(dir, 'plugins.ndjson');
+    writeSyntheticPlugins(input, N);
+    runEmbed(['--input', input, '--output', out, '--entity-type', 'plugin']);
+    // Simulate a job cancelled half-way through writing one appended line.
+    appendFileSync(out, '{"id":"plugin_synth_partial","values":[0.1,0.2', 'utf-8');
+    const log = runEmbed(['--input', input, '--output', out, '--entity-type', 'plugin']);
+    assert.match(log, new RegExp(`prior vectors: ${N}\\b`));
+    assert.match(log, /to embed:\s+0\b/);
+    const recs = vectorLines(out); // throws if the partial line survived
+    assert.equal(recs.length, N);
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }

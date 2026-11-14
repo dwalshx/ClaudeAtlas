@@ -91,6 +91,10 @@ test('4.2-M10: upload loop lists data/api-vectors.ndjson and the api steps invok
   );
 });
 
+test('2026-11-13: data runs (schedule + dispatch) share one non-cancelling concurrency group; push runs get their own', () => {
+  assert.match(yml, /^concurrency:\r?\n  group: daily-scrape-\$\{\{ github\.event_name == 'push' && 'push' \|\| 'data' \}\}\r?\n  cancel-in-progress: \$\{\{ github\.event_name == 'push' \}\}\s*$/m);
+});
+
 test('4.1-M12: the flag comment points at the v4.0 spec and PLUGINS_ENABLED stays true (flag is additive)', () => {
   assert.ok(yml.includes('docs/PHASE-4.0-SPEC.md'));
   assert.ok(yml.includes("PLUGINS_ENABLED: 'true'"));
