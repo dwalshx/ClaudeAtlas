@@ -105,6 +105,12 @@ jobs:
       # fallback) happens only after a green measured run — see
       # .planning/phases/4.2-api-harvest-v1/4.2-MEASUREMENT.md.
       DATA_FEEDS_ENABLED: ${{ inputs.data_feeds || 'false' }}
+      # 2026-11-14: Track 2 died with "Reached heap limit … JavaScript heap out of
+      # memory" (run 43536499914) once the raw corpus reached ~144k records — it
+      # holds the whole corpus Map plus the ETag cache in memory, and Node's default
+      # old-space cap on the runner is ~4 GB. ubuntu-latest has 16 GB RAM and the
+      # steps run one node process at a time, so give every step 12 GB of heap.
+      NODE_OPTIONS: --max-old-space-size=12288
     steps:
       - uses: actions/checkout@v4
 
