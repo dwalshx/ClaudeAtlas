@@ -20,6 +20,12 @@
  *   6. Embeddable Assets + Quality Tiers + Categories + Source (preserved)
  *   7. Footer with last-updated timestamp + /credits link
  *
+ * Phase 4.3: when data/apis.ndjson ships with the build, an "API catalog"
+ * endpoints section, the `type=api` search filter and the /apis/ human
+ * links are added; with no api file, none of it is emitted (the count comes
+ * from the file the /apis/ pages are built from — see
+ * scripts/lib/api-catalog-summary.js).
+ *
  * Allowlist: this script writes a single ~5 KB plaintext file. The
  * readFileSync on data/pipeline-stats.json is a bounded sidecar
  * (same shape allowed for scripts/filter.js, scripts/scrape.js).
@@ -28,11 +34,19 @@
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import {
+  summarizeApiCatalog,
+  APIS_INDEX_URL,
+  APIS_SEARCH_URL,
+  APIS_BULK_DOWNLOAD_URL,
+  APIS_METHODOLOGY_URL,
+} from './lib/api-catalog-summary.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..');
 const DATA_DIR = join(ROOT, 'data');
 const STATS_PATH = join(DATA_DIR, 'pipeline-stats.json');
+const APIS_PATH = join(DATA_DIR, 'apis.ndjson');
 const PUBLIC_DIR = join(ROOT, 'public');
 const OUTPUT_PATH = join(PUBLIC_DIR, 'llms.txt');
 
@@ -58,7 +72,40 @@ function loadStats() {
   }
 }
 
-function renderTemplate(stats) {
+/**
+ * Phase 4.3: the "API catalog" endpoints section. Empty string when the build
+ * ships no api records.
+ *
+ * @param {{ count: number, tiers: { featured: number, solid: number, listed: number } } | null} apiSummary
+ */
+function renderApiSection(apiSummary) {
+  if (!apiSummary) return '';
+  const t = apiSummary.tiers;
+  return `### API catalog (data feeds)
+
+${fmt(apiSummary.count)} public web APIs (${fmt(t.featured)} Featured, ${fmt(t.solid)} Solid,
+${fmt(t.listed)} Listed), harvested from public API directories and scored on 7
+data-feed signals (access clarity, reachability, documentation, license,
+freshness, popularity, ecosystem adoption). Every
+record carries an \`access\` block — cost model, rate limit, auth type, license,
+formats — with per-field provenance. Values the source does not declare are
+reported as \`"unknown"\`, never guessed.
+
+\`\`\`
+GET ${APIS_INDEX_URL}                                 — API index
+GET ${APIS_INDEX_URL}{provider}/{name}/                — API detail page (access card, spec + docs links)
+GET ${APIS_SEARCH_URL}&q={query}  — semantic search, APIs only
+\`\`\`
+
+**Bulk download:** every API record as NDJSON (one record per line), refreshed daily:
+\`${APIS_BULK_DOWNLOAD_URL}\`
+
+**Scoring:** ${APIS_METHODOLOGY_URL}
+
+`;
+}
+
+export function renderTemplate(stats, apiSummary = null) {
   const totalDiscovered = stats.total_discovered || 0;
   const totalIndexed = stats.total_skills || 0;
   const totalFeatured = (stats.tiers && stats.tiers.featured) || 0;
@@ -73,8 +120,20 @@ function renderTemplate(stats) {
   // stats section is absent (e.g., before plugins land on a given branch).
   const pluginCount = (stats.plugin && stats.plugin.total_plugins) || 0;
   const mcpCount = (stats.mcp_server && stats.mcp_server.total_mcp_servers) || 0;
-  // Phase 4.2 (D-07): api count from pipeline-stats.json.api (filter-apis.js); omitted when absent.
-  const apiCount = (stats.api && stats.api.total_apis) || 0;
+  // Phase 4.2 (D-07) / 4.3: api count from data/apis.ndjson (the file the
+  // /apis/ pages are built from); omitted when the build ships no api records.
+  const apiCount = (apiSummary && apiSummary.count) || 0;
+  const hasApis = apiCount > 0;
+  const typeList = hasApis ? 'skill|plugin|mcp_server|api' : 'skill|plugin|mcp_server';
+  const agentIntro = hasApis
+    ? 'If you\'re an AI agent looking for Claude skills, plugins, MCP servers, or a\npublic web API to call,'
+    : 'If you\'re an AI agent looking for Claude skills, plugins, or MCP servers,';
+  const typeParamDoc = hasApis
+    ? '"skill", "plugin", "mcp_server",\n   or "api"'
+    : '"skill", "plugin", or\n   "mcp_server"';
+  const humanApisLine = hasApis
+    ? '- APIs: /apis/ (index), individual API pages at /apis/{provider}/{name}/ (access\n  card: cost, rate limit, auth, license, formats — each with its provenance)\n'
+    : '';
   const catalogParts = [`${fmt(totalIndexed)} skills`];
   if (pluginCount > 0) catalogParts.push(`${fmt(pluginCount)} plugins`);
   if (mcpCount > 0) catalogParts.push(`${fmt(mcpCount)} MCP servers`);
@@ -90,10 +149,10 @@ function renderTemplate(stats) {
 
 ${catalogLine}
 
-If you're an AI agent looking for Claude skills, plugins, or MCP servers,
+${agentIntro}
 **don't crawl the HTML pages**. Use the structured endpoints below — they're
 faster, cheaper, and return machine-readable JSON. Filter any search by
-\`type=skill|plugin|mcp_server\`.
+\`type=${typeList}\`.
 
 ## Citation
 
@@ -180,8 +239,7 @@ POST https://claudeatlas.com/api/v1/search
 - \`k\` (optional): number of results to return, default 20, max 50
 - \`tier\` (optional): filter by quality tier — "featured", "solid", or "listed"
 - \`category\` (optional): filter by category name
-- \`type\` (optional): filter by entity_type — "skill", "plugin", or
-   "mcp_server". Omit to search all types. (command_lib, agent_lib, hook_lib are
+- \`type\` (optional): filter by entity_type — ${typeParamDoc}. Omit to search all types. (command_lib, agent_lib, hook_lib are
    reserved for future phases.)
 
 **Response:**
@@ -253,7 +311,7 @@ catalog is available via:
 \`generated_at\` to see when the current file was built. The envelope also
 carries a top-level \`citation\` block matching the citation spec above.
 
-### Search Query Log (write-only telemetry)
+${renderApiSection(apiSummary)}### Search Query Log (write-only telemetry)
 
 Used internally by the ClaudeAtlas homepage to log search queries for product
 analytics. Agents don't need to call this — the /api/v1/search endpoint logs
@@ -310,7 +368,9 @@ ClaudeAtlas automatically detects which APIs, services, and platforms each
 skill integrates with by analyzing skill content. Browse the full graph:
 
 \`\`\`
-GET https://claudeatlas.com/apis/           — all detected services
+${apiSummary
+    ? 'GET https://claudeatlas.com/apis/           — API catalog index (detected services listed at the bottom)'
+    : 'GET https://claudeatlas.com/apis/           — all detected services'}
 GET https://claudeatlas.com/apis/{service}/  — skills using a specific service
 \`\`\`
 
@@ -327,7 +387,7 @@ Browse the site at https://claudeatlas.com
   individual plugin pages at /plugins/{owner}/{repo}/ (with install commands +
   bundled skills/agents/commands/MCPs)
 - MCP servers: /mcp/ (full list), individual server pages at /mcp/{owner}/{name}/
-- Creator profiles at /creators/
+${humanApisLine}- Creator profiles at /creators/
 - API & service integration graph at /apis/
 - Credits & citation guidance at /credits/
 
@@ -348,7 +408,9 @@ function parseOutputArg(argv) {
 function main() {
   log('=== llms.txt generator start ===');
   const stats = loadStats();
-  const out = renderTemplate(stats);
+  const apiSummary = summarizeApiCatalog(APIS_PATH);
+  log(apiSummary ? `api catalog: ${apiSummary.count.toLocaleString()} records` : 'api catalog: none on this build');
+  const out = renderTemplate(stats, apiSummary);
 
   // Sanity: no unsubstituted template tokens like {foo}. We use ${} above
   // so any literal {foo} that escaped substitution would be a bug.
@@ -366,4 +428,13 @@ function main() {
   log('=== llms.txt generator complete ===');
 }
 
-main();
+// Only run main() when invoked as a script, not when imported by tests.
+const invokedAsScript = (() => {
+  try {
+    return import.meta.url === fileURLToPath(`file://${process.argv[1]}`).replace(/\\/g, '/')
+      || fileURLToPath(import.meta.url) === process.argv[1];
+  } catch {
+    return false;
+  }
+})();
+if (invokedAsScript) main();

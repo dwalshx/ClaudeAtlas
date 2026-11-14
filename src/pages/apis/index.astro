@@ -1,98 +1,272 @@
 ---
+// Phase 4.3 — /apis/ is the API index (spec "Site surfacing"). When
+// data/apis.ndjson is absent (DATA_FEEDS_ENABLED off) the page renders the
+// pre-4.3 integrations dictionary exactly as before, so a flag-off build is
+// unchanged. With api data present the dictionary moves below the catalog as
+// "Most referenced by skills" (the consumer graph proper is Phase 4.6).
 import BaseLayout from '../../layouts/BaseLayout.astro';
+import QualityBadge from '../../components/QualityBadge.astro';
 import { getApiGraph, getAllServices } from '../../lib/skills.js';
+import { getApis } from '../../lib/feeds.js';
+import { categoryColor } from '../../lib/entities.js';
+import { visibleApis, compareApis, cardFacts, providerName, decodeEntities, diverseTop } from '../../lib/api-view.js';
 
 const apiGraph = getApiGraph();
 const allServices = getAllServices();
 
-// Group services by category for the page
+// --- Legacy integrations dictionary (unchanged logic) ---
 const servicesByCategory = new Map();
 for (const svc of allServices) {
   const cat = svc.category || 'Other';
   if (!servicesByCategory.has(cat)) servicesByCategory.set(cat, []);
   servicesByCategory.get(cat).push(svc);
 }
-
-// Sort categories by total skill count across all services in that category
 const sortedCategories = [...servicesByCategory.entries()].sort((a, b) => {
   const aTotal = a[1].reduce((s, svc) => s + svc.skill_count, 0);
   const bTotal = b[1].reduce((s, svc) => s + svc.skill_count, 0);
   return bTotal - aTotal;
 });
-
 const totalServices = allServices.length;
 const skillsWithIntegrations = apiGraph.skills_with_integrations || 0;
 const integrationRate = apiGraph.integration_rate || 0;
 const skillCount = apiGraph.skill_count || 0;
 const topServices = apiGraph.top_services || allServices.slice(0, 15).map(s => ({ id: s.id, name: s.name, category: s.category, skill_count: s.skill_count }));
 
-const description = `${totalServices} APIs, services, and platforms referenced across ${skillsWithIntegrations} Claude skills. See which tools the ecosystem integrates with.`;
+// --- API catalog ---
+const apis = visibleApis(getApis()).filter((a) => a.slug.includes('/')).sort(compareApis);
+const hasCatalog = apis.length > 0;
+const featured = diverseTop(apis.filter((a) => a.quality_tier === 'featured'), 24);
+const pct = (n) => (apis.length ? Math.round((n / apis.length) * 100) : 0);
+const stats = {
+  total: apis.length,
+  free: pct(apis.filter((a) => a.access?.cost?.model === 'free').length),
+  noAuth: pct(apis.filter((a) => a.access?.auth?.type === 'none').length),
+  authKnown: pct(apis.filter((a) => a.access?.auth?.type && a.access.auth.type !== 'unknown').length),
+  withSpec: pct(apis.filter((a) => a.extra?.spec_url).length),
+  providers: new Set(apis.map(providerName)).size,
+};
+const apiCategories = new Map();
+for (const a of apis) {
+  const c = a.category || 'Other';
+  if (!apiCategories.has(c)) apiCategories.set(c, []);
+  apiCategories.get(c).push(a);
+}
+const sortedApiCategories = [...apiCategories.entries()].sort((a, b) => b[1].length - a[1].length);
+
+const description = hasCatalog
+  ? `${stats.total.toLocaleString()} APIs from ${stats.providers.toLocaleString()} providers with cost, auth, rate limits and license — each field labelled with where it came from.`
+  : `${totalServices} APIs, services, and platforms referenced across ${skillsWithIntegrations} Claude skills. See which tools the ecosystem integrates with.`;
 ---
 
-<BaseLayout title="API & Service Integrations" description={description}>
+<BaseLayout title={hasCatalog ? 'APIs — cost, auth & rate limits' : 'API & Service Integrations'} description={description}>
   <section class="max-w-6xl mx-auto px-4 py-12">
-    <header class="mb-10">
-      <h1 class="text-3xl font-bold text-white mb-3">API & Service Integrations</h1>
-      <p class="text-gray-400 max-w-3xl mb-4">
-        {skillsWithIntegrations} of {skillCount.toLocaleString()} indexed skills ({integrationRate}%) reference at least one known API, service, or platform. This graph is automatically extracted from skill content — no manual tagging.
-      </p>
-      <div class="flex flex-wrap gap-4 text-sm text-gray-500 font-mono">
-        <span>{totalServices} services detected</span>
-        <span>·</span>
-        <span>{skillsWithIntegrations} skills with integrations</span>
-        <span>·</span>
-        <span>{integrationRate}% integration rate</span>
-      </div>
-    </header>
+    {hasCatalog && (
+      <>
+        <header class="mb-8">
+          <h1 class="text-3xl font-bold text-white mb-3">APIs</h1>
+          <p class="text-gray-400 max-w-3xl mb-4">
+            {stats.total.toLocaleString()} public and commercial APIs from {stats.providers.toLocaleString()} providers, merged from
+            APIs.guru, data.gouv.fr, the UK API Catalogue and public-apis. Every API shows cost, rate limit, auth, license and formats,
+            with a chip saying where each value came from. Unknown stays unknown.
+          </p>
+          <div class="flex flex-wrap gap-4 text-sm text-gray-500 font-mono">
+            <span>{stats.authKnown}% auth known</span><span>·</span>
+            <span>{stats.noAuth}% no auth needed</span><span>·</span>
+            <span>{stats.free}% declared free</span><span>·</span>
+            <span>{stats.withSpec}% with an OpenAPI spec</span>
+          </div>
+        </header>
 
-    <!-- Top services banner -->
-    <div class="bg-gray-900 border border-gray-800 rounded-xl p-6 mb-10">
-      <h2 class="text-sm font-semibold text-gray-400 uppercase tracking-wide mb-4">Most Referenced Services</h2>
-      <div class="flex flex-wrap gap-2">
-        {topServices.slice(0, 15).map((svc) => (
-          <a
-            href={`/apis/${svc.id}/`}
-            class="inline-flex items-center gap-2 px-3 py-2 bg-gray-800 hover:bg-gray-700 border border-gray-700 rounded-lg text-sm text-gray-200 hover:text-white transition-colors"
-          >
-            <span class="font-medium">{svc.name}</span>
-            <span class="text-xs text-gray-500">{svc.skill_count}</span>
-          </a>
-        ))}
-      </div>
-    </div>
+        <!-- Semantic search, APIs only (/api/v1/search?type=api) -->
+        <div class="mb-10">
+          <label for="api-search" class="sr-only">Search APIs</label>
+          <input id="api-search" type="search" autocomplete="off" placeholder="Search APIs — e.g. weather forecast, send SMS, French company registry"
+            class="w-full px-4 py-3 bg-gray-900 border border-gray-700 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-atlas-500" />
+          <p id="api-search-status" class="text-xs text-gray-500 mt-2" aria-live="polite"></p>
+          <div id="api-search-results" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mt-4"></div>
+        </div>
 
-    <!-- Services by category -->
-    {sortedCategories.map(([category, services]) => (
-      <section class="mb-10">
-        <h2 class="text-lg font-semibold text-white mb-4 flex items-center gap-2">
-          <span class="w-2 h-2 rounded-full bg-atlas-500"></span>
-          {category}
-          <span class="text-xs text-gray-500 font-normal ml-2">{services.length} service{services.length === 1 ? '' : 's'}</span>
-        </h2>
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-          {services.map((svc) => (
-            <a
-              href={`/apis/${svc.id}/`}
-              class="flex items-center justify-between p-4 bg-gray-900 border border-gray-800 rounded-lg hover:border-atlas-500/40 hover:bg-gray-800/50 transition-colors"
-            >
-              <div class="min-w-0">
-                <div class="font-medium text-white truncate">{svc.name}</div>
-                {svc.url && (
-                  <div class="text-xs text-gray-500 truncate">{svc.url.replace('https://', '')}</div>
-                )}
-              </div>
-              <div class="flex items-center gap-2 ml-4">
-                <span class="text-sm font-mono text-atlas-400">{svc.skill_count}</span>
-                <span class="text-xs text-gray-600">skills</span>
-              </div>
+        {featured.length > 0 && (
+          <section class="mb-12">
+            <h2 class="text-lg font-semibold text-white mb-4">Featured APIs</h2>
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+              {featured.map((a) => (
+                <a href={`/apis/${a.slug}/`} class="block p-4 bg-gray-900 border border-gray-800 rounded-lg hover:border-atlas-500/40 hover:bg-gray-800/50 transition-colors">
+                  <div class="flex items-start justify-between gap-2 mb-1">
+                    <span class="font-medium text-white truncate">{decodeEntities(a.name)}</span>
+                    <span class="text-xs font-mono text-atlas-400">{a.quality_score}</span>
+                  </div>
+                  <div class="text-xs text-gray-500 font-mono truncate mb-2">{providerName(a)}</div>
+                  <p class="text-sm text-gray-400 line-clamp-2 mb-2">{decodeEntities(a.description)}</p>
+                  <div class="flex flex-wrap gap-1">
+                    {cardFacts(a).map((f) => <span class="px-2 py-0.5 rounded-full bg-gray-800 text-xs text-gray-400">{f}</span>)}
+                  </div>
+                </a>
+              ))}
+            </div>
+          </section>
+        )}
+
+        <section class="mb-12">
+          <div class="flex items-baseline justify-between mb-4 gap-4 flex-wrap">
+            <h2 class="text-lg font-semibold text-white">By category</h2>
+            <a href="/apis/browse/" class="text-sm text-atlas-400 hover:underline">Browse all {stats.total.toLocaleString()} A–Z →</a>
+          </div>
+          {sortedApiCategories.map(([category, list]) => (
+            <div class="mb-8">
+              <h3 class="text-base font-semibold text-white mb-3 flex items-center gap-2">
+                <span class={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${categoryColor(category)}`}>{category}</span>
+                <span class="text-xs text-gray-500 font-normal">{list.length.toLocaleString()} APIs</span>
+              </h3>
+              <ul class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2">
+                {list.slice(0, 12).map((a) => (
+                  <li>
+                    <a href={`/apis/${a.slug}/`} class="flex items-center justify-between gap-2 px-3 py-2 bg-gray-900 border border-gray-800 rounded-lg hover:border-atlas-500/40 transition-colors">
+                      <span class="text-sm text-gray-200 truncate">{decodeEntities(a.name)}</span>
+                      <QualityBadge tier={a.quality_tier} />
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
+        </section>
+
+        <h2 class="text-lg font-semibold text-white mb-2">Most referenced by skills</h2>
+        <p class="text-sm text-gray-500 mb-4">
+          {skillsWithIntegrations} of {skillCount.toLocaleString()} indexed skills ({integrationRate}%) mention at least one of these services.
+        </p>
+        <div class="flex flex-wrap gap-2 mb-6">
+          {topServices.slice(0, 30).map((svc) => (
+            <a href={`/apis/${svc.id}/`}
+              class="inline-flex items-center gap-2 px-3 py-2 bg-gray-800 hover:bg-gray-700 border border-gray-700 rounded-lg text-sm text-gray-200 hover:text-white transition-colors">
+              <span class="font-medium">{svc.name}</span>
+              <span class="text-xs text-gray-500">{svc.skill_count}</span>
             </a>
           ))}
         </div>
-      </section>
-    ))}
+        <p class="text-xs text-gray-600 mb-4">Detected automatically from skill content by keyword matching; some false positives are possible.</p>
+      </>
+    )}
 
-    <p class="text-xs text-gray-600 mt-10 text-center">
-      Integrations are detected automatically from skill content using keyword matching — not manually tagged. Some false positives are possible.
-    </p>
+    {!hasCatalog && (
+      <>
+        <header class="mb-10">
+          <h1 class="text-3xl font-bold text-white mb-3">API & Service Integrations</h1>
+          <p class="text-gray-400 max-w-3xl mb-4">
+            {skillsWithIntegrations} of {skillCount.toLocaleString()} indexed skills ({integrationRate}%) reference at least one known API, service, or platform. This graph is automatically extracted from skill content — no manual tagging.
+          </p>
+          <div class="flex flex-wrap gap-4 text-sm text-gray-500 font-mono">
+            <span>{totalServices} services detected</span>
+            <span>·</span>
+            <span>{skillsWithIntegrations} skills with integrations</span>
+            <span>·</span>
+            <span>{integrationRate}% integration rate</span>
+          </div>
+        </header>
+
+        <div class="bg-gray-900 border border-gray-800 rounded-xl p-6 mb-10">
+          <h2 class="text-sm font-semibold text-gray-400 uppercase tracking-wide mb-4">Most Referenced Services</h2>
+          <div class="flex flex-wrap gap-2">
+            {topServices.slice(0, 15).map((svc) => (
+              <a
+                href={`/apis/${svc.id}/`}
+                class="inline-flex items-center gap-2 px-3 py-2 bg-gray-800 hover:bg-gray-700 border border-gray-700 rounded-lg text-sm text-gray-200 hover:text-white transition-colors"
+              >
+                <span class="font-medium">{svc.name}</span>
+                <span class="text-xs text-gray-500">{svc.skill_count}</span>
+              </a>
+            ))}
+          </div>
+        </div>
+
+        {sortedCategories.map(([category, services]) => (
+          <section class="mb-10">
+            <h2 class="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+              <span class="w-2 h-2 rounded-full bg-atlas-500"></span>
+              {category}
+              <span class="text-xs text-gray-500 font-normal ml-2">{services.length} service{services.length === 1 ? '' : 's'}</span>
+            </h2>
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+              {services.map((svc) => (
+                <a
+                  href={`/apis/${svc.id}/`}
+                  class="flex items-center justify-between p-4 bg-gray-900 border border-gray-800 rounded-lg hover:border-atlas-500/40 hover:bg-gray-800/50 transition-colors"
+                >
+                  <div class="min-w-0">
+                    <div class="font-medium text-white truncate">{svc.name}</div>
+                    {svc.url && (
+                      <div class="text-xs text-gray-500 truncate">{svc.url.replace('https://', '')}</div>
+                    )}
+                  </div>
+                  <div class="flex items-center gap-2 ml-4">
+                    <span class="text-sm font-mono text-atlas-400">{svc.skill_count}</span>
+                    <span class="text-xs text-gray-600">skills</span>
+                  </div>
+                </a>
+              ))}
+            </div>
+          </section>
+        ))}
+
+        <p class="text-xs text-gray-600 mt-10 text-center">
+          Integrations are detected automatically from skill content using keyword matching — not manually tagged. Some false positives are possible.
+        </p>
+      </>
+    )}
   </section>
 </BaseLayout>
+
+<script>
+  // API-only semantic search. Results come from the worker's
+  // /api/v1/search?type=api (Vectorize metadata.entity_type = 'api').
+  const input = document.getElementById('api-search') as HTMLInputElement | null;
+  const status = document.getElementById('api-search-status');
+  const results = document.getElementById('api-search-results');
+
+  function esc(s: unknown): string {
+    return String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c] as string));
+  }
+
+  let token = 0;
+  let timer: number | null = null;
+
+  async function search(q: string) {
+    const mine = ++token;
+    if (status) status.textContent = 'Searching…';
+    try {
+      const res = await fetch(`/api/v1/search?q=${encodeURIComponent(q)}&type=api&k=30`, { headers: { accept: 'application/json' } });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+      if (mine !== token) return;
+      const list: any[] = Array.isArray(data?.results) ? data.results : [];
+      if (status) status.textContent = list.length ? `${list.length} matching APIs` : 'No matching APIs';
+      if (results) {
+        results.innerHTML = list.map((r) => `
+          <a href="${esc(r.detail_url || `/apis/${r.slug}/`)}" class="block p-4 bg-gray-900 border border-gray-800 rounded-lg hover:border-atlas-500/40 transition-colors">
+            <div class="flex items-start justify-between gap-2 mb-1">
+              <span class="font-medium text-white truncate">${esc(r.name)}</span>
+              <span class="text-xs font-mono text-atlas-400">${esc(r.quality_score ?? '')}</span>
+            </div>
+            <p class="text-sm text-gray-400 line-clamp-2">${esc(r.description)}</p>
+          </a>`).join('');
+      }
+    } catch (err) {
+      if (mine !== token) return;
+      console.error('API search failed:', err);
+      if (status) status.textContent = 'Search is unavailable right now.';
+    }
+  }
+
+  input?.addEventListener('input', () => {
+    const q = input.value.trim();
+    if (timer) window.clearTimeout(timer);
+    if (!q) {
+      token++;
+      if (status) status.textContent = '';
+      if (results) results.innerHTML = '';
+      return;
+    }
+    timer = window.setTimeout(() => search(q), 250);
+  });
+</script>

@@ -46,6 +46,9 @@ const SKILLS_NDJSON_PATH = join(ROOT, 'data', 'skills.ndjson');
 // absent (skills-only branches/CI keep passing).
 const PLUGINS_NDJSON = join(ROOT, 'data', 'plugins.ndjson');
 const MCP_NDJSON = join(ROOT, 'data', 'mcp-servers.ndjson');
+// Phase 4.3: api detail pages (/apis/<provider>/<name>/) are fully static too;
+// data/apis.ndjson is absent whenever DATA_FEEDS_ENABLED is off → 0.
+const APIS_NDJSON = join(ROOT, 'data', 'apis.ndjson');
 
 // Margin for static pages (homepage, methodology, 404, category/*, creators,
 // apis, etc.). Scales with catalog size because /creators/[username].astro
@@ -115,18 +118,20 @@ function main() {
   // absorbs the gap and the skills basis is the load-bearing assertion.
   let pluginCount = 0;
   let mcpCount = 0;
+  let apiCount = 0;
   try {
     pluginCount = countRecords(PLUGINS_NDJSON);
     mcpCount = countRecords(MCP_NDJSON);
+    apiCount = countRecords(APIS_NDJSON);
   } catch (err) {
     console.warn(`[sitemap-completeness] WARN: failed to count plugin/MCP records (${err.message}) — using 0`);
   }
 
-  const expectedCount = skillCount + pluginCount + mcpCount;
+  const expectedCount = skillCount + pluginCount + mcpCount + apiCount;
   const tolerance = computeTolerance(expectedCount);
 
   console.log(`[sitemap-completeness] ${sitemapFiles.length} sitemap file(s) (${sitemapFiles.join(', ')}), ${locCount} <loc> entries total`);
-  console.log(`[sitemap-completeness] skills.ndjson: ${skillCount} records, plugins.ndjson: ${pluginCount}, mcp-servers.ndjson: ${mcpCount} → expected basis ${expectedCount}`);
+  console.log(`[sitemap-completeness] skills.ndjson: ${skillCount} records, plugins.ndjson: ${pluginCount}, mcp-servers.ndjson: ${mcpCount}, apis.ndjson: ${apiCount} → expected basis ${expectedCount}`);
   console.log(`[sitemap-completeness] tolerance: ±${tolerance} (max(1500, 15% of combined basis) — scales with creator page count)`);
 
   // Allowed range: expected count - small (some records may legitimately be

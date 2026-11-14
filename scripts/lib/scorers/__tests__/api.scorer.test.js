@@ -28,8 +28,8 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { emptyAccess, setAccessField } from '../../access.js';
-import { FEED_WEIGHTS, NEUTRAL_REACHABILITY, NEUTRAL_POPULARITY, NEUTRAL_FRESHNESS } from '../feed.signals.js';
-import { scoreApi } from '../api.scorer.js';
+import { FEED_WEIGHTS, NEUTRAL_REACHABILITY, NEUTRAL_POPULARITY, NEUTRAL_FRESHNESS, weightedTotal } from '../feed.signals.js';
+import { scoreApi, apiSignalScores } from '../api.scorer.js';
 import { scoreDataset } from '../dataset.scorer.js';
 import { scoreEntity } from '../index.js';
 
@@ -192,4 +192,15 @@ test('4.2/decision 8: unknown freshness is neutral (50) for api — a stale 2020
   assert.ok(diff === 6 || diff === 7, `expected 6 or 7, got ${diff}`);
   assert.equal(NEUTRAL_FRESHNESS, 50);
   assert.equal(scoreDataset(bareDataset()), 18);
+});
+
+test('4.3: apiSignalScores is the pure breakdown behind scoreApi (same total, no side effect, all 7 signals)', () => {
+  const rec = bareApi({ extra: { source_modified_at: '2026-10-01T00:00:00Z' } });
+  const before = JSON.stringify(rec);
+  const s = apiSignalScores(rec);
+  assert.equal(JSON.stringify(rec), before, 'apiSignalScores must not write extra.access_clarity');
+  assert.deepEqual(Object.keys(s).sort(), Object.keys(FEED_WEIGHTS).sort());
+  for (const v of Object.values(s)) assert.ok(v >= 0 && v <= 100, `signal out of range: ${v}`);
+  assert.equal(weightedTotal(s, FEED_WEIGHTS), scoreApi(bareApi({ extra: { source_modified_at: '2026-10-01T00:00:00Z' } })));
+  assert.doesNotThrow(() => apiSignalScores({ entity_type: 'api' }));
 });

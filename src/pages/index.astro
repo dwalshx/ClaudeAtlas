@@ -118,6 +118,16 @@ const homeJsonLd = {
         </svg>
       </button>
     </div>
+    <!-- Phase 4.3: entity-type chips → /api/v1/search?type=… ("All" = untyped,
+         which still hides api/dataset — see worker/search-results.js). -->
+    <div id="search-type-chips" class="max-w-3xl mx-auto mt-2 flex flex-wrap gap-1.5 text-xs" role="radiogroup" aria-label="Search type">
+      {[['', 'All'], ['skill', 'Skills'], ['plugin', 'Plugins'], ['mcp_server', 'MCP'], ['api', 'APIs']].map(([value, label]) => (
+        <button type="button" role="radio" data-type={value} aria-checked={value === '' ? 'true' : 'false'}
+          class="search-type-chip px-2.5 py-1 rounded-full border border-gray-700 text-gray-400 hover:text-white aria-checked:bg-atlas-600 aria-checked:border-atlas-600 aria-checked:text-white transition-colors">
+          {label}
+        </button>
+      ))}
+    </div>
   </div>
 
   <!-- Hero -->
@@ -309,12 +319,16 @@ const homeJsonLd = {
     repo_full_name?: string;
     description?: string;
     detail_url?: string;
+    entity_type?: string;
   }): string {
     const tier = r.quality_tier || 'listed';
     const tc = tierClasses(tier);
     const cc = categoryClasses(r.category || '');
-    const stars = (r.repo_stars || 0).toLocaleString();
-    const owner = (r.repo_full_name || '').split('/')[0] || '';
+    // Phase 4.3: api records have no GitHub repo — show "API" instead of a
+    // 0-star count, and the provider (slug's first segment) as the owner.
+    const isApi = r.entity_type === 'api';
+    const stars = isApi ? 'API' : (r.repo_stars || 0).toLocaleString();
+    const owner = isApi ? (r.slug || '').split('/')[0] : ((r.repo_full_name || '').split('/')[0] || '');
     const href = r.detail_url || `/skills/${r.slug}/`;
     const desc = r.description || 'No description available.';
     const cat = r.category || 'Productivity & Other';
@@ -339,7 +353,7 @@ const homeJsonLd = {
         <div class="flex items-center justify-between text-xs text-gray-500">
           <div class="flex items-center gap-3">
             <span class="flex items-center gap-1">
-              <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 16 16"><path d="M8 .25a.75.75 0 01.673.418l1.882 3.815 4.21.612a.75.75 0 01.416 1.279l-3.046 2.97.719 4.192a.75.75 0 01-1.088.791L8 12.347l-3.766 1.98a.75.75 0 01-1.088-.79l.72-4.194L.818 6.374a.75.75 0 01.416-1.28l4.21-.611L7.327.668A.75.75 0 018 .25z"/></svg>
+              ${isApi ? '' : '<svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 16 16"><path d="M8 .25a.75.75 0 01.673.418l1.882 3.815 4.21.612a.75.75 0 01.416 1.279l-3.046 2.97.719 4.192a.75.75 0 01-1.088.791L8 12.347l-3.766 1.98a.75.75 0 01-1.088-.79l.72-4.194L.818 6.374a.75.75 0 01.416-1.28l4.21-.611L7.327.668A.75.75 0 018 .25z"/></svg>'}
               ${escapeHtml(stars)}
             </span>
           </div>
@@ -390,6 +404,17 @@ const homeJsonLd = {
   // --- Semantic search via /api/v1/search ---
   let searchToken = 0;
   let lastQuery = '';
+  let searchType = '';   // '' = untyped; else skill | plugin | mcp_server | api
+
+  // Phase 4.3: entity-type chips. Re-run the current query on change.
+  document.querySelectorAll<HTMLButtonElement>('.search-type-chip').forEach((chip) => {
+    chip.addEventListener('click', () => {
+      searchType = chip.dataset.type || '';
+      document.querySelectorAll('.search-type-chip').forEach((c) => c.setAttribute('aria-checked', c === chip ? 'true' : 'false'));
+      const q = (document.getElementById('skill-search') as HTMLInputElement | null)?.value.trim() || '';
+      if (q) runSemanticSearch(q);
+    });
+  });
 
   async function runSemanticSearch(query: string) {
     const thisToken = ++searchToken;
@@ -398,7 +423,8 @@ const homeJsonLd = {
 
     let payload: { results: Array<Record<string, any>> } | null = null;
     try {
-      const url = `/api/v1/search?q=${encodeURIComponent(query)}&k=30`;
+      const typeParam = searchType ? `&type=${encodeURIComponent(searchType)}` : '';
+      const url = `/api/v1/search?q=${encodeURIComponent(query)}&k=30${typeParam}`;
       const res = await fetch(url, { headers: { accept: 'application/json' } });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       payload = await res.json();

@@ -471,13 +471,19 @@ npm run preview
    runtime cost is unchanged. The genuine long-term fix is an HNSW index
    for the similarity computation (deferred to Phase 3.x backlog).
 
-13. **Phase 4.2 api pipeline is wired but OFF on main.** `DATA_FEEDS_ENABLED`
-   stays `'false'` until (a) main's daily cron is green again (red since
-   2026-09-28 — Track 2 401 / Track 1 failure-ratio gate) and (b) a measured
-   branch run (`measure-data-feeds.yml`, then a `daily-scrape.yml` dispatch
-   with `data_feeds=true`) finishes inside the 330-minute budget. Flip =
-   change the `|| 'false'` fallback to `|| 'true'` in the job env (one line)
-   and update `scripts/__tests__/workflow-flags.test.js` test 1. Calibration
+13. **The api pipeline is ON (flipped 2026-11-14 with Phase 4.3).**
+   `DATA_FEEDS_ENABLED` resolves to `'true'` on schedule; a manual dispatch
+   follows the `data_feeds` input (default true), so dispatching with
+   `data_feeds=false` skips the api legs for one run without a commit. The
+   flip followed a green cron and the measured run (`measure-data-feeds.yml`
+   run 43641213036: cold harvest 11 min, live embed 1m46s, 13.5 min total).
+   API pages are fully static (`src/pages/apis/[...slug].astro`, ~4.2k
+   pages — the deploy is on the Workers Paid 100k-file tier, 47,730 files on
+   2026-11-14), so there is no Listed-tier KV route for APIs. When
+   `data/apis.ndjson` is absent (fetch failed, or flag off) every api surface
+   degrades to "no api content" — `/apis/` falls back to the integrations
+   dictionary. Untyped search still hides api/dataset results; the homepage
+   "APIs" chip and `/apis/` search use `?type=api`. Calibration
    findings (per-source Freshness/Access bias, description-floor and
    biz-slop drops) are in `.planning/phases/4.2-api-harvest-v1/4.2-CALIBRATION.md`;
    retunes are separate, reviewed changes — never silent edits to

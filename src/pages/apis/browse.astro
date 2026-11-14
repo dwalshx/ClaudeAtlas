@@ -1,0 +1,56 @@
+---
+// Phase 4.3 — /apis/browse/: flat A–Z anchor list of every API (the same
+// SEO link-distribution role /browse/ plays for skills). Static route, so it
+// wins over the single-segment /apis/[service].astro dictionary route.
+// Empty-state when data/apis.ndjson is absent (DATA_FEEDS_ENABLED off).
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { getApis } from '../../lib/feeds.js';
+import { visibleApis, providerName, decodeEntities } from '../../lib/api-view.js';
+
+const apis = visibleApis(getApis())
+  .filter((a) => a.slug.includes('/'))
+  .sort((a, b) => String(a.name).localeCompare(String(b.name), 'en', { sensitivity: 'base' }) || String(a.id).localeCompare(String(b.id)));
+
+const groups = new Map();
+for (const a of apis) {
+  const first = String(a.name || '').trim().charAt(0).toUpperCase();
+  const key = /[A-Z]/.test(first) ? first : '#';
+  if (!groups.has(key)) groups.set(key, []);
+  groups.get(key).push(a);
+}
+const letters = [...groups.keys()].sort((a, b) => (a === '#' ? -1 : b === '#' ? 1 : a.localeCompare(b)));
+---
+
+<BaseLayout title="All APIs A–Z" description={`Every API indexed on ClaudeAtlas (${apis.length.toLocaleString()}), A–Z.`}>
+  <section class="max-w-6xl mx-auto px-4 py-12">
+    <nav class="text-sm text-gray-500 mb-6 flex items-center gap-2">
+      <a href="/" class="hover:text-white transition-colors">Home</a><span>/</span>
+      <a href="/apis/" class="hover:text-white transition-colors">APIs</a><span>/</span>
+      <span class="text-gray-400">A–Z</span>
+    </nav>
+    <h1 class="text-3xl font-bold text-white mb-2">All APIs A–Z</h1>
+    {apis.length === 0
+      ? <p class="text-gray-400">The API catalog is not published yet.</p>
+      : <p class="text-gray-400 mb-6">{apis.length.toLocaleString()} APIs.</p>}
+
+    {letters.length > 0 && (
+      <div class="flex flex-wrap gap-1 mb-8 text-sm font-mono">
+        {letters.map((l) => <a href={`#letter-${l === '#' ? 'num' : l}`} class="px-2 py-1 rounded bg-gray-900 border border-gray-800 text-gray-300 hover:text-white">{l}</a>)}
+      </div>
+    )}
+
+    {letters.map((l) => (
+      <section id={`letter-${l === '#' ? 'num' : l}`} class="mb-8">
+        <h2 class="text-lg font-semibold text-white mb-3">{l}</h2>
+        <ul class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-1 text-sm">
+          {groups.get(l).map((a) => (
+            <li class="truncate">
+              <a href={`/apis/${a.slug}/`} class="text-gray-300 hover:text-atlas-400">{decodeEntities(a.name)}</a>
+              <span class="text-gray-600 font-mono text-xs"> {providerName(a)}</span>
+            </li>
+          ))}
+        </ul>
+      </section>
+    ))}
+  </section>
+</BaseLayout>

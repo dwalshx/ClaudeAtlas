@@ -74,7 +74,15 @@ function log(msg) {
 // Skill → JSON-Feed item shape
 // ---------------------------------------------------------------------------
 
+// Phase 4.3: api records have no repo dates and no first-seen date —
+// `scraped_at` is rewritten on every harvest, so using it would make all ~4k
+// APIs "new" every day. The only honest date is the source's own
+// `extra.source_modified_at` (spec/listing last modified); APIs without one
+// stay out of the date-windowed feeds (whats-new, notable).
 function entityDate(skill) {
+  if (skill && skill.entity_type === 'api') {
+    return (skill.extra && skill.extra.source_modified_at) || null;
+  }
   return (
     (skill.extra && skill.extra.skill_first_commit_at) ||
     skill.skill_first_commit_at ||
@@ -93,28 +101,46 @@ function truncate(s, n) {
   return s.slice(0, n - 1).trimEnd() + '…';
 }
 
+// Detail-page path segment per entity_type (mirrors worker/search-results.js
+// detailPathFor). Phase 4.3 adds api → /apis/ and fixes plugin / mcp_server,
+// which used to fall through to /skills/ (their pages live at /plugins/ and
+// /mcp/). Unknown types keep the /skills/ fallback.
+const DETAIL_SEGMENT = { plugin: 'plugins', mcp_server: 'mcp', api: 'apis' };
+
 function buildItem(skill, opts = {}) {
   const slug = skill.slug || '';
-  const url = `${SITE_URL}/skills/${slug}/`;
+  const isApi = skill.entity_type === 'api';
+  const url = `${SITE_URL}/${DETAIL_SEGMENT[skill.entity_type] || 'skills'}/${slug}/`;
   const desc = skill.description || '';
   const title = desc
     ? `${skill.name}: ${truncate(desc, 80)}`
     : String(skill.name || slug);
-  const datePublished = entityDate(skill) || new Date().toISOString();
-  const creator = (skill.repo_full_name || '').split('/')[0] || '';
+  const datePublished =
+    entityDate(skill) || (isApi && skill.scraped_at) || new Date().toISOString();
+  const creator = isApi
+    ? (skill.extra && skill.extra.provider) || ''
+    : (skill.repo_full_name || '').split('/')[0] || '';
 
   const extra = {
     tier: skill.quality_tier || null,
     quality_score: typeof skill.quality_score === 'number' ? skill.quality_score : null,
     novelty_score:
       typeof skill.novelty_score === 'number' ? skill.novelty_score : null,
-    repo_stars: skill.repo_stars || 0,
+    repo_stars: isApi ? (skill.repo_stars ?? null) : skill.repo_stars || 0,
     repo_full_name: skill.repo_full_name || null,
     creator,
-    first_seen: entityDate(skill),
+    // api: no first-seen date exists (see entityDate) — null, not a guess.
+    first_seen: isApi ? null : entityDate(skill),
     type_chip: skill.entity_type || 'skill',
     category: skill.category || null,
   };
+  if (isApi) {
+    const a = skill.access || {};
+    extra.provider = (skill.extra && skill.extra.provider) || null;
+    extra.source_modified_at = entityDate(skill);
+    extra.cost_model = (a.cost && a.cost.model) || 'unknown';
+    extra.auth_type = (a.auth && a.auth.type) || 'unknown';
+  }
   if (typeof opts.stars_delta_7d === 'number') {
     extra.stars_delta_7d = opts.stars_delta_7d;
   }
@@ -149,6 +175,22 @@ function envelope(name, title, description, items) {
 // Feed builders
 // ---------------------------------------------------------------------------
 
+// Phase 4.3: an api's only date is its listing's last-modified date, and
+// data.gouv.fr re-stamps hundreds of listings a month — uncapped, APIs filled
+// all 100 what's-new slots in a skills-free smoke run. Cap them per feed so
+// the date-windowed feeds stay mostly about skills/plugins/MCP.
+export const MAX_API_ITEMS_PER_FEED = 10;
+
+/** Array.filter predicate: keep at most `max` records of `type`, in input order. */
+export function capPerType(type, max) {
+  let seen = 0;
+  return (s) => {
+    if (!s || s.entity_type !== type) return true;
+    seen += 1;
+    return seen <= max;
+  };
+}
+
 function buildWhatsNew(skills) {
   const cutoff = Date.now() - 30 * MS_PER_DAY;
   const items = skills
@@ -160,6 +202,7 @@ function buildWhatsNew(skills) {
       return !isNaN(t) && t >= cutoff;
     })
     .sort((a, b) => Date.parse(entityDate(b)) - Date.parse(entityDate(a)))
+    .filter(capPerType('api', MAX_API_ITEMS_PER_FEED))
     .slice(0, 100)
     .map((s) => buildItem(s));
 
@@ -193,6 +236,7 @@ function buildNotable(skills) {
         (b.quality_score || 0) + (b.novelty_score || 0) * 100;
       return bw - aw;
     })
+    .filter(capPerType('api', MAX_API_ITEMS_PER_FEED))
     .slice(0, 25)
     .map((s) => buildItem(s));
 
@@ -299,7 +343,7 @@ function buildTrending(skills) {
   const candidates = skills
     .filter(notDuplicate)
     .filter((s) => s.quality_tier !== 'listed')
-    .filter((s) => deltas.has(s.repo_full_name))
+    .filter((s) => s.repo_full_name && deltas.has(s.repo_full_name))
     .map((s) => ({ skill: s, delta: deltas.get(s.repo_full_name) }))
     .sort((a, b) => b.delta - a.delta)
     .slice(0, 50);
@@ -358,6 +402,8 @@ function loadAllEntities() {
     ...loadSkills(),
     ...loadExtraEntities('plugins.ndjson', 'plugin'),
     ...loadExtraEntities('mcp-servers.ndjson', 'mcp_server'),
+    // Phase 4.3: api records (absent whenever DATA_FEEDS_ENABLED is off).
+    ...loadExtraEntities('apis.ndjson', 'api'),
   ];
 }
 
@@ -374,7 +420,7 @@ function writeFeed(name, feed) {
 function main() {
   log('=== feeds generator start ===');
   const entities = loadAllEntities();
-  log(`loaded ${entities.length.toLocaleString()} total entities (skill + plugin + mcp_server)`);
+  log(`loaded ${entities.length.toLocaleString()} total entities (skill + plugin + mcp_server + api)`);
 
   writeFeed('whats-new', buildWhatsNew(entities));
   writeFeed('notable', buildNotable(entities));
