@@ -47,7 +47,7 @@
 import { createHash } from 'crypto';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
-import { readNdjsonRecords, writeNdjsonStreaming } from './lib/ndjson.js';
+import { readNdjsonRecords, writeNdjsonStreaming, openNdjsonAppend, appendNdjsonLine, closeNdjsonAppend } from './lib/ndjson.js';
 import { loadSkillsArray } from './lib/skills-stream.js';
 import { buildEmbeddingInput as buildEmbeddingInputRegistry } from './lib/embedding-input/index.js';
 // Outage 2026-10 fail-fast guard (pure; see scripts/lib/corpus-guards.js).
@@ -415,11 +415,20 @@ async function main() {
     log(`estimated cost: ~$${estCost.toFixed(4)} (${estTokens.toLocaleString()} tokens)`);
   }
 
-  // Process in batches
-  const newRecords = [];
+  // Append-only checkpointing (2026-11-13). Write the kept vectors ONCE
+  // (atomic tmp+rename), then APPEND each embedded batch. The old per-batch
+  // checkpoint rewrote the whole file — at ~120k vectors (~600 MB) that was
+  // ~20 s of disk I/O per 100-record batch, ~10× the OpenAI time, and pushed
+  // the 2026-11-13 recovery re-embed past the 6-hour job cap. A run killed
+  // mid-append leaves at most one truncated final line, which
+  // readNdjsonRecords() skips on the next run's loadPriorVectors().
+  writeNdjsonStreaming(outputPath, kept);
+  const appendFd = openNdjsonAppend(outputPath);
+  let newCount = 0;
   let done = 0;
   const startTime = Date.now();
 
+  try {
   for (let i = 0; i < todo.length; i += BATCH_SIZE) {
     const batch = todo.slice(i, i + BATCH_SIZE);
     const inputs = batch.map(({ skill }) => buildEmbeddingInput(skill));
@@ -432,10 +441,9 @@ async function main() {
         vectors = await embedBatch(inputs);
       } catch (err) {
         log(`  [FATAL] batch ${Math.floor(i / BATCH_SIZE) + 1} failed: ${err.message}`);
-        // Save progress before exiting so we can resume
-        const partial = [...kept, ...newRecords];
-        writeNdjsonStreaming(outputPath, partial);
-        log(`saved partial: ${partial.length} vectors written`);
+        // Progress is already on disk (appended per batch) — just close and exit.
+        closeNdjsonAppend(appendFd);
+        log(`saved partial: ${kept.length + newCount} vectors written`);
         process.exit(1);
       }
     }
@@ -446,7 +454,7 @@ async function main() {
 
     for (let j = 0; j < batch.length; j++) {
       const { skill, sha } = batch[j];
-      newRecords.push({
+      appendNdjsonLine(appendFd, {
         id: vectorizeId(skill.id),
         values: vectors[j],
         metadata: {
@@ -468,24 +476,25 @@ async function main() {
           _content_sha: sha,
         },
       });
+      newCount++;
     }
 
     done += batch.length;
     const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
     log(`  [${done}/${todo.length}] batch ${Math.floor(i / BATCH_SIZE) + 1} done (${elapsed}s elapsed)`);
 
-    // Checkpoint every batch (streaming write — V8-safe)
-    writeNdjsonStreaming(outputPath, [...kept, ...newRecords]);
-
     // Polite pause between batches (skipped in DRY_RUN — no rate limit)
     if (i + BATCH_SIZE < todo.length && !DRY_RUN) {
       await sleep(DELAY_BETWEEN_BATCHES_MS);
     }
   }
+  } finally {
+    try { closeNdjsonAppend(appendFd); } catch { /* already closed on the FATAL path */ }
+  }
 
   const totalElapsed = ((Date.now() - startTime) / 1000).toFixed(1);
-  log(`embedded ${newRecords.length} new/changed records in ${totalElapsed}s`);
-  log(`final output: ${kept.length + newRecords.length} total vectors`);
+  log(`embedded ${newCount} new/changed records in ${totalElapsed}s`);
+  log(`final output: ${kept.length + newCount} total vectors`);
   log(`wrote ${outputPath}`);
   log('=== embedder complete ===');
 }

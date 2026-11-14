@@ -20,6 +20,18 @@ on:
   push:
     branches: [main]
 
+# One data run at a time (2026-11-13). A manual recovery dispatch at 14:37 UTC
+# and the scheduled run 13 min later embedded the same corpus in parallel,
+# shared one GitHub user rate-limit bucket and one OpenAI quota, and BOTH hit
+# the 6-hour job cap. schedule + workflow_dispatch now queue behind each other
+# (never cancel — a cancelled data run loses its day's work). Push-event runs
+# (~20-min redeploys from skills-latest) get their own group so a push can
+# never replace a queued data run (GitHub keeps one pending run per group);
+# a newer push supersedes an older in-flight push.
+concurrency:
+  group: daily-scrape-${{ github.event_name == 'push' && 'push' || 'data' }}
+  cancel-in-progress: ${{ github.event_name == 'push' }}
+
 jobs:
   scrape-build-deploy:
     runs-on: ubuntu-latest
@@ -93,6 +105,12 @@ jobs:
       # fallback) happens only after a green measured run — see
       # .planning/phases/4.2-api-harvest-v1/4.2-MEASUREMENT.md.
       DATA_FEEDS_ENABLED: ${{ inputs.data_feeds || 'false' }}
+      # 2026-11-14: Track 2 died with "Reached heap limit … JavaScript heap out of
+      # memory" (run 43536499914) once the raw corpus reached ~144k records — it
+      # holds the whole corpus Map plus the ETag cache in memory, and Node's default
+      # old-space cap on the runner is ~4 GB. ubuntu-latest has 16 GB RAM and the
+      # steps run one node process at a time, so give every step 12 GB of heap.
+      NODE_OPTIONS: --max-old-space-size=12288
     steps:
       - uses: actions/checkout@v4
 
