@@ -23,12 +23,12 @@ import { join } from 'node:path';
 const ROOT = join(import.meta.dirname, '..', '..');
 const yml = readFileSync(join(ROOT, '.github', 'workflows', 'daily-scrape.yml'), 'utf-8');
 
-test("4.2-M10: job env resolves DATA_FEEDS_ENABLED from the data_feeds dispatch input with a 'false' fallback, directly under PLUGINS_ENABLED", () => {
-  assert.match(yml, /^\s+PLUGINS_ENABLED: 'true'\r?\n(?:\s+#[^\n]*\r?\n)*\s+DATA_FEEDS_ENABLED: \$\{\{ inputs\.data_feeds \|\| 'false' \}\}\s*$/m);
+test("4.3 flip: DATA_FEEDS_ENABLED is 'true' on schedule/push and follows the data_feeds input on dispatch, directly under PLUGINS_ENABLED", () => {
+  assert.match(yml, /^\s+PLUGINS_ENABLED: 'true'\r?\n(?:\s+#[^\n]*\r?\n)*\s+DATA_FEEDS_ENABLED: \$\{\{ github\.event_name == 'workflow_dispatch' && \(inputs\.data_feeds && 'true' \|\| 'false'\) \|\| 'true' \}\}\s*$/m);
 });
 
-test('4.2-M10: workflow_dispatch declares the data_feeds boolean input defaulting to false', () => {
-  assert.match(yml, /data_feeds:\r?\n\s+description: [^\n]+\r?\n\s+type: boolean\r?\n\s+default: false/);
+test('4.3 flip: workflow_dispatch declares the data_feeds boolean input defaulting to true (untick = one-run kill switch)', () => {
+  assert.match(yml, /data_feeds:\r?\n\s+description: [^\n]+\r?\n\s+type: boolean\r?\n\s+default: true/);
 });
 
 // Split the job into step blocks (each starts at a `      - ` list item under `steps:`).

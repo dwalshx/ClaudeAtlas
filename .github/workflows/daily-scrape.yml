@@ -14,9 +14,9 @@ on:
         type: boolean
         default: false
       data_feeds:
-        description: 'Phase 4.2: run the api harvest/filter/embed/enrich/upload legs this run (branch measurement; main stays off until the flip)'
+        description: 'Run the api harvest/filter/embed/enrich/upload legs this run (on since 2026-11-14; untick to skip them for one run)'
         type: boolean
-        default: false
+        default: true
   push:
     branches: [main]
 
@@ -99,12 +99,13 @@ jobs:
     # back off. The gated steps AND-combine this flag; the skill side is untouched.
     env:
       PLUGINS_ENABLED: 'true'
-      # Phase 4.2 (v4.0 Data Feeds — docs/PHASE-4.0-SPEC.md): api pipeline flag. Resolves to 'false'
-      # on schedule/push and when the dispatch input is unset/false, so main is unchanged; dispatch
-      # with data_feeds=true to exercise the gated api steps on a branch. The flip (literal 'true'
-      # fallback) happens only after a green measured run — see
-      # .planning/phases/4.2-api-harvest-v1/4.2-MEASUREMENT.md.
-      DATA_FEEDS_ENABLED: ${{ inputs.data_feeds || 'false' }}
+      # Phase 4.2 (v4.0 Data Feeds — docs/PHASE-4.0-SPEC.md): api pipeline flag.
+      # FLIPPED ON 2026-11-14 (Phase 4.3) after the measured run (measure-data-feeds.yml run
+      # 43641213036: cold harvest 11 min, live embed 1m46s, 13.5 min total) and two green daily
+      # runs (~3h23m of the 330-min budget). Schedule (and push, whose api steps are skipped by
+      # their own event gate) resolve to 'true'; a manual dispatch follows the data_feeds input
+      # (default true), so dispatching with data_feeds=false is the no-commit kill switch.
+      DATA_FEEDS_ENABLED: ${{ github.event_name == 'workflow_dispatch' && (inputs.data_feeds && 'true' || 'false') || 'true' }}
       # 2026-11-14: Track 2 died with "Reached heap limit … JavaScript heap out of
       # memory" (run 43536499914) once the raw corpus reached ~144k records — it
       # holds the whole corpus Map plus the ETag cache in memory, and Node's default

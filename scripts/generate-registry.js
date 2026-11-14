@@ -14,13 +14,27 @@
  * Phase 4.1: `buildRegistryEntry` is exported and `main()` is guarded by
  * `invokedAsScript` so the round-trip test can exercise the registry leg
  * without `data/skills.ndjson`. CLI behaviour unchanged. Registry content
- * is still skills-only (`loadSkillsArray`); Phase 4.3 reshapes it for feeds.
+ * is still skills-only (`loadSkillsArray`).
+ *
+ * Phase 4.3: the registry stays skills-only by design (plugins / MCP servers
+ * are not listed here either). When data/apis.ndjson ships with the build, an
+ * additive top-level `apis` summary block points agents at the API index,
+ * type-filtered search and the `apis-latest` NDJSON release asset. The key is
+ * omitted entirely when the build has no api records (flag off).
  */
 
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { loadSkillsArray } from './lib/skills-stream.js';
+import {
+  summarizeApiCatalog,
+  APIS_INDEX_URL,
+  APIS_DETAIL_URL_TEMPLATE,
+  APIS_SEARCH_URL,
+  APIS_BULK_DOWNLOAD_URL,
+  APIS_METHODOLOGY_URL,
+} from './lib/api-catalog-summary.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..');
@@ -32,6 +46,7 @@ const PUBLIC_DIR = join(ROOT, 'public');
 const OUTPUT_PATH = join(PUBLIC_DIR, 'skills-registry.json');
 
 const API_GRAPH_PATH = join(DATA_DIR, 'api-graph.json');
+const APIS_PATH = join(DATA_DIR, 'apis.ndjson');
 const SITE_URL = 'https://claudeatlas.com';
 
 function log(msg) {
@@ -68,6 +83,29 @@ export function buildRegistryEntry(s, apiGraph = { skill_integrations: {} }) {
     badge_url: `${SITE_URL}/badge/${s.slug}.svg`,
     star_history_url: `${SITE_URL}/badge/${s.slug}-history.svg`,
     integrations_url: `${SITE_URL}/apis/`,
+  };
+}
+
+/**
+ * Phase 4.3: the additive `apis` summary block. Pure; returns null when the
+ * build ships no api records (callers then omit the key).
+ *
+ * @param {{ count: number, tiers: { featured: number, solid: number, listed: number } } | null} apiSummary
+ */
+export function buildApisBlock(apiSummary) {
+  if (!apiSummary || !(apiSummary.count > 0)) return null;
+  const t = apiSummary.tiers || {};
+  return {
+    count: apiSummary.count,
+    total_featured: t.featured || 0,
+    total_solid: t.solid || 0,
+    total_listed: t.listed || 0,
+    index_url: APIS_INDEX_URL,
+    detail_url_template: APIS_DETAIL_URL_TEMPLATE,
+    search_api_url: APIS_SEARCH_URL,
+    bulk_download_url: APIS_BULK_DOWNLOAD_URL,
+    methodology_url: APIS_METHODOLOGY_URL,
+    note: 'API records are not listed inline. Fetch the full catalog as NDJSON from `bulk_download_url` (one EntityRecord per line, entity_type "api", with the `access` block and per-field provenance) or query `search_api_url`.',
   };
 }
 
@@ -118,6 +156,8 @@ export function main() {
 
   const entries = renderableEntries.map((s) => buildRegistryEntry(s, apiGraph));
 
+  const apisBlock = buildApisBlock(summarizeApiCatalog(APIS_PATH));
+
   const registry = {
     name: 'ClaudeAtlas',
     url: SITE_URL,
@@ -151,9 +191,11 @@ export function main() {
     total_listed: totalListed,
     categories: [...new Set(entries.map(e => e.category))].sort(),
     schema_version: '3',
-    schema_notes: 'Phase 3.1.3 — added top-level `citation` block (Agent Hub). Phase 3.1.x — filtered to renderable tiers due to 25MB asset cap. Full catalog via /api/v1/search or bulk_download_url.',
+    schema_notes: 'Phase 3.1.3 — added top-level `citation` block (Agent Hub). Phase 3.1.x — filtered to renderable tiers due to 25MB asset cap. Full catalog via /api/v1/search or bulk_download_url. Phase 4.3 — optional top-level `apis` summary block (present only when the build ships API records).',
+    ...(apisBlock ? { apis: apisBlock } : {}),
     skills: entries,
   };
+  log(apisBlock ? `apis block: ${apisBlock.count.toLocaleString()} api records` : 'apis block: omitted (no api records on this build)');
 
   if (!existsSync(PUBLIC_DIR)) mkdirSync(PUBLIC_DIR, { recursive: true });
   writeFileSync(OUTPUT_PATH, JSON.stringify(registry), 'utf-8');

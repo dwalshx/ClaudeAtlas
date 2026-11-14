@@ -39,8 +39,22 @@ import {
 export function scoreApi(record) {
   const clarity = accessClarity(record?.access);
   if (record?.extra && typeof record.extra === 'object') record.extra.access_clarity = clarity;
+  return weightedTotal(apiSignalScores(record, clarity), FEED_WEIGHTS);
+}
+
+/**
+ * Per-signal 0-100 scores for an api record — the breakdown behind scoreApi()
+ * (Phase 4.3: rendered on /apis/<slug>/ and the methodology page). PURE: no
+ * side effects, so pages can call it at build time. weightedTotal(this,
+ * FEED_WEIGHTS) === scoreApi(record).
+ *
+ * @param {any} record  v2 EntityRecord<ApiExtra>.
+ * @param {number} [clarity]  precomputed accessClarity(record.access).
+ * @returns {{ access: number, reachability: number, docs: number, license: number, freshness: number, popularity: number, adoption: number }}
+ */
+export function apiSignalScores(record, clarity = accessClarity(record?.access)) {
   const freshnessInput = feedFreshnessInput(record);
-  const scores = {
+  return {
     access: clarity * 100,
     reachability: NEUTRAL_REACHABILITY,          // Phase 4.4 probe history replaces this
     docs: scoreFeedDocs(record),
@@ -49,5 +63,4 @@ export function scoreApi(record) {
     popularity: scoreFeedPopularity(record),
     adoption: scoreAdoption(record),             // Phase 4.6 consumer graph feeds consumed_by
   };
-  return weightedTotal(scores, FEED_WEIGHTS);
 }

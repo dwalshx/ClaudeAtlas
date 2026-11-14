@@ -1,0 +1,234 @@
+---
+// Phase 4.3 — API detail page: /apis/<provider>/<name>/.
+//
+// Fully static, like /mcp/: every non-duplicate api record emits a page
+// (~4.2k today). The deploy is on the Workers Paid 100k-file asset tier
+// (47,730 files on 2026-11-14), so the Listed-tier KV render fallback the
+// spec sketches is not needed yet. data/apis.ndjson is absent whenever
+// DATA_FEEDS_ENABLED is off — getApis() returns [] and no pages are built.
+//
+// Route coexistence: api slugs always have >= 2 segments
+// (`<provider>/<name>`), while the legacy /apis/[service].astro dictionary
+// pages are single-segment, so the two routes never claim the same path.
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import QualityBadge from '../../components/QualityBadge.astro';
+import ScoreBar from '../../components/ScoreBar.astro';
+import JsonLd from '../../components/JsonLd.astro';
+import { getApis } from '../../lib/feeds.js';
+import { categoryColor } from '../../lib/entities.js';
+import {
+  visibleApis, accessRows, scoreRows, sourceLabel, providerName, primaryHost, compareApis, PROVENANCE_LABELS, decodeEntities,
+} from '../../lib/api-view.js';
+
+// Astro hoists getStaticPaths into its own scope: imports are visible here,
+// frontmatter constants are not.
+export function getStaticPaths() {
+  const apis = visibleApis(getApis()).filter((a) => a.slug.includes('/'));
+  const byProvider = new Map();
+  for (const a of apis) {
+    const p = providerName(a);
+    if (!byProvider.has(p)) byProvider.set(p, []);
+    byProvider.get(p).push(a);
+  }
+  return apis.map((api) => ({
+    params: { slug: api.slug },
+    props: {
+      api,
+      siblings: (byProvider.get(providerName(api)) || [])
+        .filter((s) => s.id !== api.id)
+        .sort(compareApis)
+        .slice(0, 6)
+        .map((s) => ({ slug: s.slug, name: s.name, quality_tier: s.quality_tier, quality_score: s.quality_score })),
+    },
+  }));
+}
+
+const { api, siblings } = Astro.props;
+const extra = api.extra || {};
+const name = decodeEntities(api.name);
+const desc = decodeEntities(api.description);
+const provider = providerName(api);
+const host = primaryHost(api);
+const rows = accessRows(api.access);
+const signals = scoreRows(api);
+const cc = categoryColor(api.category);
+const sources = [api.origin?.source, ...(api.origin?.also_listed_in || [])].filter(Boolean);
+const uniqueSources = [...new Set(sources)];
+const endpoints = (extra.endpoint_summaries || []).slice(0, 12);
+const baseUrls = (extra.base_urls || []).slice(0, 5);
+const knownCount = rows.filter((r) => r.value).length;
+const pageUrl = `https://claudeatlas.com/apis/${api.slug}/`;
+
+const links = [
+  api.home_url && { label: 'Website', href: api.home_url },
+  api.docs_url && { label: 'Documentation', href: api.docs_url },
+  extra.spec_url && { label: extra.spec_version ? `OpenAPI spec (${extra.spec_version})` : 'API spec', href: extra.spec_url },
+  api.access?.auth?.signup_url && { label: 'Get credentials', href: api.access.auth.signup_url },
+  extra.status_page_url && { label: 'Status page', href: extra.status_page_url },
+].filter(Boolean);
+
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'WebAPI',
+  name,
+  description: desc || `${name} — API indexed on ClaudeAtlas`,
+  url: pageUrl,
+  provider: { '@type': 'Organization', name: provider, ...(api.home_url ? { url: api.home_url } : {}) },
+  ...(api.docs_url ? { documentation: api.docs_url } : {}),
+  ...(api.access?.license?.url ? { license: api.access.license.url } : {}),
+  isPartOf: { '@type': 'DataCatalog', name: 'ClaudeAtlas', url: 'https://claudeatlas.com' },
+  keywords: ['api'].concat(Array.isArray(api.tags) ? api.tags : []).join(', '),
+  mainEntityOfPage: { '@type': 'WebPage', '@id': pageUrl },
+};
+
+const metaDescription = (desc || `${name} API by ${provider}.`).slice(0, 155);
+---
+
+<BaseLayout title={`${name} API — cost, auth & rate limits`} description={metaDescription}>
+  <JsonLd data={jsonLd} />
+
+  <div class="max-w-4xl mx-auto px-4 py-12">
+    <nav class="text-sm text-gray-500 mb-6 flex items-center gap-2 flex-wrap">
+      <a href="/" class="hover:text-white transition-colors">Home</a>
+      <span>/</span>
+      <a href="/apis/" class="hover:text-white transition-colors">APIs</a>
+      <span>/</span>
+      <span class="text-gray-400">{name}</span>
+    </nav>
+
+    <!-- Header -->
+    <div class="mb-8">
+      <div class="flex items-center gap-3 mb-2 flex-wrap">
+        <h1 class="text-3xl font-bold text-white break-words">{name}</h1>
+        <QualityBadge tier={api.quality_tier} size="lg" />
+      </div>
+      <p class="text-sm text-gray-500 font-mono mb-3">{provider}{host && host !== provider ? ` · ${host}` : ''}</p>
+      <p class="text-gray-400 text-lg mb-4">{desc || 'No description available.'}</p>
+      <div class="flex flex-wrap items-center gap-2 text-sm">
+        {api.category && (
+          <span class={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${cc}`}>{api.category}</span>
+        )}
+        {uniqueSources.map((s) => (
+          <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs bg-gray-800 border border-gray-700 text-gray-300">
+            Listed in {sourceLabel(s)}
+          </span>
+        ))}
+      </div>
+    </div>
+
+    <!-- Links -->
+    {links.length > 0 && (
+      <div class="flex flex-wrap gap-3 mb-8">
+        {links.map((l) => (
+          <a href={l.href} target="_blank" rel="noopener nofollow"
+            class="inline-flex items-center gap-2 px-4 py-2 bg-gray-800 hover:bg-gray-700 border border-gray-700 rounded-lg text-sm text-gray-300 hover:text-white transition-all">
+            {l.label} <span aria-hidden="true">↗</span>
+          </a>
+        ))}
+      </div>
+    )}
+
+    <!-- Access card -->
+    <div class="bg-gray-900 border border-gray-800 rounded-xl p-6 mb-8" id="access">
+      <div class="flex items-baseline justify-between mb-4 gap-4 flex-wrap">
+        <h2 class="text-sm font-medium text-gray-400 uppercase tracking-wider">Access</h2>
+        <span class="text-xs text-gray-500">{knownCount} of 5 fields known</span>
+      </div>
+      <dl class="divide-y divide-gray-800">
+        {rows.map((r) => (
+          <div class="py-3 grid grid-cols-1 sm:grid-cols-[8rem_1fr_auto] gap-1 sm:gap-4 items-start">
+            <dt class="text-sm text-gray-500">{r.label}</dt>
+            <dd class="text-sm">
+              {r.value
+                ? (r.link
+                    ? <a href={r.link} target="_blank" rel="noopener nofollow" class="text-white hover:text-atlas-400 transition-colors">{r.value}</a>
+                    : <span class="text-white">{r.value}</span>)
+                : <span class="text-gray-600 italic">Unknown</span>}
+              {r.note && <span class="block text-xs text-gray-500 mt-1">{r.note}</span>}
+            </dd>
+            <dd class="text-xs">
+              {r.provenance && (
+                <span
+                  class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-gray-800 border border-gray-700 text-gray-400"
+                  title={`${r.provenance.label}${r.provenance.confidencePct != null ? ` · confidence ${r.provenance.confidencePct}%` : ''}${r.provenance.sourceUrl ? ` · ${r.provenance.sourceUrl}` : ''}`}
+                >
+                  {r.provenance.method}
+                  {r.provenance.confidencePct != null && <span class="text-gray-600">{r.provenance.confidencePct}%</span>}
+                </span>
+              )}
+            </dd>
+          </div>
+        ))}
+      </dl>
+      <p class="text-xs text-gray-600 mt-4">
+        Chips show where each value came from. "Unknown" means no source we read states it — it is never guessed.
+        <a href="/methodology/#data-feed-scoring" class="text-atlas-400 hover:underline">How this works</a>
+      </p>
+    </div>
+
+    <!-- Interface -->
+    {(baseUrls.length > 0 || endpoints.length > 0 || api.access?.transport) && (
+      <div class="bg-gray-900 border border-gray-800 rounded-xl p-6 mb-8">
+        <h2 class="text-sm font-medium text-gray-400 mb-4 uppercase tracking-wider">Interface</h2>
+        {api.access?.transport && (
+          <p class="text-sm text-gray-400 mb-4">
+            <span class="text-gray-500">Transport:</span>
+            <code class="ml-2 px-2 py-0.5 bg-gray-800 border border-gray-700 rounded text-xs text-atlas-400 font-mono">{api.access.transport}</code>
+          </p>
+        )}
+        {baseUrls.length > 0 && (
+          <div class="mb-4">
+            <h3 class="text-xs font-medium text-gray-500 mb-2 uppercase tracking-wider">Base URL{baseUrls.length === 1 ? '' : 's'}</h3>
+            <ul class="space-y-1">
+              {baseUrls.map((u) => <li><code class="text-xs text-gray-300 font-mono break-all">{u}</code></li>)}
+            </ul>
+          </div>
+        )}
+        {endpoints.length > 0 && (
+          <div>
+            <h3 class="text-xs font-medium text-gray-500 mb-2 uppercase tracking-wider">
+              Endpoints{extra.endpoint_count ? ` (${endpoints.length} of ${extra.endpoint_count})` : ''}
+            </h3>
+            <ul class="space-y-1">
+              {endpoints.map((e) => <li><code class="text-xs text-gray-300 font-mono break-all">{e}</code></li>)}
+            </ul>
+          </div>
+        )}
+      </div>
+    )}
+
+    <!-- Score breakdown -->
+    <div class="bg-gray-900 border border-gray-800 rounded-xl p-6 mb-8">
+      <h2 class="text-sm font-medium text-gray-400 mb-4 uppercase tracking-wider">Quality Score: {api.quality_score}/100</h2>
+      <div class="space-y-3">
+        {signals.map((s) => <ScoreBar label={s.label} value={s.value} weight={`${s.weightPct}%`} />)}
+      </div>
+      <p class="text-xs text-gray-600 mt-4">
+        Reachability, popularity and adoption are neutral placeholders for now.
+        Tiers are percentiles within APIs only. <a href="/methodology/#data-feed-scoring" class="text-atlas-400 hover:underline">Methodology</a>
+      </p>
+    </div>
+
+    <!-- Same provider -->
+    {siblings.length > 0 && (
+      <div class="bg-gray-900 border border-gray-800 rounded-xl p-6 mb-8">
+        <h2 class="text-sm font-medium text-gray-400 mb-4 uppercase tracking-wider">More from {provider}</h2>
+        <ul class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+          {siblings.map((s) => (
+            <li>
+              <a href={`/apis/${s.slug}/`} class="flex items-center justify-between gap-3 p-3 bg-gray-800/50 border border-gray-800 rounded-lg hover:border-atlas-500/40 transition-colors">
+                <span class="text-sm text-white truncate">{decodeEntities(s.name)}</span>
+                <span class="text-xs font-mono text-gray-500">{s.quality_score}</span>
+              </a>
+            </li>
+          ))}
+        </ul>
+      </div>
+    )}
+
+    <p class="text-xs text-gray-600">
+      Data from {uniqueSources.map(sourceLabel).join(', ') || 'public catalogs'}. Provenance methods:
+      {Object.keys(PROVENANCE_LABELS).join(', ')}.
+    </p>
+  </div>
+</BaseLayout>

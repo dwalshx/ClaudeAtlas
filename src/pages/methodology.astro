@@ -1,8 +1,32 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
 import { getPipelineStats } from '../lib/skills.js';
+import { getApis } from '../lib/feeds.js';
 
 const pstats = getPipelineStats();
+
+// Phase 4.3: the data-feed scoring section renders only when this build ships
+// api records (data/apis.ndjson present). getApis() is [] when the file is absent.
+const apiCount = getApis().length;
+
+const feedSignals = [
+  { name: 'Access clarity', weight: 20, what: 'Is the auth type known? The cost model? The rate limit? One third each, weighted by the confidence of where each value came from.' },
+  { name: 'Reachability', weight: 15, what: 'Rolling 30-day success rate of a daily probe of the home page and first base URL.' },
+  { name: 'Documentation', weight: 15, what: 'Docs URL present, machine-readable spec (OpenAPI) present, description quality.' },
+  { name: 'License', weight: 15, what: 'Terms declared at all, then open/permissive, then commercial use allowed.' },
+  { name: 'Freshness', weight: 15, what: 'Days since the spec or listing was last modified (cliff at 180 days).' },
+  { name: 'Popularity', weight: 15, what: 'Source-normalized percentile: directory signals, or GitHub stars when a repo is known.' },
+  { name: 'Ecosystem adoption', weight: 5, what: 'How many indexed skills, plugins, and MCP servers reference this API.' },
+];
+
+const provenanceMethods = [
+  { method: 'declared', what: 'Stated by the source directory itself (e.g. a listing field for auth or cost).' },
+  { method: 'spec', what: 'Read from the machine-readable spec (e.g. OpenAPI security schemes, servers).' },
+  { method: 'probed', what: 'Observed by our own request against the API (e.g. rate-limit response headers).' },
+  { method: 'heuristic', what: 'Inferred by a rule from indirect evidence; lower confidence.' },
+  { method: 'extracted', what: 'Pulled from the provider\'s documentation or pricing page text.' },
+  { method: 'manual', what: 'Set by hand after human review.' },
+];
 ---
 
 <BaseLayout title="Methodology" description="How ClaudeAtlas scores and ranks Claude ecosystem skills.">
@@ -99,6 +123,62 @@ const pstats = getPipelineStats();
           </div>
         </div>
       </section>
+
+      {apiCount > 0 && (
+        <section id="data-feed-scoring">
+          <h2 class="text-xl font-semibold text-white mb-4">Data feed scoring (APIs)</h2>
+          <p class="text-gray-300 leading-relaxed mb-4">
+            APIs (<strong class="text-white">{apiCount.toLocaleString()}</strong> indexed) usually have no GitHub repository, so they get their own 100-point composite instead of stars and commits. Seven signals, all published:
+          </p>
+
+          <div class="bg-gray-900 border border-gray-800 rounded-xl p-6">
+            <table class="w-full text-sm">
+              <thead>
+                <tr class="text-gray-400 border-b border-gray-800">
+                  <th class="text-left py-2">Signal</th>
+                  <th class="text-left py-2">Weight</th>
+                  <th class="text-left py-2">What It Measures</th>
+                </tr>
+              </thead>
+              <tbody class="text-gray-300">
+                {feedSignals.map((s, i) => (
+                  <tr class={i < feedSignals.length - 1 ? 'border-b border-gray-800/50' : ''}>
+                    <td class="py-3 font-mono text-atlas-400">{s.name}</td>
+                    <td class="py-3">{s.weight}%</td>
+                    <td class="py-3">{s.what}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          <p class="text-gray-300 leading-relaxed mt-4">
+            <strong class="text-white">Current state, honestly:</strong> Reachability and Popularity are neutral placeholders (70 and 50) until the daily probe and source-normalized popularity land in Phases 4.4 and 4.5; Popularity uses GitHub stars only for the few APIs with a known repo. Ecosystem adoption stays at 0 until the skill-to-API cross-links arrive in Phase 4.6. When a source gives no modification date (most of the APIs.guru directory, a frozen snapshot), Freshness scores a neutral 50 rather than counting the API as stale.
+          </p>
+
+          <p class="text-gray-300 leading-relaxed mt-4">
+            Tiers use the same percentile rule as skills, computed <em>within</em> APIs: the top 10% are Featured, the next 30% Solid, the rest Listed. An API's tier is never compared against skill scores.
+          </p>
+
+          <h3 class="text-lg font-semibold text-white mt-6 mb-3">Provenance</h3>
+          <p class="text-gray-300 leading-relaxed mb-4">
+            Every value on an API's access card (cost, rate limit, auth, license, formats) carries a provenance chip saying where it came from:
+          </p>
+          <div class="bg-gray-900 border border-gray-800 rounded-xl p-6">
+            <dl class="text-sm space-y-3">
+              {provenanceMethods.map((p) => (
+                <div class="flex gap-3">
+                  <dt class="font-mono text-atlas-400 w-24 shrink-0">{p.method}</dt>
+                  <dd class="text-gray-300">{p.what}</dd>
+                </div>
+              ))}
+            </dl>
+          </div>
+          <p class="text-gray-300 leading-relaxed mt-4">
+            When no source tells us a value, the card says <code class="text-atlas-400 bg-gray-800 px-1 rounded">unknown</code> explicitly. We never fill a gap with a guess, and an unknown field earns no Access-clarity credit.
+          </p>
+        </section>
+      )}
 
       <section>
         <h2 class="text-xl font-semibold text-white mb-4">Filtering</h2>

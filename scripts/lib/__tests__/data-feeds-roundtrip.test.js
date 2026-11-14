@@ -204,14 +204,22 @@ for (const [file, type, expectedKept] of [
       assert.equal(item._claudeatlas.type_chip, type);
       if (!r.repo_full_name) {
         assert.equal(item._claudeatlas.repo_full_name, null);
-        assert.equal(item._claudeatlas.creator, '');
-        assert.equal(item._claudeatlas.repo_stars, 0);
+        if (type === 'api') {
+          // Phase 4.3: api items name the provider as creator and keep
+          // repo_stars null (unknown), linking /apis/<slug>/.
+          assert.equal(item._claudeatlas.creator, r.extra.provider || '');
+          assert.equal(item._claudeatlas.repo_stars, null);
+          assert.equal(item.url, `https://claudeatlas.com/apis/${r.slug}/`);
+        } else {
+          assert.equal(item._claudeatlas.creator, '');
+          assert.equal(item._claudeatlas.repo_stars, 0);
+        }
       }
     }
-    // NOTE: items is [] for null-repo feeds because entityDate() reads
-    // extra.skill_first_commit_at || skill_first_commit_at || repo_created_at;
-    // whats-new eligibility for data feeds is Phase 4.3 scope. Here we only
-    // assert the helper is total (no throw, array shape).
+    // NOTE: whats-new eligibility for api records keys on
+    // extra.source_modified_at (Phase 4.3, generate-feeds.test.js); datasets
+    // still have no feed date until 4.5. Here we only assert the helper is
+    // total (no throw, array shape).
     assert.ok(Array.isArray(buildWhatsNew(kept).items));
 
     const snap = aggregateSnapshot(kept);
