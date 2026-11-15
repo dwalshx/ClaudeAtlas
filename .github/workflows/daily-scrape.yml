@@ -603,6 +603,18 @@ jobs:
           CF_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
           CF_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
 
+      # 2026-11-15: Vectorize only filters on properties with a metadata index,
+      # and only indexes vectors upserted after it exists. The index had none,
+      # so every ?type / ?tier / ?category search returned 0. Idempotent (creates
+      # only missing ones); the upload below re-upserts every vector. Non-fatal.
+      - name: Ensure Vectorize metadata indexes
+        if: github.event_name != 'push' && github.ref == 'refs/heads/main'
+        continue-on-error: true
+        run: node scripts/ensure-vectorize-metadata-indexes.js
+        env:
+          CF_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
+          CF_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
+
       # Phase 3.2 (Task 12): Upload vectors to Vectorize — extended to upsert all
       # three entity vector files (skills + plugins + MCPs). Each invocation logs
       # its metadata.entity_type distribution. Missing inputs are skipped gracefully
