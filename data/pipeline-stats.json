@@ -1,32 +1,32 @@
 {
-  "timestamp": "2026-11-15T00:21:50.964Z",
-  "total_discovered": 148411,
-  "total_skills": 134375,
-  "unique_repos": 17793,
+  "timestamp": "2026-11-15T04:20:06.227Z",
+  "total_discovered": 149647,
+  "total_skills": 135242,
+  "unique_repos": 17892,
   "tiers": {
-    "featured": 13437,
-    "solid": 4563,
-    "listed": 116375
+    "featured": 13524,
+    "solid": 4476,
+    "listed": 117242
   },
   "categories": {
-    "AI & Automation": 84936,
-    "Web & Frontend": 9969,
-    "Testing & QA": 4463,
-    "API & Backend": 3746,
-    "Data & Documents": 12530,
-    "Code & Development": 15006,
-    "DevOps & Infrastructure": 3725
+    "AI & Automation": 85524,
+    "Web & Frontend": 10017,
+    "Testing & QA": 4482,
+    "API & Backend": 3767,
+    "Data & Documents": 12604,
+    "Code & Development": 15116,
+    "DevOps & Infrastructure": 3732
   },
   "content_flags": {
-    "flagged_records": 691,
+    "flagged_records": 695,
     "by_rule": {
       "ignore_previous": 133,
       "override_system": 7,
-      "curl_pipe_sh": 446,
+      "curl_pipe_sh": 449,
       "env_secret_to_url": 93,
       "exfil_endpoints": 21,
       "wget_pipe_sh": 11,
-      "reverse_shell": 7,
+      "reverse_shell": 8,
       "im_start_system": 1,
       "base64_decode_exec": 8,
       "dan_mode": 5
@@ -42,7 +42,7 @@
     "SOLID_THRESHOLD": 70
   },
   "plugin": {
-    "timestamp": "2026-11-15T00:21:53.734Z",
+    "timestamp": "2026-11-15T04:20:08.869Z",
     "total_raw_repos": 29596,
     "total_plugins": 15574,
     "tiers": {
@@ -52,7 +52,7 @@
     }
   },
   "mcp_server": {
-    "timestamp": "2026-11-15T00:21:54.726Z",
+    "timestamp": "2026-11-15T04:20:09.928Z",
     "total_raw_repos": 29596,
     "mcp_repos": 76,
     "total_mcp_servers": 202,
@@ -63,10 +63,10 @@
     }
   },
   "api": {
-    "timestamp": "2026-11-15T00:22:18.832Z",
-    "total_raw": 6098,
-    "total_merged": 6002,
-    "total_apis": 4301,
+    "timestamp": "2026-11-15T04:20:46.696Z",
+    "total_raw": 6099,
+    "total_merged": 6003,
+    "total_apis": 4302,
     "id_collisions": 1,
     "by_source": {
       "apis.guru": {
@@ -82,8 +82,8 @@
         "kept": 218
       },
       "public-apis": {
-        "raw": 2077,
-        "kept": 1207
+        "raw": 2078,
+        "kept": 1208
       }
     },
     "merged_duplicates": {
@@ -102,14 +102,14 @@
     "tiers": {
       "featured": 430,
       "solid": 1290,
-      "listed": 2581
+      "listed": 2582
     },
     "access_clarity_histogram": [
       6,
       0,
       218,
       1725,
-      2134,
+      2135,
       39,
       42,
       137,

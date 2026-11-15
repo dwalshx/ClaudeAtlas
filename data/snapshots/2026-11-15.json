@@ -1,26 +1,26 @@
 {
   "schema_version": 1,
   "date": "2026-11-15",
-  "timestamp": "2026-11-15T00:42:56.160Z",
+  "timestamp": "2026-11-15T04:40:49.101Z",
   "totals": {
-    "analyzed": 154452,
-    "indexed": 134888,
-    "duplicates": 19564,
+    "analyzed": 155320,
+    "indexed": 135652,
+    "duplicates": 19668,
     "tiers": {
-      "featured": 15444,
-      "solid": 10585,
-      "listed": 128423
+      "featured": 15531,
+      "solid": 10498,
+      "listed": 129291
     }
   },
   "by_entity_type": {
     "skill": {
-      "records": 134375,
-      "indexed": 115691,
-      "duplicates": 18684,
+      "records": 135242,
+      "indexed": 116454,
+      "duplicates": 18788,
       "tiers": {
-        "featured": 13437,
-        "solid": 4563,
-        "listed": 116375
+        "featured": 13524,
+        "solid": 4476,
+        "listed": 117242
       }
     },
     "plugin": {
@@ -44,34 +44,34 @@
       }
     },
     "api": {
-      "records": 4301,
-      "indexed": 3942,
+      "records": 4302,
+      "indexed": 3943,
       "duplicates": 359,
       "tiers": {
         "featured": 430,
         "solid": 1290,
-        "listed": 2581
+        "listed": 2582
       }
     }
   },
   "by_category": {
-    "ai-and-automation": 84102,
-    "code-and-development": 15524,
-    "data-and-documents": 12217,
-    "web-and-frontend": 9762,
-    "api-and-backend": 4695,
-    "devops-and-infrastructure": 4158,
-    "testing-and-qa": 4059,
+    "ai-and-automation": 84606,
+    "code-and-development": 15628,
+    "data-and-documents": 12285,
+    "web-and-frontend": 9805,
+    "api-and-backend": 4714,
+    "devops-and-infrastructure": 4165,
+    "testing-and-qa": 4078,
     "productivity-and-other": 371
   },
-  "new_last_7d": 20312,
+  "new_last_7d": 21387,
   "maintenance": {
-    "active": 112595,
-    "abandoned": 22293
+    "active": 113299,
+    "abandoned": 22353
   },
-  "unique_creators": 24422,
+  "unique_creators": 24484,
   "churn": {
     "archived": 1479,
-    "duplicates": 19564
+    "duplicates": 19668
   }
 }
