@@ -1,26 +1,26 @@
 {
   "schema_version": 1,
   "date": "2026-11-15",
-  "timestamp": "2026-11-15T04:40:49.101Z",
+  "timestamp": "2026-11-15T18:05:25.324Z",
   "totals": {
-    "analyzed": 155320,
-    "indexed": 135652,
-    "duplicates": 19668,
+    "analyzed": 156547,
+    "indexed": 136769,
+    "duplicates": 19778,
     "tiers": {
-      "featured": 15531,
-      "solid": 10498,
-      "listed": 129291
+      "featured": 15653,
+      "solid": 10377,
+      "listed": 130517
     }
   },
   "by_entity_type": {
     "skill": {
-      "records": 135242,
-      "indexed": 116454,
-      "duplicates": 18788,
+      "records": 136465,
+      "indexed": 117567,
+      "duplicates": 18898,
       "tiers": {
-        "featured": 13524,
-        "solid": 4476,
-        "listed": 117242
+        "featured": 13646,
+        "solid": 4354,
+        "listed": 118465
       }
     },
     "plugin": {
@@ -44,34 +44,34 @@
       }
     },
     "api": {
-      "records": 4302,
-      "indexed": 3943,
+      "records": 4306,
+      "indexed": 3947,
       "duplicates": 359,
       "tiers": {
         "featured": 430,
-        "solid": 1290,
-        "listed": 2582
+        "solid": 1291,
+        "listed": 2585
       }
     }
   },
   "by_category": {
-    "ai-and-automation": 84606,
-    "code-and-development": 15628,
-    "data-and-documents": 12285,
-    "web-and-frontend": 9805,
-    "api-and-backend": 4714,
-    "devops-and-infrastructure": 4165,
-    "testing-and-qa": 4078,
+    "ai-and-automation": 85318,
+    "code-and-development": 15732,
+    "data-and-documents": 12401,
+    "web-and-frontend": 9896,
+    "api-and-backend": 4749,
+    "devops-and-infrastructure": 4181,
+    "testing-and-qa": 4121,
     "productivity-and-other": 371
   },
-  "new_last_7d": 21387,
+  "new_last_7d": 22752,
   "maintenance": {
-    "active": 113299,
-    "abandoned": 22353
+    "active": 114150,
+    "abandoned": 22619
   },
-  "unique_creators": 24484,
+  "unique_creators": 24624,
   "churn": {
-    "archived": 1479,
-    "duplicates": 19668
+    "archived": 1480,
+    "duplicates": 19778
   }
 }
