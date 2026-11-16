@@ -1,29 +1,29 @@
 {
-  "timestamp": "2026-11-15T17:47:41.102Z",
-  "total_discovered": 151130,
-  "total_skills": 136465,
-  "unique_repos": 18113,
+  "timestamp": "2026-11-16T19:47:03.653Z",
+  "total_discovered": 154157,
+  "total_skills": 138981,
+  "unique_repos": 18565,
   "tiers": {
-    "featured": 13646,
-    "solid": 4354,
-    "listed": 118465
+    "featured": 13898,
+    "solid": 4102,
+    "listed": 120981
   },
   "categories": {
-    "AI & Automation": 86302,
-    "Web & Frontend": 10112,
-    "Testing & QA": 4531,
-    "API & Backend": 3803,
-    "Data & Documents": 12733,
-    "Code & Development": 15230,
-    "DevOps & Infrastructure": 3754
+    "AI & Automation": 87822,
+    "Web & Frontend": 10380,
+    "Testing & QA": 4600,
+    "API & Backend": 3864,
+    "Data & Documents": 12998,
+    "Code & Development": 15510,
+    "DevOps & Infrastructure": 3807
   },
   "content_flags": {
-    "flagged_records": 705,
+    "flagged_records": 728,
     "by_rule": {
-      "ignore_previous": 139,
+      "ignore_previous": 149,
       "override_system": 7,
-      "curl_pipe_sh": 453,
-      "env_secret_to_url": 93,
+      "curl_pipe_sh": 464,
+      "env_secret_to_url": 95,
       "exfil_endpoints": 21,
       "wget_pipe_sh": 11,
       "reverse_shell": 8,
@@ -42,7 +42,7 @@
     "SOLID_THRESHOLD": 70
   },
   "plugin": {
-    "timestamp": "2026-11-15T17:47:43.672Z",
+    "timestamp": "2026-11-16T19:47:05.851Z",
     "total_raw_repos": 29596,
     "total_plugins": 15574,
     "tiers": {
@@ -52,7 +52,7 @@
     }
   },
   "mcp_server": {
-    "timestamp": "2026-11-15T17:47:44.493Z",
+    "timestamp": "2026-11-16T19:47:06.654Z",
     "total_raw_repos": 29596,
     "mcp_repos": 76,
     "total_mcp_servers": 202,
@@ -63,10 +63,10 @@
     }
   },
   "api": {
-    "timestamp": "2026-11-15T17:48:06.326Z",
-    "total_raw": 6103,
-    "total_merged": 6007,
-    "total_apis": 4306,
+    "timestamp": "2026-11-16T19:47:49.368Z",
+    "total_raw": 6122,
+    "total_merged": 6026,
+    "total_apis": 4325,
     "id_collisions": 1,
     "by_source": {
       "apis.guru": {
@@ -74,16 +74,16 @@
         "kept": 1771
       },
       "data.gouv.fr": {
-        "raw": 1261,
-        "kept": 1105
+        "raw": 1262,
+        "kept": 1106
       },
       "uk-api-catalogue": {
         "raw": 231,
         "kept": 218
       },
       "public-apis": {
-        "raw": 2082,
-        "kept": 1212
+        "raw": 2100,
+        "kept": 1230
       }
     },
     "merged_duplicates": {
@@ -100,19 +100,19 @@
       "no_base_or_spec": 19
     },
     "tiers": {
-      "featured": 430,
-      "solid": 1291,
-      "listed": 2585
+      "featured": 432,
+      "solid": 1297,
+      "listed": 2596
     },
     "access_clarity_histogram": [
       6,
       0,
       218,
       1725,
-      2139,
+      2157,
       39,
       42,
-      137,
+      138,
       0,
       0
     ]
