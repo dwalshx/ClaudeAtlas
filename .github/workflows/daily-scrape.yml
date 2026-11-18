@@ -400,7 +400,15 @@ jobs:
         id: filter_apis
         if: ${{ env.DATA_FEEDS_ENABLED == 'true' && github.event_name != 'push' && steps.harvest_apis.outcome == 'success' && hashFiles('data/apis-raw.ndjson') != '' }}
         continue-on-error: true
-        run: node scripts/filter-apis.js
+        # Calibration v1 (2026-11-18): start from the published catalog so filter-apis.js
+        # keeps every existing /apis/<slug>/ URL stable and carries the preserved
+        # enrichment fields (on a fresh runner data/apis.ndjson does not exist yet).
+        run: |
+          gh release download apis-latest --pattern apis.ndjson --dir data --clobber \
+            || echo "::notice::no apis-latest release to read prior slugs from (first run?)"
+          node scripts/filter-apis.js
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       # --- Semantic search: embed new/changed skills, upload to Vectorize ---
       # Embed step is resumable and idempotent: reads prior ndjson, only embeds

@@ -400,6 +400,7 @@ function upcastApiRecord(rec) {
   const provider = typeof (e.provider ?? rec.provider) === 'string' ? (e.provider ?? rec.provider) : '';
   const extra = {
     type: 'api',
+    title: str(e.title ?? rec.title),   // calibration v1: the catalog's human title (display); name stays the slug input
     base_urls: arr(e.base_urls ?? rec.base_urls),
     spec_url: str(e.spec_url ?? rec.spec_url),
     spec_version: str(e.spec_version ?? rec.spec_version),

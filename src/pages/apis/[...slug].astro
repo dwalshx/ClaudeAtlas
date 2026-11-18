@@ -18,6 +18,7 @@ import { getApis } from '../../lib/feeds.js';
 import { categoryColor } from '../../lib/entities.js';
 import {
   visibleApis, accessRows, scoreRows, sourceLabel, providerName, primaryHost, compareApis, PROVENANCE_LABELS, decodeEntities,
+  apiDisplayName, withApiSuffix,
 } from '../../lib/api-view.js';
 
 // Astro hoists getStaticPaths into its own scope: imports are visible here,
@@ -38,14 +39,14 @@ export function getStaticPaths() {
         .filter((s) => s.id !== api.id)
         .sort(compareApis)
         .slice(0, 6)
-        .map((s) => ({ slug: s.slug, name: s.name, quality_tier: s.quality_tier, quality_score: s.quality_score })),
+        .map((s) => ({ slug: s.slug, name: apiDisplayName(s), quality_tier: s.quality_tier, quality_score: s.quality_score })),
     },
   }));
 }
 
 const { api, siblings } = Astro.props;
 const extra = api.extra || {};
-const name = decodeEntities(api.name);
+const name = apiDisplayName(api);
 const desc = decodeEntities(api.description);
 const provider = providerName(api);
 const host = primaryHost(api);
@@ -81,10 +82,10 @@ const jsonLd = {
   mainEntityOfPage: { '@type': 'WebPage', '@id': pageUrl },
 };
 
-const metaDescription = (desc || `${name} API by ${provider}.`).slice(0, 155);
+const metaDescription = (desc || `${withApiSuffix(name)} by ${provider}.`).slice(0, 155);
 ---
 
-<BaseLayout title={`${name} API — cost, auth & rate limits`} description={metaDescription}>
+<BaseLayout title={`${withApiSuffix(name)} — cost, auth & rate limits`} description={metaDescription}>
   <JsonLd data={jsonLd} />
 
   <div class="max-w-4xl mx-auto px-4 py-12">
@@ -217,7 +218,7 @@ const metaDescription = (desc || `${name} API by ${provider}.`).slice(0, 155);
           {siblings.map((s) => (
             <li>
               <a href={`/apis/${s.slug}/`} class="flex items-center justify-between gap-3 p-3 bg-gray-800/50 border border-gray-800 rounded-lg hover:border-atlas-500/40 transition-colors">
-                <span class="text-sm text-white truncate">{decodeEntities(s.name)}</span>
+                <span class="text-sm text-white truncate">{s.name}</span>
                 <span class="text-xs font-mono text-gray-500">{s.quality_score}</span>
               </a>
             </li>

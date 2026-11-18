@@ -488,6 +488,15 @@ npm run preview
    biz-slop drops) are in `.planning/phases/4.2-api-harvest-v1/4.2-CALIBRATION.md`;
    retunes are separate, reviewed changes — never silent edits to
    `scripts/lib/scorers/*` or `scripts/lib/filter-rules/*`.
+   **Calibration v1 (2026-11-18)** applied the report's filter recommendations
+   (api description floor 50 → 30, api exempt from `BIZ_SLOP_PATTERNS`) and
+   data fixes in `scripts/lib/feeds/api-normalize.js`, which runs at the filter
+   stage so 304-reused raw records are corrected too: catalog titles in
+   `extra.title`, description clean-up, and public-apis is no longer "free"
+   (unknown cost + a heuristic `free_tier` note). **API page URLs are stable:**
+   the filter step downloads `apis-latest` first and `restorePriorSlugs()`
+   keeps every published slug; do not drop that download. The scorer weights
+   are unchanged; the per-source score bias (no popularity signal) is open.
 
 14. **The pipeline fails LOUDLY and EARLY on dead credentials and empty
    data (added after the 2026-09-28 → 2026-11-05 outage).** Root causes
