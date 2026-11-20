@@ -1,37 +1,37 @@
 {
-  "timestamp": "2026-11-18T18:51:10.206Z",
-  "total_discovered": 158450,
-  "total_skills": 142582,
-  "unique_repos": 19323,
+  "timestamp": "2026-11-20T18:28:53.647Z",
+  "total_discovered": 162422,
+  "total_skills": 145695,
+  "unique_repos": 19928,
   "tiers": {
-    "featured": 14258,
-    "solid": 3742,
-    "listed": 124582
+    "featured": 14569,
+    "solid": 3431,
+    "listed": 127695
   },
   "categories": {
-    "AI & Automation": 90053,
-    "Web & Frontend": 10726,
-    "Testing & QA": 4680,
-    "API & Backend": 3982,
-    "Data & Documents": 13403,
-    "Code & Development": 15863,
-    "DevOps & Infrastructure": 3875
+    "AI & Automation": 91938,
+    "Web & Frontend": 11008,
+    "Testing & QA": 4746,
+    "API & Backend": 4075,
+    "Data & Documents": 13786,
+    "Code & Development": 16175,
+    "DevOps & Infrastructure": 3967
   },
   "content_flags": {
-    "flagged_records": 765,
+    "flagged_records": 795,
     "by_rule": {
-      "ignore_previous": 161,
+      "ignore_previous": 172,
       "override_system": 7,
-      "curl_pipe_sh": 478,
-      "env_secret_to_url": 101,
-      "exfil_endpoints": 27,
+      "curl_pipe_sh": 494,
+      "env_secret_to_url": 103,
+      "exfil_endpoints": 28,
       "wget_pipe_sh": 11,
-      "reverse_shell": 8,
+      "reverse_shell": 9,
       "im_start_system": 1,
       "base64_decode_exec": 8,
-      "dan_mode": 5
+      "dan_mode": 6
     },
-    "multi_rule_records": 34
+    "multi_rule_records": 36
   },
   "filter_config": {
     "MIN_BODY_LENGTH": 200,
@@ -42,7 +42,7 @@
     "SOLID_THRESHOLD": 70
   },
   "plugin": {
-    "timestamp": "2026-11-18T18:51:13.450Z",
+    "timestamp": "2026-11-20T18:28:55.871Z",
     "total_raw_repos": 29596,
     "total_plugins": 15574,
     "tiers": {
@@ -52,7 +52,7 @@
     }
   },
   "mcp_server": {
-    "timestamp": "2026-11-18T18:51:14.731Z",
+    "timestamp": "2026-11-20T18:28:56.696Z",
     "total_raw_repos": 29596,
     "mcp_repos": 76,
     "total_mcp_servers": 202,
@@ -63,10 +63,10 @@
     }
   },
   "api": {
-    "timestamp": "2026-11-18T18:51:43.848Z",
-    "total_raw": 6144,
-    "total_merged": 6048,
-    "total_apis": 4346,
+    "timestamp": "2026-11-20T18:29:17.089Z",
+    "total_raw": 6169,
+    "total_merged": 6073,
+    "total_apis": 4371,
     "id_collisions": 1,
     "by_source": {
       "apis.guru": {
@@ -82,8 +82,8 @@
         "kept": 218
       },
       "public-apis": {
-        "raw": 2114,
-        "kept": 1244
+        "raw": 2139,
+        "kept": 1269
       }
     },
     "merged_duplicates": {
@@ -100,16 +100,16 @@
       "no_base_or_spec": 19
     },
     "tiers": {
-      "featured": 434,
-      "solid": 1303,
-      "listed": 2609
+      "featured": 437,
+      "solid": 1311,
+      "listed": 2623
     },
     "access_clarity_histogram": [
       6,
       0,
       218,
       1725,
-      2173,
+      2198,
       39,
       42,
       143,
