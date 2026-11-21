@@ -24,8 +24,10 @@ import { readNdjsonRecords, writeNdjsonStreaming } from './lib/ndjson.js';
 import { assignSlugs } from './lib/slug.js';
 import { isSlop } from './lib/filter-rules/index.js';
 import {
-  isFixtureRepo, hasTemplateName, hasPlaceholderDescription, hasBizSlopName, hasShortDescription,
+  isFixtureRepo, hasTemplateName, hasPlaceholderDescription,
 } from './lib/filter-rules/common.rules.js';
+import { hasShortApiDescription } from './lib/filter-rules/api.rules.js';
+import { normalizeRawApi } from './lib/feeds/api-normalize.js';
 import { scoreEntity } from './lib/scorers/index.js';
 import { assignPercentileTiers } from './lib/tier-assignment.js';
 import { upcastRecord } from './lib/legacy-skill-reader.js';
@@ -46,7 +48,6 @@ export const SOURCES = ['apis.guru', 'data.gouv.fr', 'uk-api-catalogue', 'public
 // F-3: enrichment fields preserved across daily runs (verbatim from filter-plugins.js; Known-issue 11).
 export const PRESERVED_FIELDS = ['is_duplicate', 'canonical_id', 'canonical_slug', 'novelty_score', 'bundled_in_plugins'];
 const GATES = ['fixture_repo', 'template_name', 'placeholder_description', 'biz_slop', 'short_description', 'no_home_url', 'no_base_or_spec'];
-const MIN_DESCRIPTION_LENGTH = 50;
 
 // Includes content_sha: source_id is not unique within a source (UK HMRC rows share one url,
 // public-apis names repeat across categories). Keep in sync with harvest-apis.js rawKey.
@@ -85,8 +86,8 @@ export function dropReason(e) {
   if (isFixtureRepo(e)) return 'fixture_repo';
   if (hasTemplateName(e)) return 'template_name';
   if (hasPlaceholderDescription(e)) return 'placeholder_description';
-  if (hasBizSlopName(e)) return 'biz_slop';
-  if (hasShortDescription(e, MIN_DESCRIPTION_LENGTH)) return 'short_description';
+  // 'biz_slop' stays in GATES (stats shape) but api is exempt since calibration v1 — always 0.
+  if (hasShortApiDescription(e)) return 'short_description';
   if (!(typeof e?.home_url === 'string' && e.home_url)) return 'no_home_url';
   const x = e?.extra || {};
   const hasBase = Array.isArray(x.base_urls) && x.base_urls.length > 0;
@@ -136,12 +137,40 @@ const strCmp = (a, b) => (a < b ? -1 : a > b ? 1 : 0);
  * @param {any[]} raw  raw api records (harvest-apis.js output)
  * @param {Map<string, object>} [priorEnrichments]  id → preserved fields (+ consumed_by)
  */
+/**
+ * Keep published URLs stable. assignSlugs() switches EVERY member of an
+ * (owner, name) collision group to the 3-segment form, so one newly kept
+ * record would move an existing page (/apis/languagetool.org/languagetool/
+ * did on the calibration v1 run). A record whose prior slug is free gets it
+ * back; returns how many were restored.
+ *
+ * @param {any[]} records  after assignSlugs()
+ * @param {Map<string, { slug?: string }>} prior  loadPriorEnrichments() map
+ */
+export function restorePriorSlugs(records, prior) {
+  const holder = new Map(records.map((r) => [r.slug, r]));
+  let restored = 0;
+  for (const r of records) {
+    const ps = prior.get(r.id)?.slug;
+    if (!ps || ps === r.slug) continue;
+    const h = holder.get(ps);
+    if (h && h !== r) continue;   // another record holds it now — keep the computed slug
+    holder.delete(r.slug);
+    r.slug = ps;
+    holder.set(ps, r);
+    restored++;
+  }
+  return restored;
+}
+
 export function filterApisRaw(raw, priorEnrichments = new Map()) {
   const total_raw = raw.length;
   const rawBySource = countBySource(raw);
 
+  // Calibration v1: description / title / public-apis cost clean-up on the raw
+  // records (filter-stage, so 304-reused raw records are corrected too).
   // Substitution 2: cross-source merge BEFORE upcast.
-  const { merged, stats: mergeStats } = mergeApiRecords(raw);
+  const { merged, stats: mergeStats } = mergeApiRecords(raw.map(normalizeRawApi));
   let records = merged.map(upcastRecord);
 
   // Id-collision guard: different merge keys can still compute the SAME id
@@ -192,6 +221,7 @@ export function filterApisRaw(raw, priorEnrichments = new Map()) {
   for (const e of records) e.quality_score = scoreEntity(e);
   assignPercentileTiers(records);
   assignSlugs(records);
+  const slugs_restored = restorePriorSlugs(records, priorEnrichments);
 
   // PRESERVED_FIELDS (plugin rule: restore prior when current is a default) + nested consumed_by.
   for (const e of records) {
@@ -217,6 +247,7 @@ export function filterApisRaw(raw, priorEnrichments = new Map()) {
     total_merged: merged.length,
     total_apis: records.length,
     id_collisions,
+    slugs_restored,
     by_source: Object.fromEntries(SOURCES.map((s) => [s, { raw: rawBySource[s], kept: keptBySource[s] }])),
     merged_duplicates: mergeStats.merged_duplicates,
     dropped,
@@ -247,6 +278,8 @@ export function loadPriorEnrichments(path = OUTPUT_PATH) {
         if (!isDefaultValue(p[f], f)) { e[f] = p[f]; any = true; }
       }
       if (!emptyConsumed(p.extra?.consumed_by)) { e.consumed_by = p.extra.consumed_by; any = true; }
+      // Calibration v1: every published slug, so restorePriorSlugs() keeps /apis/<slug>/ URLs stable.
+      if (typeof p.slug === 'string' && p.slug) { e.slug = p.slug; any = true; }
       if (any) map.set(p.id, e);
     }
     return map;

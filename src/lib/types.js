@@ -182,6 +182,7 @@
  *
  * @typedef {Object} ApiExtra
  * @property {'api'} type
+ * @property {string | null} [title]           Catalog's human title (display); `name` stays the slug input. Calibration v1.
  * @property {string[]} base_urls              OpenAPI servers[] or catalog base_api_url.
  * @property {string | null} spec_url
  * @property {string | null} spec_version

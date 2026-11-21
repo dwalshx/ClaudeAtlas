@@ -19,7 +19,7 @@ import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { readNdjsonRecords } from '../lib/ndjson.js';
 import { resolveEmbedIO } from '../embed-skills.js';
-import { MIN_PRIOR_FOR_DRIFT_CHECK } from '../embed-skills.js';
+import { MIN_PRIOR_FOR_DRIFT_CHECK, vectorMetadata } from '../embed-skills.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..', '..');
@@ -297,4 +297,37 @@ test('4.2-M09: resolveEmbedIO maps api → data/apis.ndjson / data/api-vectors.n
   assert.ok(io.outputPath.endsWith(join('data', 'api-vectors.ndjson')), io.outputPath);
   assert.equal(resolveEmbedIO('plugin', { input: 'x.ndjson' }).inputPath, 'x.ndjson');
   assert.throws(() => resolveEmbedIO('nope', {}), /skill\|plugin\|mcp_server\|api/);
+});
+
+test('2026-11-18: reused vectors get the current metadata (tier/score) without re-embedding', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'embed-meta-'));
+  try {
+    const N = 60;
+    const out = join(dir, 'plugin-vectors.ndjson');
+    const input = join(dir, 'plugins.ndjson');
+    writeSyntheticPlugins(input, N, (r) => ({ ...r, quality_tier: 'listed', quality_score: 10 }));
+    runEmbed(['--input', input, '--output', out, '--entity-type', 'plugin']);
+    const first = vectorLines(out);
+    writeSyntheticPlugins(input, N, (r) => ({ ...r, quality_tier: 'featured', quality_score: 90 }));
+    const log = runEmbed(['--input', input, '--output', out, '--entity-type', 'plugin']);
+    assert.match(log, /to embed:\s+0\s/, 'tier/score are not embedding input');
+    const second = vectorLines(out);
+    assert.equal(second.length, N);
+    const prev = new Map(first.map((r) => [r.id, r]));
+    for (const r of second) {
+      assert.equal(r.metadata.quality_tier, 'featured');
+      assert.equal(r.metadata.quality_score, 90);
+      assert.deepEqual(r.values, prev.get(r.id).values, 'vector reused, not re-embedded');
+    }
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test('calibration v1: api vector metadata shows the catalog title; other types keep name', () => {
+  const api = { id: 'api:api.insee.fr/melodi', entity_type: 'api', name: 'melodi', slug: 'insee/melodi', extra: { title: 'API Melodi' } };
+  assert.equal(vectorMetadata(api, 'sha', 'api').name, 'API Melodi');
+  assert.equal(vectorMetadata({ ...api, extra: {} }, 'sha', 'api').name, 'melodi');
+  assert.equal(vectorMetadata({ id: 'skill:x', entity_type: 'skill', name: 'my-skill', extra: { title: 'Nope' } }, 'sha', 'skill').name, 'my-skill');
+  assert.equal(vectorMetadata(api, 'sha', 'api')._content_sha, 'sha');
 });

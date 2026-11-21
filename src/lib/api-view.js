@@ -181,6 +181,23 @@ const NAMED_ENTITIES = { amp: '&', lt: '<', gt: '>', quot: '"', apos: "'", nbsp:
  * an undecoded entity would show up literally. Unknown named entities are
  * left as-is.
  */
+/** Display name: the catalog's human title (extra.title, calibration v1), else the slug-shaped name; entities decoded. */
+export function apiDisplayName(record) {
+  const t = record?.extra?.title;
+  return decodeEntities(typeof t === 'string' && t.trim() ? t : record?.name);
+}
+
+/** A–Z sort/group key: accents folded, a leading "API"/"APIs" word dropped ("API Melodi" files under M). */
+export function sortKeyName(name) {
+  const s = String(name || '').normalize('NFKD').replace(/\p{M}+/gu, '').trim();
+  return s.replace(/^APIs?\b[\s:–-]*/i, '').trim() || s;
+}
+
+/** "<name> API" unless the name already says API/APIs. */
+export function withApiSuffix(name) {
+  return /\bAPIs?\b/i.test(name) ? name : `${name} API`;
+}
+
 export function decodeEntities(text) {
   if (text == null) return '';
   return String(text).replace(/&(#x[0-9a-f]+|#\d+|[a-z]+);/gi, (m, e) => {

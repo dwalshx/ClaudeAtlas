@@ -55,16 +55,16 @@ try {
 
 const byName = (records, name) => records.find((r) => r.name === name);
 
-test('4.2-M07: filterApisRaw on the fixture raw set — 33 raw → 30 merged → 21 kept, tiers 2/6/13', () => {
+test('4.2-M07 + calibration v1: filterApisRaw on the fixture raw set — 33 raw → 30 merged → 22 kept, tiers 2/6/14', () => {
   const { records, tiers, stats } = filterApisRaw(structuredClone(RAW));
   assert.equal(stats.total_raw, 33);
   assert.equal(stats.total_merged, 30);
-  assert.equal(stats.total_apis, 21);
-  assert.equal(records.length, 21);
-  assert.deepEqual(tiers, { featured: 2, solid: 6, listed: 13 });
+  assert.equal(stats.total_apis, 22);
+  assert.equal(records.length, 22);
+  assert.deepEqual(tiers, { featured: 2, solid: 6, listed: 14 });
   assert.deepEqual(stats.merged_duplicates, { cross_source: 3, same_source: 0 });
   assert.deepEqual(stats.by_source, {
-    'apis.guru': { raw: 7, kept: 5 },
+    'apis.guru': { raw: 7, kept: 6 },   // calibration v1: twilio (35 chars) clears the 30-char floor
     'data.gouv.fr': { raw: 6, kept: 5 },
     'uk-api-catalogue': { raw: 10, kept: 8 },
     'public-apis': { raw: 10, kept: 3 },
@@ -84,15 +84,18 @@ test('4.2-M07/Pitfall 7: dropped table names every record and gate', () => {
   const { records, stats } = filterApisRaw(structuredClone(RAW));
   assert.deepEqual(stats.dropped, {
     fixture_repo: 0, template_name: 0, placeholder_description: 0, biz_slop: 0,
-    short_description: 7, no_home_url: 1, no_base_or_spec: 1,
+    short_description: 6, no_home_url: 1, no_base_or_spec: 1,
   });
   assert.deepEqual([...stats.dropped_names.short_description].sort(), [
-    'apis.guru:github', 'apis.guru:twilio', 'data.gouv.fr:explore-api-v2-https-data-eurelien-fr',
+    'apis.guru:github', 'data.gouv.fr:explore-api-v2-https-data-eurelien-fr',
     'public-apis:cat-facts', 'public-apis:clarifai', 'public-apis:meteorologisk-institutt', 'public-apis:open-food-facts',
   ]);
   assert.deepEqual(stats.dropped_names.no_home_url, ['uk-api-catalogue:findr-matching-service']);
   assert.deepEqual(stats.dropped_names.no_base_or_spec, ['uk-api-catalogue:get-into-teaching-api']);
-  assert.equal(dropReason({ entity_type: 'api', name: 'inventory-sync', description: 'x'.repeat(60), home_url: 'https://h', extra: { base_urls: ['https://h'] } }), 'biz_slop');
+  // Calibration v1: api names are exempt from BIZ_SLOP_PATTERNS (real catalog titles).
+  assert.equal(dropReason({ entity_type: 'api', name: 'inventory-sync', description: 'x'.repeat(60), home_url: 'https://h', extra: { base_urls: ['https://h'] } }), null);
+  assert.equal(dropReason({ entity_type: 'api', name: 'x', description: 'x'.repeat(29), home_url: 'https://h', extra: { base_urls: ['https://h'] } }), 'short_description');
+  assert.equal(dropReason({ entity_type: 'api', name: 'x', description: 'x'.repeat(30), home_url: 'https://h', extra: { base_urls: ['https://h'] } }), null);
   assert.equal(dropReason(records[0]), null);
 });
 
@@ -102,8 +105,13 @@ test('4.2-M07: merge + upcast — winners carry also_listed_in and merged access
   assert.deepEqual(stripe.origin.also_listed_in, ['public-apis']);
   assert.equal(stripe.slug, 'stripe.com/stripe');
   assert.equal(stripe.access.auth.type, 'http_basic');
-  assert.equal(stripe.access.cost.model, 'free');
-  assert.equal(stripe.access.provenance['cost.model'].method, 'declared');
+  // Calibration v1: public-apis lists free OR free-tier APIs — cost unknown + a heuristic free_tier note.
+  assert.equal(stripe.access.cost.model, 'unknown');
+  assert.equal(stripe.access.cost.free_tier, 'Free access or a free tier (listed in public-apis)');
+  assert.equal(stripe.access.provenance['cost.free_tier'].method, 'heuristic');
+  assert.ok(!('cost.model' in stripe.access.provenance));
+  assert.equal(stripe.extra.title, 'Stripe API');
+  assert.equal(byName(records, 'melodi').extra.title, 'API Melodi');
 
   const openai = byName(records, 'openai');
   assert.equal(openai.slug, 'openai.com/openai');
@@ -116,13 +124,13 @@ test('4.2-M07: merge + upcast — winners carry also_listed_in and merged access
   assert.equal(byName(records, 'gov-uk-notify').slug, 'government-digital-service/gov-uk-notify');
 
   for (const r of records) assert.ok(!r.slug.includes('undefined'), r.slug);
-  assert.equal(new Set(records.map((r) => r.slug)).size, 21);
-  assert.equal(new Set(records.map((r) => r.id)).size, 21);
+  assert.equal(new Set(records.map((r) => r.slug)).size, 22);
+  assert.equal(new Set(records.map((r) => r.id)).size, 22);
   assert.equal(stats.id_collisions, 0);
   assert.ok(!('raw_source' in records[0]));
   assert.deepEqual(Object.keys(records[0].extra).sort(), [
     'access_clarity', 'base_urls', 'categories_src', 'consumed_by', 'endpoint_count', 'endpoint_summaries',
-    'provider', 'sdks', 'spec_parsed', 'spec_url', 'spec_version', 'source_modified_at', 'status_page_url', 'type',
+    'provider', 'sdks', 'spec_parsed', 'spec_url', 'spec_version', 'source_modified_at', 'status_page_url', 'title', 'type',
   ].sort());
 });
 
@@ -171,8 +179,9 @@ test('4.2-M07/F-3: PRESERVED_FIELDS round-trip incl. nested extra.consumed_by', 
     assert.equal(e.is_duplicate, true);
     assert.equal(e.canonical_slug, 'x/y');
     assert.deepEqual(e.consumed_by, { skills: ['s1'], plugins: [], mcp_servers: [] });
-    assert.equal(loaded.has(other.id), false, 'records with nothing to preserve are omitted');
-    assert.equal(readNdjsonRecords(p).size, 21);
+    // Calibration v1: every record carries its published slug (URL stability), nothing else to preserve here.
+    assert.deepEqual(loaded.get(other.id), { slug: other.slug });
+    assert.equal(readNdjsonRecords(p).size, 22);
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }
@@ -222,7 +231,7 @@ test('4.2-M08: stats object shape', () => {
   const { stats } = filterApisRaw(structuredClone(RAW));
   assert.deepEqual(Object.keys(stats).sort(), [
     'access_clarity_histogram', 'by_source', 'dropped', 'dropped_names', 'id_collisions',
-    'merged_duplicates', 'tiers', 'total_apis', 'total_merged', 'total_raw',
+    'merged_duplicates', 'slugs_restored', 'tiers', 'total_apis', 'total_merged', 'total_raw',
   ]);
   assert.equal(stats.id_collisions, 0);
 
@@ -235,7 +244,7 @@ test('4.2-M08: stats object shape', () => {
   assert.equal(res.records.find((r) => r.origin.source === 'public-apis').id, 'api:acme/weather~public-apis-weather');
 
   assert.equal(stats.access_clarity_histogram.length, 10);
-  assert.equal(stats.access_clarity_histogram.reduce((a, b) => a + b, 0), 21);
+  assert.equal(stats.access_clarity_histogram.reduce((a, b) => a + b, 0), 22);
   assert.deepEqual(
     accessClarityHistogram([{ extra: { access_clarity: 0 } }, { extra: { access_clarity: 1 } }, { extra: { access_clarity: 0.95 } }, { extra: { access_clarity: 0.1 } }]),
     [1, 1, 0, 0, 0, 0, 0, 0, 0, 2],
