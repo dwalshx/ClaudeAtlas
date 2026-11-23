@@ -1,37 +1,37 @@
 {
-  "timestamp": "2026-11-22T18:19:52.116Z",
-  "total_discovered": 165924,
-  "total_skills": 148615,
-  "unique_repos": 20512,
+  "timestamp": "2026-11-23T22:07:10.253Z",
+  "total_discovered": 168019,
+  "total_skills": 150337,
+  "unique_repos": 20894,
   "tiers": {
-    "featured": 14861,
-    "solid": 3139,
-    "listed": 130615
+    "featured": 15033,
+    "solid": 2967,
+    "listed": 132337
   },
   "categories": {
-    "AI & Automation": 93713,
-    "Web & Frontend": 11288,
-    "Testing & QA": 4830,
-    "API & Backend": 4137,
-    "Data & Documents": 14119,
-    "Code & Development": 16499,
-    "DevOps & Infrastructure": 4029
+    "AI & Automation": 94731,
+    "Web & Frontend": 11462,
+    "Testing & QA": 4870,
+    "API & Backend": 4172,
+    "Data & Documents": 14330,
+    "Code & Development": 16695,
+    "DevOps & Infrastructure": 4077
   },
   "content_flags": {
-    "flagged_records": 871,
+    "flagged_records": 918,
     "by_rule": {
-      "ignore_previous": 186,
+      "ignore_previous": 187,
       "override_system": 7,
-      "curl_pipe_sh": 554,
-      "env_secret_to_url": 106,
-      "exfil_endpoints": 28,
+      "curl_pipe_sh": 602,
+      "env_secret_to_url": 105,
+      "exfil_endpoints": 29,
       "wget_pipe_sh": 11,
       "reverse_shell": 9,
       "im_start_system": 1,
       "base64_decode_exec": 8,
       "dan_mode": 6
     },
-    "multi_rule_records": 37
+    "multi_rule_records": 39
   },
   "filter_config": {
     "MIN_BODY_LENGTH": 200,
@@ -42,7 +42,7 @@
     "SOLID_THRESHOLD": 70
   },
   "plugin": {
-    "timestamp": "2026-11-22T18:19:54.863Z",
+    "timestamp": "2026-11-23T22:07:12.519Z",
     "total_raw_repos": 29596,
     "total_plugins": 15574,
     "tiers": {
@@ -52,7 +52,7 @@
     }
   },
   "mcp_server": {
-    "timestamp": "2026-11-22T18:19:55.866Z",
+    "timestamp": "2026-11-23T22:07:13.370Z",
     "total_raw_repos": 29596,
     "mcp_repos": 76,
     "total_mcp_servers": 202,
@@ -63,10 +63,10 @@
     }
   },
   "api": {
-    "timestamp": "2026-11-22T18:20:20.963Z",
-    "total_raw": 6187,
-    "total_merged": 6091,
-    "total_apis": 4389,
+    "timestamp": "2026-11-23T22:07:34.571Z",
+    "total_raw": 6194,
+    "total_merged": 6098,
+    "total_apis": 4396,
     "id_collisions": 1,
     "by_source": {
       "apis.guru": {
@@ -74,16 +74,16 @@
         "kept": 1771
       },
       "data.gouv.fr": {
-        "raw": 1272,
-        "kept": 1115
+        "raw": 1270,
+        "kept": 1113
       },
       "uk-api-catalogue": {
         "raw": 231,
         "kept": 218
       },
       "public-apis": {
-        "raw": 2155,
-        "kept": 1285
+        "raw": 2164,
+        "kept": 1294
       }
     },
     "merged_duplicates": {
@@ -100,16 +100,16 @@
       "no_base_or_spec": 19
     },
     "tiers": {
-      "featured": 438,
-      "solid": 1316,
-      "listed": 2635
+      "featured": 439,
+      "solid": 1318,
+      "listed": 2639
     },
     "access_clarity_histogram": [
       6,
       0,
       218,
       1725,
-      2215,
+      2222,
       39,
       43,
       143,
