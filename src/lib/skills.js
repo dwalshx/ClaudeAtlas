@@ -26,6 +26,7 @@ export {
   getSkills,
   getSkillBySlug,
   getFeaturedSkills,
+  capPerRepo,
   getSkillsByCategory,
   getAllCategories,
   getCategorySlug,

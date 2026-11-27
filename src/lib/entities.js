@@ -184,8 +184,77 @@ export function getSkillBySlug(slug) {
 
 export const allSkills = getSkills();
 
-export function getFeaturedSkills(limit = 6) {
-  return allSkills.filter(notDuplicate).filter((s) => s.quality_tier === 'featured').slice(0, limit);
+/**
+ * Per-repo diversity cap (SELECTION/RENDER-ONLY).
+ *
+ * Given entities already in PRIORITY ORDER (highest-priority first — e.g.
+ * sorted by quality_score desc), return a NEW array in which no more than
+ * `maxPerRepo` entries share the same `repo_full_name`. Order is preserved;
+ * overflow entries past the cap are dropped. Entities lacking a
+ * `repo_full_name` are never grouped and always kept.
+ *
+ * This is a display concern only — it never mutates scores, tiers, or the
+ * underlying records. It exists so a single mega-repo can't monopolise the
+ * homepage's small, curated card grids (Featured strip + Top-N grid) while
+ * lower-ranked-but-distinct authors get squeezed out.
+ *
+ * @param {any[]} entities  pre-sorted entities (highest priority first)
+ * @param {number} [maxPerRepo=2]  max entries allowed per repo_full_name
+ * @returns {any[]} filtered copy, order preserved
+ */
+export function capPerRepo(entities, maxPerRepo = 2) {
+  if (!Array.isArray(entities)) return [];
+  // A non-positive / non-finite cap disables the filter (pass-through copy).
+  if (!Number.isFinite(maxPerRepo) || maxPerRepo <= 0) return [...entities];
+
+  const counts = new Map();
+  const out = [];
+  for (const e of entities) {
+    const repo = e?.repo_full_name || '';
+    if (!repo) {
+      // No repo identity to group on — always keep.
+      out.push(e);
+      continue;
+    }
+    const seen = counts.get(repo) || 0;
+    if (seen < maxPerRepo) {
+      counts.set(repo, seen + 1);
+      out.push(e);
+    }
+  }
+  return out;
+}
+
+/**
+ * Deterministic priority comparator for homepage card selection: quality_score
+ * desc, ties broken by repo_stars desc, then id asc (mirrors the filter.js
+ * tier-ranking tiebreak so selection is stable across builds).
+ */
+function byQualityDesc(a, b) {
+  return (
+    (b.quality_score || 0) - (a.quality_score || 0) ||
+    (b.repo_stars || 0) - (a.repo_stars || 0) ||
+    String(a.id || '').localeCompare(String(b.id || ''))
+  );
+}
+
+/**
+ * Featured-tier skills for the homepage hero strip.
+ *
+ * Sorts featured skills by quality (deterministic tiebreak), applies a
+ * per-repo diversity cap so the small strip showcases distinct authors, then
+ * takes the top `limit`. Selection-only: no score/tier is modified.
+ *
+ * @param {number} [limit=6]
+ * @param {number} [maxPerRepo=1]  one featured card per repo by default
+ * @returns {any[]}
+ */
+export function getFeaturedSkills(limit = 6, maxPerRepo = 1) {
+  const featured = allSkills
+    .filter(notDuplicate)
+    .filter((s) => s.quality_tier === 'featured')
+    .sort(byQualityDesc);
+  return capPerRepo(featured, maxPerRepo).slice(0, limit);
 }
 
 export function getSkillsByCategory(category) {
