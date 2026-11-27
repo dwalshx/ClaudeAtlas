@@ -235,7 +235,7 @@ test('4.2-M06: accessForRecord uk-api-catalogue — license URL vs name at 0.8, 
   }
 });
 
-test('4.2-M06: accessForRecord public-apis — Auth map at 0.6, cost free 0.7, base_urls provenance declared 0.5 (decision 2)', () => {
+test('4.2-M06 + calibration v1: accessForRecord public-apis — Auth map at 0.6, cost unknown + heuristic free_tier note, base_urls provenance declared 0.5 (decision 2)', () => {
   assert.equal(publicApisAuth(''), 'none');
   assert.equal(publicApisAuth('apiKey'), 'api_key');
   assert.equal(publicApisAuth('OAuth'), 'oauth2');
@@ -249,7 +249,10 @@ test('4.2-M06: accessForRecord public-apis — Auth map at 0.6, cost free 0.7, b
   assert.equal(a.auth.type, 'none');
   assert.equal(prov(a, 'auth.type').confidence, 0.6);
   assert.equal(prov(a, 'auth.type').method, 'declared');
-  assert.equal(a.cost.model, 'free');
+  assert.equal(a.cost.model, 'unknown');
+  assert.equal(a.cost.free_tier, 'Free access or a free tier (listed in public-apis)');
+  assert.equal(prov(a, 'cost.free_tier').method, 'heuristic');
+  assert.equal(prov(a, 'cost.free_tier').confidence, 0.5);
   assert.deepEqual(a.provenance.base_urls, { method: 'declared', source_url: 'https://catfact.ninja/', confidence: 0.5, checked_at: AT });
 
   const weird = accessForRecord({ ...raw('public-apis', { ...entry, Auth: 'weird' }), home_url: entry.Link }, AT);
@@ -269,7 +272,7 @@ test('4.2-M06: accessForRecord apis.guru — info_license seeds license (method 
   const b = accessForRecord(raw('apis.guru', { info_license: null }, SPEC_URL), AT);
   assert.equal(b.license.spdx, null);
 
-  assert.deepEqual(COST_FREE_SOURCES, ['data.gouv.fr', 'uk-api-catalogue', 'public-apis']);
+  assert.deepEqual(COST_FREE_SOURCES, ['data.gouv.fr', 'uk-api-catalogue']);
 
   const nope = accessForRecord(raw('nope', {}), AT);
   assert.deepEqual(nope, emptyAccess());

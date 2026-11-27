@@ -171,6 +171,33 @@ function computeContentSha(record, entityType) {
   return createHash('sha256').update(buildEmbeddingInputRegistry(record)).digest('hex');
 }
 
+/**
+ * Vectorize metadata for one record. Shared by new and reused vectors so the
+ * tier / score / name filters always reflect today's records.
+ * api records show the catalog's human title (extra.title, calibration v1).
+ */
+export function vectorMetadata(skill, sha, entityType) {
+  const displayName = skill.entity_type === 'api' && typeof skill.extra?.title === 'string' && skill.extra.title
+    ? skill.extra.title
+    : skill.name;
+  return {
+    name: displayName,
+    slug: skill.slug,
+    skill_id: skill.id, // source-of-truth for re-embed delta detection
+    category: skill.category || '',
+    quality_tier: skill.quality_tier || 'listed',
+    quality_score: skill.quality_score || 0,
+    repo_stars: skill.repo_stars || 0,
+    repo_full_name: skill.repo_full_name || '',
+    description: (skill.description || '').slice(0, 500),
+    // F2 (B4 / DOD-7): carry entity_type into Vectorize metadata so the
+    // worker's ?type filter has a queryable field. Default to 'skill' for
+    // legacy v1 records; falls back to the run's --entity-type.
+    entity_type: skill.entity_type || entityType || 'skill',
+    _content_sha: sha,
+  };
+}
+
 // Vectorize accepts IDs up to 64 characters. Our skill.id values (full
 // path including the SKILL.md filename) can exceed this. We keep them
 // stable by using a SHA-256 prefix whenever the raw id is too long.
@@ -343,7 +370,10 @@ async function main() {
     const priorRec = prior.get(rec.id);
 
     if (priorRec && priorRec.metadata && priorRec.metadata._content_sha === sha && Array.isArray(priorRec.values) && priorRec.values.length === DIMENSIONS) {
-      kept.push(priorRec);
+      // 2026-11-18: refresh the metadata on reused vectors (no OpenAI call). Before
+      // this, a reused vector kept the tier / score / name from the day it was
+      // embedded, so ?tier= filtered on stale tiers.
+      kept.push({ ...priorRec, metadata: vectorMetadata(rec, sha, entityType) });
     } else {
       todo.push({ skill: rec, sha });
     }
@@ -457,24 +487,7 @@ async function main() {
       appendNdjsonLine(appendFd, {
         id: vectorizeId(skill.id),
         values: vectors[j],
-        metadata: {
-          name: skill.name,
-          slug: skill.slug,
-          skill_id: skill.id, // source-of-truth for re-embed delta detection
-          category: skill.category || '',
-          quality_tier: skill.quality_tier || 'listed',
-          quality_score: skill.quality_score || 0,
-          repo_stars: skill.repo_stars || 0,
-          repo_full_name: skill.repo_full_name || '',
-          description: (skill.description || '').slice(0, 500),
-          // F2 (B4 / DOD-7): carry entity_type into Vectorize metadata so
-          // the worker's ?type filter has a queryable field the day plugins
-          // (Phase 3.2) land. Default to 'skill' for legacy v1 records on
-          // disk during the cutover window. Phase 3.2: falls back to the
-          // run's --entity-type so plugin/mcp vectors are tagged correctly.
-          entity_type: skill.entity_type || entityType || 'skill',
-          _content_sha: sha,
-        },
+        metadata: vectorMetadata(skill, sha, entityType),
       });
       newCount++;
     }

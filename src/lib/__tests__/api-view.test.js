@@ -10,7 +10,7 @@ import { scoreApi } from '../../../scripts/lib/scorers/api.scorer.js';
 import {
   accessRows, scoreRows, provenanceFor, rateLimitLabel, costLabel, authLabel,
   licenseLabel, primaryHost, providerName, cardFacts, compareApis, visibleApis, sourceLabel,
-  decodeEntities, diverseTop,
+  decodeEntities, diverseTop, apiDisplayName, withApiSuffix, sortKeyName,
 } from '../api-view.js';
 
 test('decodeEntities: numeric, hex and named entities decode; unknown ones and plain text pass through', () => {
@@ -110,4 +110,17 @@ test('listing helpers: duplicates and slugless records hidden; sort is score des
   a.cost.model = 'free';
   a.auth.type = 'none';
   assert.deepEqual(cardFacts({ access: a }), ['Free', 'No auth']);
+});
+
+test('calibration v1: display name prefers the catalog title; page titles never say "API API"; A–Z key drops a leading API', () => {
+  assert.equal(apiDisplayName({ name: 'melodi', extra: { title: 'API Melodi' } }), 'API Melodi');
+  assert.equal(apiDisplayName({ name: 'melodi', extra: { title: '  ' } }), 'melodi');
+  assert.equal(apiDisplayName({ name: 'L&#39;API', extra: {} }), "L'API");
+  assert.equal(withApiSuffix('Stripe'), 'Stripe API');
+  assert.equal(withApiSuffix('Stripe API'), 'Stripe API');
+  assert.equal(withApiSuffix('1Forge Finance APIs'), '1Forge Finance APIs');
+  assert.equal(sortKeyName('API Données Radar'), 'Donnees Radar');
+  assert.equal(sortKeyName('APIs: Zebra'), 'Zebra');
+  assert.equal(sortKeyName('API'), 'API');
+  assert.equal(sortKeyName('Rapid API'), 'Rapid API');
 });

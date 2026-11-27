@@ -244,6 +244,8 @@ export interface McpExtra {
 /** Phase 4.1 (scaffold; harvester lands 4.2). Field semantics in docs/PHASE-4.0-SPEC.md § ApiExtra. */
 export interface ApiExtra {
   type: 'api';
+  /** Catalog's human title (display); `name` stays the slug-shaped id input. Calibration v1, 2026-11-18. */
+  title?: string | null;
   /** OpenAPI servers[] or catalog base_api_url */
   base_urls: string[];
   spec_url: string | null;

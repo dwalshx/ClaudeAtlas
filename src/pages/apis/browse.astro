@@ -5,15 +5,16 @@
 // Empty-state when data/apis.ndjson is absent (DATA_FEEDS_ENABLED off).
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import { getApis } from '../../lib/feeds.js';
-import { visibleApis, providerName, decodeEntities } from '../../lib/api-view.js';
+import { visibleApis, providerName, apiDisplayName, sortKeyName } from '../../lib/api-view.js';
 
 const apis = visibleApis(getApis())
   .filter((a) => a.slug.includes('/'))
-  .sort((a, b) => String(a.name).localeCompare(String(b.name), 'en', { sensitivity: 'base' }) || String(a.id).localeCompare(String(b.id)));
+  .map((a) => ({ ...a, _display: apiDisplayName(a), _key: sortKeyName(apiDisplayName(a)) }))
+  .sort((a, b) => a._key.localeCompare(b._key, 'en', { sensitivity: 'base' }) || String(a.id).localeCompare(String(b.id)));
 
 const groups = new Map();
 for (const a of apis) {
-  const first = String(a.name || '').trim().charAt(0).toUpperCase();
+  const first = a._key.charAt(0).toUpperCase();
   const key = /[A-Z]/.test(first) ? first : '#';
   if (!groups.has(key)) groups.set(key, []);
   groups.get(key).push(a);
@@ -45,7 +46,7 @@ const letters = [...groups.keys()].sort((a, b) => (a === '#' ? -1 : b === '#' ? 
         <ul class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-1 text-sm">
           {groups.get(l).map((a) => (
             <li class="truncate">
-              <a href={`/apis/${a.slug}/`} class="text-gray-300 hover:text-atlas-400">{decodeEntities(a.name)}</a>
+              <a href={`/apis/${a.slug}/`} class="text-gray-300 hover:text-atlas-400">{a._display}</a>
               <span class="text-gray-600 font-mono text-xs"> {providerName(a)}</span>
             </li>
           ))}

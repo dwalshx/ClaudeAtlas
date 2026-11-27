@@ -61,7 +61,10 @@ export function isSlop(record) {
   // Common gates first — exercised exactly once per record.
   if (hasTemplateName(record)) return true;
   if (hasPlaceholderDescription(record)) return true;
-  if (hasBizSlopName(record)) return true;
+  // Calibration v1 (2026-11-18): api names are catalog titles of real,
+  // documented services ("Logistics API", the "production-…" électricité
+  // feeds), not generated skill slop — 4.2-CALIBRATION.md recommendation.
+  if (record?.entity_type !== 'api' && hasBizSlopName(record)) return true;
 
   // Per-type gates
   const t = record?.entity_type || 'skill';

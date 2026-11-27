@@ -11,8 +11,10 @@
  *     transport rest|graphql (0.9).
  *   - declared (ladder step 2): data.gouv.fr rate_limiting (0.8),
  *     access_type (0.7), license (0.9); UK catalogue license (0.8);
- *     public-apis Auth (0.6); cost.model 'free' for the three open catalogs
- *     (0.7); public-apis base_urls = [Link] marked declared 0.5 (decision 2).
+ *     public-apis Auth (0.6); cost.model 'free' for the two government
+ *     catalogs (0.7); public-apis cost.free_tier note (heuristic 0.5 —
+ *     calibration v1, its entries are free OR free-tier); public-apis
+ *     base_urls = [Link] marked declared 0.5 (decision 2).
  *
  * No I/O, no clock reads (checkedAt is always passed in).
  */
@@ -20,7 +22,11 @@
 import { emptyAccess, setAccessField, UNKNOWN } from '../access.js';
 
 export const AUTH_PRECEDENCE = ['api_key', 'bearer', 'oauth2', 'http_basic', 'openid'];
-export const COST_FREE_SOURCES = ['data.gouv.fr', 'uk-api-catalogue', 'public-apis'];
+// Calibration v1 (2026-11-18): public-apis dropped from this list. It lists
+// APIs with free access OR a free tier (Stripe, OpenAI), so it gets a
+// heuristic cost.free_tier note instead of a declared 'free' model.
+export const COST_FREE_SOURCES = ['data.gouv.fr', 'uk-api-catalogue'];
+export const PUBLIC_APIS_FREE_TIER_NOTE = 'Free access or a free tier (listed in public-apis)';
 
 const CONF = {
   spec_auth: 0.9,
@@ -33,6 +39,7 @@ const CONF = {
   uk_license: 0.8,
   pub_auth: 0.6,
   cost_free: 0.7,
+  pub_free_tier: 0.5,
   pub_base_url: 0.5,
 };
 
@@ -301,5 +308,8 @@ export function accessForRecord(rec, checkedAt) {
   }
 
   if (COST_FREE_SOURCES.includes(src)) setAccessField(a, 'cost.model', 'free', D(CONF.cost_free));
+  if (src === 'public-apis') {
+    setAccessField(a, 'cost.free_tier', PUBLIC_APIS_FREE_TIER_NOTE, { ...D(CONF.pub_free_tier), method: 'heuristic' });
+  }
   return a;
 }
